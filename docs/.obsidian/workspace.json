@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "f90f98d74f9b165c",
+        "id": "08af85c99ef05ed0",
         "type": "tabs",
         "children": [
           {
-            "id": "0e53577055a2f067",
+            "id": "3ade911eea9b6485",
             "type": "leaf",
             "state": {
               "type": "empty",
@@ -178,8 +178,10 @@
       "bases:Create new base": false
     }
   },
-  "active": "0e53577055a2f067",
+  "active": "3ade911eea9b6485",
   "lastOpenFiles": [
+    "decisions/ADR-002-definition-of-done-and-process.md",
+    "testing/Performace Testing.md",
     "decisions/ADR-001-monorepo.md",
     "architecture/System Overview.md",
     "testing/Test Pyramid.md",

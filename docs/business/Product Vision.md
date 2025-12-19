@@ -1,4 +1,5 @@
 # Shopwise – Product Vision
+
 Shopwise is a demo e-commerce platform designed to showcase
 real-world backend, frontend, testing and CI/CD practices.
 
