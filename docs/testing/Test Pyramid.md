@@ -16,6 +16,9 @@ and maintenance cost low.
 
 ## Unit Tests
 
+Unit tests use an in-memory SQLite database
+to minimize execution time and external dependencies.
+
 Purpose:
 
 - Verify individual units of logic in isolation
@@ -35,6 +38,9 @@ Tools:
 Unit tests form the largest part of the test suite.
 
 ## Integration Tests
+
+Integration tests are executed against a MySQL database
+to reflect production-like behavior.
 
 Purpose:
 

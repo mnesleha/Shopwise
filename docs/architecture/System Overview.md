@@ -97,6 +97,13 @@ All validations and rules are enforced on the backend.
 All data access is handled through Django ORM.
 No direct SQL queries are used in application logic.
 
+### Database Usage by Environment
+
+- Local development: MySQL
+- CI unit tests: SQLite
+- CI integration tests: MySQL
+- Production: MySQL
+
 ## Authentication & Authorization
 
 - Authentication is handled by Django authentication system
