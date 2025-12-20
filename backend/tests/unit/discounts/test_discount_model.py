@@ -39,6 +39,7 @@ def test_discount_with_invalid_date_range_is_invalid():
         discount.full_clean()
 
 
+@pytest.mark.regression
 @pytest.mark.django_db
 def test_inactive_discount_is_not_valid():
 
