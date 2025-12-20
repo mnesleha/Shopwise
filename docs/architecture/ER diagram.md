@@ -23,22 +23,24 @@ The Shopwise data model covers the following domains:
 
 Represents a registered user of the system.
 
-Field Type Description
-id UUID Primary key
-email String Unique identifier
-password String Hashed
-is_staff Boolean Admin flag
-created_at DateTime Creation timestamp
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary key |
+| email | String | Unique identifier |
+| password | String | Hashed |
+| is_staff | Boolean | Admin flag |
+| created_at | DateTime | Creation timestamp |
 
 ## Category
 
 Represents a hierarchical product category.
 
-Field Type Description
-id UUID Primary key
-name String Category name
-parent_id UUID Self-reference
-is_active Boolean Visibility flag
+| Field | Type | Description |
+|------|-------|-----------  |
+|id | UUID | Primary key |
+| name | String | Category name |
+| parent_id | UUID | Self-reference |
+| is_active | Boolean | Visibility flag |
 
 Relationships:
 Category → Category (parent-child)
@@ -48,15 +50,16 @@ Category → Product (1:N)
 
 Represents a sellable product.
 
-Field Type Description
-id UUID Primary key
-name String Product name
-description Text Description
-price Decimal Base price
-stock_quantity Integer Inventory
-category_id UUID FK to Category
-is_active Boolean Availability
-created_at DateTime Creation timestamp
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary key |
+| name | String | Product name |
+| description | Text | Description |
+| price | Decimal | Base price |
+| stock_quantity | Integer | Inventory |
+| category_id | UUID | FK to Category |
+| is_active | Boolean | Availability |
+| created_at | DateTime | Creation timestamp |
 
 Relationships:
 Product → Category (N:1)
@@ -67,17 +70,18 @@ Product → Discount (1:N)
 
 Represents a discount applied to products or categories.
 
-Field Type Description
-id UUID Primary key
-name String Discount name
-type Enum PERCENT / FIXED
-value Decimal Discount value
-valid_from DateTime Start
-valid_to DateTime End
-applies_to Enum PRODUCT / CATEGORY
-product_id UUID Optional FK
-category_id UUID Optional FK
-is_active Boolean Enabled
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary key |
+| name | String | Discount name |
+| type | Enum | PERCENT / FIXED |
+| value | Decimal | Discount value |
+| valid_from | DateTime | Start |
+| valid_to | DateTime | End |
+| applies_to | Enum | PRODUCT / CATEGORY |
+| product_id | UUID | Optional FK |
+| category_id | UUID | Optional FK |
+| is_active | Boolean | Enabled |
 
 Rules:
 
@@ -88,12 +92,13 @@ Rules:
 
 Represents a customer order.
 
-Field Type Description
-id UUID Primary key
-user_id UUID FK to User
-status Enum CREATED, PAID, SHIPPED, DELIVERED, CANCELED
-total_price Decimal Calculated
-created_at DateTime Creation timestamp
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary key |
+| user_id | UUID | FK to User |
+| status | Enum | CREATED, PAID, SHIPPED, DELIVERED, CANCELED |
+| total_price | Decimal | Calculated |
+| created_at | DateTime | Creation timestamp |
 
 Relationships:
 Order → User (N:1)
@@ -104,23 +109,25 @@ Order → Payment (1:1)
 
 Represents an item within an order.
 
-Field Type Description
-id UUID Primary key
-order_id UUID FK to Order
-product_id UUID FK to Product
-quantity Integer Ordered quantity
-price_at_order_time Decimal Snapshot price
-discount_applied Decimal Discount amount
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary key |
+| order_id | UUID | FK to Order |
+| product_id | UUID | FK to Product |
+| quantity | Integer | Ordered quantity |
+| price_at_order_time | Decimal | Snapshot price |
+| discount_applied | Decimal | Discount amount |
 
 ## Payment
 
 Represents a payment attempt for an order.
 
-Field Type Description
-id UUID Primary key
-order_id UUID FK to Order
-status Enum PENDING, SUCCESS, FAILED
-created_at DateTime Timestamp
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary key |
+| order_id | UUID | FK to Order |
+| status | Enum | PENDING, SUCCESS, FAILED |
+| created_at | DateTime | Timestamp |
 
 ## Entity relationships summary
 

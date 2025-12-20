@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "08af85c99ef05ed0",
+        "id": "421b37d85ef25852",
         "type": "tabs",
         "children": [
           {
-            "id": "3ade911eea9b6485",
+            "id": "4565b13ee433d5ee",
             "type": "leaf",
             "state": {
               "type": "empty",
@@ -178,15 +178,15 @@
       "bases:Create new base": false
     }
   },
-  "active": "3ade911eea9b6485",
+  "active": "4565b13ee433d5ee",
   "lastOpenFiles": [
+    "architecture/ER diagram.md",
     "decisions/ADR-002-definition-of-done-and-process.md",
     "testing/Performace Testing.md",
     "decisions/ADR-001-monorepo.md",
     "architecture/System Overview.md",
     "testing/Test Pyramid.md",
     "ci-cd/Pipeline.md",
-    "architecture/ER diagram.md",
     "testing/Test Strategy.md",
     "business/Requirements.md",
     "business/Product Vision.md",
