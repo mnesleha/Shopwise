@@ -15,8 +15,8 @@ def test_discount_is_valid_only_within_date_range():
         name="Summer Sale",
         discount_type="PERCENT",
         value=10,
-        valid_from=now() - timedelta(days=1),
-        valid_to=now() + timedelta(days=1),
+        valid_from=now().date() - timedelta(days=1),
+        valid_to=now().date() + timedelta(days=1),
         is_active=True,
     )
 
@@ -30,8 +30,8 @@ def test_discount_with_invalid_date_range_is_invalid():
         name="Broken Discount",
         discount_type="PERCENT",
         value=10,
-        valid_from=now() + timedelta(days=1),
-        valid_to=now(),
+        valid_from=now().date() + timedelta(days=1),
+        valid_to=now().date(),
         is_active=True,
     )
 
@@ -47,8 +47,8 @@ def test_inactive_discount_is_not_valid():
         name="Inactive Discount",
         discount_type="PERCENT",
         value=20,
-        valid_from=now() - timedelta(days=1),
-        valid_to=now() + timedelta(days=1),
+        valid_from=now().date() - timedelta(days=1),
+        valid_to=now().date() + timedelta(days=1),
         is_active=False,
     )
 
@@ -62,8 +62,8 @@ def test_discount_without_target_is_invalid():
         name="No Target Discount",
         discount_type="PERCENT",
         value=10,
-        valid_from=now() - timedelta(days=1),
-        valid_to=now() + timedelta(days=1),
+        valid_from=now().date() - timedelta(days=1),
+        valid_to=now().date() + timedelta(days=1),
         is_active=True,
     )
 
@@ -87,8 +87,8 @@ def test_discount_cannot_target_product_and_category_at_once():
         name="Conflicting Discount",
         discount_type="PERCENT",
         value=10,
-        valid_from=now() - timedelta(days=1),
-        valid_to=now() + timedelta(days=1),
+        valid_from=now().date() - timedelta(days=1),
+        valid_to=now().date() + timedelta(days=1),
         is_active=True,
         product=product,
         category=category,
@@ -105,8 +105,8 @@ def test_discount_with_zero_value_is_invalid():
         name="Zero Discount",
         discount_type="PERCENT",
         value=0,
-        valid_from=now() - timedelta(days=1),
-        valid_to=now() + timedelta(days=1),
+        valid_from=now().date() - timedelta(days=1),
+        valid_to=now().date() + timedelta(days=1),
         is_active=True,
     )
 

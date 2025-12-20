@@ -1,8 +1,12 @@
 from django.db import models
 from django.utils.timezone import now
-from datetime import timedelta
+from datetime import timedelta, date
 from django.core.exceptions import ValidationError
 from django.core.exceptions import NON_FIELD_ERRORS
+
+
+def get_default_valid_from():
+    return now().date()
 
 
 def get_default_valid_to():
@@ -27,7 +31,7 @@ class Discount(models.Model):
 
     value = models.DecimalField(max_digits=5, decimal_places=2)
 
-    valid_from = models.DateField(default=now)
+    valid_from = models.DateField(default=get_default_valid_from)
     valid_to = models.DateField(default=get_default_valid_to)
 
     is_active = models.BooleanField(default=True)
