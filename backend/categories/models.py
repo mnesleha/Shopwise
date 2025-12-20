@@ -4,6 +4,8 @@ from django.core.exceptions import ValidationError
 
 class Category(models.Model):
     name = models.CharField(max_length=255)
+    is_parent = models.BooleanField(default=False)
+
     parent = models.ForeignKey(
         "self",
         null=True,
@@ -12,43 +14,30 @@ class Category(models.Model):
         on_delete=models.CASCADE,
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["parent", "name"],
+                name="unique_category_name_per_parent",
+            )
+        ]
+
     def clean(self):
         errors = {}
 
-        # 1️⃣ Name validation
-        if not self.name:
-            errors["name"] = "Category name cannot be empty"
+        # Parent category rules
+        if self.is_parent and self.parent:
+            errors["parent"] = "Parent category cannot have a parent"
 
-        # 2️⃣ Self-parent validation (ALWAYS)
-        if self.parent is not None and self.parent is self:
-            errors["parent"] = "Category cannot be its own parent"
+        # Leaf category rules
+        if not self.is_parent and not self.parent:
+            errors["parent"] = "Leaf category must have a parent"
 
-        # 3️⃣ Cycle detection (in-memory safe)
-        seen = set()
-        ancestor = self.parent
-
-        while ancestor is not None:
-            if ancestor is self:
-                errors["parent"] = "Category hierarchy cannot contain cycles"
-                break
-            if ancestor in seen:
-                break
-            seen.add(ancestor)
-            ancestor = ancestor.parent
-
-        # 4️⃣ Uniqueness within same parent
-        # This validation is enforced at application level
-        # and intentionally works even for unsaved instances.
-        if self.parent:
-            siblings = self.parent.children.all() if self.parent.pk else []
-        else:
-            siblings = Category.objects.filter(
-                parent__isnull=True) if self.pk else []
-
-        for sibling in siblings:
-            if sibling is not self and sibling.name == self.name:
-                errors["name"] = "Category name must be unique within the same parent"
-                break
+        if self.parent and not self.parent.is_parent:
+            errors["parent"] = "Parent must be a parent category"
 
         if errors:
             raise ValidationError(errors)
+
+    def __str__(self):
+        return self.name

@@ -22,28 +22,6 @@ def test_category_without_name_is_invalid():
 
 
 @pytest.mark.django_db
-def test_category_cannot_have_itself_as_parent():
-
-    category = Category(name="Electronics")
-    category.parent = category
-
-    with pytest.raises(ValidationError):
-        category.full_clean()
-
-
-@pytest.mark.django_db
-def test_category_cannot_create_cycle():
-
-    parent = Category.objects.create(name="Electronics")
-    child = Category.objects.create(name="Phones", parent=parent)
-
-    parent.parent = child
-
-    with pytest.raises(ValidationError):
-        parent.full_clean()
-
-
-@pytest.mark.django_db
 def test_category_name_must_be_unique_within_same_parent():
 
     parent = Category.objects.create(name="Electronics")
@@ -57,3 +35,27 @@ def test_category_name_must_be_unique_within_same_parent():
 
     with pytest.raises(ValidationError):
         duplicate.full_clean()
+
+
+@pytest.mark.django_db
+def test_leaf_category_must_have_parent():
+
+    category = Category(name="Phones", is_parent=False)
+
+    with pytest.raises(ValidationError):
+        category.full_clean()
+
+
+@pytest.mark.django_db
+def test_parent_category_cannot_have_parent():
+
+    parent = Category.objects.create(name="Electronics", is_parent=True)
+
+    category = Category(
+        name="Sub",
+        is_parent=True,
+        parent=parent,
+    )
+
+    with pytest.raises(ValidationError):
+        category.full_clean()
