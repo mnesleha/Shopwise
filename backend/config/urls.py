@@ -16,15 +16,12 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 from django.http import JsonResponse
-
-
-def healthcheck(request):
-    return JsonResponse({"status": "ok"})
+from debug_toolbar.toolbar import debug_toolbar_urls
 
 
 urlpatterns = [
-    path("health/", healthcheck, name="healthcheck"),
     path("admin/", admin.site.urls),
-]
+    path("api/v1/", include("api.urls")),
+] + debug_toolbar_urls()
