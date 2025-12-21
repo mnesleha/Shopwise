@@ -13,8 +13,9 @@ class Order(models.Model):
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
         on_delete=models.CASCADE,
-        related_name="orders",
     )
 
     status = models.CharField(
