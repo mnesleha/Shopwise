@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     "orders",
     "orderitems",
     "payments",
+    "carts",
     "rest_framework",
     "debug_toolbar"
 ]
