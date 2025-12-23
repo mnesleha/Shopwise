@@ -1,0 +1,330 @@
+{
+  "info": {
+    "_postman_id": "33670a13-941f-4607-a301-f1f6ff0ec749",
+    "name": "Shopwise Category API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Categories List",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "22255fde-687e-4e0d-981e-ec5eb41456f7",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Response is an array of categories\", function () {\r",
+              "    const data = pm.response.json();\r",
+              "    pm.expect(data).to.be.an(\"array\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Each parent category has required fields\", function () {\r",
+              "    const categories = pm.response.json();\r",
+              "\r",
+              "    categories.forEach(category => {\r",
+              "        pm.expect(category).to.have.property(\"id\");\r",
+              "        pm.expect(category).to.have.property(\"name\");\r",
+              "        pm.expect(category).to.have.property(\"is_parent\", true);\r",
+              "        pm.expect(category).to.have.property(\"children\");\r",
+              "        pm.expect(category.children).to.be.an(\"array\");\r",
+              "    });\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Children categories are leaf categories\", function () {\r",
+              "    const categories = pm.response.json();\r",
+              "\r",
+              "    categories.forEach(parent => {\r",
+              "        parent.children.forEach(child => {\r",
+              "            pm.expect(child.is_parent).to.eql(false);\r",
+              "            pm.expect(child.children).to.be.an(\"array\").that.is.empty;\r",
+              "        });\r",
+              "    });\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Category tree depth is max 2 levels\", function () {\r",
+              "    const categories = pm.response.json();\r",
+              "\r",
+              "    categories.forEach(parent => {\r",
+              "        parent.children.forEach(child => {\r",
+              "            pm.expect(child.children.length).to.eql(0);\r",
+              "        });\r",
+              "    });\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Category names are not empty\", function () {\r",
+              "    const categories = pm.response.json();\r",
+              "\r",
+              "    categories.forEach(parent => {\r",
+              "        pm.expect(parent.name).to.be.a(\"string\").and.not.empty;\r",
+              "\r",
+              "        parent.children.forEach(child => {\r",
+              "            pm.expect(child.name).to.be.a(\"string\").and.not.empty;\r",
+              "        });\r",
+              "    });\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Root categories are always parent categories\", function () {\r",
+              "    const categories = pm.response.json();\r",
+              "\r",
+              "    categories.forEach(category => {\r",
+              "        pm.expect(category.is_parent).to.eql(true);\r",
+              "    });\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Store first leaf category ID\", function () {\r",
+              "    const categories = pm.response.json();\r",
+              "\r",
+              "    for (let parent of categories) {\r",
+              "        if (parent.children.length > 0) {\r",
+              "            pm.environment.set(\"leaf_category_id\", parent.children[0].id);\r",
+              "            break;\r",
+              "        }\r",
+              "    }\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Store first parent category ID\", function () {\r",
+              "    const categories = pm.response.json();\r",
+              "\r",
+              "    pm.expect(categories.length).to.be.above(0);\r",
+              "\r",
+              "    pm.environment.set(\"parent_category_id\", categories[0].id);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "b94ef23d-6e7e-4189-b326-d9015f9c5148",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/categories/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "categories",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Category Detail",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "4434179c-5bc6-406d-b733-99ddb4f1aef7",
+            "exec": [
+              "pm.test(\"Category detail returns 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Category detail has required fields\", function () {\r",
+              "    const category = pm.response.json();\r",
+              "\r",
+              "    pm.expect(category).to.have.property(\"id\");\r",
+              "    pm.expect(category).to.have.property(\"name\");\r",
+              "    pm.expect(category).to.have.property(\"is_parent\");\r",
+              "    pm.expect(category).to.have.property(\"children\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Category detail is a parent category\", function () {\r",
+              "    const category = pm.response.json();\r",
+              "\r",
+              "    pm.expect(category.is_parent).to.eql(true);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Parent category detail contains only leaf children\", function () {\r",
+              "    const category = pm.response.json();\r",
+              "\r",
+              "    category.children.forEach(child => {\r",
+              "        pm.expect(child.is_parent).to.eql(false);\r",
+              "        pm.expect(child.children).to.be.an(\"array\").that.is.empty;\r",
+              "    });\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Returned category ID matches requested ID\", function () {\r",
+              "    const category = pm.response.json();\r",
+              "    const requestedId = pm.environment.get(\"parent_category_id\");\r",
+              "\r",
+              "    pm.expect(category.id).to.eql(parseInt(requestedId));\r",
+              "});\r",
+              "\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "ec22e71b-b522-4dbf-baed-ce060fdc9c8c",
+      "protocolProfileBehavior": {
+        "disabledSystemHeaders": {
+          "accept": true
+        }
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/categories/{{parent_category_id}}/\n",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "categories",
+            "{{parent_category_id}}",
+            "\n"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Leaf Category Detail",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "0dd3cb33-a684-4278-a8fb-53490a07f232",
+            "exec": [
+              "pm.test(\"Leaf category detail returns 404\", function () {\r",
+              "    pm.response.to.have.status(404);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "1f03ec57-6983-4b02-b1b8-e6b9b5a96988",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/categories/{{leaf_category_id}}/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "categories",
+            "{{leaf_category_id}}",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Category Detail 2",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "4434179c-5bc6-406d-b733-99ddb4f1aef7",
+            "exec": [
+              "pm.test(\"Category detail returns 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Category detail has required fields\", function () {\r",
+              "    const category = pm.response.json();\r",
+              "\r",
+              "    pm.expect(category).to.have.property(\"id\");\r",
+              "    pm.expect(category).to.have.property(\"name\");\r",
+              "    pm.expect(category).to.have.property(\"is_parent\");\r",
+              "    pm.expect(category).to.have.property(\"children\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Category detail is a parent category\", function () {\r",
+              "    const category = pm.response.json();\r",
+              "\r",
+              "    pm.expect(category.is_parent).to.eql(true);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Parent category detail contains only leaf children\", function () {\r",
+              "    const category = pm.response.json();\r",
+              "\r",
+              "    category.children.forEach(child => {\r",
+              "        pm.expect(child.is_parent).to.eql(false);\r",
+              "        pm.expect(child.children).to.be.an(\"array\").that.is.empty;\r",
+              "    });\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Returned category ID matches requested ID\", function () {\r",
+              "    const category = pm.response.json();\r",
+              "    const requestedId = pm.environment.get(\"parent_category_id\");\r",
+              "\r",
+              "    pm.expect(category.id).to.eql(parseInt(requestedId));\r",
+              "});\r",
+              "\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "a5b9bfae-9ce9-460a-ac31-b1bd0315d89e",
+      "protocolProfileBehavior": {
+        "disabledSystemHeaders": {
+          "accept": true
+        }
+      },
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/categories/{{parent_category_id}}/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "categories",
+            "{{parent_category_id}}",
+            ""
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

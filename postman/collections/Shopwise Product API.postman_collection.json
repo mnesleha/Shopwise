@@ -1,0 +1,151 @@
+{
+  "info": {
+    "_postman_id": "4eed003e-bfc7-4799-9369-f03a356edbe8",
+    "name": "Shopwise Product API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Product List",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "496f20f1-63a6-4c74-85b3-513bf0b2ecdd",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Response is a JSON array\", function () {\r",
+              "    const jsonData = pm.response.json();\r",
+              "    pm.expect(jsonData).to.be.an(\"array\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Each product has required fields\", function () {\r",
+              "    const products = pm.response.json();\r",
+              "\r",
+              "    products.forEach(product => {\r",
+              "        pm.expect(product).to.have.property(\"id\");\r",
+              "        pm.expect(product).to.have.property(\"name\");\r",
+              "        pm.expect(product).to.have.property(\"price\");\r",
+              "        pm.expect(product).to.have.property(\"stock_quantity\");\r",
+              "    });\r",
+              "});\r",
+              "\r",
+              "pm.test(\"All products have stock_quantity > 0\", function () {\r",
+              "    const products = pm.response.json();\r",
+              "\r",
+              "    products.forEach(product => {\r",
+              "        pm.expect(product.stock_quantity).to.be.above(0);\r",
+              "    });\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Product name is not empty\", function () {\r",
+              "    const products = pm.response.json();\r",
+              "\r",
+              "    products.forEach(product => {\r",
+              "        pm.expect(product.name).to.be.a(\"string\").and.not.empty;\r",
+              "    });\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Product price is a positive number\", function () {\r",
+              "    const products = pm.response.json();\r",
+              "\r",
+              "    products.forEach(product => {\r",
+              "        const price = parseFloat(product.price);\r",
+              "        pm.expect(price).to.be.above(0);\r",
+              "    });\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Store first product ID\", function () {\r",
+              "    const products = pm.response.json();\r",
+              "\r",
+              "    if (products.length > 0) {\r",
+              "        pm.environment.set(\"product_id\", products[0].id);\r",
+              "    }\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "c889e107-4056-4fee-8c73-041dc9406564",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/products/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "products",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Product detail",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "3cd35a60-cf54-485d-997f-66b812f3b76b",
+            "exec": [
+              "pm.test(\"Product detail returns 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Product detail has correct structure\", function () {\r",
+              "    const product = pm.response.json();\r",
+              "\r",
+              "    pm.expect(product).to.have.property(\"id\");\r",
+              "    pm.expect(product).to.have.property(\"name\");\r",
+              "    pm.expect(product).to.have.property(\"price\");\r",
+              "    pm.expect(product).to.have.property(\"stock_quantity\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Returned product ID matches requested ID\", function () {\r",
+              "    const product = pm.response.json();\r",
+              "    const requestedId = pm.environment.get(\"product_id\");\r",
+              "\r",
+              "    pm.expect(product.id).to.eql(parseInt(requestedId));\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "6b994774-a003-44e2-8458-40372b5389ab",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/products/{{product_id}}/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "products",
+            "{{product_id}}",
+            ""
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

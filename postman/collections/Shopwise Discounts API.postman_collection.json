@@ -1,0 +1,157 @@
+{
+  "info": {
+    "_postman_id": "8c51735f-5dac-440a-9c86-3a50cf4194ce",
+    "name": "Shopwise Discounts API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Discounts List",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "4d27b945-b874-4586-95d6-d9208ea3e602",
+            "exec": [
+              "pm.test(\"Discounts list returns 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Each discount targets a product\", function () {\r",
+              "    const discounts = pm.response.json();\r",
+              "\r",
+              "    discounts.forEach(discount => {\r",
+              "        pm.expect(discount.product).to.exist;\r",
+              "        pm.expect(discount.product.id).to.be.a(\"number\");\r",
+              "    });\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Store discount ID\", function () {\r",
+              "    const discounts = pm.response.json();\r",
+              "    pm.expect(discounts.length).to.be.above(0);\r",
+              "    pm.environment.set(\"discount_id\", discounts[0].id);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "b15d07c9-1a9a-4fe9-80ff-33f632fe4832",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/discounts/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "discounts",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Discount Detail",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "017de9c9-402d-4c3d-8104-c7b866bf434e",
+            "exec": [
+              "pm.test(\"Discount detail returns 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Discount has correct structure\", function () {\r",
+              "    const data = pm.response.json();\r",
+              "\r",
+              "    pm.expect(data).to.have.property(\"id\");\r",
+              "    pm.expect(data).to.have.property(\"discount_type\");\r",
+              "    pm.expect(data).to.have.property(\"value\");\r",
+              "    pm.expect(data).to.have.property(\"product\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Discount is linked to a product\", function () {\r",
+              "    const data = pm.response.json();\r",
+              "\r",
+              "    pm.expect(data.product).to.exist;\r",
+              "    pm.expect(data.product).to.have.property(\"id\");\r",
+              "    pm.expect(data.product).to.have.property(\"name\");\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "63cc2366-d850-41e7-a52f-ebb0cc1f669c",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/discounts/{{discount_id}}/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "discounts",
+            "{{discount_id}}",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Discount Negative",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "0673d115-2fb4-4395-a375-f76ea8202080",
+            "exec": [
+              "pm.test(\"Non-existing discount returns 404\", function () {\r",
+              "    pm.response.to.have.status(404);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "eae7c4b4-b203-4908-a47c-f7344c001d6e",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/discounts/999999/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "discounts",
+            "999999",
+            ""
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

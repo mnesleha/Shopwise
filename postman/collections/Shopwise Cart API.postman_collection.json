@@ -1,0 +1,436 @@
+{
+  "info": {
+    "_postman_id": "176b2866-19e4-41eb-a9e9-6ff107349033",
+    "name": "Shopwise Cart API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Cart (create or retrieve)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "73367385-eb77-4842-890f-2a38763c900d",
+            "exec": [
+              "pm.test(\"Get cart returns 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Cart has ACTIVE status\", function () {\r",
+              "    const data = pm.response.json();\r",
+              "    pm.expect(data.status).to.eql(\"ACTIVE\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Cart ID is stored\", function () {\r",
+              "    const data = pm.response.json();\r",
+              "    pm.environment.set(\"cart_id\", data.id);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "2eaf4ec1-5ce7-4951-ac89-8bc88684b866",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "sessionid=mnnm798zmdl1kxxzzh9hpz87pawezhon",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/cart/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "cart",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Add item to cart",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "a04e32e3-ea6a-4340-84ad-24c86abbe3f4",
+            "exec": [
+              "pm.test(\"Add item returns 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Item quantity is correct\", function () {\r",
+              "    const data = pm.response.json();\r",
+              "    pm.expect(data.quantity).to.eql(2);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Price snapshot exists\", function () {\r",
+              "    const data = pm.response.json();\r",
+              "    pm.expect(data.price_at_add_time).to.exist;\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "7d8bf257-648a-4e78-aac5-ca2de4d4408d",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "sessionid={{sessionid}}",
+            "type": "text"
+          },
+          {
+            "key": "Cookie",
+            "value": "csrftoken={{csrftoken}}",
+            "type": "text"
+          },
+          {
+            "key": "X-CSRFToken",
+            "value": "{{csrftoken}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"product_id\": {{product_id}},\r\n  \"quantity\": 2\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/cart/items/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "cart",
+            "items",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Add item with invalid quantity",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "ab99ebe2-d210-4c24-b4ad-5de9a202d297",
+            "exec": [
+              "pm.test(\"Zero quantity is rejected\", function () {\r",
+              "    pm.response.to.have.status(400);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "c45a82c7-2b71-4fd8-a3c7-2369170ab0d3",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "sessionid={{sessionid}}",
+            "type": "text"
+          },
+          {
+            "key": "Cookie",
+            "value": "csrftoken={{csrftoken}}",
+            "type": "text"
+          },
+          {
+            "key": "X-CSRFToken",
+            "value": "{{csrftoken}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"product_id\": {{product_id}},\r\n  \"quantity\": 0\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/cart/items/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "cart",
+            "items",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Cart (after adding items)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "09701df5-cbf0-462b-9cd4-8479307ee50f",
+            "exec": [
+              "pm.test(\"Cart contains items\", function () {\r",
+              "    const data = pm.response.json();\r",
+              "    pm.expect(data.items.length).to.be.above(0);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Cart item has correct structure\", function () {\r",
+              "    const item = pm.response.json().items[0];\r",
+              "    pm.expect(item).to.have.property(\"product\");\r",
+              "    pm.expect(item).to.have.property(\"quantity\");\r",
+              "    pm.expect(item).to.have.property(\"price_at_add_time\");\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "f874cf61-7967-4521-be08-578b7518db99",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "sessionid=mnnm798zmdl1kxxzzh9hpz87pawezhon",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/cart/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "cart",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Checkout Cart",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "dd3cec2c-c459-4f0e-afec-b8a399f7299d",
+            "exec": [
+              "pm.test(\"Checkout returns 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Order ID is returned\", function () {\r",
+              "    const data = pm.response.json();\r",
+              "    pm.expect(data.id).to.be.a(\"number\");\r",
+              "    pm.environment.set(\"order_id\", data.id);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Order status is CREATED\", function () {\r",
+              "    pm.expect(pm.response.json().status).to.eql(\"CREATED\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Order contains items\", function () {\r",
+              "    pm.expect(pm.response.json().items.length).to.be.above(0);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Total price exists\", function () {\r",
+              "    pm.expect(pm.response.json().total_price).to.exist;\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "ffcec88f-09b8-44ac-acdf-8676c85b59e4",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "sessionid={{sessionid}}",
+            "type": "text"
+          },
+          {
+            "key": "Cookie",
+            "value": "csrftoken={{csrftoken}}",
+            "type": "text"
+          },
+          {
+            "key": "X-CSRFToken",
+            "value": "{{csrftoken}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/cart/checkout/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "cart",
+            "checkout",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Checkout again (negative – no active cart)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "bd1587fa-b480-479f-829f-56d900516a06",
+            "exec": [
+              "pm.test(\"Checkout without active cart fails\", function () {\r",
+              "    pm.response.to.have.status(400);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "d7065f0b-19cb-4a84-9866-16ef4c6618c4",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "sessionid={{sessionid}}",
+            "type": "text"
+          },
+          {
+            "key": "Cookie",
+            "value": "csrftoken={{csrftoken}}",
+            "type": "text"
+          },
+          {
+            "key": "X-CSRFToken",
+            "value": "{{csrftoken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/cart/checkout/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "cart",
+            "checkout",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Cart after checkout (new cart created)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "680408c6-fe44-40b6-aeed-97206b3d64c4",
+            "exec": [
+              "pm.test(\"New cart is created after checkout\", function () {\r",
+              "    const data = pm.response.json();\r",
+              "    pm.expect(data.status).to.eql(\"ACTIVE\");\r",
+              "    pm.expect(data.items.length).to.eql(0);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "2a6d8b30-be43-445f-b6eb-faff17e84576",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "sessionid=mnnm798zmdl1kxxzzh9hpz87pawezhon",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/cart/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "cart",
+            ""
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
