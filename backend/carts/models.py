@@ -9,10 +9,10 @@ class Cart(models.Model):
         ACTIVE = "ACTIVE"
         CONVERTED = "CONVERTED"
 
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name="cart",
+        related_name="carts",
     )
     status = models.CharField(
         max_length=10,
@@ -20,6 +20,15 @@ class Cart(models.Model):
         default=Status.ACTIVE,
     )
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.status == Cart.Status.ACTIVE:
+            if Cart.objects.filter(
+                user=self.user,
+                status=Cart.Status.ACTIVE
+            ).exclude(pk=self.pk).exists():
+                raise ValidationError("User already has an active cart.")
+        super().save(*args, **kwargs)
 
 
 class CartItem(models.Model):
