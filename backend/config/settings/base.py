@@ -23,6 +23,8 @@ INSTALLED_APPS = [
     "payments",
     "carts",
     "rest_framework",
+    'drf_spectacular',
+    'drf_spectacular_sidecar',
     "debug_toolbar"
 ]
 
@@ -72,5 +74,51 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Shopwise API',
+    'DESCRIPTION': """
+## What is Shopwise
+
+Shopwise is a quality-driven showcase project.
+
+## Why it exists
+
+This API demonstrates:
+- QA as equal development partner
+- documentation as a quality tool
+- testing as part of design
+
+## Quality Strategy
+
+- Test Driven Development
+- Documentation Driven Development
+- OpenAPI as single source of truth
+
+## Intended Audience
+
+- Recruiters
+- Test Managers
+- Project Managers
+""",
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SWAGGER_UI_SETTINGS': {
+        'persistAuthorization': True,
+        'displayRequestDuration': True,
+    },
+    'TAGS': [
+        {'name': 'Users', 'description': 'User management'},
+        {'name': 'Auth', 'description': 'Authentication & authorization'},
+        {'name': 'Products', 'description': 'Product catalog management'},
+        {'name': 'Categories', 'description': 'Product category management'},
+        {'name': 'Orders', 'description': 'Read-only order resources'},
+        {'name': 'Payments', 'description': 'Payment simulation and processing'},
+        {'name': 'Discounts', 'description': 'Discount and promotion management'},
+        {'name': 'Carts', 'description': 'User intent and shopping workflow'},
     ],
 }
