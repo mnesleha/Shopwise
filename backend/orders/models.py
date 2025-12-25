@@ -7,6 +7,7 @@ class Order(models.Model):
     class Status(models.TextChoices):
         CREATED = "CREATED", "Created"
         PAID = "PAID", "Paid"
+        PAYMENT_FAILED = "PAYMENT_FAILED"
         SHIPPED = "SHIPPED", "Shipped"
         DELIVERED = "DELIVERED", "Delivered"
         CANCELED = "CANCELED", "Canceled"
