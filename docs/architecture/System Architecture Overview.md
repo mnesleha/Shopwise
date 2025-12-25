@@ -1,4 +1,4 @@
-# System Architecture – Shopwise
+# System Architecture Overview
 
 This document describes the high-level architecture of the Shopwise system,
 including its main components, responsibilities, and interactions.

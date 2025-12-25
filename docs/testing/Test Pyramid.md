@@ -1,4 +1,4 @@
-# Test Pyramid – Shopwise
+# Test Pyramid
 
 This document describes the test pyramid adopted in the Shopwise project.
 It defines different test levels, their purpose, tools, and relative proportions.
@@ -15,6 +15,20 @@ The goal is to maximize confidence while keeping feedback fast
 and maintenance cost low.
 
 ## Unit Tests
+
+Unit tests form the base of the test pyramid.
+
+They focus on:
+
+- domain rules
+- model validation
+- state invariants
+
+Characteristics:
+
+- fast execution
+- high isolation
+- precise failure localization
 
 Unit tests use an in-memory SQLite database
 to minimize execution time and external dependencies.
@@ -35,9 +49,11 @@ Tools:
 - pytest (backend)
 - Vitest (frontend)
 
-Unit tests form the largest part of the test suite.
+Unit tests form the largest part of the test suite. They provide immediate feedback during development and support safe reafactoring.
 
-## Integration Tests
+## Integration API Tests
+
+API integration test form the **most important layer** of the Shopwise test pyramid.
 
 Integration tests are executed against a MySQL database
 to reflect production-like behavior.
@@ -48,7 +64,10 @@ Purpose:
 
 Scope:
 
+- Business workflows
+- Interaction between multiple components
 - REST API endpoints
+- State transitions across requests
 - Database integration
 - Authentication and authorization
 
@@ -73,6 +92,7 @@ Scope:
 
 Tools:
 
+- Postman
 - Playwright
 
 ## Test Distribution (Proposal)
@@ -101,16 +121,16 @@ Exact proportions may evolve as the project grows.
 - Integration tests run on every pull request
 - E2E tests run on main branch and before deployment
 
-## Risks and Mitigation
+## Relationship to Other Testing Documents
 
-Risk:
+- [Test Strategy](Test%20Strategy.md)  
+  Explains _why_ this pyramid exists.
 
-- Too many E2E tests slowing pipeline
+- [Coverage vs Risk](Coverage%20vs%20Risk.md)  
+  Explains _where_ test effort is concentrated.
 
-Mitigation:
-
-- Strict control over E2E scope
-- Prefer integration tests where possible
+- [E2E Postman](E2E%20Postman.md)  
+  Documents _how_ top-level scenarios are validated.
 
 ## Summary
 
