@@ -195,7 +195,7 @@ class CartCheckoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["Checkout"],
+        tags=["Cart Checkout"],
         summary="Checkout active cart",
         description="""
 Converts the user's active cart into an order.

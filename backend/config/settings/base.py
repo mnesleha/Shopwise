@@ -134,7 +134,7 @@ This API demonstrates:
             ),
         },
         {
-            'name': 'Checkout',
+            'name': 'Cart Checkout',
             'description': (
                 'Cart checkout workflow. '
                 'Converts cart into an order.'
