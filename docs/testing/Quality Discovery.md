@@ -108,3 +108,17 @@ STATUS: Properly documented via OpenAPI
 - No idempotency or retry mechanism is implemented.
 - Only one payment per order is allowed.
 - Payment lifecycle is minimal and not extensible.
+
+### Products Domain
+
+- Products are exposed as read-only resources.
+- Only active and in-stock products are visible via API.
+- Product availability filtering is enforced at query level.
+- Stock quantity is informational and does not imply reservation.
+
+### Categories Domain
+
+- Categories are hierarchical with a fixed two-level structure.
+- Only parent categories are exposed as top-level resources.
+- Child categories are embedded and read-only.
+- Category tree depth is enforced by model validation.
