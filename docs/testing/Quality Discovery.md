@@ -122,3 +122,11 @@ STATUS: Properly documented via OpenAPI
 - Only parent categories are exposed as top-level resources.
 - Child categories are embedded and read-only.
 - Category tree depth is enforced by model validation.
+
+### Discounts Domain
+
+- Discounts are exposed as read-only resources.
+- Only active discounts within validity period are returned.
+- Discounts target either a product or a leaf category.
+- Category-targeted discounts are not explicitly represented in API payload.
+- Discount application logic is intentionally out of API scope.
