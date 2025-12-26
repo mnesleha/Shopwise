@@ -92,3 +92,19 @@ Repeated call:
 - but first call may create resource
 
 STATUS: Properly documented via OpenAPI
+
+### GET /orders/
+
+- Orders are immutable, read-only resources.
+- Orders are created exclusively via cart checkout.
+- No explicit order state transition rules are documented yet.
+- Order status lifecycle exists but is not formalized.
+- Access control is correctly enforced at query level.
+
+### POST /payments/
+
+- Payments are synchronous and simulated (fake gateway).
+- Payment creation has immediate side effects on order status.
+- No idempotency or retry mechanism is implemented.
+- Only one payment per order is allowed.
+- Payment lifecycle is minimal and not extensible.
