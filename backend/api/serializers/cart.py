@@ -24,3 +24,19 @@ class CartSerializer(serializers.ModelSerializer):
             "status",
             "items",
         ]
+
+
+class CartItemCreateRequestSerializer(serializers.Serializer):
+    """
+    OpenAPI request schema for adding an item to the cart.
+
+    This serializer is used for documentation and validation
+    of the request body, not for saving data.
+    """
+    product_id = serializers.IntegerField(
+        help_text="ID of the product to add to the cart"
+    )
+    quantity = serializers.IntegerField(
+        min_value=1,
+        help_text="Quantity must be greater than zero"
+    )

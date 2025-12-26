@@ -119,6 +119,26 @@ This API demonstrates:
         {'name': 'Orders', 'description': 'Read-only order resources'},
         {'name': 'Payments', 'description': 'Payment simulation and processing'},
         {'name': 'Discounts', 'description': 'Discount and promotion management'},
-        {'name': 'Carts', 'description': 'User intent and shopping workflow'},
+        {
+            'name': 'Cart',
+            'description': (
+                'User shopping cart representing intent. '
+                'A user can have at most one ACTIVE cart.'
+            ),
+        },
+        {
+            'name': 'Cart Items',
+            'description': (
+                'Items added to the active cart. '
+                'Price is snapshotted at add time.'
+            ),
+        },
+        {
+            'name': 'Checkout',
+            'description': (
+                'Cart checkout workflow. '
+                'Converts cart into an order.'
+            ),
+        },
     ],
 }
