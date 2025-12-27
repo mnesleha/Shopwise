@@ -27,6 +27,39 @@ info:
     - Test Managers
     - Project Managers
 paths:
+  /api/v1/auth/csrf/:
+    get:
+      operationId: v1_auth_csrf_retrieve
+      description: Returns CSRF token cookie for authenticated requests.
+      summary: Get CSRF token (test helper)
+      tags:
+      - Auth
+      responses:
+        '200':
+          description: No response body
+  /api/v1/auth/login/:
+    post:
+      operationId: v1_auth_login_create
+      description: Login endpoint intended for automated testing and QA workflows.
+        Creates a session and sets authentication cookies.
+      summary: Login user (test endpoint)
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LoginRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LoginRequestRequest'
+        required: true
+      responses:
+        '200':
+          description: No response body
   /api/v1/cart/:
     get:
       operationId: v1_cart_retrieve
@@ -46,10 +79,7 @@ paths:
         HTTP semantics:
         - 200 OK: an existing active cart is returned
         - 201 Created: a new active cart was created (target behavior)
-
-        Note:
-        - Current implementation always returns 200 OK.
-        - Returning 201 Created when a cart is created is a planned improvement.
+        - 403 Forbidden: user is not authenticated
       summary: Retrieve active cart
       tags:
       - Cart
@@ -86,11 +116,16 @@ paths:
                     items: []
                   summary: Newly created empty cart
           description: ''
-        '401':
+        '403':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                UnauthorizedUserAttempt:
+                  value:
+                    detail: Authentication credentials were not provided.
+                  summary: Unauthorized user attempt
           description: ''
   /api/v1/cart/checkout/:
     post:
@@ -860,6 +895,19 @@ components:
           description: Human-readable description of the error.
       required:
       - detail
+    LoginRequestRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - username
     Order:
       type: object
       properties:

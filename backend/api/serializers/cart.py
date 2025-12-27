@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from carts.models import Cart, CartItem
 from products.models import Product
+from api.serializers.order import OrderSerializer
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -40,3 +41,7 @@ class CartItemCreateRequestSerializer(serializers.Serializer):
         min_value=1,
         help_text="Quantity must be greater than zero"
     )
+
+
+class CartCheckoutResponseSerializer(serializers.Serializer):
+    order = OrderSerializer(read_only=True)

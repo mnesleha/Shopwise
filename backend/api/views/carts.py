@@ -1,4 +1,6 @@
+from django.db import transaction
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -9,8 +11,9 @@ from carts.models import Cart, CartItem
 from orders.models import Order
 from orderitems.models import OrderItem
 from products.models import Product
-from api.serializers.cart import CartSerializer, CartItemCreateRequestSerializer, CartItemSerializer
+from api.serializers.cart import CartSerializer, CartItemCreateRequestSerializer, CartItemSerializer, CartCheckoutResponseSerializer
 from api.serializers.common import ErrorResponseSerializer
+from api.exceptions import ProductUnavailableException
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiExample
 
@@ -37,10 +40,6 @@ HTTP semantics:
 - 200 OK: an existing active cart is returned
 - 201 Created: a new active cart was created (target behavior)
 - 403 Forbidden: user is not authenticated
-
-Note:
-- Current implementation always returns 200 OK.
-- Returning 201 Created when a cart is created is a planned improvement.
 """,
         responses={
             200: CartSerializer,
@@ -86,12 +85,15 @@ Note:
         ],
     )
     def get(self, request):
-        cart, _ = Cart.objects.get_or_create(
+        cart, created = Cart.objects.get_or_create(
             user=request.user,
             status=Cart.Status.ACTIVE,
         )
         serializer = CartSerializer(cart)
-        return Response(serializer.data)
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
 
 
 class CartItemCreateView(APIView):
@@ -172,13 +174,27 @@ Notes:
         ],
     )
     def post(self, request):
+        product_id = request.data.get("product_id")
+        quantity = request.data.get("quantity")
+
+        if product_id is None or quantity is None:
+            raise DRFValidationError(
+                {"detail": "product_id and quantity are required"})
+
+        try:
+            quantity = int(quantity)
+        except (TypeError, ValueError):
+            raise DRFValidationError({"detail": "quantity must be an integer"})
+
         cart, _ = Cart.objects.get_or_create(
             user=request.user,
             status=Cart.Status.ACTIVE,
         )
 
-        product = Product.objects.get(id=request.data["product_id"])
-        quantity = int(request.data["quantity"])
+        product = get_object_or_404(Product, id=product_id)
+
+        if not product.is_sellable():
+            raise ProductUnavailableException()
 
         try:
             item = CartItem.objects.create(
@@ -188,7 +204,7 @@ Notes:
                 price_at_add_time=product.price,
             )
         except DjangoValidationError as e:
-            raise DRFValidationError(e.message_dict or e.messages)
+            raise DRFValidationError({"detail": e.messages[0]})
 
         return Response(
             {
@@ -287,25 +303,36 @@ Notes:
                 status=Cart.Status.ACTIVE,
             )
         except Cart.DoesNotExist:
-            raise DRFValidationError("No active cart to checkout.")
+            raise DRFValidationError({"detail": "No active cart to checkout."})
 
         if not cart.items.exists():
-            raise DRFValidationError("Cart is empty.")
+            raise DRFValidationError({"detail": "Cart is empty."})
 
-        order = Order.objects.create(
-            user=request.user,
-        )
-
-        for item in cart.items.all():
-            OrderItem.objects.create(
-                order=order,
-                product=item.product,
-                quantity=item.quantity,
-                price_at_order_time=item.price_at_add_time,
+        with transaction.atomic():
+            order = Order.objects.create(
+                user=request.user,
             )
 
-        cart.status = Cart.Status.CONVERTED
-        cart.save()
+            for item in cart.items.all():
+                OrderItem.objects.create(
+                    order=order,
+                    product=item.product,
+                    quantity=item.quantity,
+                    price_at_order_time=item.price_at_add_time,
+                )
 
-        serializer = OrderSerializer(order)
-        return Response(serializer.data, status=201)
+            cart.status = Cart.Status.CONVERTED
+            cart.save()
+
+        response_data = {
+            "order": OrderSerializer(order).data
+        }
+
+        serializer = CartCheckoutResponseSerializer(
+            instance={"order": order}
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED,
+        )

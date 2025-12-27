@@ -29,20 +29,16 @@ def product():
     )
 
 
-def create_order_via_checkout(auth_client, product, quantity=2):
-    # ensure cart exists
+def create_order_via_checkout(auth_client, product):
     auth_client.get("/api/v1/cart/")
-
-    # add item
     auth_client.post(
         "/api/v1/cart/items/",
-        {
-            "product_id": product.id,
-            "quantity": quantity,
-        },
+        {"product_id": product.id, "quantity": 1},
         format="json",
     )
 
-    # checkout
     response = auth_client.post("/api/v1/cart/checkout/")
-    return response.json()
+    assert response.status_code == 201
+
+    data = response.json()
+    return data["order"]

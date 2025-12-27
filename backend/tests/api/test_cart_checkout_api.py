@@ -23,10 +23,12 @@ def test_checkout_creates_order_with_items_and_total(auth_client, user):
     assert response.status_code == 201
 
     data = response.json()
-    assert data["status"] == "CREATED"
-    assert len(data["items"]) == 1
-    assert data["items"][0]["quantity"] == 2
-    assert data["total_price"] == "200.00"
+    order = data["order"]
+
+    assert order["status"] == "CREATED"
+    assert len(order["items"]) == 1
+    assert order["items"][0]["quantity"] == 2
+    assert order["total_price"] == "200.00"
 
 
 @pytest.mark.django_db
