@@ -7,6 +7,7 @@ from api.views.orders import OrderViewSet
 from api.views.discounts import DiscountViewSet
 from api.views.carts import CartView, CartItemCreateView
 from api.views.payments import PaymentCreateView
+from api.views.auth import LoginView, CsrfTokenView
 from api.views import health_check
 
 app_name = "api"
@@ -25,4 +26,6 @@ urlpatterns = [
     path("cart/items/", CartItemCreateView.as_view(), name="cart-item-create"),
     path("cart/checkout/", CartCheckoutView.as_view()),
     path("payments/", PaymentCreateView.as_view(), name="payment-create"),
+    path("auth/login/", LoginView.as_view(), name="login"),
+    path("auth/csrf/", CsrfTokenView.as_view(), name="csrf"),
 ]

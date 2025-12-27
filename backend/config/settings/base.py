@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     "orderitems",
     "payments",
     "carts",
+    "utils",
     "rest_framework",
     'drf_spectacular',
     'drf_spectacular_sidecar',

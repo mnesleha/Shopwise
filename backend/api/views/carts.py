@@ -36,6 +36,7 @@ Important notes:
 HTTP semantics:
 - 200 OK: an existing active cart is returned
 - 201 Created: a new active cart was created (target behavior)
+- 403 Forbidden: user is not authenticated
 
 Note:
 - Current implementation always returns 200 OK.
@@ -44,7 +45,7 @@ Note:
         responses={
             200: CartSerializer,
             201: CartSerializer,
-            401: ErrorResponseSerializer,
+            403: ErrorResponseSerializer,
         },
         examples=[
             OpenApiExample(
@@ -73,6 +74,14 @@ Note:
                 },
                 response_only=True,
                 status_codes=["201"],
+            ),
+            OpenApiExample(
+                name="Unauthorized user attempt",
+                value={
+                    "detail": "Authentication credentials were not provided.",
+                },
+                response_only=True,
+                status_codes=["403"],
             ),
         ],
     )
