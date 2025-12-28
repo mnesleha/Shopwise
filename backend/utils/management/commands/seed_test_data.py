@@ -10,8 +10,18 @@ from django.utils.timezone import now, timedelta
 class Command(BaseCommand):
     help = "Seed minimal test data for local development and QA testing"
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--reset",
+            action="store_true",
+            help="Reset runtime data (carts, orders, payments) before seeding",
+        )
+
     def handle(self, *args, **options):
         self.stdout.write("Seeding test data...")
+
+        if options["reset"]:
+            self.reset_runtime_data()
 
         self.create_users()
         self.create_products()
@@ -19,32 +29,46 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("Test data seeded successfully."))
 
+    def reset_runtime_data(self):
+        from carts.models import CartItem, Cart
+        from orders.models import Order
+        from orderitems.models import OrderItem
+        from payments.models import Payment
+
+        self.stdout.write("Resetting runtime data...")
+
+        CartItem.objects.all().delete()
+        Cart.objects.all().delete()
+        OrderItem.objects.all().delete()
+        Order.objects.all().delete()
+        Payment.objects.all().delete()
+
+        self.stdout.write(self.style.WARNING("Runtime data reset completed."))
+
     def create_users(self):
         User = get_user_model()
 
-        users = [
-            {
-                "username": "tomjohnes",
-                "password": "tomjohnes",
-            },
-            {
-                "username": "frankmills",
-                "password": "frankmills",
-            },
+        usernames = [
+            "karenblack",
+            "paulrabbit",
+            "alicebrown",
+            "bobsmith",
+            "jimwhite",
+            "carolgreen",
         ]
 
-        for user_data in users:
+        for username in usernames:
             user, created = User.objects.get_or_create(
-                username=user_data["username"],
+                username=username,
                 defaults={},
             )
 
             if created:
-                user.set_password(user_data["password"])
+                user.set_password(username)
                 user.save()
-                self.stdout.write(f"Created user: {user.username}")
+                self.stdout.write(f"Created user: {username}")
             else:
-                self.stdout.write(f"User already exists: {user.username}")
+                self.stdout.write(f"User already exists: {username}")
 
     def create_products(self):
         products = [
@@ -85,9 +109,16 @@ class Command(BaseCommand):
             self.stdout.write("No product for discounts, skipping.")
             return
 
+    def create_discounts(self):
+        product = Product.objects.filter(name="Sellable Mouse").first()
+        if not product:
+            self.stdout.write("No product for discounts, skipping.")
+            return
+
         discounts = [
+            # PERCENT
             {
-                "name": "Active Mouse Discount",
+                "name": "Active Percent Discount",
                 "discount_type": Discount.PERCENT,
                 "value": Decimal("10.00"),
                 "valid_from": now().date() - timedelta(days=1),
@@ -96,12 +127,32 @@ class Command(BaseCommand):
                 "product": product,
             },
             {
-                "name": "Expired Mouse Discount",
+                "name": "Expired Percent Discount",
                 "discount_type": Discount.PERCENT,
                 "value": Decimal("20.00"),
                 "valid_from": now().date() - timedelta(days=10),
                 "valid_to": now().date() - timedelta(days=5),
                 "is_active": True,
+                "product": product,
+            },
+
+            # FIXED – EDGE CASES
+            {
+                "name": "Active Fixed Discount",
+                "discount_type": Discount.FIXED,
+                "value": Decimal("150.00"),  # > product price
+                "valid_from": now().date() - timedelta(days=1),
+                "valid_to": now().date() + timedelta(days=5),
+                "is_active": True,
+                "product": product,
+            },
+            {
+                "name": "Inactive Fixed Discount",
+                "discount_type": Discount.FIXED,
+                "value": Decimal("20.00"),
+                "valid_from": now().date() - timedelta(days=1),
+                "valid_to": now().date() + timedelta(days=5),
+                "is_active": False,
                 "product": product,
             },
         ]

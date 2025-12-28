@@ -104,6 +104,30 @@ This API demonstrates:
 - Recruiters
 - Test Managers
 - Project Managers
+
+## Pricing Rules
+
+This API follows strict and deterministic pricing rules to ensure
+consistency between cart preview and checkout.
+
+### Base Price
+- `base_price = unit_price × quantity`
+
+### Discount Application
+- At most **one discount** can be applied per product.
+- Discount precedence:
+  1. **FIXED** discount
+  2. **PERCENT** discount
+- Discounts never reduce price below **0.00**.
+
+### Rounding
+- Prices are rounded to **2 decimal places**
+- Rounding mode: **ROUND_HALF_UP**
+
+### Price Snapshotting
+- Product price is snapshotted at **add-to-cart time**
+- Checkout uses `price_at_add_time`
+- Later product price changes do **not** affect existing carts
 """,
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,

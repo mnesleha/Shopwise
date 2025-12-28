@@ -110,6 +110,10 @@ Business rules:
 - Quantity must be greater than zero.
 - Product price is snapshotted at add time.
 
+Pricing behavior
+- Product price is snapshotted at add time (`price_at_add_time`)
+- Discounts are NOT applied at this stage
+
 Error handling strategy:
 - 400 Bad Request: request is malformed or fails validation (e.g. invalid quantity)
 - 404 Not Found: referenced product does not exist
@@ -235,6 +239,18 @@ Business rules:
 - A cart can be checked out only once
 - Orders are immutable
 - After checkout, a new ACTIVE cart will be created on next cart retrieval
+
+Pricing behavior
+- Final prices are calculated at checkout
+- Pricing rules:
+  - FIXED discount has priority over PERCENT
+  - Only one discount per product
+  - Final price is never negative
+  - Rounding: ROUND_HALF_UP (2 decimal places)
+
+Price consistency
+- Uses `price_at_add_time`
+- Product price changes after adding to cart do not affect checkout
 
 Error handling strategy:
 - 400 Bad Request: cart exists but is empty

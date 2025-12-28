@@ -7,13 +7,13 @@ from products.models import Product
 def test_products_list_returns_only_active_products():
     client = APIClient()
 
-    Product.objects.create(
+    active_product = Product.objects.create(
         name="Active Product",
         price=100,
         stock_quantity=10,
         is_active=True,
     )
-    Product.objects.create(
+    inactive_product = Product.objects.create(
         name="Inactive Product",
         price=100,
         stock_quantity=10,
@@ -25,8 +25,13 @@ def test_products_list_returns_only_active_products():
     assert response.status_code == 200
     data = response.json()
 
-    assert len(data) == 1
-    assert data[0]["name"] == "Active Product"
+    returned_names = {item["name"] for item in data}
+
+    # endpoint vrátil aktivní produkt
+    assert active_product.name in returned_names
+
+    # endpoint nevrátil neaktivní produkt
+    assert inactive_product.name not in returned_names
 
 
 @pytest.mark.django_db

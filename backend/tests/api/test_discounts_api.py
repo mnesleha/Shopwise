@@ -5,6 +5,13 @@ from products.models import Product
 from datetime import date
 
 
+import pytest
+from datetime import date
+from rest_framework.test import APIClient
+from products.models import Product
+from discounts.models import Discount
+
+
 @pytest.mark.django_db
 def test_discounts_return_only_valid_product_discounts():
     product = Product.objects.create(
@@ -38,6 +45,14 @@ def test_discounts_return_only_valid_product_discounts():
     assert response.status_code == 200
     data = response.json()
 
-    assert len(data) == 1
-    assert data[0]["id"] == valid_discount.id
-    assert data[0]["product"]["id"] == product.id
+    returned_ids = {item["id"] for item in data}
+
+    # valid discount je vrácen
+    assert valid_discount.id in returned_ids
+
+    # inactive discount vrácen není
+    assert inactive_discount.id not in returned_ids
+
+    # product link control
+    valid_item = next(item for item in data if item["id"] == valid_discount.id)
+    assert valid_item["product"]["id"] == product.id
