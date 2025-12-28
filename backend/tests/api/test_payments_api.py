@@ -21,7 +21,7 @@ def test_successful_payment_creates_payment_and_updates_order(auth_client, user)
     )
 
     checkout_response = auth_client.post("/api/v1/cart/checkout/").json()
-    order_id = checkout_response["order"]["id"]
+    order_id = checkout_response["id"]
 
     response = auth_client.post(
         "/api/v1/payments/",

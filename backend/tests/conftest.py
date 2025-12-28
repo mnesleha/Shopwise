@@ -53,4 +53,4 @@ def create_order_via_checkout(auth_client, product):
     assert response.status_code == 201
 
     data = response.json()
-    return data["order"]
+    return data

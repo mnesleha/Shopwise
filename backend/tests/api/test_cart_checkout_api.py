@@ -22,8 +22,7 @@ def test_checkout_creates_order_with_items_and_total(auth_client, user):
     response = auth_client.post("/api/v1/cart/checkout/")
     assert response.status_code == 201
 
-    data = response.json()
-    order = data["order"]
+    order = response.json()
 
     assert order["status"] == "CREATED"
     assert len(order["items"]) == 1

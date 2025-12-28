@@ -13,6 +13,7 @@ from orderitems.models import OrderItem
 from products.models import Product
 from api.serializers.cart import CartSerializer, CartItemCreateRequestSerializer, CartItemSerializer, CartCheckoutResponseSerializer
 from api.serializers.common import ErrorResponseSerializer
+from api.services.pricing import calculate_price
 from api.exceptions import ProductUnavailableException
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiExample
@@ -330,23 +331,23 @@ Notes:
             )
 
             for item in cart.items.all():
+                pricing = calculate_price(
+                    unit_price=item.price_at_add_time,
+                    quantity=item.quantity,
+                    discounts=item.product.discounts.all(),
+                )
+
                 OrderItem.objects.create(
                     order=order,
                     product=item.product,
                     quantity=item.quantity,
-                    price_at_order_time=item.price_at_add_time,
+                    price_at_order_time=pricing.unit_price,
                 )
 
             cart.status = Cart.Status.CONVERTED
             cart.save()
 
-        response_data = {
-            "order": OrderSerializer(order).data
-        }
-
-        serializer = CartCheckoutResponseSerializer(
-            instance={"order": order}
-        )
+        serializer = OrderSerializer(order)
 
         return Response(
             serializer.data,

@@ -128,6 +128,10 @@ def test_price_rounding_is_consistent(auth_client):
     response = auth_client.post("/api/v1/cart/checkout/")
     data = response.json()
 
+    print(f"\nStatus code: {response.status_code}")
+    print(f"Response data: {data}")
+
+    assert response.status_code == 201, response.json()
     assert data["total_price"] == "100.00"
 
 

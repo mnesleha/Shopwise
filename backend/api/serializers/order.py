@@ -18,7 +18,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         ]
 
     def get_total_price(self, obj):
-        total = obj.quantity * obj.price_at_order_time
+        total = obj.price_at_order_time * obj.quantity
         return f"{total:.2f}"
 
 
@@ -32,7 +32,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def get_total_price(self, obj):
         total = sum(
-            (item.quantity * item.price_at_order_time for item in obj.items.all()),
+            (item.price_at_order_time * item.quantity for item in obj.items.all()),
             Decimal("0.00"),
         )
         return f"{total:.2f}"
