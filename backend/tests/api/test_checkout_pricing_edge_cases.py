@@ -132,7 +132,7 @@ def test_price_rounding_is_consistent(auth_client):
     print(f"Response data: {data}")
 
     assert response.status_code == 201, response.json()
-    assert data["total_price"] == "100.00"
+    assert data["total_price"] == "99.99"
 
 
 # Test for price change between adding to cart and checkout

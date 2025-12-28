@@ -1,6 +1,10 @@
+from decimal import Decimal
 import pytest
+from unittest.mock import patch
 from products.models import Product
 from carts.models import Cart
+from orders.models import Order
+from orderitems.models import OrderItem
 
 
 @pytest.mark.django_db
@@ -71,3 +75,74 @@ def test_checkout_empty_cart_fails(auth_client):
 
     cart = Cart.objects.get()
     assert cart.status == Cart.Status.ACTIVE
+
+
+@pytest.mark.django_db
+def test_double_checkout_returns_409(auth_client):
+    product = Product.objects.create(
+        name="Test Product",
+        price=Decimal("100.00"),
+        stock_quantity=10,
+        is_active=True,
+    )
+
+    auth_client.get("/api/v1/cart/")
+    auth_client.post(
+        "/api/v1/cart/items/",
+        {"product_id": product.id, "quantity": 1},
+        format="json",
+    )
+
+    # First checkout – OK
+    first = auth_client.post("/api/v1/cart/checkout/")
+    assert first.status_code == 201
+
+    # Second checkout – MUST FAIL
+    second = auth_client.post("/api/v1/cart/checkout/")
+    assert second.status_code == 409
+    assert second.json()["detail"] == "Cart has already been checked out."
+
+    # Still only ONE order
+    assert Order.objects.count() == 1
+
+
+@pytest.mark.django_db(transaction=True)
+def test_checkout_rolls_back_on_order_item_failure(auth_client, user):
+    product = Product.objects.create(
+        name="Rollback Product",
+        price=Decimal("100.00"),
+        stock_quantity=10,
+        is_active=True,
+    )
+
+    # create cart + item
+    auth_client.get("/api/v1/cart/")
+    auth_client.post(
+        "/api/v1/cart/items/",
+        {"product_id": product.id, "quantity": 1},
+        format="json",
+    )
+
+    cart = Cart.objects.get(user=user, status=Cart.Status.ACTIVE)
+
+    # sanity check before checkout
+    assert Order.objects.count() == 0
+    assert OrderItem.objects.count() == 0
+    assert cart.status == Cart.Status.ACTIVE
+
+    # force failure INSIDE transaction
+    with patch(
+        "api.views.carts.OrderItem.objects.create",
+        side_effect=Exception("Boom during order item creation"),
+    ):
+        response = auth_client.post("/api/v1/cart/checkout/")
+
+    # response can be 500 or mapped error – not the focus here
+    assert response.status_code >= 400
+
+    # ASSERT ROLLBACK
+    cart.refresh_from_db()
+    assert cart.status == Cart.Status.ACTIVE
+
+    assert Order.objects.count() == 0
+    assert OrderItem.objects.count() == 0

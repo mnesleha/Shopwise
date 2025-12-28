@@ -1,3 +1,4 @@
+# api/services/pricing.py
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Iterable, Optional
 
@@ -11,12 +12,10 @@ class PricingResult:
         *,
         base_price: Decimal,
         final_price: Decimal,
-        unit_price: Decimal,
         applied_discount: Optional[Discount],
     ):
-        self.base_price = base_price
-        self.final_price = final_price
-        self.unit_price = unit_price
+        self.base_price = base_price          # přesná mezihodnota
+        self.final_price = final_price        # ZAOKROUHLENÝ LINE TOTAL
         self.applied_discount = applied_discount
 
 
@@ -34,14 +33,12 @@ def calculate_price(
     discounts: Iterable[Discount],
 ) -> PricingResult:
     """
-    Calculate final price for a cart item.
+    LINE-PRICE based pricing.
 
-    Business rules:
-    - base price = unit_price * quantity
-    - at most one discount is applied
-    - FIXED discount has priority over PERCENT
-    - discount never produces negative price
-    - rounding: ROUND_HALF_UP to 2 decimal places
+    Rules:
+    - base_price = unit_price * quantity  (NO rounding)
+    - discounts are applied on LINE PRICE
+    - exactly ONE rounding at the very end
     """
 
     if quantity <= 0:
@@ -50,7 +47,7 @@ def calculate_price(
     if unit_price < ZERO:
         raise InvalidPriceError("Unit price cannot be negative")
 
-    base_price = unit_price * quantity
+    base_price = unit_price * quantity      # e.g. 33.333 * 3 = 99.999
     final_price = base_price
     applied_discount = None
 
@@ -71,19 +68,14 @@ def calculate_price(
         applied_discount = fixed_discount
 
     elif percent_discount:
-        final_price -= (final_price * percent_discount.value / Decimal("100"))
+        final_price -= final_price * percent_discount.value / Decimal("100")
         applied_discount = percent_discount
 
     if final_price < ZERO:
         final_price = ZERO
 
-    final_price = _round(final_price)
-
-    unit_price = _round(final_price / quantity) if quantity else ZERO
-
     return PricingResult(
-        base_price=(base_price),
-        final_price=final_price,
-        unit_price=unit_price,
+        base_price=base_price,
+        final_price=_round(final_price),
         applied_discount=applied_discount,
     )

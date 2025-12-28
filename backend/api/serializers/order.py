@@ -5,21 +5,14 @@ from orderitems.models import OrderItem
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    total_price = serializers.SerializerMethodField()
-
     class Meta:
         model = OrderItem
         fields = [
             "id",
             "product",
             "quantity",
-            "price_at_order_time",
-            "total_price",
+            "price_at_order_time",  # LINE TOTAL
         ]
-
-    def get_total_price(self, obj):
-        total = obj.price_at_order_time * obj.quantity
-        return f"{total:.2f}"
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -32,7 +25,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def get_total_price(self, obj):
         total = sum(
-            (item.price_at_order_time * item.quantity for item in obj.items.all()),
+            (item.price_at_order_time for item in obj.items.all()),
             Decimal("0.00"),
         )
         return f"{total:.2f}"

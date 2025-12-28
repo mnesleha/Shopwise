@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from rest_framework.exceptions import ValidationError as DRFValidationError
+from rest_framework.exceptions import ValidationError as DRFValidationError, APIException
 from api.serializers.order import OrderSerializer
 from carts.models import Cart, CartItem
 from orders.models import Order
@@ -208,6 +208,9 @@ Notes:
                 quantity=quantity,
                 price_at_add_time=product.price,
             )
+
+            item.refresh_from_db()
+
         except DjangoValidationError as e:
             raise DRFValidationError({"detail": e.messages[0]})
 
@@ -315,41 +318,64 @@ Notes:
     )
     def post(self, request):
         try:
-            cart = Cart.objects.get(
-                user=request.user,
-                status=Cart.Status.ACTIVE,
+            with transaction.atomic():
+                # Lock cart row
+                try:
+                    cart = (
+                        Cart.objects
+                        .select_for_update()
+                        .get(user=request.user)
+                    )
+                except Cart.DoesNotExist:
+                    raise DRFValidationError(
+                        {"detail": "No active cart to checkout."}
+                    )
+
+                # Status re-check AFTER lock
+                if cart.status != Cart.Status.ACTIVE:
+                    return Response(
+                        {"detail": "Cart has already been checked out."},
+                        status=status.HTTP_409_CONFLICT,
+                    )
+
+                # Business validation
+                if not cart.items.exists():
+                    raise DRFValidationError({"detail": "Cart is empty."})
+
+                # Create order
+                order = Order.objects.create(user=request.user)
+
+                # Create order items
+                for item in cart.items.all():
+                    pricing = calculate_price(
+                        unit_price=item.price_at_add_time,
+                        quantity=item.quantity,
+                        discounts=item.product.discounts.all(),
+                    )
+
+                    OrderItem.objects.create(
+                        order=order,
+                        product=item.product,
+                        quantity=item.quantity,
+                        price_at_order_time=pricing.final_price,
+                    )
+
+                # Convert cart ONLY if everything succeeded
+                cart.status = Cart.Status.CONVERTED
+                cart.save()
+
+        except DRFValidationError:
+            # 400 / 404 – rollback already happened
+            raise
+
+        except Exception:
+            # rollback already DONE by atomic()
+            return Response(
+                {"detail": "Checkout failed. Please try again."},
+                status=status.HTTP_409_CONFLICT,
             )
-        except Cart.DoesNotExist:
-            raise DRFValidationError({"detail": "No active cart to checkout."})
-
-        if not cart.items.exists():
-            raise DRFValidationError({"detail": "Cart is empty."})
-
-        with transaction.atomic():
-            order = Order.objects.create(
-                user=request.user,
-            )
-
-            for item in cart.items.all():
-                pricing = calculate_price(
-                    unit_price=item.price_at_add_time,
-                    quantity=item.quantity,
-                    discounts=item.product.discounts.all(),
-                )
-
-                OrderItem.objects.create(
-                    order=order,
-                    product=item.product,
-                    quantity=item.quantity,
-                    price_at_order_time=pricing.unit_price,
-                )
-
-            cart.status = Cart.Status.CONVERTED
-            cart.save()
-
-        serializer = OrderSerializer(order)
 
         return Response(
-            serializer.data,
+            OrderSerializer(order).data,
             status=status.HTTP_201_CREATED,
         )
