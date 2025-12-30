@@ -6,26 +6,18 @@
   },
   "item": [
     {
-      "name": "Create Order",
+      "name": "Order Detail (Anonymous)",
       "event": [
         {
           "listen": "test",
           "script": {
-            "id": "03c4c577-440f-44ca-957e-5ceeb3368037",
+            "id": "9f7358d5-a472-42ae-9c1c-269cbdcff71c",
             "exec": [
-              "pm.test(\"Create order returns 201\", function () {\r",
-              "    pm.response.to.have.status(201);\r",
+              "pm.test(\"Order detail returns 403 for anonymous\", function () {\r",
+              "    pm.response.to.have.status(403);\r",
               "});\r",
               "\r",
-              "pm.test(\"Order has CREATED status\", function () {\r",
-              "    const data = pm.response.json();\r",
-              "    pm.expect(data.status).to.eql(\"CREATED\");\r",
-              "});\r",
               "\r",
-              "pm.test(\"Store order ID\", function () {\r",
-              "    const data = pm.response.json();\r",
-              "    pm.environment.set(\"order_id\", data.id);\r",
-              "});\r",
               ""
             ],
             "type": "text/javascript",
@@ -34,69 +26,12 @@
           }
         }
       ],
-      "id": "9a293809-923d-4b2a-8972-6656e60cb413",
+      "id": "986f7499-378d-4a18-a381-63a7358b5629",
       "request": {
-        "method": "POST",
+        "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{base_url}}/api/v1/orders/",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "orders",
-            ""
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Add Item to Order",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "id": "98d9385b-18bb-48b1-b639-9e76a3209d34",
-            "exec": [
-              "pm.test(\"Add item returns 201\", function () {\r",
-              "    pm.response.to.have.status(201);\r",
-              "});\r",
-              "\r",
-              "pm.test(\"Order item has correct quantity\", function () {\r",
-              "    const data = pm.response.json();\r",
-              "    pm.expect(data.quantity).to.eql(2);\r",
-              "});\r",
-              "\r",
-              "pm.test(\"Order item has price at order time\", function () {\r",
-              "    const data = pm.response.json();\r",
-              "    pm.expect(data.price_at_order_time).to.exist;\r",
-              "});\r",
-              ""
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "id": "04beb11d-6982-4b00-8afb-82ad618d6d0e",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"product_id\": {{product_id}},\r\n  \"quantity\": 2\r\n}\r\n",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{base_url}}/api/v1/orders/{{order_id}}/items/",
+          "raw": "{{base_url}}/api/v1/orders/{{order_id}}/",
           "host": [
             "{{base_url}}"
           ],
@@ -105,7 +40,6 @@
             "v1",
             "orders",
             "{{order_id}}",
-            "items",
             ""
           ]
         }
@@ -113,56 +47,7 @@
       "response": []
     },
     {
-      "name": "Add Item to Order Negative",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "id": "9a254909-b21c-4259-a736-31a188224a10",
-            "exec": [
-              "pm.test(\"Cannot add item with zero quantity\", function () {\r",
-              "    pm.response.to.have.status(400);\r",
-              "});\r",
-              ""
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "id": "50ca27f4-e743-4805-9c7b-3debb945fbd2",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"product_id\": {{product_id}},\r\n  \"quantity\": 0\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{base_url}}/api/v1/orders/{{order_id}}/items/",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "orders",
-            "{{order_id}}",
-            "items",
-            ""
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Order Detail",
+      "name": "Order Detail (Authentificated)",
       "event": [
         {
           "listen": "test",
@@ -197,10 +82,26 @@
           }
         }
       ],
-      "id": "986f7499-378d-4a18-a381-63a7358b5629",
+      "id": "dc48c662-34b6-48f1-bda0-e952a4ce2928",
       "request": {
         "method": "GET",
-        "header": [],
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "sessionid={{sessionid}}",
+            "type": "text"
+          },
+          {
+            "key": "Cookie",
+            "value": "csrftoken={{csrftoken}}",
+            "type": "text"
+          },
+          {
+            "key": "X-CSRFToken",
+            "value": "{{csrftoken}}",
+            "type": "text"
+          }
+        ],
         "url": {
           "raw": "{{base_url}}/api/v1/orders/{{order_id}}/",
           "host": [
@@ -218,7 +119,44 @@
       "response": []
     },
     {
-      "name": "Sanity Check (POST 405)",
+      "name": "Sanity Check (POST 403 - Anonymous)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "82003ef7-9100-4eac-828d-7e8e5e65b70b",
+            "exec": [
+              "pm.test(\"Status code is 403\", function () {\r",
+              "    pm.response.to.have.status(403);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "547071b2-c2ac-400b-adb6-0acc7d8b3038",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/orders/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "orders",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Sanity Check (POST 405 - Authentificated)",
       "event": [
         {
           "listen": "test",
@@ -235,10 +173,26 @@
           }
         }
       ],
-      "id": "547071b2-c2ac-400b-adb6-0acc7d8b3038",
+      "id": "270b29f7-ec93-4680-972a-26dd54471eed",
       "request": {
         "method": "POST",
-        "header": [],
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "sessionid={{sessionid}}",
+            "type": "text"
+          },
+          {
+            "key": "Cookie",
+            "value": "csrftoken={{csrftoken}}",
+            "type": "text"
+          },
+          {
+            "key": "X-CSRFToken",
+            "value": "{{csrftoken}}",
+            "type": "text"
+          }
+        ],
         "url": {
           "raw": "{{base_url}}/api/v1/orders/",
           "host": [

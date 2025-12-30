@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -6,6 +5,10 @@ from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema, OpenApiExample
 from api.serializers.payment import PaymentCreateRequestSerializer
 from api.serializers.common import ErrorResponseSerializer
+from api.exceptions.payment import (
+    PaymentAlreadyExistsException,
+    InvalidPaymentResultException,
+)
 from orders.models import Order
 from payments.models import Payment
 
@@ -64,7 +67,8 @@ Notes:
             OpenApiExample(
                 name="Order not found or not payable",
                 value={
-                    "detail": "Not found."
+                    "code": "not_found",
+                    "message": "Order not found or not payable."
                 },
                 response_only=True,
                 status_codes=["404"],
@@ -72,7 +76,8 @@ Notes:
             OpenApiExample(
                 name="Payment already exists",
                 value={
-                    "detail": "Payment already exists."
+                    "code": "PAYMENT_ALREADY_EXISTS",
+                    "message": "Payment already exists."
                 },
                 response_only=True,
                 status_codes=["409"],
@@ -80,7 +85,8 @@ Notes:
             OpenApiExample(
                 name="Invalid payment result",
                 value={
-                    "detail": "Invalid payment result."
+                    "code": "INVALID_PAYMENT_RESULT",
+                    "message": "Invalid payment result."
                 },
                 response_only=True,
                 status_codes=["400"],
@@ -96,7 +102,7 @@ Notes:
         )
 
         if hasattr(order, "payment"):
-            raise ValidationError("Payment already exists.")
+            raise PaymentAlreadyExistsException()
 
         result = request.data.get("result")
 
@@ -106,7 +112,7 @@ Notes:
         }
 
         if result not in status_map:
-            raise ValidationError("Invalid payment result.")
+            raise InvalidPaymentResultException()
 
         payment = Payment.objects.create(
             order=order,

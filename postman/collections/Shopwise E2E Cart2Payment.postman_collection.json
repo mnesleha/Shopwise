@@ -1,12 +1,12 @@
 {
   "info": {
-    "_postman_id": "176b2866-19e4-41eb-a9e9-6ff107349033",
-    "name": "Shopwise Cart API",
+    "_postman_id": "ae6d35fd-e823-4491-ac65-687c4748a13f",
+    "name": "Shopwise E2E Cart2Payment",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Cart (create or retrieve)",
+      "name": "E2E Cart (create or retrieve)",
       "event": [
         {
           "listen": "test",
@@ -34,7 +34,7 @@
           }
         }
       ],
-      "id": "2eaf4ec1-5ce7-4951-ac89-8bc88684b866",
+      "id": "9f589c7d-1fc3-422c-8a35-9a60408e435c",
       "request": {
         "method": "GET",
         "header": [
@@ -60,7 +60,7 @@
       "response": []
     },
     {
-      "name": "Add item to cart",
+      "name": "E2E Add item to cart",
       "event": [
         {
           "listen": "test",
@@ -88,7 +88,7 @@
           }
         }
       ],
-      "id": "7d8bf257-648a-4e78-aac5-ca2de4d4408d",
+      "id": "c1d0b36a-f871-4ebc-8d9c-c60513aca6f7",
       "request": {
         "method": "POST",
         "header": [
@@ -134,7 +134,7 @@
       "response": []
     },
     {
-      "name": "Cart (after adding items)",
+      "name": "E2E Cart (after adding items)",
       "event": [
         {
           "listen": "test",
@@ -160,7 +160,7 @@
           }
         }
       ],
-      "id": "f874cf61-7967-4521-be08-578b7518db99",
+      "id": "5d920c67-e52c-4cd2-955e-d21386afeafc",
       "request": {
         "method": "GET",
         "header": [
@@ -186,71 +186,7 @@
       "response": []
     },
     {
-      "name": "Add item with invalid quantity",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "id": "ab99ebe2-d210-4c24-b4ad-5de9a202d297",
-            "exec": [
-              "pm.test(\"Zero quantity is rejected\", function () {\r",
-              "    pm.response.to.have.status(400);\r",
-              "});\r",
-              ""
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "id": "c45a82c7-2b71-4fd8-a3c7-2369170ab0d3",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Cookie",
-            "value": "sessionid={{sessionid}}",
-            "type": "text"
-          },
-          {
-            "key": "Cookie",
-            "value": "csrftoken={{csrftoken}}",
-            "type": "text"
-          },
-          {
-            "key": "X-CSRFToken",
-            "value": "{{csrftoken}}",
-            "type": "text"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"product_id\": {{product_id}},\r\n  \"quantity\": 0\r\n}\r\n",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{base_url}}/api/v1/cart/items/",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "cart",
-            "items",
-            ""
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Checkout Cart",
+      "name": "E2E Checkout Cart",
       "event": [
         {
           "listen": "test",
@@ -286,7 +222,7 @@
           }
         }
       ],
-      "id": "ffcec88f-09b8-44ac-acdf-8676c85b59e4",
+      "id": "3bb6a69a-980d-4f27-8ed8-fc9e039b2ac3",
       "request": {
         "method": "POST",
         "header": [
@@ -332,15 +268,91 @@
       "response": []
     },
     {
-      "name": "Checkout again (negative – no active cart)",
+      "name": "E2E Order Detail (Authentificated)",
       "event": [
         {
           "listen": "test",
           "script": {
-            "id": "bd1587fa-b480-479f-829f-56d900516a06",
+            "id": "9f7358d5-a472-42ae-9c1c-269cbdcff71c",
             "exec": [
-              "pm.test(\"Checkout without active cart fails\", function () {\r",
-              "    pm.response.to.have.status(400);\r",
+              "pm.test(\"Order detail returns 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Order contains items\", function () {\r",
+              "    const data = pm.response.json();\r",
+              "    pm.expect(data.items.length).to.be.above(0);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Total price is quantity × price\", function () {\r",
+              "    const data = pm.response.json();\r",
+              "    const item = data.items[0];\r",
+              "\r",
+              "    const quantity = item.quantity;\r",
+              "    const price = parseFloat(item.price_at_order_time);\r",
+              "    const expectedTotal = (quantity * price).toFixed(2);\r",
+              "\r",
+              "    pm.expect(data.total_price).to.eql(expectedTotal);\r",
+              "});\r",
+              "\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "158cac2f-bc96-41aa-a352-9c836e80ea6c",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "sessionid={{sessionid}}",
+            "type": "text"
+          },
+          {
+            "key": "Cookie",
+            "value": "csrftoken={{csrftoken}}",
+            "type": "text"
+          },
+          {
+            "key": "X-CSRFToken",
+            "value": "{{csrftoken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/orders/{{order_id}}/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "orders",
+            "{{order_id}}",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "E2E Payment Successful",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "d9eddd45-0a91-471f-a387-4def615c2916",
+            "exec": [
+              "pm.test(\"Payment success\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Payment status is SUCCESS\", function () {\r",
+              "    pm.expect(pm.response.json().status).to.eql(\"SUCCESS\");\r",
               "});\r",
               ""
             ],
@@ -350,7 +362,7 @@
           }
         }
       ],
-      "id": "d7065f0b-19cb-4a84-9866-16ef4c6618c4",
+      "id": "63fe06aa-6c99-4e09-ad96-b480479abda8",
       "request": {
         "method": "POST",
         "header": [
@@ -370,16 +382,24 @@
             "type": "text"
           }
         ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"order_id\": {{order_id}},\r\n  \"result\": \"success\"\r\n}\r\n\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
         "url": {
-          "raw": "{{base_url}}/api/v1/cart/checkout/",
+          "raw": "{{base_url}}/api/v1/payments/",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
             "v1",
-            "cart",
-            "checkout",
+            "payments",
             ""
           ]
         }
@@ -387,17 +407,97 @@
       "response": []
     },
     {
-      "name": "Cart after checkout (new cart created)",
+      "name": "E2E Order Detail (Authentificated)",
       "event": [
         {
           "listen": "test",
           "script": {
-            "id": "680408c6-fe44-40b6-aeed-97206b3d64c4",
+            "id": "9f7358d5-a472-42ae-9c1c-269cbdcff71c",
             "exec": [
-              "pm.test(\"New cart is created after checkout\", function () {\r",
+              "pm.test(\"Order detail returns 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Order contains items\", function () {\r",
+              "    const data = pm.response.json();\r",
+              "    pm.expect(data.items.length).to.be.above(0);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Total price is quantity × price\", function () {\r",
+              "    const data = pm.response.json();\r",
+              "    const item = data.items[0];\r",
+              "\r",
+              "    const quantity = item.quantity;\r",
+              "    const price = parseFloat(item.price_at_order_time);\r",
+              "    const expectedTotal = (quantity * price).toFixed(2);\r",
+              "\r",
+              "    pm.expect(data.total_price).to.eql(expectedTotal);\r",
+              "});\r",
+              "\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "3ff4dae1-9ddb-4800-aa67-797b671ddcc3",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "sessionid={{sessionid}}",
+            "type": "text"
+          },
+          {
+            "key": "Cookie",
+            "value": "csrftoken={{csrftoken}}",
+            "type": "text"
+          },
+          {
+            "key": "X-CSRFToken",
+            "value": "{{csrftoken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/orders/{{order_id}}/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "orders",
+            "{{order_id}}",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "E2E Cart (create or retrieve)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "73367385-eb77-4842-890f-2a38763c900d",
+            "exec": [
+              "pm.test(\"Get cart returns 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Cart has ACTIVE status\", function () {\r",
               "    const data = pm.response.json();\r",
               "    pm.expect(data.status).to.eql(\"ACTIVE\");\r",
-              "    pm.expect(data.items.length).to.eql(0);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Cart ID is stored\", function () {\r",
+              "    const data = pm.response.json();\r",
+              "    pm.environment.set(\"cart_id\", data.id);\r",
               "});\r",
               ""
             ],
@@ -407,7 +507,7 @@
           }
         }
       ],
-      "id": "2a6d8b30-be43-445f-b6eb-faff17e84576",
+      "id": "dfa712fd-740d-42f3-879b-961668dcfe12",
       "request": {
         "method": "GET",
         "header": [

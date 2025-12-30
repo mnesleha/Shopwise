@@ -1,0 +1,200 @@
+{
+  "info": {
+    "_postman_id": "db17eca2-24a2-4a4b-a466-057664d4246b",
+    "name": "Shopwise Payment API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Cart Checkout",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "c722321f-3fe1-4b48-9318-f0ba48259e9d",
+            "exec": [
+              "pm.test(\"Checkout returns 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Order ID stored\", function () {\r",
+              "    const data = pm.response.json();\r",
+              "    pm.expect(data.id).to.be.a(\"number\");\r",
+              "    pm.environment.set(\"order_id\", data.id);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "48812785-51ce-456c-9bfe-439e6bb13853",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "sessionid={{sessionid}}",
+            "type": "text"
+          },
+          {
+            "key": "Cookie",
+            "value": "csrftoken={{csrftoken}}",
+            "type": "text"
+          },
+          {
+            "key": "X-CSRFToken",
+            "value": "{{csrftoken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/cart/checkout/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "cart",
+            "checkout",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Payment Successful",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "d9eddd45-0a91-471f-a387-4def615c2916",
+            "exec": [
+              "pm.test(\"Payment success\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Payment status is SUCCESS\", function () {\r",
+              "    pm.expect(pm.response.json().status).to.eql(\"SUCCESS\");\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "08f56fe1-8d21-4a61-81db-cb402e221631",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "sessionid={{sessionid}}",
+            "type": "text"
+          },
+          {
+            "key": "Cookie",
+            "value": "csrftoken={{csrftoken}}",
+            "type": "text"
+          },
+          {
+            "key": "X-CSRFToken",
+            "value": "{{csrftoken}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"order_id\": {{order_id}},\r\n  \"result\": \"success\"\r\n}\r\n\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/payments/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "payments",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Cannot pay twice",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "d9eddd45-0a91-471f-a387-4def615c2916",
+            "exec": [
+              "pm.test(\"Second payment attempt is rejected\", function () {\r",
+              "    pm.response.to.have.status(400);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "d27115e8-f790-49a8-8670-1f6851193c53",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "sessionid={{sessionid}}",
+            "type": "text"
+          },
+          {
+            "key": "Cookie",
+            "value": "csrftoken={{csrftoken}}",
+            "type": "text"
+          },
+          {
+            "key": "X-CSRFToken",
+            "value": "{{csrftoken}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"order_id\": {{order_id}},\r\n  \"result\": \"success\"\r\n}\r\n\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/payments/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "payments",
+            ""
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
