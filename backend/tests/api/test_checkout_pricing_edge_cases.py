@@ -35,7 +35,7 @@ def test_fixed_discount_greater_than_product_price_clamps_to_zero(auth_client):
     data = response.json()
 
     assert response.status_code == 201
-    assert data["total_price"] == "0.00"
+    assert data["total"] == "0.00"
 
 
 # Test for multiple discounts on the same product
@@ -76,7 +76,7 @@ def test_only_one_discount_is_applied_per_product(auth_client):
     response = auth_client.post("/api/v1/cart/checkout/")
     data = response.json()
 
-    assert data["total_price"] == "80.00"  # FIXED wins
+    assert data["total"] == "80.00"  # FIXED wins
 
 
 # Test for discount not applied when product is unavailable
@@ -126,16 +126,15 @@ def test_price_rounding_is_consistent(auth_client):
     )
 
     response = auth_client.post("/api/v1/cart/checkout/")
+    assert response.status_code == 201
+
     data = response.json()
 
-    print(f"\nStatus code: {response.status_code}")
-    print(f"Response data: {data}")
-
-    assert response.status_code == 201, response.json()
-    assert data["total_price"] == "99.99"
-
+    assert data["total"] == "99.99"
 
 # Test for price change between adding to cart and checkout
+
+
 @pytest.mark.django_db
 def test_price_change_after_add_to_cart_does_not_affect_checkout(auth_client):
     product = Product.objects.create(
@@ -159,4 +158,5 @@ def test_price_change_after_add_to_cart_does_not_affect_checkout(auth_client):
     response = auth_client.post("/api/v1/cart/checkout/")
     data = response.json()
 
-    assert data["total_price"] == "100.00"
+    assert response.status_code == 201
+    assert data["total"] == "100.00"

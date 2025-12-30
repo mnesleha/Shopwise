@@ -5,13 +5,17 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from rest_framework.exceptions import ValidationError as DRFValidationError, APIException
-from api.serializers.order import OrderSerializer
+from rest_framework.exceptions import APIException
 from carts.models import Cart, CartItem
 from orders.models import Order
 from orderitems.models import OrderItem
 from products.models import Product
-from api.serializers.cart import CartSerializer, CartItemCreateRequestSerializer, CartItemSerializer, CartCheckoutResponseSerializer
+from api.serializers.cart import (
+    CartSerializer,
+    CartItemCreateRequestSerializer,
+    CartItemSerializer,
+    CartCheckoutResponseSerializer,
+)
 from api.serializers.common import ErrorResponseSerializer
 from api.services.pricing import calculate_price
 from api.exceptions import ProductUnavailableException
@@ -278,7 +282,7 @@ Notes:
 - Some conflict scenarios may not be fully implemented yet.
 """,
         responses={
-            201: OrderSerializer,
+            201: CartCheckoutResponseSerializer,
             400: ErrorResponseSerializer,
             404: ErrorResponseSerializer,
             409: ErrorResponseSerializer,
@@ -287,16 +291,17 @@ Notes:
             OpenApiExample(
                 name="Checkout successful",
                 value={
-                    "id": 123,
+                    "order_id": 123,
                     "status": "CREATED",
                     "items": [
                         {
+                            "id": 1,
                             "product": 42,
                             "quantity": 2,
                             "price_at_order_time": "19.99"
                         }
                     ],
-                    "total_price": "39.98"
+                    "total": "39.98"
                 },
                 response_only=True,
                 status_codes=["201"],
@@ -373,6 +378,6 @@ Notes:
             raise CheckoutFailedException()
 
         return Response(
-            OrderSerializer(order).data,
+            CartCheckoutResponseSerializer(order).data,
             status=status.HTTP_201_CREATED,
         )

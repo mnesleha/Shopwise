@@ -21,7 +21,7 @@ def test_successful_payment_creates_payment_and_updates_order(auth_client, user)
     )
 
     checkout_response = auth_client.post("/api/v1/cart/checkout/").json()
-    order_id = checkout_response["id"]
+    order_id = checkout_response["order_id"]
 
     response = auth_client.post(
         "/api/v1/payments/",
@@ -39,7 +39,7 @@ def test_failed_payment_marks_order_as_failed(auth_client, product):
 
     response = auth_client.post(
         "/api/v1/payments/",
-        {"order_id": order["id"], "result": "fail"},
+        {"order_id": order["order_id"], "result": "fail"},
         format="json",
     )
 
@@ -52,13 +52,13 @@ def test_payment_cannot_be_created_twice(auth_client, product):
 
     auth_client.post(
         "/api/v1/payments/",
-        {"order_id": order["id"], "result": "success"},
+        {"order_id": order["order_id"], "result": "success"},
         format="json",
     )
 
     response = auth_client.post(
         "/api/v1/payments/",
-        {"order_id": order["id"], "result": "success"},
+        {"order_id": order["order_id"], "result": "success"},
         format="json",
     )
 

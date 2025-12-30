@@ -1,3 +1,4 @@
+import re
 from decimal import Decimal
 import pytest
 from unittest.mock import patch
@@ -5,6 +6,46 @@ from products.models import Product
 from carts.models import Cart
 from orders.models import Order
 from orderitems.models import OrderItem
+
+
+def assert_checkout_contract(order: dict) -> None:
+    """
+    Contract guard for POST /api/v1/cart/checkout/ response.
+
+    We intentionally keep this strict to prevent accidental schema drift
+    (e.g. leaking extra Order/OrderItem fields via implicit ModelSerializer output).
+    """
+    assert isinstance(order, dict)
+
+    # top-level shape
+    assert set(order.keys()) == {"order_id", "status", "items", "total"}
+
+    assert isinstance(order["order_id"], int)
+    assert order["order_id"] > 0
+
+    assert isinstance(order["status"], str)
+    assert order["status"]  # non-empty
+
+    assert isinstance(order["items"], list)
+    assert len(order["items"]) >= 1
+
+    # items shape
+    item = order["items"][0]
+    assert isinstance(item, dict)
+    assert set(item.keys()) == {"id", "product",
+                                "quantity", "price_at_order_time"}
+
+    assert isinstance(item["id"], int)
+    assert isinstance(item["product"], int)
+    assert isinstance(item["quantity"], int)
+    assert item["quantity"] > 0
+
+    assert isinstance(item["price_at_order_time"], str)
+    assert re.match(r"^\d+\.\d{2}$", item["price_at_order_time"])
+
+    # total format
+    assert isinstance(order["total"], str)
+    assert re.match(r"^\d+\.\d{2}$", order["total"])
 
 
 @pytest.mark.django_db
@@ -28,10 +69,15 @@ def test_checkout_creates_order_with_items_and_total(auth_client, user):
 
     order = response.json()
 
+    # CONTRACT GUARD (this is what will make RED now)
+    assert_checkout_contract(order)
+
+    # business expectations
     assert order["status"] == "CREATED"
     assert len(order["items"]) == 1
+    assert order["items"][0]["product"] == product.id
     assert order["items"][0]["quantity"] == 2
-    assert order["total_price"] == "200.00"
+    assert order["total"] == "200.00"
 
 
 @pytest.mark.django_db
