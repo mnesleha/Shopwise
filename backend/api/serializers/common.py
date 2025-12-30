@@ -7,6 +7,11 @@ class ErrorResponseSerializer(serializers.Serializer):
 
     Used to document error responses returned by the API.
     """
-    detail = serializers.CharField(
-        help_text="Human-readable description of the error."
+    code = serializers.CharField()
+    message = serializers.CharField()
+    errors = serializers.DictField(
+        child=serializers.ListField(
+            child=serializers.CharField()
+        ),
+        required=False,
     )

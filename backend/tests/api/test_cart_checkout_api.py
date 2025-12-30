@@ -100,7 +100,7 @@ def test_double_checkout_returns_409(auth_client):
     # Second checkout – MUST FAIL
     second = auth_client.post("/api/v1/cart/checkout/")
     assert second.status_code == 409
-    assert second.json()["detail"] == "Cart has already been checked out."
+    assert second.json()["message"] == "Cart has already been checked out."
 
     # Still only ONE order
     assert Order.objects.count() == 1

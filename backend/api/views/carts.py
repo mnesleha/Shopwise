@@ -15,6 +15,18 @@ from api.serializers.cart import CartSerializer, CartItemCreateRequestSerializer
 from api.serializers.common import ErrorResponseSerializer
 from api.services.pricing import calculate_price
 from api.exceptions import ProductUnavailableException
+from api.exceptions.cart import (
+    # Cart checkout exceptions
+    NoActiveCartException,
+    CartEmptyException,
+    CartAlreadyCheckedOutException,
+    CheckoutFailedException,
+    # Cart item exceptions
+    CartItemInvalidQuantityException,
+    CartItemMissingFieldException,
+    CartItemQuantityNotIntegerException,
+    ProductNotFoundException,
+)
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiExample
 
@@ -179,47 +191,46 @@ Notes:
         ],
     )
     def post(self, request):
-        product_id = request.data.get("product_id")
-        quantity = request.data.get("quantity")
+        data = request.data
 
-        if product_id is None or quantity is None:
-            raise DRFValidationError(
-                {"detail": "product_id and quantity are required"})
+        # --- required fields ---
+        if "product_id" not in data or "quantity" not in data:
+            raise CartItemMissingFieldException()
 
+        # --- quantity parsing ---
         try:
-            quantity = int(quantity)
+            quantity = int(data["quantity"])
         except (TypeError, ValueError):
-            raise DRFValidationError({"detail": "quantity must be an integer"})
+            raise CartItemQuantityNotIntegerException()
 
+        if quantity <= 0:
+            raise CartItemInvalidQuantityException()
+
+        # --- cart ---
         cart, _ = Cart.objects.get_or_create(
             user=request.user,
             status=Cart.Status.ACTIVE,
         )
 
-        product = get_object_or_404(Product, id=product_id)
+        # --- product ---
+        try:
+            product = Product.objects.get(id=data["product_id"])
+        except Product.DoesNotExist:
+            raise ProductNotFoundException()
 
         if not product.is_sellable():
             raise ProductUnavailableException()
 
-        try:
-            item = CartItem.objects.create(
-                cart=cart,
-                product=product,
-                quantity=quantity,
-                price_at_add_time=product.price,
-            )
-
-            item.refresh_from_db()
-
-        except DjangoValidationError as e:
-            raise DRFValidationError({"detail": e.messages[0]})
+        # --- create item ---
+        item = CartItem.objects.create(
+            cart=cart,
+            product=product,
+            quantity=quantity,
+            price_at_add_time=product.price,
+        )
 
         return Response(
-            {
-                "id": item.id,
-                "quantity": item.quantity,
-                "price_at_add_time": str(item.price_at_add_time),
-            },
+            CartItemSerializer(item).data,
             status=status.HTTP_201_CREATED,
         )
 
@@ -293,25 +304,25 @@ Notes:
             OpenApiExample(
                 name="Cart is empty",
                 value={
-                    "detail": "Cart is empty."
+                    "code": "cart_empty",
+                    "message": "Cart is empty."
                 },
-                response_only=True,
                 status_codes=["400"],
             ),
             OpenApiExample(
                 name="No active cart",
                 value={
-                    "detail": "No active cart to checkout."
+                    "code": "no_active_cart",
+                    "message": "No active cart to checkout."
                 },
-                response_only=True,
                 status_codes=["404"],
             ),
             OpenApiExample(
-                name="Cart already checked out",
+                name="Already checked out",
                 value={
-                    "detail": "Cart has already been checked out."
+                    "code": "cart_already_checked_out",
+                    "message": "Cart has already been checked out."
                 },
-                response_only=True,
                 status_codes=["409"],
             ),
         ],
@@ -319,7 +330,6 @@ Notes:
     def post(self, request):
         try:
             with transaction.atomic():
-                # Lock cart row
                 try:
                     cart = (
                         Cart.objects
@@ -327,25 +337,17 @@ Notes:
                         .get(user=request.user)
                     )
                 except Cart.DoesNotExist:
-                    raise DRFValidationError(
-                        {"detail": "No active cart to checkout."}
-                    )
+                    raise NoActiveCartException()
 
-                # Status re-check AFTER lock
+                # MUST be after select_for_update
                 if cart.status != Cart.Status.ACTIVE:
-                    return Response(
-                        {"detail": "Cart has already been checked out."},
-                        status=status.HTTP_409_CONFLICT,
-                    )
+                    raise CartAlreadyCheckedOutException()
 
-                # Business validation
                 if not cart.items.exists():
-                    raise DRFValidationError({"detail": "Cart is empty."})
+                    raise CartEmptyException()
 
-                # Create order
                 order = Order.objects.create(user=request.user)
 
-                # Create order items
                 for item in cart.items.all():
                     pricing = calculate_price(
                         unit_price=item.price_at_add_time,
@@ -360,20 +362,15 @@ Notes:
                         price_at_order_time=pricing.final_price,
                     )
 
-                # Convert cart ONLY if everything succeeded
                 cart.status = Cart.Status.CONVERTED
                 cart.save()
 
-        except DRFValidationError:
-            # 400 / 404 – rollback already happened
+        except APIException:
             raise
 
         except Exception:
-            # rollback already DONE by atomic()
-            return Response(
-                {"detail": "Checkout failed. Please try again."},
-                status=status.HTTP_409_CONFLICT,
-            )
+            # atomic block guarantees rollback
+            raise CheckoutFailedException()
 
         return Response(
             OrderSerializer(order).data,
