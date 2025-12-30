@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.core.management import call_command
 from rest_framework.test import APIClient
 from products.models import Product
+from discounts.models import Discount
 
 
 @pytest.fixture
@@ -45,19 +46,37 @@ def seed_test_data(django_db_setup, django_db_blocker):
 @pytest.fixture
 def fixed_discount(db):
     """
-    Create an active FIXED discount for a product.
+    Create an active FIXED discount targeting a product.
     Usage:
         fixed_discount(product=product, value="150.00")
     """
-    def _create_fixed_discount(*, product, value):
+    def _create(*, product, value, name="Fixed discount"):
         return Discount.objects.create(
-            product=product,
-            kind="FIXED",
+            name=name,
+            discount_type=Discount.FIXED,
             value=value,
             is_active=True,
+            product=product,
         )
+    return _create
 
-    return _create_fixed_discount
+
+@pytest.fixture
+def percent_discount(db):
+    """
+    Create an active PERCENT discount targeting a product.
+    Usage:
+        percent_discount(product=product, value="10.00")
+    """
+    def _create(*, product, value, name="Percent discount"):
+        return Discount.objects.create(
+            name=name,
+            discount_type=Discount.PERCENT,
+            value=value,
+            is_active=True,
+            product=product,
+        )
+    return _create
 
 
 def create_order_via_checkout(auth_client, product):
