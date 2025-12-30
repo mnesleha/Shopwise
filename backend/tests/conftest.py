@@ -1,3 +1,4 @@
+from discounts.models import Discount
 import pytest
 from django.contrib.auth.models import User
 from django.core.management import call_command
@@ -39,6 +40,24 @@ def seed_test_data(django_db_setup, django_db_blocker):
 
     with django_db_blocker.unblock():
         call_command("seed_test_data", reset=True)
+
+
+@pytest.fixture
+def fixed_discount(db):
+    """
+    Create an active FIXED discount for a product.
+    Usage:
+        fixed_discount(product=product, value="150.00")
+    """
+    def _create_fixed_discount(*, product, value):
+        return Discount.objects.create(
+            product=product,
+            kind="FIXED",
+            value=value,
+            is_active=True,
+        )
+
+    return _create_fixed_discount
 
 
 def create_order_via_checkout(auth_client, product):
