@@ -48,7 +48,11 @@ def calculate_price(
     valid_percent = []
 
     for discount in discounts:
-        is_valid = discount.is_valid() if hasattr(discount, "is_valid") else getattr(discount, "is_active", False)
+        has_is_valid = hasattr(discount, "is_valid")
+        is_valid = (
+            discount.is_valid() if has_is_valid
+            else getattr(discount, "is_active", False)
+        )
         if not is_valid:
             continue
 
@@ -57,14 +61,21 @@ def calculate_price(
         elif discount.discount_type == Discount.PERCENT:
             valid_percent.append(discount)
 
-    applied_discount = valid_fixed[0] if valid_fixed else valid_percent[0] if valid_percent else None
+    applied_discount = (
+        valid_fixed[0] if valid_fixed
+        else valid_percent[0] if valid_percent
+        else None
+    )
 
     discounted_unit = unit_price
     if applied_discount:
         if applied_discount.discount_type == Discount.FIXED:
             discounted_unit = unit_price - applied_discount.value
         elif applied_discount.discount_type == Discount.PERCENT:
-            discounted_unit = unit_price * (Decimal("1") - applied_discount.value / Decimal("100"))
+            percent_multiplier = (
+                Decimal("1") - applied_discount.value / Decimal("100")
+            )
+            discounted_unit = unit_price * percent_multiplier
 
     if discounted_unit < ZERO:
         discounted_unit = ZERO
