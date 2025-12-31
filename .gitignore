@@ -7,3 +7,6 @@ __pycache__/
 *.pyo
 *.zip
 *.diff
+*.py[cod]
+*$py.class
+__pycache__/
