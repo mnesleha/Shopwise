@@ -33,12 +33,7 @@ def calculate_price(
     discounts: Iterable[Discount],
 ) -> PricingResult:
     """
-    LINE-PRICE based pricing.
-
-    Rules:
-    - base_price = unit_price * quantity  (NO rounding)
-    - discounts are applied on LINE PRICE
-    - exactly ONE rounding at the very end
+    Apply discounts per unit (FIXED wins over PERCENT), then derive line total.
     """
 
     if quantity <= 0:
@@ -47,35 +42,38 @@ def calculate_price(
     if unit_price < ZERO:
         raise InvalidPriceError("Unit price cannot be negative")
 
-    base_price = unit_price * quantity      # e.g. 33.333 * 3 = 99.999
-    final_price = base_price
-    applied_discount = None
+    base_price = unit_price * quantity  # pre-discount line price (no rounding)
 
-    fixed_discount = None
-    percent_discount = None
+    valid_fixed = []
+    valid_percent = []
 
     for discount in discounts:
-        if not discount.is_active:
+        is_valid = discount.is_valid() if hasattr(discount, "is_valid") else getattr(discount, "is_active", False)
+        if not is_valid:
             continue
 
         if discount.discount_type == Discount.FIXED:
-            fixed_discount = discount
+            valid_fixed.append(discount)
         elif discount.discount_type == Discount.PERCENT:
-            percent_discount = discount
+            valid_percent.append(discount)
 
-    if fixed_discount:
-        final_price -= fixed_discount.value
-        applied_discount = fixed_discount
+    applied_discount = valid_fixed[0] if valid_fixed else valid_percent[0] if valid_percent else None
 
-    elif percent_discount:
-        final_price -= final_price * percent_discount.value / Decimal("100")
-        applied_discount = percent_discount
+    discounted_unit = unit_price
+    if applied_discount:
+        if applied_discount.discount_type == Discount.FIXED:
+            discounted_unit = unit_price - applied_discount.value
+        elif applied_discount.discount_type == Discount.PERCENT:
+            discounted_unit = unit_price * (Decimal("1") - applied_discount.value / Decimal("100"))
 
-    if final_price < ZERO:
-        final_price = ZERO
+    if discounted_unit < ZERO:
+        discounted_unit = ZERO
+
+    discounted_unit = _round(discounted_unit)
+    line_total = _round(discounted_unit * quantity)
 
     return PricingResult(
         base_price=base_price,
-        final_price=_round(final_price),
+        final_price=line_total,
         applied_discount=applied_discount,
     )

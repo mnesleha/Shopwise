@@ -1,9 +1,8 @@
-from decimal import Decimal
-
 from rest_framework import serializers
 
 from carts.models import Cart, CartItem
 from products.models import Product
+from api.serializers.order import OrderResponseSerializer
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -45,25 +44,5 @@ class CartItemCreateRequestSerializer(serializers.Serializer):
     )
 
 
-class CartCheckoutItemSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    product = serializers.IntegerField(source="product.id", read_only=True)
-    quantity = serializers.IntegerField(read_only=True)
-    price_at_order_time = serializers.SerializerMethodField()
-
-    def get_price_at_order_time(self, obj):
-        return f"{obj.price_at_order_time:.2f}"
-
-
-class CartCheckoutResponseSerializer(serializers.Serializer):
-    order_id = serializers.IntegerField(source="id", read_only=True)
-    status = serializers.CharField(read_only=True)
-    items = CartCheckoutItemSerializer(many=True, read_only=True)
-    total = serializers.SerializerMethodField()
-
-    def get_total(self, obj):
-        total = sum(
-            (item.price_at_order_time for item in obj.items.all()),
-            Decimal("0.00"),
-        )
-        return f"{total:.2f}"
+class CartCheckoutResponseSerializer(OrderResponseSerializer):
+    """Checkout response shares the same contract as Orders endpoints."""

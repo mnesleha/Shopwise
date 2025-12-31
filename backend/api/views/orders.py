@@ -6,7 +6,7 @@ from drf_spectacular.utils import (
     OpenApiExample,
 )
 from orders.models import Order
-from api.serializers.order import OrderSerializer
+from api.serializers.order import OrderResponseSerializer
 from api.serializers.common import ErrorResponseSerializer
 
 
@@ -25,7 +25,7 @@ Notes:
 - The list is ordered by creation time (implicit database order).
 """,
         responses={
-            200: OrderSerializer,
+            200: OrderResponseSerializer,
             401: ErrorResponseSerializer,
         },
         examples=[
@@ -40,11 +40,15 @@ Notes:
                                 "id": 1,
                                 "product": 42,
                                 "quantity": 2,
-                                "price_at_order_time": "19.99",
-                                "total_price": "39.98"
+                                "unit_price": "25.00",
+                                "line_total": "40.00",
+                                "discount": {
+                                    "type": "PERCENT",
+                                    "value": "20.00"
+                                }
                             }
                         ],
-                        "total_price": "39.98"
+                        "total": "40.00"
                     }
                 ],
                 response_only=True,
@@ -62,7 +66,7 @@ Notes:
 - Orders cannot be modified after creation.
 """,
         responses={
-            200: OrderSerializer,
+            200: OrderResponseSerializer,
             401: ErrorResponseSerializer,
             404: ErrorResponseSerializer,
         },
@@ -77,11 +81,15 @@ Notes:
                             "id": 1,
                             "product": 42,
                             "quantity": 2,
-                            "price_at_order_time": "19.99",
-                            "total_price": "39.98"
+                            "unit_price": "25.00",
+                            "line_total": "40.00",
+                            "discount": {
+                                "type": "PERCENT",
+                                "value": "20.00"
+                            }
                         }
                     ],
-                    "total_price": "39.98"
+                    "total": "40.00"
                 },
                 response_only=True,
             ),
@@ -92,7 +100,7 @@ class OrderViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     queryset = Order.objects.all()
-    serializer_class = OrderSerializer
+    serializer_class = OrderResponseSerializer
     http_method_names = ["get", "head", "options"]
 
     def get_queryset(self):

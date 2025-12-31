@@ -82,7 +82,7 @@ def test_rounding_is_half_up_to_two_decimals():
     )
 
     assert result.base_price == Decimal("99.999")
-    assert result.final_price == Decimal("100.00")
+    assert result.final_price == Decimal("99.99")
 
 
 def test_no_discount_returns_base_price():

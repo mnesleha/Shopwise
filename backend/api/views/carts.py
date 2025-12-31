@@ -291,17 +291,22 @@ Notes:
             OpenApiExample(
                 name="Checkout successful",
                 value={
-                    "order_id": 123,
+                    "id": 123,
                     "status": "CREATED",
                     "items": [
                         {
                             "id": 1,
                             "product": 42,
                             "quantity": 2,
-                            "price_at_order_time": "19.99"
+                            "unit_price": "25.00",
+                            "line_total": "40.00",
+                            "discount": {
+                                "type": "PERCENT",
+                                "value": "20.00"
+                            }
                         }
                     ],
-                    "total": "39.98"
+                    "total": "40.00"
                 },
                 response_only=True,
                 status_codes=["201"],
@@ -365,6 +370,18 @@ Notes:
                         product=item.product,
                         quantity=item.quantity,
                         price_at_order_time=pricing.final_price,
+                        unit_price_at_order_time=item.price_at_add_time,
+                        line_total_at_order_time=pricing.final_price,
+                        applied_discount_type_at_order_time=(
+                            pricing.applied_discount.discount_type
+                            if pricing.applied_discount
+                            else None
+                        ),
+                        applied_discount_value_at_order_time=(
+                            pricing.applied_discount.value
+                            if pricing.applied_discount
+                            else None
+                        ),
                     )
 
                 cart.status = Cart.Status.CONVERTED

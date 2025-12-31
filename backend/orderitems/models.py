@@ -20,6 +20,29 @@ class OrderItem(models.Model):
         max_digits=10,
         decimal_places=2,
     )
+    unit_price_at_order_time = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    line_total_at_order_time = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    applied_discount_type_at_order_time = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True,
+    )
+    applied_discount_value_at_order_time = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
 
     def clean(self):
         errors = {}
@@ -27,8 +50,21 @@ class OrderItem(models.Model):
         if self.quantity is None or self.quantity <= 0:
             errors["quantity"] = "Quantity must be greater than zero"
 
-        if self.price_at_order_time is None or self.price_at_order_time <= 0:
-            errors["price_at_order_time"] = "Price must be greater than zero"
+        # Allow zero, reject negatives for all price fields
+        if self.price_at_order_time is None or self.price_at_order_time < 0:
+            errors["price_at_order_time"] = "Price must be zero or greater"
+
+        if self.unit_price_at_order_time is not None and self.unit_price_at_order_time < 0:
+            errors["unit_price_at_order_time"] = "Unit price must be zero or greater"
+
+        if self.line_total_at_order_time is not None and self.line_total_at_order_time < 0:
+            errors["line_total_at_order_time"] = "Line total must be zero or greater"
+
+        if (
+            self.applied_discount_value_at_order_time is not None
+            and self.applied_discount_value_at_order_time < 0
+        ):
+            errors["applied_discount_value_at_order_time"] = "Discount value must be zero or greater"
 
         if errors:
             raise ValidationError(errors)
