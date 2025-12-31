@@ -3,7 +3,9 @@ from products.models import Product
 
 
 @pytest.mark.django_db
-def test_checkout_returns_unit_price_and_line_total(auth_client, user, fixed_discount):
+def test_checkout_returns_unit_price_and_line_total(
+    auth_client, user, fixed_discount
+):
     product = Product.objects.create(
         name="Test product",
         price=100,

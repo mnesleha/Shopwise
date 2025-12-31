@@ -30,7 +30,9 @@ class DummyDiscount:
         ("100.00", 2, "150.00", "10.00", "0.00"),
     ],
 )
-def test_discounts_apply_per_unit_fixed_wins(unit_price, quantity, fixed, percent, expected_total):
+def test_discounts_apply_per_unit_fixed_wins(
+    unit_price, quantity, fixed, percent, expected_total
+):
     discounts = []
     if fixed:
         discounts.append(DummyDiscount(Discount.FIXED, fixed))

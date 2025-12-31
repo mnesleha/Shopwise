@@ -26,6 +26,6 @@ def test_order_item_persists_price_snapshot_after_checkout(auth_client, user):
     item = OrderItem.objects.first()
     assert item is not None
 
-    # These fields will be introduced in PR1 (model) and filled in PR2 (checkout persistence)
+    # Fields introduced in PR1 (model) and filled in PR2 (checkout)
     assert item.unit_price_at_order_time is not None
     assert item.line_total_at_order_time is not None

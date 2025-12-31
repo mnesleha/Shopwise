@@ -1,13 +1,14 @@
 from decimal import Decimal
-from discounts.models import Discount
+
 import pytest
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from rest_framework.test import APIClient
-from products.models import Product
+
 from discounts.models import Discount
 from orders.models import Order
 from orderitems.models import OrderItem
+from products.models import Product
 
 
 @pytest.fixture
