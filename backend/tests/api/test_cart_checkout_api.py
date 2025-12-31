@@ -18,10 +18,10 @@ def assert_checkout_contract(order: dict) -> None:
     assert isinstance(order, dict)
 
     # top-level shape
-    assert set(order.keys()) == {"order_id", "status", "items", "total"}
+    assert set(order.keys()) == {"id", "status", "items", "total"}
 
-    assert isinstance(order["order_id"], int)
-    assert order["order_id"] > 0
+    assert isinstance(order["id"], int)
+    assert order["id"] > 0
 
     assert isinstance(order["status"], str)
     assert order["status"]  # non-empty
@@ -33,15 +33,25 @@ def assert_checkout_contract(order: dict) -> None:
     item = order["items"][0]
     assert isinstance(item, dict)
     assert set(item.keys()) == {"id", "product",
-                                "quantity", "price_at_order_time"}
+                                "quantity", "unit_price", "line_total", "discount"}
 
     assert isinstance(item["id"], int)
     assert isinstance(item["product"], int)
     assert isinstance(item["quantity"], int)
     assert item["quantity"] > 0
 
-    assert isinstance(item["price_at_order_time"], str)
-    assert re.match(r"^\d+\.\d{2}$", item["price_at_order_time"])
+    assert isinstance(item["unit_price"], str)
+    assert re.match(r"^\d+\.\d{2}$", item["unit_price"])
+
+    assert isinstance(item["line_total"], str)
+    assert re.match(r"^\d+\.\d{2}$", item["line_total"])
+
+    if item["discount"] is not None:
+        assert set(item["discount"].keys()) == {"type", "value"}
+        assert item["discount"]["type"] in {"FIXED", "PERCENT"}
+        assert re.match(r"^\d+\.\d{2}$", item["discount"]["value"])
+    else:
+        assert item["discount"] is None
 
     # total format
     assert isinstance(order["total"], str)

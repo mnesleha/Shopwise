@@ -1,3 +1,4 @@
+from decimal import Decimal
 import pytest
 from django.core.exceptions import ValidationError
 from orders.models import Order
@@ -72,14 +73,13 @@ def test_orderitem_quantity_must_be_positive():
 
 
 @pytest.mark.django_db
-def test_orderitem_price_snapshot_must_be_positive():
-
+def test_orderitem_price_snapshot_allows_zero():
     User = get_user_model()
     user = User.objects.create_user(username="user4", password="pass")
     order = Order.objects.create(user=user)
     product = Product.objects.create(
         name="Tablet",
-        price=500,
+        price=Decimal("500.00"),
         stock_quantity=10,
         is_active=True,
     )
@@ -88,7 +88,30 @@ def test_orderitem_price_snapshot_must_be_positive():
         order=order,
         product=product,
         quantity=1,
-        price_at_order_time=0,
+        price_at_order_time=Decimal("0.00"),
+    )
+
+    # should NOT raise
+    item.full_clean()
+
+
+@pytest.mark.django_db
+def test_orderitem_price_snapshot_rejects_negative():
+    User = get_user_model()
+    user = User.objects.create_user(username="user5", password="pass")
+    order = Order.objects.create(user=user)
+    product = Product.objects.create(
+        name="Tablet",
+        price=Decimal("500.00"),
+        stock_quantity=10,
+        is_active=True,
+    )
+
+    item = OrderItem(
+        order=order,
+        product=product,
+        quantity=1,
+        price_at_order_time=Decimal("-0.01"),
     )
 
     with pytest.raises(ValidationError):

@@ -291,17 +291,22 @@ Notes:
             OpenApiExample(
                 name="Checkout successful",
                 value={
-                    "order_id": 123,
+                    "id": 123,
                     "status": "CREATED",
                     "items": [
                         {
                             "id": 1,
                             "product": 42,
                             "quantity": 2,
-                            "price_at_order_time": "19.99"
+                            "unit_price": "25.00",
+                            "line_total": "40.00",
+                            "discount": {
+                                "type": "PERCENT",
+                                "value": "20.00"
+                            }
                         }
                     ],
-                    "total": "39.98"
+                    "total": "40.00"
                 },
                 response_only=True,
                 status_codes=["201"],
