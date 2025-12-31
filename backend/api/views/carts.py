@@ -365,6 +365,18 @@ Notes:
                         product=item.product,
                         quantity=item.quantity,
                         price_at_order_time=pricing.final_price,
+                        unit_price_at_order_time=item.price_at_add_time,
+                        line_total_at_order_time=pricing.final_price,
+                        applied_discount_type_at_order_time=(
+                            pricing.applied_discount.discount_type
+                            if pricing.applied_discount
+                            else None
+                        ),
+                        applied_discount_value_at_order_time=(
+                            pricing.applied_discount.value
+                            if pricing.applied_discount
+                            else None
+                        ),
                     )
 
                 cart.status = Cart.Status.CONVERTED
