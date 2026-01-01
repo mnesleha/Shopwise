@@ -1,3 +1,4 @@
+import os
 from decimal import Decimal
 from discounts.models import Discount
 import pytest
@@ -14,7 +15,6 @@ def pytest_collection_modifyitems(config, items):
     use_mysql = config.getoption("-m") and "mysql" in config.getoption("-m")
 
     if use_mysql:
-        import os
         os.environ["DJANGO_SETTINGS_MODULE"] = "settings.local"
 
 

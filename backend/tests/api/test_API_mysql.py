@@ -86,13 +86,8 @@ def test_payment_double_submit_mysql(auth_client, user, order_factory):
     r1 = auth_client.post("/api/v1/payments/", payload, format="json")
     r2 = auth_client.post("/api/v1/payments/", payload, format="json")
 
-    print("r1", r1.status_code, r1.content)
     assert Order.objects.filter(id=order.id, user=user).exists()
     order_db = Order.objects.get(id=order.id)
-    print("order status after r1:", order_db.status)
-    print("CREATED exists?", Order.objects.filter(
-        id=order.id, user=user, status=Order.Status.CREATED).exists())
-    print("r2", r2.status_code, r2.content)
 
     assert Order.objects.filter(id=order.id, user=user).exists()
     assert Order.objects.filter(

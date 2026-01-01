@@ -37,7 +37,7 @@ Default invocation:
 
 MySQL verification suite:
 
-- `DJANGO_SETTINGS_MODULE=settings.mysql pytest -m mysql`
+- `DJANGO_SETTINGS_MODULE=settings.local pytest -m mysql`
 
 ### Scope and When to Run MySQL Tests
 
