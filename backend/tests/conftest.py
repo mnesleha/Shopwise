@@ -10,6 +10,14 @@ from orders.models import Order
 from orderitems.models import OrderItem
 
 
+def pytest_collection_modifyitems(config, items):
+    use_mysql = config.getoption("-m") and "mysql" in config.getoption("-m")
+
+    if use_mysql:
+        import os
+        os.environ["DJANGO_SETTINGS_MODULE"] = "settings.local"
+
+
 @pytest.fixture
 def user():
     return User.objects.create_user(
@@ -65,6 +73,60 @@ def order(db, user):
     )
 
     return order
+
+
+@pytest.fixture
+def order_factory(db):
+    """
+    Factory for creating orders with a single order item.
+    Explicitly sets snapshot pricing fields to avoid dependency on pricing service.
+
+    Usage:
+        order = order_factory(user=user)
+        order = order_factory(user=user, status=Order.Status.CREATED)
+        order = order_factory(user=user, quantity=2, unit_price="100.00")
+    """
+    def _create(
+        *,
+        user,
+        status=Order.Status.CREATED,
+        quantity=1,
+        unit_price="100.00",
+        line_total=None,
+        discount_type=None,
+        discount_value=None,
+    ):
+        product = Product.objects.create(
+            name="Factory product",
+            price=Decimal(unit_price),
+            stock_quantity=10,
+            is_active=True,
+        )
+
+        order = Order.objects.create(
+            user=user,
+            status=status,
+        )
+
+        if line_total is None:
+            line_total = Decimal(unit_price) * quantity
+
+        OrderItem.objects.create(
+            order=order,
+            product=product,
+            quantity=quantity,
+            unit_price_at_order_time=Decimal(unit_price),
+            line_total_at_order_time=Decimal(line_total),
+            price_at_order_time=Decimal(line_total),  # legacy compatibility
+            applied_discount_type_at_order_time=discount_type,
+            applied_discount_value_at_order_time=(
+                Decimal(discount_value) if discount_value is not None else None
+            ),
+        )
+
+        return order
+
+    return _create
 
 
 @pytest.fixture
