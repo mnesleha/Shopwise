@@ -134,7 +134,7 @@ def test_checkout_empty_cart_fails(auth_client):
 
 
 @pytest.mark.django_db
-def test_double_checkout_returns_409(auth_client):
+def test_double_checkout_returns_404(auth_client):
     product = Product.objects.create(
         name="Test Product",
         price=Decimal("100.00"),
@@ -155,8 +155,8 @@ def test_double_checkout_returns_409(auth_client):
 
     # Second checkout – MUST FAIL
     second = auth_client.post("/api/v1/cart/checkout/")
-    assert second.status_code == 409
-    assert second.json()["message"] == "Cart has already been checked out."
+    assert second.status_code == 404
+    assert second.json()["code"] == "NO_ACTIVE_CART"
 
     # Still only ONE order
     assert Order.objects.count() == 1

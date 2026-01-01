@@ -23,7 +23,6 @@ from api.exceptions.cart import (
     # Cart checkout exceptions
     NoActiveCartException,
     CartEmptyException,
-    CartAlreadyCheckedOutException,
     CheckoutFailedException,
     # Cart item exceptions
     CartItemInvalidQuantityException,
@@ -285,7 +284,6 @@ Notes:
             201: CartCheckoutResponseSerializer,
             400: ErrorResponseSerializer,
             404: ErrorResponseSerializer,
-            409: ErrorResponseSerializer,
         },
         examples=[
             OpenApiExample(
@@ -314,7 +312,7 @@ Notes:
             OpenApiExample(
                 name="Cart is empty",
                 value={
-                    "code": "cart_empty",
+                    "code": "CART_EMPTY",
                     "message": "Cart is empty."
                 },
                 status_codes=["400"],
@@ -322,18 +320,10 @@ Notes:
             OpenApiExample(
                 name="No active cart",
                 value={
-                    "code": "no_active_cart",
+                    "code": "NO_ACTIVE_CART",
                     "message": "No active cart to checkout."
                 },
                 status_codes=["404"],
-            ),
-            OpenApiExample(
-                name="Already checked out",
-                value={
-                    "code": "cart_already_checked_out",
-                    "message": "Cart has already been checked out."
-                },
-                status_codes=["409"],
             ),
         ],
     )
@@ -348,10 +338,6 @@ Notes:
                     )
                 except Cart.DoesNotExist:
                     raise NoActiveCartException()
-
-                # MUST be after select_for_update
-                if cart.status != Cart.Status.ACTIVE:
-                    raise CartAlreadyCheckedOutException()
 
                 if not cart.items.exists():
                     raise CartEmptyException()

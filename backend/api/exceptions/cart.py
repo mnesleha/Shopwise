@@ -40,11 +40,6 @@ class CartEmptyException(ValidationException):
     default_code = "CART_EMPTY"
 
 
-class CartAlreadyCheckedOutException(ConflictException):
-    default_detail = "Cart has already been checked out."
-    default_code = "CART_ALREADY_CHECKED_OUT"
-
-
 class CheckoutFailedException(ConflictException):
     default_detail = "Checkout failed. Please retry."
     default_code = "CHECKOUT_FAILED"
