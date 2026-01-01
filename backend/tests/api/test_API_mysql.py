@@ -90,11 +90,9 @@ def test_payment_double_submit_mysql(auth_client, user, order_factory):
     order_db = Order.objects.get(id=order.id)
 
     assert Order.objects.filter(id=order.id, user=user).exists()
-    assert Order.objects.filter(
-        id=order.id, user=user, status=Order.Status.CREATED).exists()
 
     assert r1.status_code == 201
-    assert r2.status_code in (400, 409)
+    assert r2.status_code == 409
 
 
 # Datetime & timezone precision

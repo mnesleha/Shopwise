@@ -1,4 +1,5 @@
 import pytest
+from orders.models import Order
 from products.models import Product
 from tests.conftest import create_order_via_checkout
 
@@ -63,3 +64,21 @@ def test_payment_cannot_be_created_twice(auth_client, product):
     )
 
     assert response.status_code == 409
+
+
+@pytest.mark.django_db(transaction=True)
+def test_payment_double_submit(auth_client, user, order_factory):
+    order = order_factory(user=user)
+
+    payload = {"order_id": order.id, "result": "success"}
+
+    r1 = auth_client.post("/api/v1/payments/", payload, format="json")
+    r2 = auth_client.post("/api/v1/payments/", payload, format="json")
+
+    assert Order.objects.filter(id=order.id, user=user).exists()
+    order_db = Order.objects.get(id=order.id)
+
+    assert Order.objects.filter(id=order.id, user=user).exists()
+
+    assert r1.status_code == 201
+    assert r2.status_code == 409
