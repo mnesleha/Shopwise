@@ -8,6 +8,7 @@ from api.serializers.common import ErrorResponseSerializer
 from api.exceptions.payment import (
     PaymentAlreadyExistsException,
     InvalidPaymentResultException,
+    OrderNotPayableException
 )
 from orders.models import Order
 from payments.models import Payment
@@ -83,6 +84,15 @@ Notes:
                 status_codes=["409"],
             ),
             OpenApiExample(
+                name="Order not payable",
+                value={
+                    "detail": "Order is not payable in its current state.",
+                    "code": "ORDER_NOT_PAYABLE",
+                },
+                response_only=True,
+                status_codes=["409"],
+            ),
+            OpenApiExample(
                 name="Invalid payment result",
                 value={
                     "code": "INVALID_PAYMENT_RESULT",
@@ -98,11 +108,13 @@ Notes:
             Order,
             id=request.data["order_id"],
             user=request.user,
-            status=Order.Status.CREATED,
         )
 
         if hasattr(order, "payment"):
             raise PaymentAlreadyExistsException()
+
+        if order.status != Order.Status.CREATED:
+            raise OrderNotPayableException()
 
         result = request.data.get("result")
 

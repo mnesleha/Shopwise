@@ -62,4 +62,4 @@ def test_payment_cannot_be_created_twice(auth_client, product):
         format="json",
     )
 
-    assert response.status_code == 404
+    assert response.status_code == 409
