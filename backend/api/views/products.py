@@ -1,4 +1,5 @@
 from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework import generics, permissions, filters
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiExample
 from api.serializers.common import ErrorResponseSerializer
 from products.models import Product
@@ -72,6 +73,8 @@ Otherwise, it will not be accessible via the API.
 )
 class ProductViewSet(ReadOnlyModelViewSet):
     serializer_class = ProductSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name"]
 
     def get_queryset(self):
         return Product.objects.filter(
