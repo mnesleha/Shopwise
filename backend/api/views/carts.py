@@ -344,7 +344,7 @@ Notes:
                     cart = (
                         Cart.objects
                         .select_for_update()
-                        .get(user=request.user)
+                        .get(user=request.user, status=Cart.Status.ACTIVE)
                     )
                 except Cart.DoesNotExist:
                     raise NoActiveCartException()
