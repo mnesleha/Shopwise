@@ -1,0 +1,76 @@
+users:
+  - key: CUSTOMER_1
+    username: customer_1
+    password: customer_1
+    role: CUSTOMER
+  - key: CUSTOMER_2
+    username: customer_2
+    password: customer_2
+    role: CUSTOMER
+
+products:
+  - key: SELLABLE_MOUSE
+    name: E2E_SELLABLE_MOUSE
+    price: "100.00"
+    stock_quantity: 10
+    is_active: true
+  - key: OUT_OF_STOCK_MOUSE
+    name: E2E_OUT_OF_STOCK_MOUSE
+    price: "50.00"
+    stock_quantity: 0
+    is_active: true
+  - key: INACTIVE_MOUSE
+    name: E2E_INACTIVE_MOUSE
+    price: "30.00"
+    stock_quantity: 10
+    is_active: false
+  - key: FIXED_WINS_PRODUCT
+    name: E2E_FIXED_WINS_PRODUCT
+    price: "100.00"
+    stock_quantity: 10
+    is_active: true
+
+discounts:
+  - key: FIXED_150_ACTIVE
+    name: E2E_FIXED_150_ACTIVE
+    discount_type: FIXED
+    value: "150.00"
+    is_active: true
+    valid_from_offset_days: -1
+    valid_to_offset_days: +5
+    product_key: FIXED_WINS_PRODUCT
+  - key: PERCENT_10_ACTIVE
+    name: E2E_PERCENT_10_ACTIVE
+    discount_type: PERCENT
+    value: "10.00"
+    is_active: true
+    valid_from_offset_days: -1
+    valid_to_offset_days: +5
+    product_key: FIXED_WINS_PRODUCT
+  - key: PERCENT_20_EXPIRED
+    name: E2E_PERCENT_20_EXPIRED
+    discount_type: PERCENT
+    value: "20.00"
+    is_active: true
+    valid_from_offset_days: -10
+    valid_to_offset_days: -5
+    product_key: FIXED_WINS_PRODUCT
+  - key: FIXED_20_INACTIVE
+    name: E2E_FIXED_20_INACTIVE
+    discount_type: FIXED
+    value: "20.00"
+    is_active: false
+    valid_from_offset_days: -1
+    valid_to_offset_days: +5
+    product_key: FIXED_WINS_PRODUCT
+
+bulk_products:
+  enabled: true
+  count: 100
+  name_prefix: E2E_BULK_
+  price_min: "5.00"
+  price_max: "500.00"
+  stock_min: 0
+  stock_max: 50
+  active_ratio: 0.9
+  deterministic_seed: 12345
