@@ -110,11 +110,11 @@ Notes:
             user=request.user,
         )
 
-        if order.status != Order.Status.CREATED:
-            raise OrderNotPayableException()
-
         if hasattr(order, "payment"):
             raise PaymentAlreadyExistsException()
+
+        if order.status != Order.Status.CREATED:
+            raise OrderNotPayableException()
 
         result = request.data.get("result")
 
