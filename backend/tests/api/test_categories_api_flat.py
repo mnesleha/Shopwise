@@ -17,7 +17,7 @@ def test_categories_list_is_flat(auth_client):
     assert r.status_code == 200
     data = r.json()
     assert isinstance(data, list)
-    assert len(data) >= 2
+    assert len(data) == 2
 
     # Contract: flat items only
     for item in data:
