@@ -6,6 +6,12 @@ from products.models import Product
 from api.serializers.product import ProductSerializer
 
 
+def _truthy(value: str | None) -> bool:
+    if value is None:
+        return False
+    return value.strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
 @extend_schema_view(
     list=extend_schema(
         tags=["Products"],
@@ -77,7 +83,15 @@ class ProductViewSet(ReadOnlyModelViewSet):
     search_fields = ["name"]
 
     def get_queryset(self):
-        return Product.objects.filter(
-            is_active=True,
-            stock_quantity__gt=0,
-        )
+        qs = Product.objects.all()
+
+        include_unavailable = _truthy(
+            self.request.query_params.get("include_unavailable"))
+
+        # TODO [SHOP-165]: Optional safety: only allow include_unavailable for authenticated users
+        # if include_unavailable and self.request.user and self.request.user.is_authenticated:
+        if include_unavailable:
+            return qs.order_by("id")
+
+        # Default FE-friendly behavior: only sellable
+        return qs.filter(is_active=True, stock_quantity__gt=0).order_by("id")
