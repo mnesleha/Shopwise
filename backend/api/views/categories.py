@@ -10,37 +10,21 @@ from api.serializers.category import CategorySerializer
         tags=["Categories"],
         summary="List product categories",
         description="""
-Returns the category tree used for product classification.
-
-Behavior:
-- Only parent (root) categories are returned.
-- Child categories are nested under their parent.
-- Category hierarchy is limited to two levels (parent → children).
+Returns a flat list of categories.
 
 Notes:
 - Categories are read-only.
-- Leaf categories are not exposed as top-level resources.
+- No hierarchy is exposed (categories are flat).
 """,
         responses={
             200: CategorySerializer,
         },
         examples=[
             OpenApiExample(
-                name="Category tree",
+                name="Flat category list",
                 value=[
-                    {
-                        "id": 1,
-                        "name": "Electronics",
-                        "is_parent": True,
-                        "children": [
-                            {
-                                "id": 2,
-                                "name": "Accessories",
-                                "is_parent": False,
-                                "children": []
-                            }
-                        ]
-                    }
+                    {"id": 1, "name": "Electronics"},
+                    {"id": 2, "name": "Accessories"},
                 ],
                 response_only=True,
             ),
@@ -54,7 +38,7 @@ Returns details of a single category.
 
 Notes:
 - Categories are read-only.
-- Both parent and leaf categories can be retrieved by ID.
+- Categories are flat (no parent/children).
 """,
         responses={
             200: CategorySerializer,
@@ -63,19 +47,7 @@ Notes:
         examples=[
             OpenApiExample(
                 name="Category detail",
-                value={
-                    "id": 1,
-                    "name": "Electronics",
-                    "is_parent": True,
-                    "children": [
-                        {
-                            "id": 2,
-                            "name": "Accessories",
-                            "is_parent": False,
-                            "children": []
-                        }
-                    ]
-                },
+                value={"id": 1, "name": "Electronics"},
                 response_only=True,
             ),
         ],
@@ -85,6 +57,4 @@ class CategoryViewSet(ReadOnlyModelViewSet):
     serializer_class = CategorySerializer
 
     def get_queryset(self):
-        return Category.objects.filter(
-            is_parent=True
-        ).prefetch_related("children")
+        return Category.objects.all()

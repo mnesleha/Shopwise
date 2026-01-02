@@ -16,14 +16,13 @@ Returns currently active discounts.
 Only discounts that:
 - are active
 - are within their validity period
-- target a product or a leaf category
+- target a product
 
 are returned.
 
 Notes:
 - Discounts are read-only.
 - Discounts do not calculate final prices.
-- Category discounts apply only to leaf categories.
 """,
         responses={
             200: DiscountSerializer,

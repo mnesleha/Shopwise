@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import json
 import random
 from dataclasses import dataclass
@@ -102,6 +103,8 @@ class Command(BaseCommand):
 
         if reset:
             self._reset_db()
+
+        self._ensure_superuser()
 
         # Everything should be deterministic and atomic.
         with transaction.atomic():
@@ -303,3 +306,28 @@ class Command(BaseCommand):
                 f"{'Created' if created else 'Updated'} discount: {name} (key={key})")
 
         return out
+
+    def _ensure_superuser(self):
+        User = get_user_model()
+        username = os.getenv("DJANGO_SUPERUSER_USERNAME", "admin")
+        password = os.getenv("DJANGO_SUPERUSER_PASSWORD", "admin")
+        email = os.getenv("DJANGO_SUPERUSER_EMAIL", "admin@example.com")
+
+        user, created = User.objects.get_or_create(
+            username=username,
+            defaults={
+                "email": email,
+                "is_staff": True,
+                "is_superuser": True,
+            },
+        )
+        # keep credentials deterministic
+        user.email = email
+        user.is_staff = True
+        user.is_superuser = True
+        user.set_password(password)
+        user.save()
+
+        action = "Created" if created else "Updated"
+        self.stdout.write(self.style.SUCCESS(
+            f"{action} superuser: {username}"))
