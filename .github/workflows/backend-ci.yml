@@ -36,3 +36,134 @@ jobs:
         run: |
           cd backend
           pytest -m "not mysql"
+
+  postman-api-tests:
+    name: Postman API Tests (Cloud Collection + MySQL)
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: shopwise
+          MYSQL_USER: shopwise
+          MYSQL_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.ci_mysql
+      DB_HOST: ${{ vars.DB_HOST }}
+      DB_PORT: ${{ vars.DB_PORT }}
+      DB_NAME: ${{ vars.DB_NAME }}
+      DB_USER: ${{ vars.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install system deps (MySQL client)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y default-mysql-client
+
+      - name: Install backend deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            mysqladmin ping -h 127.0.0.1 -P 3306 -u${{ vars.DB_USER }} -p${{ secrets.DB_PASSWORD }} --silent && exit 0 || true
+            sleep 2
+          done
+          echo "MySQL did not become ready in time"
+          docker ps -a || true
+          exit 1
+
+      - name: Migrate DB
+        run: |
+          cd backend
+          python manage.py migrate --noinput
+
+      - name: Seed test data
+        run: |
+          cd backend
+          python manage.py seed_test_data
+
+      - name: Verify seeded user (debug)
+        run: |
+          cd backend
+          python manage.py shell -c "from django.contrib.auth import get_user_model; U=get_user_model(); u=U.objects.filter(username='customer_2').first(); print('exists=', bool(u)); print('password_ok=', u.check_password('customer_2') if u else None)"
+
+
+      - name: Start Django runserver (background)
+        run: |
+          cd backend
+          nohup python manage.py runserver 127.0.0.1:8000 > runserver.log 2>&1 &
+          echo $! > runserver.pid
+
+      - name: Wait for backend health
+        run: |
+          for i in {1..45}; do
+            curl -sSf http://127.0.0.1:8000/api/v1/health/ && exit 0 || true
+            sleep 1
+          done
+          echo "Backend did not become ready in time"
+          echo "---- runserver.log (tail) ----"
+          tail -n 200 backend/runserver.log || true
+          exit 1
+
+      - name: Healthcheck from CI runner
+        run: |
+          curl -i http://127.0.0.1:8000/api/v1/health/
+
+      - name: Login check from CI runner (curl)
+        run: |
+          curl -i -X POST http://127.0.0.1:8000/api/v1/auth/login/ \
+            -H "Content-Type: application/json" \
+            -d '{"username":"customer_2","password":"customer_2"}'
+
+
+      - name: List Postman Collections (debug)
+        env:
+          POSTMAN_API_KEY: ${{ secrets.POSTMAN_API_KEY }}
+        run: |
+          curl -sS -H "X-Api-Key: $POSTMAN_API_KEY" https://api.getpostman.com/collections | head -c 2000
+
+      - name: Run Postman Collection (cloud IDs)
+        uses: postmanlabs/postman-cli-action@v1
+        with:
+          api-key: ${{ secrets.POSTMAN_API_KEY }}
+          command: >
+            collection run 50963019-2604f22a-37e4-4f85-afe7-8cd894f8d994
+            --environment 50963019-cce78deb-378b-4740-92df-d5f37e4b23d3
+            --reporters cli,junit
+            --reporter-junit-export postman-junit.xml
+
+      - name: Upload Postman JUnit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: postman-junit
+          path: postman-junit.xml
+
+      - name: Upload runserver log (debug)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: runserver-log
+          path: backend/runserver.log
