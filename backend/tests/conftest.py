@@ -4,6 +4,7 @@ from discounts.models import Discount
 import pytest
 from django.contrib.auth.models import User
 from django.core.management import call_command
+from django.db import connection
 from rest_framework.test import APIClient
 from products.models import Product
 from discounts.models import Discount
@@ -11,11 +12,50 @@ from orders.models import Order
 from orderitems.models import OrderItem
 
 
-def pytest_collection_modifyitems(config, items):
-    use_mysql = config.getoption("-m") and "mysql" in config.getoption("-m")
+def _wants_mysql(args: list[str]) -> bool:
+    """Heuristika: pokud -m obsahuje mysql, jedeme MySQL settings."""
+    if "-m" not in args:
+        return False
+    i = args.index("-m")
+    if i + 1 >= len(args):
+        return False
+    expr = args[i + 1]
+    # expr může být: "mysql", "mysql and not slow", "not sqlite and mysql", atd.
+    return "mysql" in expr.split() or "mysql" in expr
 
-    if use_mysql:
-        os.environ["DJANGO_SETTINGS_MODULE"] = "settings.local"
+
+def pytest_load_initial_conftests(early_config, parser, args):
+    if _wants_mysql(args):
+        # pokud uživatel nedal explicitně --ds, doplníme ho
+        if not any(a.startswith("--ds=") for a in args) and "--ds" not in args:
+            args.append("--ds=config.settings.local")
+
+        # pro jistotu nastavíme i env (někdy se hodí pro code, co čte env přímo)
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE",
+                              "config.settings.local")
+
+
+@pytest.fixture(autouse=True)
+def print_mysql_db_identity(request, db):
+    if request.node.get_closest_marker("mysql"):
+        print("\n--- MYSQL TEST DB INFO ---")
+        print("ENGINE:", connection.settings_dict["ENGINE"])
+        print("NAME:", connection.settings_dict["NAME"])
+        print("HOST:", connection.settings_dict.get("HOST"))
+        print("PORT:", connection.settings_dict.get("PORT"))
+        print("VENDOR:", connection.vendor)
+
+        if connection.vendor == "mysql":
+            with connection.cursor() as c:
+                c.execute("select database(), @@hostname, @@port")
+                print("DB says:", c.fetchone())
+
+
+# def pytest_collection_modifyitems(config, items):
+#     use_mysql = config.getoption("-m") and "mysql" in config.getoption("-m")
+
+#     if use_mysql:
+#         os.environ["DJANGO_SETTINGS_MODULE"] = "settings.local"
 
 
 @pytest.fixture
