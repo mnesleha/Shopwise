@@ -4,6 +4,8 @@
 
 **Date**: Sprint 7
 
+**Decision type**: Architecure
+
 ## Context
 
 Shopwise historically modeled categories as a two-level tree (parent → children). This is reflected in:

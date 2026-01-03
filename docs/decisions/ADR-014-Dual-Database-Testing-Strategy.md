@@ -4,6 +4,8 @@
 
 **Date**: Sprint 7
 
+**Decision type**: Architecure
+
 ## Context
 
 The project currently runs the pytest suite against **SQLite** by default. This provides fast feedback but introduces a risk of **false confidence**, because production will run on MySQL where behavior differs in important ways:

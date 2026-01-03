@@ -1,5 +1,7 @@
 # Definition of Done
 
+**Decision type**: Process
+
 A user story is considered "Done" when all of the following
 criteria are met:
 

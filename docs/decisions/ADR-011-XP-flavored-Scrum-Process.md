@@ -2,6 +2,8 @@
 
 **Status**: Accepted (Process)
 
+**Decision type**: Process
+
 ## Context
 
 The project is:

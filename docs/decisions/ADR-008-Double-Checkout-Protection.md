@@ -4,6 +4,8 @@
 
 **Date**: Sprint 7
 
+**Decision type**: Architecure
+
 ## Context
 
 There was a risk of:

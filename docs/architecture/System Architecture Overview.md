@@ -6,6 +6,9 @@ including its main components, responsibilities, and interactions.
 The goal is to provide a clear understanding of how the system is structured
 and how individual parts communicate.
 
+> For the authoritative current state (active decisions, guarantees and testing strategy),
+> see [Current Architecture Baseline.md](Current%20Architecture%20Baseline.md).
+
 ## High-Level Architecture
 
 Shopwise follows a classic client-server architecture:

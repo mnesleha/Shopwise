@@ -1,7 +1,10 @@
 # ADR-013: Pricing and Rounding Policy (Per-Unit Discounts, FIXED Wins)
 
 **Status**: Accepted
+
 **Date**: Sprint 7
+
+**Decision type**: Architecure
 
 ## Context
 

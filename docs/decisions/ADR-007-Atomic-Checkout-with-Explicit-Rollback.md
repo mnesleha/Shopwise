@@ -4,6 +4,8 @@
 
 **Date**: Sprint 7 (Hardening)
 
+**Decision type**: Architecure
+
 ## Context
 
 Checkout was a critical point:

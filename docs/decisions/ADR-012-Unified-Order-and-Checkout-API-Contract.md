@@ -1,7 +1,10 @@
 # ADR-012: Unified Order and Checkout API Contract
 
 **Status**: Accepted
+
 **Date**: Sprint 7
+
+**Decision type**: Architecure
 
 ## Context
 

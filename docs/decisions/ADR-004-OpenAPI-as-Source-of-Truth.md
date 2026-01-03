@@ -4,6 +4,8 @@
 
 **Date**: Sprint 5–6
 
+**Decision type**: Architecure
+
 ## Context
 
 The project reached a stage where:

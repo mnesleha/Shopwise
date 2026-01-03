@@ -1,5 +1,7 @@
 # ADR-003: Database Strategy
 
+**Decision type**: Architecure
+
 ## Status
 
 Accepted

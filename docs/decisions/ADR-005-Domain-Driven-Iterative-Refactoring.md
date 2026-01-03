@@ -4,6 +4,8 @@
 
 **Date**: Sprint 6
 
+**Decision type**: Process
+
 ## Context
 
 Backlog grew to the point where:

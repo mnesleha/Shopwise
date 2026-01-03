@@ -4,6 +4,8 @@
 
 **Date**: Sprint 6
 
+**Decision type**: Architecure
+
 ## Context
 
 Major issues with:

@@ -4,6 +4,8 @@
 
 **Date**: Sprint 7
 
+**Decision type**: Architecure
+
 ## Context
 
 Original state:

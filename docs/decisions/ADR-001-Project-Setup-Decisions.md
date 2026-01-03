@@ -1,5 +1,7 @@
 # ADR-001: Project setup decisions
 
+**Decision type**: Architecure
+
 - Monorepo chosen for simplicity
 - Django + DRF backend
 - React + TypeScript frontend
