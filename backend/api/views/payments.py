@@ -1,13 +1,13 @@
-from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema, OpenApiExample
 from api.serializers.payment import PaymentCreateRequestSerializer
+from api.serializers.payment_response import PaymentResponseSerializer
 from api.serializers.common import ErrorResponseSerializer
+from api.exceptions.base import NotFoundException
 from api.exceptions.payment import (
     PaymentAlreadyExistsException,
-    InvalidPaymentResultException,
     OrderNotPayableException
 )
 from orders.models import Order
@@ -41,7 +41,7 @@ Notes:
 """,
         request=PaymentCreateRequestSerializer,
         responses={
-            201: None,  # response is inline dict, documented via examples
+            201: PaymentResponseSerializer,
             400: ErrorResponseSerializer,
             404: ErrorResponseSerializer,
             409: ErrorResponseSerializer,
@@ -68,8 +68,8 @@ Notes:
             OpenApiExample(
                 name="Order not found or not payable",
                 value={
-                    "code": "not_found",
-                    "message": "Order not found or not payable."
+                    "code": "NOT_FOUND",
+                    "message": "Order not found."
                 },
                 response_only=True,
                 status_codes=["404"],
@@ -86,8 +86,8 @@ Notes:
             OpenApiExample(
                 name="Order not payable",
                 value={
-                    "detail": "Order is not payable in its current state.",
                     "code": "ORDER_NOT_PAYABLE",
+                    "message": "Order is not payable in its current state.",
                 },
                 response_only=True,
                 status_codes=["409"],
@@ -95,8 +95,9 @@ Notes:
             OpenApiExample(
                 name="Invalid payment result",
                 value={
-                    "code": "INVALID_PAYMENT_RESULT",
-                    "message": "Invalid payment result."
+                    "code": "VALIDATION_ERROR",
+                    "message": "One or more fields have errors.",
+                    "errors": {"result": ['"maybe" is not a valid choice.']},
                 },
                 response_only=True,
                 status_codes=["400"],
@@ -104,31 +105,31 @@ Notes:
         ],
     )
     def post(self, request):
-        order = get_object_or_404(
-            Order,
-            id=request.data["order_id"],
-            user=request.user,
-        )
+        serializer = PaymentCreateRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        if hasattr(order, "payment"):
+        order_id = serializer.validated_data["order_id"]
+        payment_result = serializer.validated_data["result"]
+
+        try:
+            order = Order.objects.get(id=order_id, user=request.user)
+        except Order.DoesNotExist:
+            raise NotFoundException("Order not found.")
+
+        if Payment.objects.filter(order=order).exists():
             raise PaymentAlreadyExistsException()
 
         if order.status != Order.Status.CREATED:
             raise OrderNotPayableException()
-
-        result = request.data.get("result")
 
         status_map = {
             "success": Payment.Status.SUCCESS,
             "fail": Payment.Status.FAILED,
         }
 
-        if result not in status_map:
-            raise InvalidPaymentResultException()
-
         payment = Payment.objects.create(
             order=order,
-            status=status_map[result],
+            status=status_map[payment_result],
         )
 
         order.status = (
@@ -138,11 +139,4 @@ Notes:
         )
         order.save()
 
-        return Response(
-            {
-                "id": payment.id,
-                "status": payment.status,
-                "order": order.id,
-            },
-            status=201,
-        )
+        return Response(PaymentResponseSerializer(payment).data, status=201)

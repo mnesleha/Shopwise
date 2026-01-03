@@ -11,7 +11,7 @@ class ValidationException(APIException):
 class NotFoundException(APIException):
     status_code = status.HTTP_404_NOT_FOUND
     default_detail = "Resource not found."
-    default_code = "not_found"
+    default_code = "NOT_FOUND"
 
 
 class ConflictException(APIException):

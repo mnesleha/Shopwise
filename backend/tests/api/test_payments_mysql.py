@@ -1,4 +1,5 @@
 import pytest
+from django.db import IntegrityError
 from orders.models import Order
 from payments.models import Payment
 
@@ -27,5 +28,5 @@ def test_payment_is_one_to_one_with_order_mysql(order_factory, user):
     Payment.objects.create(order=order, status=Payment.Status.SUCCESS)
 
     # Creating another payment for the same order must fail on DB constraint
-    with pytest.raises(Exception):
+    with pytest.raises(IntegrityError):
         Payment.objects.create(order=order, status=Payment.Status.FAILED)
