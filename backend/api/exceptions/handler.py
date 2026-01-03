@@ -22,9 +22,10 @@ def custom_exception_handler(exc, context):
 
     # --- Domain / business errors ---
     if isinstance(exc, APIException):
+        code = getattr(exc, "default_code", "ERROR")
         return Response(
             {
-                "code": getattr(exc, "default_code", "error"),
+                "code": str(code).upper(),
                 "message": str(exc.detail),
             },
             status=response.status_code,
