@@ -5,7 +5,7 @@ from rest_framework import status
 class ValidationException(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
     default_detail = "Validation error."
-    default_code = "validation_error"
+    default_code = "VALIDATION_ERROR"
 
 
 class NotFoundException(APIException):
@@ -17,4 +17,4 @@ class NotFoundException(APIException):
 class ConflictException(APIException):
     status_code = status.HTTP_409_CONFLICT
     default_detail = "Conflict."
-    default_code = "conflict"
+    default_code = "CONFLICT"

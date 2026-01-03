@@ -14,7 +14,7 @@ def test_payments_create_returns_contract_shape(auth_client, user, order_factory
     Contract:
     201 returns payment object: {id:int, status:str, order:int}
     """
-    order = order_factory(user=user, status=Order.Status.CREATED)
+    order = order_factory(user=user)
 
     r = auth_client.post(
         "/api/v1/payments/",
@@ -28,6 +28,7 @@ def test_payments_create_returns_contract_shape(auth_client, user, order_factory
     assert set(data.keys()) == PAYMENT_OK_KEYS
     assert isinstance(data["id"], int)
     assert isinstance(data["status"], str)
+    assert data["status"] == "SUCCESS"  # Validate actual value, not just type
     assert isinstance(data["order"], int)
     assert data["order"] == order.id
 
@@ -38,7 +39,7 @@ def test_payments_invalid_result_returns_400_error_shape(auth_client, user, orde
     Contract:
     400 returns {code, message} and code is UPPER_SNAKE_CASE.
     """
-    order = order_factory(user=user, status=Order.Status.CREATED)
+    order = order_factory(user=user)
 
     r = auth_client.post(
         "/api/v1/payments/",
@@ -52,7 +53,7 @@ def test_payments_invalid_result_returns_400_error_shape(auth_client, user, orde
     assert set(data.keys()) >= ERROR_KEYS
     assert isinstance(data["code"], str)
     assert isinstance(data["message"], str)
-    assert re.match(r"^[A-Z0-9_]+$", data["code"])
+    assert re.match(r"^[A-Z][A-Z0-9_]*$", data["code"])
 
 
 @pytest.mark.django_db
@@ -80,7 +81,7 @@ def test_payments_double_submit_returns_409_error_shape(auth_client, user, order
     Business rule:
     Each order can have only one payment. Second submit => 409.
     """
-    order = order_factory(user=user, status=Order.Status.CREATED)
+    order = order_factory(user=user)
 
     payload = {"order_id": order.id, "result": "success"}
     r1 = auth_client.post("/api/v1/payments/", payload, format="json")
@@ -91,4 +92,4 @@ def test_payments_double_submit_returns_409_error_shape(auth_client, user, order
 
     data = r2.json()
     assert set(data.keys()) >= ERROR_KEYS
-    assert re.match(r"^[A-Z0-9_]+$", data["code"])
+    assert re.match(r"^[A-Z][A-Z0-9_]*$", data["code"])

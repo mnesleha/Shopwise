@@ -1,2 +1,2 @@
 from .cart import ProductUnavailableException
-from .payment import PaymentAlreadyExistsException, InvalidPaymentResultException
+from .payment import PaymentAlreadyExistsException
