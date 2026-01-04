@@ -51,6 +51,34 @@ def test_register_validation_errors(payload, expected_error_fields):
 
 
 @pytest.mark.django_db
+def test_register_duplicate_username_returns_validation_error_in_unified_shape():
+    client = APIClient()
+
+    # first registration
+    r1 = client.post(
+        "/api/v1/auth/register/",
+        {"username": "dupuser", "password": "Passw0rd!123"},
+        format="json",
+    )
+    assert r1.status_code == 201
+
+    # second registration with same username
+    r2 = client.post(
+        "/api/v1/auth/register/",
+        {"username": "dupuser", "password": "DifferentPass!456"},
+        format="json",
+    )
+
+    assert r2.status_code == 400
+    data = r2.json()
+
+    assert data["code"] == "VALIDATION_ERROR"
+    assert "errors" in data
+    assert isinstance(data["errors"], dict)
+    assert "username" in data["errors"]
+
+
+@pytest.mark.django_db
 def test_login_returns_bearer_token_for_valid_credentials():
     # Precondition: user exists
     User.objects.create_user(username="loginuser", password="Passw0rd!123")
