@@ -17,6 +17,7 @@ class RegisterRequestSerializer(serializers.Serializer):
     email = serializers.EmailField(
         required=False,
         allow_null=True,
+        allow_blank=True,
         validators=[
             UniqueValidator(
                 queryset=User.objects.exclude(
@@ -25,6 +26,16 @@ class RegisterRequestSerializer(serializers.Serializer):
             )
         ],
     )
+
+    def validate_email(self, value):
+        # Normalize empty string to None to ensure consistent DB storage
+        # and predictable uniqueness behavior (especially on MySQL).
+        if value == "":
+            return None
+        return value
+
+    def validate_username(self, value):
+        return value.lower()
 
 
 class LoginRequestSerializer(serializers.Serializer):
@@ -35,6 +46,10 @@ class LoginRequestSerializer(serializers.Serializer):
 class TokenResponseSerializer(serializers.Serializer):
     access = serializers.CharField(read_only=True)
     refresh = serializers.CharField(read_only=True)
+
+
+class RefreshRequestSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
 
 
 class UserResponseSerializer(serializers.Serializer):

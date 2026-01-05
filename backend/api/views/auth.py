@@ -1,9 +1,12 @@
 from django.contrib.auth import authenticate, get_user_model
 from django.db import IntegrityError, transaction
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import ValidationError
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+
 from drf_spectacular.utils import extend_schema
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -12,6 +15,7 @@ from api.serializers.auth import (
     LoginRequestSerializer,
     TokenResponseSerializer,
     UserResponseSerializer,
+    RefreshRequestSerializer
 )
 
 User = get_user_model()
@@ -34,10 +38,6 @@ class RegisterView(APIView):
         username = serializer.validated_data["username"]
         password = serializer.validated_data["password"]
         email = serializer.validated_data.get("email")
-
-        # Normalize empty email to None so DB-level uniqueness behaves predictably (esp. MySQL).
-        if email == "":
-            email = None
 
         try:
             with transaction.atomic():
@@ -82,7 +82,7 @@ class LoginView(APIView):
 
         user = authenticate(
             request,
-            username=serializer.validated_data["username"],
+            username=serializer.validated_data["username"].lower(),
             password=serializer.validated_data["password"],
         )
 
@@ -108,3 +108,32 @@ class MeView(APIView):
     )
     def get(self, request):
         return Response(UserResponseSerializer(request.user).data)
+
+
+class RefreshView(APIView):
+    authentication_classes = []  # refresh uses the refresh token in body
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=["Auth"],
+        summary="Refresh access token",
+        request=RefreshRequestSerializer,
+        responses={200: TokenResponseSerializer},
+    )
+    def post(self, request):
+        serializer = RefreshRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        refresh_str = serializer.validated_data["refresh"]
+        try:
+            refresh = RefreshToken(refresh_str)
+            # This will rotate and blacklist (based on SIMPLE_JWT settings)
+            data = {
+                "access": str(refresh.access_token),
+                # after rotation this becomes the new refresh token
+                "refresh": str(refresh),
+            }
+            return Response(TokenResponseSerializer(data).data, status=status.HTTP_200_OK)
+        except TokenError:
+            raise ValidationError(
+                {"refresh": ["Invalid or expired refresh token."]})

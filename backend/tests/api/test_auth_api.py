@@ -162,3 +162,21 @@ def test_me_requires_authentication():
     # DRF commonly uses 'not_authenticated' -> our handler uppercases it
     assert data["code"] in ("NOT_AUTHENTICATED",
                             "AUTHENTICATION_FAILED", "PERMISSION_DENIED")
+
+
+@pytest.mark.django_db
+def test_register_rejects_username_longer_than_150_chars():
+    client = APIClient()
+    too_long_username = "u" * 151
+
+    r = client.post(
+        "/api/v1/auth/register/",
+        {"username": too_long_username, "password": "Passw0rd!123"},
+        format="json",
+    )
+
+    assert r.status_code == 400
+    data = r.json()
+    assert data["code"] == "VALIDATION_ERROR"
+    assert "errors" in data
+    assert "username" in data["errors"]
