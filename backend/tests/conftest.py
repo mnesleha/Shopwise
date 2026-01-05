@@ -1,4 +1,5 @@
 import os
+import sys
 from decimal import Decimal
 from discounts.models import Discount
 import pytest
@@ -13,15 +14,25 @@ from orderitems.models import OrderItem
 
 
 def _wants_mysql(args: list[str]) -> bool:
-    """Heuristika: pokud -m obsahuje mysql, jedeme MySQL settings."""
+    """
+    Heuristic:
+    - If there is no -m, assume default (SQLite) -> False.
+    - If expression contains 'not mysql' (as a phrase), treat as False.
+    - If expression contains 'mysql' otherwise, treat as True.
+    """
     if "-m" not in args:
         return False
     i = args.index("-m")
     if i + 1 >= len(args):
         return False
-    expr = args[i + 1]
-    # expr může být: "mysql", "mysql and not slow", "not sqlite and mysql", atd.
-    return "mysql" in expr.split() or "mysql" in expr
+    expr = args[i + 1].strip().lower()
+
+    # explicit exclusion
+    if "not mysql" in expr:
+        return False
+
+    # explicit inclusion
+    return "mysql" in expr
 
 
 def pytest_load_initial_conftests(early_config, parser, args):
@@ -201,6 +212,11 @@ def seed_test_data(django_db_setup, django_db_blocker):
     Seed deterministic test data once per test session.
     Does NOT flush DB, preserves superuser.
     """
+
+    # Only seed for MySQL suite (integration/E2E-like tests).
+    # Default SQLite unit tests should own their own data and remain isolated.
+    if not _wants_mysql(sys.argv):
+        return
 
     with django_db_blocker.unblock():
         call_command("seed_test_data", reset=True)

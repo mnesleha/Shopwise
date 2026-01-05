@@ -36,8 +36,8 @@ def test_checkout_is_atomic_on_mysql(auth_client, user, product):
         response = auth_client.post("/api/v1/cart/checkout/")
         assert response.status_code in (409, 500)
 
-    assert Order.objects.count() == 0
-    assert OrderItem.objects.count() == 0
+    assert Order.objects.filter(user=user).count() == 0
+    assert OrderItem.objects.filter(order__user=user).count() == 0
 
 
 # Decimal precision & rounding persistence
