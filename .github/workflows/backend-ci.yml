@@ -41,6 +41,16 @@ jobs:
     name: Postman API Tests (Cloud Collection + MySQL)
     runs-on: ubuntu-latest
 
+    strategy:
+      # collection matrix definition
+      matrix:
+        collection_id: 
+          - 50963019-cf6b6cce-3e0e-402e-a70b-2ae1762faa75
+          - 50963019-5a0e0099-fc8d-4520-b2cd-e75ad4caf870
+      
+      # Option to continue all matrix runs even if some fail
+      fail-fast: false 
+
     services:
       mysql:
         image: mysql:8.0
@@ -99,10 +109,16 @@ jobs:
           cd backend
           python manage.py migrate --noinput
 
-      - name: Seed test data
+      - name: Seed test data and export fixtures
         run: |
-          cd backend
-          python manage.py seed_test_data
+          mkdir -p artifacts
+          python backend/manage.py seed_test_data --profile e2e --reset --export-fixtures artifacts/fixtures.json
+
+      - name: Load fixtures JSON into env var
+        id: fixtures
+        run: |
+          # Minify JSON to a single line for safe CLI passing
+          echo "FIXTURES_JSON=$(cat artifacts/fixtures.json | python -c 'import json,sys; print(json.dumps(json.load(sys.stdin), separators=(",",":")))')" >> $GITHUB_ENV
 
       - name: Verify seeded user (debug)
         run: |
@@ -149,8 +165,9 @@ jobs:
         with:
           api-key: ${{ secrets.POSTMAN_API_KEY }}
           command: >
-            collection run 50963019-2604f22a-37e4-4f85-afe7-8cd894f8d994
+            collection run ${{ matrix.collection_id }}
             --environment 50963019-cce78deb-378b-4740-92df-d5f37e4b23d3
+            --env-var fixtures_json="${{ env.FIXTURES_JSON }}"
             --reporters cli,junit
             --reporter-junit-export postman-junit.xml
 
