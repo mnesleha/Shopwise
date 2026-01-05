@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import ValidationError
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 
 from drf_spectacular.utils import extend_schema
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -125,15 +125,18 @@ class RefreshView(APIView):
         serializer.is_valid(raise_exception=True)
 
         refresh_str = serializer.validated_data["refresh"]
+
         try:
-            refresh = RefreshToken(refresh_str)
-            # This will rotate and blacklist (based on SIMPLE_JWT settings)
-            data = {
-                "access": str(refresh.access_token),
-                # after rotation this becomes the new refresh token
-                "refresh": str(refresh),
-            }
-            return Response(TokenResponseSerializer(data).data, status=status.HTTP_200_OK)
-        except TokenError:
+            # This serializer applies:
+            # - ROTATE_REFRESH_TOKENS
+            # - BLACKLIST_AFTER_ROTATION (requires token_blacklist app + migrations)
+            refresh_serializer = TokenRefreshSerializer(
+                data={"refresh": refresh_str})
+            refresh_serializer.is_valid(raise_exception=True)
+            # dict with "access" and, when rotating, "refresh"
+            data = refresh_serializer.validated_data
+            return Response(TokenResponseSerializer(data).data, status=200)
+        except Exception:
+            # Map any refresh problems to our unified validation shape
             raise ValidationError(
                 {"refresh": ["Invalid or expired refresh token."]})

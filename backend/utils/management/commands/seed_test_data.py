@@ -6,7 +6,7 @@ import random
 from dataclasses import dataclass
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
-from typing import Any
+from typing import Any, Tuple
 
 from django.apps import apps
 from django.contrib.auth import get_user_model
@@ -16,6 +16,10 @@ from django.utils.timezone import now, timedelta
 
 from products.models import Product
 from discounts.models import Discount
+from carts.models import Cart, CartItem
+from orders.models import Order
+from orderitems.models import OrderItem
+from payments.models import Payment
 
 
 MONEY_Q = Decimal("0.01")
@@ -146,16 +150,23 @@ class Command(BaseCommand):
     # -----------------------
     def _seed_from_yaml(self, data: dict[str, Any]) -> dict[str, Any]:
         fixtures: dict[str, Any] = {
-            "users": {}, "products": {}, "discounts": {}}
-
+            "users": {},
+            "products": {},
+            "discounts": {},
+            "carts": {},
+            "orders": {},
+            "payments": {},
+        }
         users = data.get("users", []) or []
         products = data.get("products", []) or []
-        discounts = data.get("discounts", []) or {}
+        discounts = data.get("discounts", []) or []
         bulk = data.get("bulk_products", {}) or {}
+        carts = data.get("carts", []) or []
+        orders = data.get("orders", []) or []
+        payments = data.get("payments", []) or []
 
-        user_map = self._create_users(users)
-        for k, v in user_map.items():
-            fixtures["users"][k] = v
+        user_obj_map, user_fixture_map = self._create_users(users)
+        fixtures["users"].update(user_fixture_map)
 
         product_map = self._create_products(products)
         for key, product in product_map.items():
@@ -172,11 +183,42 @@ class Command(BaseCommand):
             fixtures["discounts"][key] = {
                 "id": discount.id, "name": discount.name}
 
+        # Carts (depends on users + products)
+        cart_map = self._create_carts(carts, user_obj_map, product_map)
+        for key, cart in cart_map.items():
+            fixtures["carts"][key] = {
+                "id": cart.id,
+                "user_id": cart.user_id,
+                "status": cart.status,
+            }
+
+        # Orders (depends on users + products)
+        order_map = self._create_orders(orders, user_obj_map, product_map)
+        for key, order in order_map.items():
+            fixtures["orders"][key] = {
+                "id": order.id,
+                "user_id": order.user_id,
+                "status": order.status,
+            }
+
+        # Payments (depends on orders)
+        payment_map = self._create_payments(payments, order_map)
+        for key, payment in payment_map.items():
+            fixtures["payments"][key] = {
+                "id": payment.id,
+                "order_id": payment.order_id,
+                "status": payment.status,
+            }
+
         return fixtures
 
-    def _create_users(self, users: list[dict[str, Any]]) -> dict[str, dict[str, str]]:
+    def _create_users(
+        self, users: list[dict[str, Any]]
+    ) -> Tuple[dict[str, Any], dict[str, dict[str, str]]]:
+
         User = get_user_model()
-        out: dict[str, dict[str, str]] = {}
+        obj_map: dict[str, Any] = {}
+        fixture_map: dict[str, dict[str, str]] = {}
 
         for u in users:
             key = u["key"]
@@ -194,7 +236,147 @@ class Command(BaseCommand):
                 user.save()
                 self.stdout.write(f"Updated user password: {username}")
 
-            out[key] = {"username": username, "password": password}
+            obj_map[key] = user
+            fixture_map[key] = {"username": username, "password": password}
+
+        return obj_map, fixture_map
+
+    def _create_carts(
+        self,
+        carts: list[dict[str, Any]],
+        user_obj_map: dict[str, Any],
+        product_map: dict[str, Product],
+    ) -> dict[str, Cart]:
+        out: dict[str, Cart] = {}
+
+        for c in carts:
+            key = c["key"]
+            user_key = c["user_key"]
+            status = c.get("status", Cart.Status.ACTIVE)
+            items = c.get("items", []) or []
+
+            if user_key not in user_obj_map:
+                raise CommandError(
+                    f"Cart {key} references unknown user_key: {user_key}")
+
+            user = user_obj_map[user_key]
+
+            # Create cart (deterministic: always create fresh after reset; update if exists)
+            cart, created = Cart.objects.get_or_create(
+                user=user,
+                status=status,
+            )
+            if not created:
+                # ensure deterministic status
+                Cart.objects.filter(id=cart.id).update(status=status)
+                cart.refresh_from_db()
+
+            # Clear existing items to keep deterministic
+            CartItem.objects.filter(cart=cart).delete()
+
+            for it in items:
+                product_key = it["product_key"]
+                qty = int(it["quantity"])
+                if product_key not in product_map:
+                    raise CommandError(
+                        f"Cart {key} references unknown product_key: {product_key}")
+                product = product_map[product_key]
+
+                CartItem.objects.create(
+                    cart=cart,
+                    product=product,
+                    quantity=qty,
+                    price_at_add_time=product.price,
+                )
+
+            out[key] = cart
+            self.stdout.write(
+                f"{'Created' if created else 'Updated'} cart: {key} (user={user.username}, status={status})"
+            )
+
+        return out
+
+    def _create_orders(
+        self,
+        orders: list[dict[str, Any]],
+        user_obj_map: dict[str, Any],
+        product_map: dict[str, Product],
+    ) -> dict[str, Order]:
+        out: dict[str, Order] = {}
+
+        for o in orders:
+            key = o["key"]
+            user_key = o.get("user_key")
+            status = o.get("status", Order.Status.CREATED)
+            items = o.get("items", []) or []
+
+            user = None
+            if user_key is not None:
+                if user_key not in user_obj_map:
+                    raise CommandError(
+                        f"Order {key} references unknown user_key: {user_key}")
+                user = user_obj_map[user_key]
+
+            order = Order.objects.create(user=user, status=status)
+
+            for it in items:
+                product_key = it["product_key"]
+                qty = int(it["quantity"])
+                if product_key not in product_map:
+                    raise CommandError(
+                        f"Order {key} references unknown product_key: {product_key}")
+                product = product_map[product_key]
+
+                unit = product.price
+                line_total = money(unit * qty)
+
+                OrderItem.objects.create(
+                    order=order,
+                    product=product,
+                    quantity=qty,
+                    # snapshot fields (keep consistent & non-negative)
+                    unit_price_at_order_time=unit,
+                    line_total_at_order_time=line_total,
+                    price_at_order_time=line_total,
+                    applied_discount_type_at_order_time=None,
+                    applied_discount_value_at_order_time=None,
+                )
+
+            out[key] = order
+            self.stdout.write(
+                f"Created order: {key} (user={getattr(user, 'username', None)}, status={status})"
+            )
+
+        return out
+
+    def _create_payments(
+        self,
+        payments: list[dict[str, Any]],
+        order_map: dict[str, Order],
+    ) -> dict[str, Payment]:
+        out: dict[str, Payment] = {}
+
+        for p in payments:
+            key = p["key"]
+            order_key = p["order_key"]
+            status = p.get("status", Payment.Status.PENDING)
+
+            if order_key not in order_map:
+                raise CommandError(
+                    f"Payment {key} references unknown order_key: {order_key}")
+
+            order = order_map[order_key]
+
+            if Payment.objects.filter(order=order).exists():
+                raise CommandError(
+                    f"Payment {key} violates unique_payment_per_order: order_key={order_key}"
+                )
+
+            payment = Payment.objects.create(order=order, status=status)
+            out[key] = payment
+            self.stdout.write(
+                f"Created payment: {key} (order={order.id}, status={status})"
+            )
 
         return out
 

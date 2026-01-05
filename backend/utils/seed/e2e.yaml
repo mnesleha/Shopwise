@@ -64,6 +64,38 @@ discounts:
     valid_to_offset_days: +5
     product_key: FIXED_WINS_PRODUCT
 
+carts:
+  - key: CUSTOMER_1_ACTIVE_CART
+    user_key: CUSTOMER_1
+    status: ACTIVE
+    items:
+      - product_key: SELLABLE_MOUSE
+        quantity: 2
+      - product_key: FIXED_WINS_PRODUCT
+        quantity: 1
+
+orders:
+  - key: ORDER_CREATED_1
+    user_key: CUSTOMER_1
+    status: CREATED
+    items:
+      - product_key: SELLABLE_MOUSE
+        quantity: 1
+  - key: ORDER_PAID_1
+    user_key: CUSTOMER_2
+    status: PAID
+    items:
+      - product_key: FIXED_WINS_PRODUCT
+        quantity: 2
+
+payments:
+  - key: PAYMENT_FAILED_1
+    order_key: ORDER_CREATED_1
+    status: FAILED
+  - key: PAYMENT_SUCCESS_1
+    order_key: ORDER_PAID_1
+    status: SUCCESS
+
 bulk_products:
   enabled: true
   count: 100
