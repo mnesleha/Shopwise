@@ -175,12 +175,12 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: postman-junit
+          name: postman-junit-${{ matrix.collection_id }}
           path: postman-junit.xml
 
       - name: Upload runserver log (debug)
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: runserver-log
+          name: runserver-log-${{ matrix.collection_id }}
           path: backend/runserver.log
