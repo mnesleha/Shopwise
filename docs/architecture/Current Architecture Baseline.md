@@ -9,7 +9,7 @@ API contracts, data guarantees, or testing strategy.
 
 ---
 
-## 1 System Snapshot (Current)
+## System Snapshot (Current)
 
 - **Backend:** Django + Django REST Framework
 - **API Contract:** OpenAPI is the canonical specification (generated from code and treated as source of truth). (ADR-004)
@@ -23,36 +23,36 @@ API contracts, data guarantees, or testing strategy.
 
 ---
 
-## 2 Architecture Principles (Active)
+## Architecture Principles (Active)
 
 These principles are currently enforced across the codebase (or within the hardened domains if scope-limited).
 
-### 2.1 Contract-first API behavior
+### Contract-first API behavior
 
 - OpenAPI is the canonical contract for endpoints, status codes and error payloads. (ADR-004)
 
-### 2.2 Unified error contract
+### Unified error contract
 
 - All API errors use a consistent payload shape:
   `{ "code": "<string>", "message": "<human readable>" }`
 - Domain-specific exceptions are mapped through a single handler. (ADR-009)
 
-### 2.3 Deterministic pricing
+### Deterministic pricing
 
 - Orders store pricing snapshots (unit price, discounts, line totals) to guarantee determinism after checkout. (ADR-006)
 
-### 2.4 Atomic checkout
+### Atomic checkout
 
 - Checkout is executed atomically; partial state is not allowed.
 - Explicit rollback behavior is applied where needed. (ADR-007)
 
-### 2.5 Double-checkout protection
+### Double-checkout protection
 
 - The system prevents converting the same cart multiple times; conflicts return a deterministic error (e.g., 409). (ADR-008)
 
 ---
 
-## 3 Domain Boundaries (Current)
+## Domain Boundaries (Current)
 
 This section describes the active bounded contexts / domains and their responsibilities.
 
@@ -62,7 +62,7 @@ This section describes the active bounded contexts / domains and their responsib
 
 > Details: see `architecture/Domain Model.md` and `architecture/Cart-Order Lifecycle.md`.
 
-### 3.1 Product Catalog: Categories
+### Product Catalog: Categories
 
 Categories are modeled as a **flat list** with no hierarchy. (ADR-015)
 
@@ -74,34 +74,34 @@ Source: [ADR-015](../decisions/ADR-015-Category_Model_Is_Flat.md).
 
 ---
 
-## 4 Data & Persistence Guarantees
+## Data & Persistence Guarantees
 
-### 4.1 Database strategy by environment (Current)
+### Database strategy by environment (Current)
 
 - Unit tests: SQLite (fast feedback loop). (ADR-003)
 - Production-like behavior: MySQL (integration confidence). (ADR-003)
 
-### 4.2 Transactional guarantees (Checkout)
+### Transactional guarantees (Checkout)
 
 - Checkout changes are atomic.
 - Data invariants are protected at the domain/service layer and (where applicable) reinforced by DB constraints/indexes.
 
 ---
 
-## 5 API Contract (Current)
+## API Contract (Current)
 
-### 5.1 Error model
+### Error model
 
 - Error payload shape is standardized. (ADR-009)
 - Error codes are stable identifiers used by clients and tests.
 
-### 5.2 Contract governance (Current process)
+### Contract governance (Current process)
 
 - API changes must update the OpenAPI schema and add/adjust tests.
 - Breaking changes require an ADR or explicit decision record.
 - Postman CLI tests serve as an executable verification of the OpenAPI contract and expected API behavior. ([ADR-016](../decisions/ADR-016-Postman-CLI-for-API-Contract-and-E2E-Testing-in-CI.md))
 
-### 5.3 Unified Order + Checkout response shape
+### Unified Order + Checkout response shape
 
 Checkout and Orders expose a single, consistent public contract. ([ADR-012](../decisions/ADR-012-Unified-Order-and-Checkout-API-Contract.md))
 
@@ -115,7 +115,7 @@ Checkout and Orders expose a single, consistent public contract. ([ADR-012](../d
 
 Source: [ADR-012](../decisions/ADR-012-Unified-Order-and-Checkout-API-Contract.md).
 
-### 5.4 Categories response shape
+### Categories response shape
 
 Category endpoints return flat category representations only. (ADR-015)
 
@@ -126,7 +126,7 @@ Source: [ADR-015](../decisions/ADR-015-Category_Model_Is_Flat.md).
 
 ---
 
-## 6 Pricing Policy (Current)
+## Pricing Policy (Current)
 
 Pricing is deterministic, audit-friendly, and fully server-calculated. (ADR-013)
 
@@ -152,15 +152,24 @@ Source: [ADR-013](../decisions/ADR-013-Pricing-and-Rounding-Policy.md).
 
 ---
 
-## 7 Testing Strategy (Current)
+## Authentication (Current)
 
-### 7.1 Test pyramid
+The API uses JWT Bearer authentication. (ADR-019)
+Clients send `Authorization: Bearer <access_token>`. Roles/permissions are enforced server-side.
+
+JWT-related errors follow the unified error payload conventions.
+
+---
+
+## Testing Strategy (Current)
+
+### Test pyramid
 
 - **Unit tests (pytest + SQLite):** fast, deterministic, domain/service oriented.
 - **DB-behavior integration tests (pytest + MySQL):** required for transactionality and DB-specific behavior.
 - **E2E/contract smoke (Postman):** validates workflows from a consumer perspective.
 
-### 7.2 Critical paths
+### Critical paths
 
 These flows must remain stable and heavily tested:
 
@@ -170,7 +179,7 @@ These flows must remain stable and heavily tested:
 - Pricing snapshot invariants
 - Unified error payload across hardened domains
 
-### 7.3 Dual database approach
+### Dual database approach
 
 - SQLite is the default backend for fast unit test feedback.
 - A targeted MySQL verification suite validates production-critical DB behavior. (ADR-014)
@@ -198,12 +207,12 @@ MySQL suite is required for changes touching:
 
 Source: [ADR-014](../decisions/ADR-014-Dual-Database-Testing-Strategy.md).
 
-### 7.4 MySQL parity note
+### MySQL parity note
 
 Historical schema constructs that block MySQL migrations must not remain in the active migration chain.
 Where needed, migrations are squashed or rewritten to ensure MySQL parity. ([ADR-015](../decisions/ADR-015-Category_Model_Is_Flat.md), [ADR-014](../decisions/ADR-014-Dual-Database-Testing-Strategy.md))
 
-### 7.5 API Contract & E2E Verification
+### API Contract & E2E Verification
 
 End-to-end API behavior is verified in CI using **Postman CLI**, executing cloud-hosted Postman collections against a locally started backend with a real MySQL database. (ADR-016)
 
@@ -216,7 +225,7 @@ This layer complements unit and integration tests by validating the system from 
 
 ---
 
-## 8 Known Limitations & Planned Improvements
+## Known Limitations & Planned Improvements
 
 - Frontend language decision (JS vs TS) pending.
 - Full-system rollout of unified error handling and OpenAPI governance pending (currently prioritized domains: carts/checkout).
@@ -224,7 +233,7 @@ This layer complements unit and integration tests by validating the system from 
 
 ---
 
-## 9 Traceability
+## Traceability
 
 **Baseline statements are backed by ADRs:**
 
