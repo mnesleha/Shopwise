@@ -17,6 +17,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework_simplejwt.token_blacklist",
+    "accounts",
     "categories",
     "products",
     "discounts",
@@ -30,6 +31,8 @@ INSTALLED_APPS = [
     'drf_spectacular_sidecar',
     "debug_toolbar"
 ]
+
+AUTH_USER_MODEL = "accounts.User"
 
 MIDDLEWARE = [
     "debug_toolbar.middleware.DebugToolbarMiddleware",

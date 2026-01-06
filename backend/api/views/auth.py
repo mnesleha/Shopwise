@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, APIException
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 
 from drf_spectacular.utils import extend_schema
@@ -21,6 +21,12 @@ from api.serializers.auth import (
 User = get_user_model()
 
 
+class InvalidCredentials(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = "Invalid email or password."
+    default_code = "INVALID_CREDENTIALS"
+
+
 class RegisterView(APIView):
     authentication_classes = []  # allow unauthenticated
     permission_classes = [AllowAny]
@@ -35,26 +41,25 @@ class RegisterView(APIView):
         serializer = RegisterRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        username = serializer.validated_data["username"]
+        email = serializer.validated_data["email"]
         password = serializer.validated_data["password"]
-        email = serializer.validated_data.get("email")
+        first_name = serializer.validated_data.get("first_name", "")
+        last_name = serializer.validated_data.get("last_name", "")
 
         try:
             with transaction.atomic():
                 user = User.objects.create_user(
-                    username=username,
                     password=password,
                     email=email,
+                    first_name=first_name,
+                    last_name=last_name,
                 )
         except IntegrityError:
             # DB-level safety net for race conditions.
             # Map to DRF ValidationError -> global handler -> unified shape.
             errors = {}
 
-            if User.objects.filter(username=username).exists():
-                errors["username"] = ["This username is already taken."]
-
-            if email is not None and User.objects.filter(email=email).exists():
+            if User.objects.filter(email=email).exists():
                 errors["email"] = ["This email is already taken."]
 
             if not errors:
@@ -82,13 +87,12 @@ class LoginView(APIView):
 
         user = authenticate(
             request,
-            username=serializer.validated_data["username"].lower(),
+            username=serializer.validated_data["email"],
             password=serializer.validated_data["password"],
         )
 
         if user is None:
-            raise ValidationError(
-                {"non_field_errors": ["Invalid username or password."]})
+            raise InvalidCredentials()
 
         refresh = RefreshToken.for_user(user)
 

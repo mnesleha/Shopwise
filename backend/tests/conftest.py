@@ -3,10 +3,10 @@ import sys
 from decimal import Decimal
 from discounts.models import Discount
 import pytest
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.db import connection
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, force_authenticate
 from products.models import Product
 from discounts.models import Discount
 from orders.models import Order
@@ -70,17 +70,47 @@ def print_mysql_db_identity(request, db):
 
 
 @pytest.fixture
-def user():
+def user(db):
+    """
+    Default authenticated test user for API tests.
+    Email is the primary login identifier.
+    """
+    User = get_user_model()
     return User.objects.create_user(
-        username="testuser",
-        password="pass1234",
+        email="testuser@example.com",
+        password="Passw0rd!123",
+        first_name="Test",
+        last_name="User",
     )
 
 
 @pytest.fixture
-def auth_client(user):
+def auth_client(db, user):
+    """
+    Authenticated DRF APIClient using the real login endpoint (JWT).
+    This reflects production behaviour better than force_authenticate.
+    """
     client = APIClient()
-    client.force_authenticate(user=user)
+
+    # Login via API to obtain JWT
+    login_response = client.post(
+        "/api/v1/auth/login/",
+        {"email": user.email, "password": "Passw0rd!123"},
+        format="json",
+    )
+    assert login_response.status_code == 200, login_response.content
+
+    tokens = login_response.json()
+    assert "access" in tokens and tokens["access"]
+
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {tokens['access']}")
+    return client
+
+
+@pytest.fixture
+def forced_auth_client(db, user):
+    client = APIClient()
+    force_authenticate(client, user=user)
     return client
 
 

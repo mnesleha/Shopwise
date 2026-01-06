@@ -1,46 +1,31 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 
 class RegisterRequestSerializer(serializers.Serializer):
-    username = serializers.CharField(
-        max_length=150,
-        validators=[
-            UniqueValidator(
-                queryset=User.objects.all(),
-                message="This username is already taken.",
-            )
-        ],
-    )
+    email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
-    email = serializers.EmailField(
-        required=False,
-        allow_null=True,
-        allow_blank=True,
-        validators=[
-            UniqueValidator(
-                queryset=User.objects.exclude(
-                    email__isnull=True).exclude(email=""),
-                message="This email is already taken.",
-            )
-        ],
-    )
+    first_name = serializers.CharField(required=False, allow_blank=True)
+    last_name = serializers.CharField(required=False, allow_blank=True)
 
     def validate_email(self, value):
-        # Normalize empty string to None to ensure consistent DB storage
-        # and predictable uniqueness behavior (especially on MySQL).
-        if value == "":
-            return None
-        return value
-
-    def validate_username(self, value):
-        return value.lower()
+        normalized = value.strip().lower()
+        User = get_user_model()
+        validator = UniqueValidator(
+            queryset=User.objects.all(),
+            message="This email is already taken.",
+        )
+        validator(normalized, self.fields["email"])
+        return normalized
 
 
 class LoginRequestSerializer(serializers.Serializer):
-    username = serializers.CharField()
+    email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
+
+    def validate_email(self, value):
+        return value.strip().lower()
 
 
 class TokenResponseSerializer(serializers.Serializer):
@@ -54,8 +39,9 @@ class RefreshRequestSerializer(serializers.Serializer):
 
 class UserResponseSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
-    username = serializers.CharField(read_only=True)
     email = serializers.EmailField(read_only=True, allow_null=True)
+    first_name = serializers.CharField(read_only=True)
+    last_name = serializers.CharField(read_only=True)
     role = serializers.SerializerMethodField()
 
     def get_role(self, obj):

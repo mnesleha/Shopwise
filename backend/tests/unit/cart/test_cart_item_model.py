@@ -1,12 +1,13 @@
 import pytest
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from carts.models import Cart, CartItem
 from products.models import Product
 
 
 @pytest.mark.django_db
 def test_cart_item_quantity_must_be_positive():
-    user = User.objects.create_user(username="u1")
+    User = get_user_model()
+    user = User.objects.create_user(email="u1@example.com", password="pass")
     cart = Cart.objects.create(user=user)
 
     product = Product.objects.create(
