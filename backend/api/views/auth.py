@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, APIException
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 
 from drf_spectacular.utils import extend_schema
@@ -19,6 +19,12 @@ from api.serializers.auth import (
 )
 
 User = get_user_model()
+
+
+class InvalidCredentials(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = "Invalid email or password."
+    default_code = "INVALID_CREDENTIALS"
 
 
 class RegisterView(APIView):
@@ -45,6 +51,7 @@ class RegisterView(APIView):
                 user = User.objects.create_user(
                     password=password,
                     email=email,
+                    username=email,
                     first_name=first_name,
                     last_name=last_name,
                 )
@@ -81,13 +88,12 @@ class LoginView(APIView):
 
         user = authenticate(
             request,
-            email=serializer.validated_data["email"],
+            username=serializer.validated_data["email"],
             password=serializer.validated_data["password"],
         )
 
         if user is None:
-            raise ValidationError(
-                {"non_field_errors": ["Invalid username or password."]})
+            raise InvalidCredentials()
 
         refresh = RefreshToken.for_user(user)
 
