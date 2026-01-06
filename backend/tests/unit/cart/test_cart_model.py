@@ -21,7 +21,7 @@ def test_user_cannot_have_two_active_carts():
     User = get_user_model()
 
     user = User.objects.create_user(
-        email="testuser@example.com", password="pass")
+        email="testuser1@example.com", password="pass")
 
     Cart.objects.create(
         user=user,
@@ -42,7 +42,7 @@ def test_user_can_have_converted_and_active_cart():
     User = get_user_model()
 
     user = User.objects.create_user(
-        email="testuser@example.com", password="pass")
+        email="testuser2@example.com", password="pass")
 
     Cart.objects.create(
         user=user,

@@ -122,7 +122,7 @@ def test_orderitem_price_snapshot_rejects_negative():
 def test_valid_orderitem_is_valid():
 
     User = get_user_model()
-    user = User.objects.create_user(email="user5@example.com", password="pass")
+    user = User.objects.create_user(email="user6@example.com", password="pass")
     order = Order.objects.create(user=user)
     product = Product.objects.create(
         name="Camera",

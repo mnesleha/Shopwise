@@ -3,11 +3,10 @@ import sys
 from decimal import Decimal
 from discounts.models import Discount
 import pytest
-from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.db import connection
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, force_authenticate
 from products.models import Product
 from discounts.models import Discount
 from orders.models import Order
@@ -82,8 +81,6 @@ def user(db):
         password="Passw0rd!123",
         first_name="Test",
         last_name="User",
-        # username is kept only for Django compatibility; set deterministically
-        username="testuser@example.com",
     )
 
 
@@ -107,6 +104,13 @@ def auth_client(db, user):
     assert "access" in tokens and tokens["access"]
 
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {tokens['access']}")
+    return client
+
+
+@pytest.fixture
+def forced_auth_client(db, user):
+    client = APIClient()
+    force_authenticate(client, user=user)
     return client
 
 

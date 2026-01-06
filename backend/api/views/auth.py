@@ -51,7 +51,6 @@ class RegisterView(APIView):
                 user = User.objects.create_user(
                     password=password,
                     email=email,
-                    username=email,
                     first_name=first_name,
                     last_name=last_name,
                 )

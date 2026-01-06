@@ -222,14 +222,18 @@ class Command(BaseCommand):
 
         for u in users:
             key = u["key"]
-            email = u.get("email") or u["username"]
+            if not u.get("email"):
+                raise ValueError(
+                    f"Seed user '{key}' must define 'email' (email-based login is required)."
+                )
+            email = u["email"]
             password = u.get("password", email)
             first_name = u.get("first_name", "")
             last_name = u.get("last_name", "")
 
             user, created = User.objects.get_or_create(
                 email=email,
-                defaults={"username": email},
+                defaults={},
             )
             if created:
                 user.set_password(password)
@@ -506,14 +510,11 @@ class Command(BaseCommand):
         user, created = User.objects.get_or_create(
             email=email,
             defaults={
-                "username": email,
                 "is_staff": True,
                 "is_superuser": True,
             },
         )
         # keep credentials deterministic
-        user.username = email
-        user.email = email
         user.is_staff = True
         user.is_superuser = True
         user.set_password(password)
