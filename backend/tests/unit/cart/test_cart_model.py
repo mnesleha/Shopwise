@@ -1,12 +1,14 @@
 from django.forms import ValidationError
 import pytest
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from carts.models import Cart
 
 
 @pytest.mark.django_db
 def test_user_can_have_only_one_active_cart():
-    user = User.objects.create_user(username="u1")
+    User = get_user_model()
+
+    user = User.objects.create_user(email="u1@example.com", password="pass")
 
     Cart.objects.create(user=user)
 
@@ -16,7 +18,10 @@ def test_user_can_have_only_one_active_cart():
 
 @pytest.mark.django_db
 def test_user_cannot_have_two_active_carts():
-    user = User.objects.create_user(username="testuser")
+    User = get_user_model()
+
+    user = User.objects.create_user(
+        email="testuser@example.com", password="pass")
 
     Cart.objects.create(
         user=user,
@@ -34,7 +39,10 @@ def test_user_cannot_have_two_active_carts():
 
 @pytest.mark.django_db
 def test_user_can_have_converted_and_active_cart():
-    user = User.objects.create_user(username="testuser")
+    User = get_user_model()
+
+    user = User.objects.create_user(
+        email="testuser@example.com", password="pass")
 
     Cart.objects.create(
         user=user,

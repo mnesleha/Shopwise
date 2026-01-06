@@ -9,7 +9,7 @@ def test_order_created_with_default_status():
 
     User = get_user_model()
     user = User.objects.create_user(
-        username="testuser",
+        email="testuser1@example.com",
         password="password",
     )
 
@@ -33,7 +33,7 @@ def test_order_invalid_status_is_rejected():
 
     User = get_user_model()
     user = User.objects.create_user(
-        username="testuser2",
+        email="testuser2@example.com",
         password="password",
     )
 

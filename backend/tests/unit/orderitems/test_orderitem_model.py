@@ -11,7 +11,7 @@ from django.contrib.auth import get_user_model
 def test_orderitem_must_have_order():
 
     User = get_user_model()
-    user = User.objects.create_user(username="user1", password="pass")
+    user = User.objects.create_user(email="user1@example.com", password="pass")
     product = Product.objects.create(
         name="Phone",
         price=1000,
@@ -34,7 +34,7 @@ def test_orderitem_must_have_order():
 def test_orderitem_must_have_product():
 
     User = get_user_model()
-    user = User.objects.create_user(username="user2", password="pass")
+    user = User.objects.create_user(email="user2@example.com", password="pass")
     order = Order.objects.create(user=user)
 
     item = OrderItem(
@@ -52,7 +52,7 @@ def test_orderitem_must_have_product():
 def test_orderitem_quantity_must_be_positive():
 
     User = get_user_model()
-    user = User.objects.create_user(username="user3", password="pass")
+    user = User.objects.create_user(email="user3@example.com", password="pass")
     order = Order.objects.create(user=user)
     product = Product.objects.create(
         name="Laptop",
@@ -75,7 +75,7 @@ def test_orderitem_quantity_must_be_positive():
 @pytest.mark.django_db
 def test_orderitem_price_snapshot_allows_zero():
     User = get_user_model()
-    user = User.objects.create_user(username="user4", password="pass")
+    user = User.objects.create_user(email="user4@example.com", password="pass")
     order = Order.objects.create(user=user)
     product = Product.objects.create(
         name="Tablet",
@@ -98,7 +98,7 @@ def test_orderitem_price_snapshot_allows_zero():
 @pytest.mark.django_db
 def test_orderitem_price_snapshot_rejects_negative():
     User = get_user_model()
-    user = User.objects.create_user(username="user5", password="pass")
+    user = User.objects.create_user(email="user5@example.com", password="pass")
     order = Order.objects.create(user=user)
     product = Product.objects.create(
         name="Tablet",
@@ -122,7 +122,7 @@ def test_orderitem_price_snapshot_rejects_negative():
 def test_valid_orderitem_is_valid():
 
     User = get_user_model()
-    user = User.objects.create_user(username="user5", password="pass")
+    user = User.objects.create_user(email="user5@example.com", password="pass")
     order = Order.objects.create(user=user)
     product = Product.objects.create(
         name="Camera",

@@ -9,7 +9,8 @@ from django.core.exceptions import ValidationError
 def test_payment_created_with_default_status():
 
     User = get_user_model()
-    user = User.objects.create_user(username="payuser1", password="pass")
+    user = User.objects.create_user(
+        email="payuser1@example.com", password="pass")
     order = Order.objects.create(user=user)
 
     payment = Payment.objects.create(order=order)
@@ -30,7 +31,8 @@ def test_payment_must_have_order():
 def test_payment_invalid_status_is_rejected():
 
     User = get_user_model()
-    user = User.objects.create_user(username="payuser2", password="pass")
+    user = User.objects.create_user(
+        email="payuser2@example.com", password="pass")
     order = Order.objects.create(user=user)
 
     payment = Payment(
@@ -46,7 +48,8 @@ def test_payment_invalid_status_is_rejected():
 def test_valid_payment_is_valid():
 
     User = get_user_model()
-    user = User.objects.create_user(username="payuser3", password="pass")
+    user = User.objects.create_user(
+        email="payuser3@example.com", password="pass")
     order = Order.objects.create(user=user)
 
     payment = Payment(
