@@ -1,9 +1,11 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 
 class RegisterRequestSerializer(serializers.Serializer):
+    User = get_user_model()
+
     username = serializers.CharField(
         max_length=150,
         validators=[
@@ -26,6 +28,13 @@ class RegisterRequestSerializer(serializers.Serializer):
             )
         ],
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        User = get_user_model()
+        self.fields["email"].validators.append(
+            UniqueValidator(queryset=User.objects.all())
+        )
 
     def validate_email(self, value):
         # Normalize empty string to None to ensure consistent DB storage

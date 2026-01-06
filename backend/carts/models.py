@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from products.models import Product
 from django.core.exceptions import ValidationError
 
@@ -10,7 +10,7 @@ class Cart(models.Model):
         CONVERTED = "CONVERTED"
 
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="carts",
     )

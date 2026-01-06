@@ -32,6 +32,8 @@ INSTALLED_APPS = [
     "debug_toolbar"
 ]
 
+AUTH_USER_MODEL = "accounts.User"
+
 MIDDLEWARE = [
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
