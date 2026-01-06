@@ -222,22 +222,31 @@ class Command(BaseCommand):
 
         for u in users:
             key = u["key"]
-            username = u["username"]
-            password = u.get("password", username)
+            email = u.get("email") or u["username"]
+            password = u.get("password", email)
+            first_name = u.get("first_name", "")
+            last_name = u.get("last_name", "")
 
-            user, created = User.objects.get_or_create(username=username)
+            user, created = User.objects.get_or_create(
+                email=email,
+                defaults={"username": email},
+            )
             if created:
                 user.set_password(password)
+                user.first_name = first_name
+                user.last_name = last_name
                 user.save()
-                self.stdout.write(f"Created user: {username}")
+                self.stdout.write(f"Created user: {email}")
             else:
                 # keep password stable for CI
                 user.set_password(password)
+                user.first_name = first_name
+                user.last_name = last_name
                 user.save()
-                self.stdout.write(f"Updated user password: {username}")
+                self.stdout.write(f"Updated user password: {email}")
 
             obj_map[key] = user
-            fixture_map[key] = {"username": username, "password": password}
+            fixture_map[key] = {"email": email, "password": password}
 
         return obj_map, fixture_map
 
@@ -491,19 +500,19 @@ class Command(BaseCommand):
 
     def _ensure_superuser(self):
         User = get_user_model()
-        username = os.getenv("DJANGO_SUPERUSER_USERNAME", "admin")
         password = os.getenv("DJANGO_SUPERUSER_PASSWORD", "admin")
         email = os.getenv("DJANGO_SUPERUSER_EMAIL", "admin@example.com")
 
         user, created = User.objects.get_or_create(
-            username=username,
+            email=email,
             defaults={
-                "email": email,
+                "username": email,
                 "is_staff": True,
                 "is_superuser": True,
             },
         )
         # keep credentials deterministic
+        user.username = email
         user.email = email
         user.is_staff = True
         user.is_superuser = True
@@ -512,4 +521,4 @@ class Command(BaseCommand):
 
         action = "Created" if created else "Updated"
         self.stdout.write(self.style.SUCCESS(
-            f"{action} superuser: {username}"))
+            f"{action} superuser: {email}"))

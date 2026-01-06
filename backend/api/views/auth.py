@@ -35,26 +35,25 @@ class RegisterView(APIView):
         serializer = RegisterRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        username = serializer.validated_data["username"]
+        email = serializer.validated_data["email"]
         password = serializer.validated_data["password"]
-        email = serializer.validated_data.get("email")
+        first_name = serializer.validated_data.get("first_name", "")
+        last_name = serializer.validated_data.get("last_name", "")
 
         try:
             with transaction.atomic():
                 user = User.objects.create_user(
-                    username=username,
                     password=password,
                     email=email,
+                    first_name=first_name,
+                    last_name=last_name,
                 )
         except IntegrityError:
             # DB-level safety net for race conditions.
             # Map to DRF ValidationError -> global handler -> unified shape.
             errors = {}
 
-            if User.objects.filter(username=username).exists():
-                errors["username"] = ["This username is already taken."]
-
-            if email is not None and User.objects.filter(email=email).exists():
+            if User.objects.filter(email=email).exists():
                 errors["email"] = ["This email is already taken."]
 
             if not errors:
@@ -82,7 +81,7 @@ class LoginView(APIView):
 
         user = authenticate(
             request,
-            username=serializer.validated_data["username"].lower(),
+            email=serializer.validated_data["email"],
             password=serializer.validated_data["password"],
         )
 
