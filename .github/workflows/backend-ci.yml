@@ -117,7 +117,8 @@ jobs:
         id: fixtures
         run: |
           # Minify JSON to a single line for safe CLI passing
-          echo "FIXTURES_JSON=$(cat artifacts/fixtures.json | python -c 'import json,sys; print(json.dumps(json.load(sys.stdin), separators=(",",":")))')" >> $GITHUB_ENV
+          FIXTURES_MINIFIED="$(cat artifacts/fixtures.json | python -c "import json,sys; print(json.dumps(json.load(sys.stdin), separators=(',',':')))")"
+          echo "FIXTURES_B64=$(printf '%s' "$FIXTURES_MINIFIED" | base64 -w 0)" >> $GITHUB_ENV
 
       - name: Verify seeded user (debug)
         run: |
@@ -166,7 +167,7 @@ jobs:
           command: >
             collection run ${{ matrix.collection_id }}
             --environment 50963019-4274f153-a0d9-4495-a621-e0fb23fc18eb
-            --env-var fixtures_json="${{ env.FIXTURES_JSON }}"
+            --env-var fixtures_b64="${{ env.FIXTURES_B64 }}"
             --reporters cli,junit
             --reporter-junit-export postman-junit.xml
 
