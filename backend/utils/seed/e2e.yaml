@@ -1,9 +1,11 @@
 users:
   - key: CUSTOMER_1
+    email: customer_1@example.com
     username: customer_1
     password: customer_1
     role: CUSTOMER
   - key: CUSTOMER_2
+    email: customer_2@example.com
     username: customer_2
     password: customer_2
     role: CUSTOMER

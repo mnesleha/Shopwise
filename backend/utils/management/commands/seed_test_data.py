@@ -226,28 +226,33 @@ class Command(BaseCommand):
                 raise ValueError(
                     f"Seed user '{key}' must define 'email' (email-based login is required)."
                 )
-            email = u["email"]
+            email = str(u["email"]).strip().lower()
             password = u.get("password", email)
             first_name = u.get("first_name", "")
             last_name = u.get("last_name", "")
 
-            user, created = User.objects.get_or_create(
-                email=email,
-                defaults={},
-            )
+            # IMPORTANT:
+            # Do not use get_or_create() for users because it bypasses create_user(),
+            # which is responsible for setting username deterministically, normalizing email,
+            # and hashing passwords.
+            user = User.objects.filter(email=email).first()
+            created = user is None
+
             if created:
-                user.set_password(password)
-                user.first_name = first_name
-                user.last_name = last_name
-                user.save()
+                user = User.objects.create_user(
+                    email=email,
+                    password=password,
+                    first_name=first_name,
+                    last_name=last_name,
+                )
                 self.stdout.write(f"Created user: {email}")
             else:
-                # keep password stable for CI
-                user.set_password(password)
+                # keep deterministic for CI: always enforce same password + names
                 user.first_name = first_name
                 user.last_name = last_name
+                user.set_password(password)
                 user.save()
-                self.stdout.write(f"Updated user password: {email}")
+                self.stdout.write(f"Updated user: {email}")
 
             obj_map[key] = user
             fixture_map[key] = {"email": email, "password": password}
@@ -506,19 +511,24 @@ class Command(BaseCommand):
         User = get_user_model()
         password = os.getenv("DJANGO_SUPERUSER_PASSWORD", "admin")
         email = os.getenv("DJANGO_SUPERUSER_EMAIL", "admin@example.com")
+        email = str(email).strip().lower()
 
-        user, created = User.objects.get_or_create(
-            email=email,
-            defaults={
-                "is_staff": True,
-                "is_superuser": True,
-            },
-        )
-        # keep credentials deterministic
-        user.is_staff = True
-        user.is_superuser = True
-        user.set_password(password)
-        user.save()
+        user = User.objects.filter(email=email).first()
+        created = user is None
+
+        if created:
+            # Ensure the superuser goes through the manager logic.
+            # Some projects require username in REQUIRED_FIELDS; our manager should handle it.
+            user = User.objects.create_superuser(
+                email=email,
+                password=password,
+            )
+        else:
+            # Keep deterministic
+            user.is_staff = True
+            user.is_superuser = True
+            user.set_password(password)
+            user.save()
 
         action = "Created" if created else "Updated"
         self.stdout.write(self.style.SUCCESS(
