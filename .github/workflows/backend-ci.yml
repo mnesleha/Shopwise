@@ -45,8 +45,7 @@ jobs:
       # collection matrix definition
       matrix:
         collection_id: 
-          - 50963019-cf6b6cce-3e0e-402e-a70b-2ae1762faa75
-          - 50963019-5a0e0099-fc8d-4520-b2cd-e75ad4caf870
+          - 50963019-ae6d35fd-e823-4491-ac65-687c4748a13f
       
       # Option to continue all matrix runs even if some fail
       fail-fast: false 
@@ -166,7 +165,7 @@ jobs:
           api-key: ${{ secrets.POSTMAN_API_KEY }}
           command: >
             collection run ${{ matrix.collection_id }}
-            --environment 50963019-cce78deb-378b-4740-92df-d5f37e4b23d3
+            --environment 50963019-4274f153-a0d9-4495-a621-e0fb23fc18eb
             --env-var fixtures_json="${{ env.FIXTURES_JSON }}"
             --reporters cli,junit
             --reporter-junit-export postman-junit.xml
