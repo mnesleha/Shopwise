@@ -1,17 +1,35 @@
 from django.db import transaction
 from django.utils import timezone
-
+from typing import Optional
 from api.exceptions.base import ConflictException
 from carts.models import Cart, CartItem
 from carts.services.resolver import hash_cart_token
 
 
 class CartMergeStockConflict(ConflictException):
+    """
+    Raised when cart merge would exceed available stock for one or more products.
+    Intended to be mapped to HTTP 409 with unified error shape {code, message}.
+    """
+
     default_detail = "Insufficient stock to merge carts."
     default_code = "CART_MERGE_STOCK_CONFLICT"
 
 
-def merge_or_adopt_guest_cart(*, user, raw_token: str) -> None:
+def merge_or_adopt_guest_cart(*, user, raw_token: Optional[str]) -> None:
+    """
+    Merge or adopt an anonymous (guest) cart into the authenticated user's cart.
+
+    This function is idempotent: repeated calls with the same token will not duplicate merges.
+
+    Args:
+        user: Authenticated user instance.
+        raw_token: Guest cart token from request header/cookie. Can be None/empty.
+
+    Raises:
+        CartMergeStockConflict: If merging quantities would exceed available product stock.
+    """
+
     if not raw_token:
         return
 
