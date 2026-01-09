@@ -1,5 +1,6 @@
 import pytest
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from carts.models import Cart, CartItem
@@ -67,7 +68,7 @@ def test_converted_cart_does_not_count_as_active_for_uniqueness():
 def test_anonymous_token_hash_is_unique_when_present():
     Cart.objects.create(user=None, status=Cart.Status.ACTIVE,
                         anonymous_token_hash="h1")
-    with pytest.raises(Exception):
+    with pytest.raises(IntegrityError):
         # IntegrityError expected at DB level (MySQL), SQLite may raise IntegrityError too
         Cart.objects.create(
             user=None, status=Cart.Status.ACTIVE, anonymous_token_hash="h1")
@@ -116,6 +117,7 @@ def test_merge_flow_requires_merged_into_cart_and_merged_at_and_sets_status_merg
     anon_cart.anonymous_token_hash = None
     anon_cart.merged_into_cart = user_cart
     anon_cart.merged_at = timezone.now()
+    anon_cart.full_clean()
     anon_cart.save()
 
     anon_cart.refresh_from_db()
@@ -136,6 +138,7 @@ def test_merged_cart_cannot_have_token_hash():
     anon_cart.status = Cart.Status.MERGED
     # violating invariant: token still set
     with pytest.raises(ValidationError):
+        anon_cart.full_clean()
         anon_cart.save()
 
 
@@ -152,4 +155,21 @@ def test_merged_cart_must_reference_target_cart():
     anon_cart.merged_at = timezone.now()
 
     with pytest.raises(ValidationError):
+        anon_cart.full_clean()
         anon_cart.save()
+
+
+@pytest.mark.django_db
+def test_active_cart_cannot_have_merge_metadata(user):
+    """
+    Invariant: Only MERGED carts may have merged_into_cart / merged_at set.
+    ACTIVE carts must raise ValidationError if merge metadata is present.
+    """
+    active = Cart.objects.create(user=user, status=Cart.Status.ACTIVE)
+    target = Cart.objects.create(user=user, status=Cart.Status.ACTIVE)
+
+    active.merged_into_cart = target
+    active.merged_at = timezone.now()
+
+    with pytest.raises(ValidationError):
+        active.full_clean()

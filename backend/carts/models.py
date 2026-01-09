@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from products.models import Product
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 
 class Cart(models.Model):
@@ -46,15 +47,31 @@ class Cart(models.Model):
                 status=Cart.Status.ACTIVE,
             ).exclude(pk=self.pk).exists():
                 raise ValidationError("User already has an active cart.")
+        # MERGED invariant enforcement
         if self.status == Cart.Status.MERGED:
             if self.anonymous_token_hash is not None:
-                raise ValidationError("Merged carts cannot be addressable by token.")
-            if self.merged_into_cart is None or self.merged_at is None:
-                raise ValidationError("Merged carts must have merge metadata.")
+                raise ValidationError({
+                    "anonymous_token_hash": _("MERGED carts must not have a token hash.")
+                })
+            if self.merged_into_cart is None:
+                raise ValidationError({
+                    "merged_into_cart": _("MERGED carts must reference the target user cart.")
+                })
+            if self.merged_at is None:
+                raise ValidationError({
+                    "merged_at": _("MERGED carts must have merged_at set.")
+                })
         else:
-            if self.merged_into_cart_id or self.merged_at:
-                self.merged_into_cart = None
-                self.merged_at = None
+            # IMPORTANT: do not silently clear unexpected metadata (data loss).
+            # Non-MERGED carts must not carry merge metadata.
+            if self.merged_into_cart is not None:
+                raise ValidationError({
+                    "merged_into_cart": _("Only MERGED carts may reference merged_into_cart.")
+                })
+            if self.merged_at is not None:
+                raise ValidationError({
+                    "merged_at": _("Only MERGED carts may have merged_at set.")
+                })
         super().save(*args, **kwargs)
 
 

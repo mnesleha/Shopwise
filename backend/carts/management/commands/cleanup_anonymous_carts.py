@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from django.utils import timezone
 
 from carts.models import Cart
@@ -28,8 +29,9 @@ class Command(BaseCommand):
 
         queryset = Cart.objects.filter(
             user__isnull=True,
-            status=Cart.Status.ACTIVE,
             created_at__lt=cutoff,
+        ).filter(
+            Q(status=Cart.Status.ACTIVE) | Q(status=Cart.Status.MERGED)
         )
         count = queryset.count()
 
