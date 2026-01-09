@@ -10,6 +10,8 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from drf_spectacular.utils import extend_schema
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from carts.services.merge import merge_or_adopt_guest_cart
+from carts.services.resolver import extract_cart_token
 from api.serializers.auth import (
     RegisterRequestSerializer,
     LoginRequestSerializer,
@@ -95,6 +97,9 @@ class LoginView(APIView):
             raise InvalidCredentials()
 
         refresh = RefreshToken.for_user(user)
+
+        cart_token = extract_cart_token(request)
+        merge_or_adopt_guest_cart(user=user, raw_token=cart_token)
 
         token_data = TokenResponseSerializer(
             {"access": str(refresh.access_token), "refresh": str(refresh)}
