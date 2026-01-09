@@ -1,6 +1,7 @@
+from __future__ import annotations
 import hashlib
 from typing import Optional
-from __future__ import annotations
+
 
 from carts.models import Cart
 
