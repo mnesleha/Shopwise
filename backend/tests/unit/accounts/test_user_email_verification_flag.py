@@ -12,3 +12,11 @@ def test_user_email_verified_defaults_to_false():
     )
 
     assert user.email_verified is False
+
+
+@pytest.mark.django_db
+def test_superuser_email_verified_defaults_to_false(db):
+    User = get_user_model()
+    su = User.objects.create_superuser(
+        email="admin@example.com", password="Passw0rd!123")
+    assert su.email_verified is False

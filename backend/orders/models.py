@@ -1,9 +1,17 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 
 
 class Order(models.Model):
+    def _normalize_customer_email(self) -> None:
+        if self.customer_email is None:
+            self.customer_email_normalized = None
+            return
+        self.customer_email_normalized = self.customer_email.strip().lower()
+
     class Status(models.TextChoices):
         CREATED = "CREATED", "Created"
         PAID = "PAID", "Paid"
@@ -16,26 +24,33 @@ class Order(models.Model):
         settings.AUTH_USER_MODEL,
         null=True,
         blank=True,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
     )
-    customer_email = models.EmailField(null=True, blank=True)
+    customer_email = models.EmailField(null=False, blank=False)
     customer_email_normalized = models.EmailField(
-        null=True,
-        blank=True,
+        null=False,
+        blank=False,
+        db_index=True,
     )
-    shipping_name = models.CharField(max_length=255, null=True, blank=True)
-    shipping_address_line1 = models.CharField(max_length=255, null=True, blank=True)
-    shipping_address_line2 = models.CharField(max_length=255, null=True, blank=True)
-    shipping_city = models.CharField(max_length=255, null=True, blank=True)
-    shipping_postal_code = models.CharField(max_length=64, null=True, blank=True)
-    shipping_country = models.CharField(max_length=64, null=True, blank=True)
-    shipping_phone = models.CharField(max_length=64, null=True, blank=True)
+    shipping_name = models.CharField(max_length=255, null=False, blank=False)
+    shipping_address_line1 = models.CharField(
+        max_length=255, null=False, blank=False)
+    shipping_address_line2 = models.CharField(
+        max_length=255, null=True, blank=True)
+    shipping_city = models.CharField(max_length=255, null=False, blank=False)
+    shipping_postal_code = models.CharField(
+        max_length=64, null=False, blank=False)
+    shipping_country = models.CharField(max_length=64, null=False, blank=False)
+    shipping_phone = models.CharField(max_length=64, null=False, blank=False)
     billing_same_as_shipping = models.BooleanField(default=True)
     billing_name = models.CharField(max_length=255, null=True, blank=True)
-    billing_address_line1 = models.CharField(max_length=255, null=True, blank=True)
-    billing_address_line2 = models.CharField(max_length=255, null=True, blank=True)
+    billing_address_line1 = models.CharField(
+        max_length=255, null=True, blank=True)
+    billing_address_line2 = models.CharField(
+        max_length=255, null=True, blank=True)
     billing_city = models.CharField(max_length=255, null=True, blank=True)
-    billing_postal_code = models.CharField(max_length=64, null=True, blank=True)
+    billing_postal_code = models.CharField(
+        max_length=64, null=True, blank=True)
     billing_country = models.CharField(max_length=64, null=True, blank=True)
     billing_phone = models.CharField(max_length=64, null=True, blank=True)
     is_claimed = models.BooleanField(default=False)
@@ -57,20 +72,25 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def clean(self):
-        errors = {}
+        super().clean()
 
-        # Explicit status validation (choices are validated automatically,
-        # but this keeps behavior explicit and testable)
-        valid_statuses = {choice.value for choice in self.Status}
-        if self.status not in valid_statuses:
-            errors["status"] = "Invalid order status"
+        # --- customer email required + normalized ---
+        if self.customer_email is None or self.customer_email.strip() == "":
+            raise ValidationError(
+                {"customer_email": _("customer_email is required.")})
 
-        if not self.customer_email or not self.customer_email.strip():
-            errors["customer_email"] = "This field is required."
-        else:
-            self.customer_email_normalized = self.customer_email.strip().lower()
+        # Ensure normalization is consistent during validation as well
+        normalized = self.customer_email.strip().lower()
+        if self.customer_email_normalized is None or self.customer_email_normalized.strip() == "":
+            # allow model to populate it in save(), but during full_clean we want consistency
+            self.customer_email_normalized = normalized
+        elif self.customer_email_normalized != normalized:
+            raise ValidationError({
+                "customer_email_normalized": _("customer_email_normalized must match normalized customer_email.")
+            })
 
-        shipping_required_fields = [
+        # --- shipping required snapshots (shipping_phone included) ---
+        required_shipping = [
             "shipping_name",
             "shipping_address_line1",
             "shipping_city",
@@ -78,26 +98,56 @@ class Order(models.Model):
             "shipping_country",
             "shipping_phone",
         ]
-        for field in shipping_required_fields:
-            value = getattr(self, field)
-            if value is None or (isinstance(value, str) and not value.strip()):
-                errors[field] = "This field is required."
+        shipping_errors = {}
+        for f in required_shipping:
+            v = getattr(self, f)
+            if v is None or (isinstance(v, str) and v.strip() == ""):
+                shipping_errors[f] = _("This field is required.")
+        if shipping_errors:
+            raise ValidationError(shipping_errors)
 
+        # --- billing snapshots conditional ---
         if self.billing_same_as_shipping is False:
-            billing_required_fields = [
+            required_billing = [
                 "billing_name",
                 "billing_address_line1",
                 "billing_city",
                 "billing_postal_code",
                 "billing_country",
             ]
-            for field in billing_required_fields:
-                value = getattr(self, field)
-                if value is None or (isinstance(value, str) and not value.strip()):
-                    errors[field] = "This field is required."
+            billing_errors = {}
+            for f in required_billing:
+                v = getattr(self, f)
+                if v is None or (isinstance(v, str) and v.strip() == ""):
+                    billing_errors[f] = _(
+                        "This field is required when billing_same_as_shipping is False.")
+            if billing_errors:
+                raise ValidationError(billing_errors)
+            # billing_phone intentionally optional
 
-        if errors:
-            raise ValidationError(errors)
+        # --- claim invariants ---
+        if self.is_claimed:
+            if self.claimed_at is None:
+                raise ValidationError(
+                    {"claimed_at": _("claimed_at is required when is_claimed is True.")})
+            if self.claimed_by_user_id is None:
+                raise ValidationError({"claimed_by_user": _(
+                    "claimed_by_user is required when is_claimed is True.")})
+            if self.user_id is None:
+                raise ValidationError(
+                    {"user": _("user must be set when an order is claimed.")})
+        else:
+            if self.claimed_at is not None:
+                raise ValidationError(
+                    {"claimed_at": _("claimed_at must be null when is_claimed is False.")})
+            if self.claimed_by_user_id is not None:
+                raise ValidationError({"claimed_by_user": _(
+                    "claimed_by_user must be null when is_claimed is False.")})
+
+    def save(self, *args, **kwargs):
+        self._normalize_customer_email()
+        self.full_clean()
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Order #{self.pk} ({self.status})"
