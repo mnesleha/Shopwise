@@ -212,6 +212,48 @@ class Command(BaseCommand):
 
         return fixtures
 
+    def _build_order_snapshot_defaults(self, *, user, raw_order: dict[str, Any]) -> dict[str, Any]:
+        """
+        Build minimal audit-ready order snapshots required by the Order domain model.
+
+        YAML may optionally override any of these fields.
+        If user is present and customer_email is missing, user.email is used.
+        """
+        # customer email
+        customer_email = raw_order.get("customer_email")
+        if customer_email is None and user is not None:
+            customer_email = getattr(user, "email", None)
+
+        if customer_email is None:
+            raise CommandError(
+                f"Order {raw_order.get('key')} must define customer_email when user_key is not provided."
+            )
+
+        defaults: dict[str, Any] = {
+            "customer_email": str(customer_email),
+            # --- shipping (required) ---
+            "shipping_name": raw_order.get("shipping_name", "E2E Customer"),
+            "shipping_address_line1": raw_order.get("shipping_address_line1", "E2E Main Street 1"),
+            "shipping_address_line2": raw_order.get("shipping_address_line2", ""),
+            "shipping_city": raw_order.get("shipping_city", "E2E City"),
+            "shipping_postal_code": raw_order.get("shipping_postal_code", "00000"),
+            "shipping_country": raw_order.get("shipping_country", "US"),
+            "shipping_phone": raw_order.get("shipping_phone", "+10000000000"),
+            # --- billing (optional by default) ---
+            "billing_same_as_shipping": bool(raw_order.get("billing_same_as_shipping", True)),
+            "billing_name": raw_order.get("billing_name"),
+            "billing_address_line1": raw_order.get("billing_address_line1"),
+            "billing_address_line2": raw_order.get("billing_address_line2"),
+            "billing_city": raw_order.get("billing_city"),
+            "billing_postal_code": raw_order.get("billing_postal_code"),
+            "billing_country": raw_order.get("billing_country"),
+            "billing_phone": raw_order.get("billing_phone"),
+        }
+
+        # If someone explicitly sets billing_same_as_shipping=False in YAML,
+        # we still allow YAML to provide fields. Model validation will enforce completeness.
+        return defaults
+
     def _create_users(
         self, users: list[dict[str, Any]]
     ) -> Tuple[dict[str, Any], dict[str, dict[str, str]]]:
@@ -335,7 +377,14 @@ class Command(BaseCommand):
                         f"Order {key} references unknown user_key: {user_key}")
                 user = user_obj_map[user_key]
 
-            order = Order.objects.create(user=user, status=status)
+            snapshot_defaults = self._build_order_snapshot_defaults(
+                user=user, raw_order=o)
+
+            order = Order.objects.create(
+                user=user,
+                status=status,
+                **snapshot_defaults,
+            )
 
             for it in items:
                 product_key = it["product_key"]
