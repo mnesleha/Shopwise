@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.db import IntegrityError, transaction
 from rest_framework import status
@@ -7,11 +8,12 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import ValidationError, APIException
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiExample
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from carts.services.merge import merge_or_adopt_guest_cart
 from carts.services.resolver import extract_cart_token
+from api.services.cookies import cart_token_cookie_kwargs
 from api.serializers.auth import (
     RegisterRequestSerializer,
     LoginRequestSerializer,
@@ -19,6 +21,7 @@ from api.serializers.auth import (
     UserResponseSerializer,
     RefreshRequestSerializer
 )
+from api.serializers.common import ErrorResponseSerializer
 
 User = get_user_model()
 
@@ -81,7 +84,21 @@ class LoginView(APIView):
         tags=["Auth"],
         summary="Login user (JWT)",
         request=LoginRequestSerializer,
-        responses={200: TokenResponseSerializer},
+        responses={
+            200: TokenResponseSerializer,
+            409: ErrorResponseSerializer,
+        },
+        examples=[
+            OpenApiExample(
+                name="Cart merge stock conflict",
+                value={
+                    "code": "CART_MERGE_STOCK_CONFLICT",
+                    "message": "Insufficient stock to merge carts.",
+                },
+                response_only=True,
+                status_codes=["409"],
+            ),
+        ],
     )
     def post(self, request):
         serializer = LoginRequestSerializer(data=request.data)
@@ -104,7 +121,14 @@ class LoginView(APIView):
         token_data = TokenResponseSerializer(
             {"access": str(refresh.access_token), "refresh": str(refresh)}
         )
-        return Response(token_data.data, status=200)
+        response = Response(token_data.data, status=200)
+        response.set_cookie(
+            "cart_token",
+            "",
+            max_age=0,
+            **cart_token_cookie_kwargs()
+        )
+        return response
 
 
 class MeView(APIView):

@@ -1,10 +1,11 @@
 import hashlib
 import pytest
 from django.db import IntegrityError, transaction
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from rest_framework.test import APIClient
 from django.contrib.auth import get_user_model
-
+from carts.services.resolver import hash_cart_token
 from carts.models import Cart, CartItem
 from products.models import Product
 
@@ -49,11 +50,19 @@ def test_db_unique_constraint_on_anonymous_token_hash():
     # This assumes Cart has field anonymous_token_hash (nullable)
     token_hash = sha256_hex("fixed_token_value")
 
+    # ORM save() runs full_clean(), which raises ValidationError before DB insert.
     Cart.objects.create(status=Cart.Status.ACTIVE,
                         anonymous_token_hash=token_hash)
-    with pytest.raises(IntegrityError):
+    with pytest.raises(ValidationError):
         Cart.objects.create(status=Cart.Status.ACTIVE,
                             anonymous_token_hash=token_hash)
+
+    # DB-level assertion: bypass model validation via bulk_create (no full_clean()).
+    with pytest.raises(IntegrityError):
+        Cart.objects.bulk_create([
+            Cart(status=Cart.Status.ACTIVE, anonymous_token_hash="bulk_h1"),
+            Cart(status=Cart.Status.ACTIVE, anonymous_token_hash="bulk_h1"),
+        ])
 
 
 @pytest.mark.django_db(transaction=True)
@@ -173,7 +182,7 @@ def test_converted_cart_is_not_merge_target_on_login(product):
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.mysql
-def test_integrity_error_on_token_hash_collision_is_handled_as_safe_retry(product):
+def test_integrity_error_on_token_hash_collision_is_handled_as_safe_retry(product, monkeypatch):
     """
     This is a deterministic stand-in for a race:
     Simulate a collision / duplicate token_hash insert.
@@ -183,18 +192,35 @@ def test_integrity_error_on_token_hash_collision_is_handled_as_safe_retry(produc
     Implementation expectation:
     - on create anonymous cart, if token_hash unique constraint fails, regenerate token and retry
     """
-    # This test assumes you implement "create cart" in a way we can trigger collisions.
-    # We emulate it by pre-creating a cart with a known hash, and then forcing generator
-    # to output same token first. If you don't have injectable generator yet, keep this test
-    # as a future-proof "pending" via xfail until you add it.
-    pytest.xfail(
-        "Requires injectable token generator to deterministically force a collision.")
+    # Precreate a cart with hash(AAAA) to force collision on first attempt
+    Cart.objects.create(
+        user=None,
+        status=Cart.Status.ACTIVE,
+        anonymous_token_hash=hash_cart_token("AAAA"),
+    )
 
-    # Example intended structure:
-    # - patch carts.services.tokens.generate_token to return "AAAA" then "BBBB"
-    # - precreate cart with hash(AAAA)
-    # - call endpoint that creates guest cart without token
-    # - expect 201, cookie token == BBBB, not 500
+    # Force token generator: first returns "AAAA" (collision), then "BBBB" (success)
+    tokens = iter(["AAAA", "BBBB"])
+
+    def fake_generate():
+        return next(tokens)
+
+    # Patch the generator in the module where it's imported/used
+    monkeypatch.setattr(
+        "api.views.carts.generate_cart_token", fake_generate)
+
+    client = APIClient()
+    res = client.post(
+        "/api/v1/cart/items/",
+        {"product_id": product.id, "quantity": 1},
+        format="json",
+    )
+
+    assert res.status_code == 201, res.content
+
+    # Ensure cookie token is set to the second (non-colliding) value
+    assert "cart_token" in res.cookies
+    assert res.cookies["cart_token"].value == "BBBB"
 
 
 @pytest.mark.django_db(transaction=True)

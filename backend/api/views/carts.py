@@ -1,12 +1,20 @@
-from django.db import transaction
+import secrets
+
+from django.conf import settings
+from django.db import transaction, IntegrityError
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework import status
 from rest_framework.exceptions import APIException
 from carts.models import Cart, CartItem
+from carts.services.resolver import (
+    extract_cart_token,
+    get_active_anonymous_cart_by_token,
+    hash_cart_token,
+)
 from orders.models import Order
 from orderitems.models import OrderItem
 from products.models import Product
@@ -18,6 +26,8 @@ from api.serializers.cart import (
 )
 from api.serializers.common import ErrorResponseSerializer
 from api.services.pricing import calculate_price
+from api.services.cookies import cart_token_cookie_kwargs
+from carts.services.tokens import generate_cart_token
 from api.exceptions import ProductUnavailableException
 from api.exceptions.cart import (
     # Cart checkout exceptions
@@ -31,11 +41,124 @@ from api.exceptions.cart import (
     ProductNotFoundException,
 )
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema, OpenApiExample
+from drf_spectacular.utils import (
+    extend_schema,
+    OpenApiExample,
+    OpenApiParameter,
+)
+
+CART_TOKEN_PARAMETERS = [
+    OpenApiParameter(
+        name="X-Cart-Token",
+        type=OpenApiTypes.STR,
+        location=OpenApiParameter.HEADER,
+        required=False,
+        description="Optional anonymous cart token.",
+    ),
+    OpenApiParameter(
+        name="cart_token",
+        type=OpenApiTypes.STR,
+        location=OpenApiParameter.COOKIE,
+        required=False,
+        description="Optional anonymous cart token cookie.",
+    ),
+]
+
+
+def _resolve_or_create_cart(request):
+    """
+    Resolve or create a cart for the given request.
+
+    Behavior:
+    - Authenticated users: return (or lazily create) the user's ACTIVE cart.
+    - Anonymous users: resolve an ACTIVE anonymous cart via token (header/cookie),
+      or create a new anonymous ACTIVE cart when missing/invalid.
+
+    Returns:
+        A tuple (cart, created, raw_token_or_none) where raw_token_or_none is the newly generated
+        guest token when a new anonymous cart was created (used to set the cookie).
+    """
+
+    if request.user.is_authenticated:
+        cart, created = Cart.objects.get_or_create(
+            user=request.user,
+            status=Cart.Status.ACTIVE,
+        )
+        return cart, created, None
+
+    raw_token = extract_cart_token(request)
+    if raw_token:
+        cart = get_active_anonymous_cart_by_token(raw_token)
+        if cart:
+            return cart, False, None
+
+    cart, raw_token = _create_anonymous_cart_with_unique_token()
+    return cart, True, raw_token
+
+
+def _get_active_cart_for_request(request):
+    """
+    Return the current ACTIVE cart for the request context.
+
+    - If authenticated: resolves/creates the user's ACTIVE cart.
+    - If anonymous: resolves an ACTIVE anonymous cart by token; may return None
+      if no valid token is present (depending on implementation).
+    """
+
+    if request.user.is_authenticated:
+        return Cart.objects.filter(
+            user=request.user,
+            status=Cart.Status.ACTIVE,
+        ).first()
+
+    raw_token = extract_cart_token(request)
+    if not raw_token:
+        return None
+
+    return get_active_anonymous_cart_by_token(raw_token)
+
+
+def _create_anonymous_cart_with_unique_token(max_attempts: int = 3):
+    """
+    Create an anonymous ACTIVE cart with a freshly generated token hash.
+
+    Retries on DB unique constraint collision for anonymous_token_hash.
+    This is a deterministic stand-in for rare token collisions / race conditions.
+
+    Returns:
+        (cart, raw_token)
+
+    Raises:
+        IntegrityError: if collisions persist beyond max_attempts.
+    """
+    last_error = None
+    for _ in range(max_attempts):
+        raw_token = generate_cart_token()
+        token_hash = hash_cart_token(raw_token)
+        try:
+            cart = Cart.objects.create(
+                user=None,
+                status=Cart.Status.ACTIVE,
+                anonymous_token_hash=token_hash,
+            )
+            return cart, raw_token
+        except IntegrityError as e:
+            last_error = e
+            continue
+        except DjangoValidationError as e:
+            # With Cart.save() calling full_clean(), uniqueness collisions may surface
+            # as ValidationError before hitting the DB layer.
+            msg_dict = getattr(e, "message_dict", None) or {}
+            if "anonymous_token_hash" in msg_dict:
+                last_error = e
+                continue
+            raise
+    # If we still fail, bubble up (global handler should turn into {code,message} not 500).
+    raise last_error
 
 
 class CartView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     @extend_schema(
         tags=["Cart"],
@@ -46,6 +169,8 @@ Returns the user's active cart.
 Behavior:
 - If an ACTIVE cart exists, it is returned.
 - If no ACTIVE cart exists, a new cart is created automatically.
+- If the request is anonymous and a new cart is created, a `cart_token`
+  cookie is set on the response.
 
 Important notes:
 - This endpoint has a side-effect (cart creation).
@@ -55,12 +180,11 @@ Important notes:
 HTTP semantics:
 - 200 OK: an existing active cart is returned
 - 201 Created: a new active cart was created (target behavior)
-- 403 Forbidden: user is not authenticated
 """,
+        parameters=CART_TOKEN_PARAMETERS,
         responses={
             200: CartSerializer,
             201: CartSerializer,
-            403: ErrorResponseSerializer,
         },
         examples=[
             OpenApiExample(
@@ -90,30 +214,26 @@ HTTP semantics:
                 response_only=True,
                 status_codes=["201"],
             ),
-            OpenApiExample(
-                name="Unauthorized user attempt",
-                value={
-                    "detail": "Authentication credentials were not provided.",
-                },
-                response_only=True,
-                status_codes=["403"],
-            ),
         ],
     )
     def get(self, request):
-        cart, created = Cart.objects.get_or_create(
-            user=request.user,
-            status=Cart.Status.ACTIVE,
-        )
+        cart, created, raw_token = _resolve_or_create_cart(request)
         serializer = CartSerializer(cart)
-        return Response(
+        response = Response(
             serializer.data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
+        if raw_token:
+            response.set_cookie(
+                "cart_token",
+                raw_token,
+                **cart_token_cookie_kwargs(),
+            )
+        return response
 
 
 class CartItemCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     @extend_schema(
         tags=["Cart Items"],
@@ -139,8 +259,11 @@ Error handling strategy:
 Notes:
 - Error handling behavior reflects the target API contract.
 - Not all scenarios may be fully implemented yet.
+- Anonymous requests may receive a `cart_token` cookie when a new cart
+  is created.
 """,
         request=CartItemCreateRequestSerializer,
+        parameters=CART_TOKEN_PARAMETERS,
         responses={
             201: CartItemSerializer,
             400: ErrorResponseSerializer,
@@ -210,10 +333,7 @@ Notes:
             raise CartItemInvalidQuantityException()
 
         # --- cart ---
-        cart, _ = Cart.objects.get_or_create(
-            user=request.user,
-            status=Cart.Status.ACTIVE,
-        )
+        cart, _, raw_token = _resolve_or_create_cart(request)
 
         # --- product ---
         try:
@@ -232,14 +352,21 @@ Notes:
             price_at_add_time=product.price,
         )
 
-        return Response(
+        response = Response(
             CartItemSerializer(item).data,
             status=status.HTTP_201_CREATED,
         )
+        if raw_token:
+            response.set_cookie(
+                "cart_token",
+                raw_token,
+                **cart_token_cookie_kwargs(),
+            )
+        return response
 
 
 class CartCheckoutView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     @extend_schema(
         tags=["Cart Checkout"],
@@ -280,6 +407,7 @@ Notes:
 - Error handling reflects the target API contract.
 - Some conflict scenarios may not be fully implemented yet.
 """,
+        parameters=CART_TOKEN_PARAMETERS,
         responses={
             201: CartCheckoutResponseSerializer,
             400: ErrorResponseSerializer,
@@ -331,10 +459,13 @@ Notes:
         try:
             with transaction.atomic():
                 try:
+                    cart = _get_active_cart_for_request(request)
+                    if not cart:
+                        raise Cart.DoesNotExist()
                     cart = (
                         Cart.objects
                         .select_for_update()
-                        .get(user=request.user, status=Cart.Status.ACTIVE)
+                        .get(pk=cart.pk)
                     )
                 except Cart.DoesNotExist:
                     raise NoActiveCartException()

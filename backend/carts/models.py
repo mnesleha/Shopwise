@@ -40,13 +40,24 @@ class Cart(models.Model):
     merged_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def save(self, *args, **kwargs):
+    def clean(self):
+        """
+        Enforce Cart domain invariants.
+
+        Notes:
+        - Validation must live in clean() so that full_clean() (and unit tests) catches issues.
+        - save() calls full_clean() to ensure invariants are enforced for all persistence paths.
+        """
+        super().clean()
+
+        # Invariant: a user can have only one ACTIVE cart (applies only when user is set).
         if self.status == Cart.Status.ACTIVE:
             if self.user and Cart.objects.filter(
                 user=self.user,
                 status=Cart.Status.ACTIVE,
             ).exclude(pk=self.pk).exists():
                 raise ValidationError("User already has an active cart.")
+
         # MERGED invariant enforcement
         if self.status == Cart.Status.MERGED:
             if self.anonymous_token_hash is not None:
@@ -61,18 +72,27 @@ class Cart(models.Model):
                 raise ValidationError({
                     "merged_at": _("MERGED carts must have merged_at set.")
                 })
-        else:
-            # IMPORTANT: do not silently clear unexpected metadata (data loss).
-            # Non-MERGED carts must not carry merge metadata.
-            if self.merged_into_cart is not None:
-                raise ValidationError({
-                    "merged_into_cart": _("Only MERGED carts may reference merged_into_cart.")
-                })
-            if self.merged_at is not None:
-                raise ValidationError({
-                    "merged_at": _("Only MERGED carts may have merged_at set.")
-                })
-        super().save(*args, **kwargs)
+            return
+
+        # Non-MERGED carts must not carry merge metadata.
+        if self.merged_into_cart is not None:
+            raise ValidationError({
+                "merged_into_cart": _("Only MERGED carts may reference merged_into_cart.")
+            })
+        if self.merged_at is not None:
+            raise ValidationError({
+                "merged_at": _("Only MERGED carts may have merged_at set.")
+            })
+
+    def save(self, *args, **kwargs):
+        """
+        Persist Cart while enforcing domain invariants.
+
+        We call full_clean() to ensure clean() validation always runs, even when objects
+        are saved via ORM directly (not through serializers/forms).
+        """
+        self.full_clean()
+        return super().save(*args, **kwargs)
 
 
 class CartItem(models.Model):

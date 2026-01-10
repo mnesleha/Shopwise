@@ -5,7 +5,27 @@ from products.models import Product
 from api.serializers.order import OrderResponseSerializer
 
 
+class CartItemProductSerializer(serializers.ModelSerializer):
+    """
+    Minimal product representation embedded in cart responses.
+
+    Rationale:
+    - Improves frontend usability (no extra lookup required).
+    - Keeps API responses self-describing for E2E tests (Postman / pytest).
+    """
+
+    class Meta:
+        model = Product
+        fields = [
+            "id",
+            "name",
+            "price",
+        ]
+
+
 class CartItemSerializer(serializers.ModelSerializer):
+    product = CartItemProductSerializer(read_only=True)
+
     class Meta:
         model = CartItem
         fields = [

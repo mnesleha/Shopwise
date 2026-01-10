@@ -68,10 +68,11 @@ def test_converted_cart_does_not_count_as_active_for_uniqueness():
 def test_anonymous_token_hash_is_unique_when_present():
     Cart.objects.create(user=None, status=Cart.Status.ACTIVE,
                         anonymous_token_hash="h1")
-    with pytest.raises(IntegrityError):
-        # IntegrityError expected at DB level (MySQL), SQLite may raise IntegrityError too
+
+    with pytest.raises(ValidationError) as exc:
         Cart.objects.create(
             user=None, status=Cart.Status.ACTIVE, anonymous_token_hash="h1")
+    assert "anonymous_token_hash" in exc.value.message_dict
 
 
 @pytest.mark.django_db
@@ -166,7 +167,7 @@ def test_active_cart_cannot_have_merge_metadata(user):
     ACTIVE carts must raise ValidationError if merge metadata is present.
     """
     active = Cart.objects.create(user=user, status=Cart.Status.ACTIVE)
-    target = Cart.objects.create(user=user, status=Cart.Status.ACTIVE)
+    target = Cart.objects.create(user=user, status=Cart.Status.CONVERTED)
 
     active.merged_into_cart = target
     active.merged_at = timezone.now()
