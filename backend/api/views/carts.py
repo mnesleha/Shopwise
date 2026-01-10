@@ -1,7 +1,7 @@
 import secrets
 
 from django.conf import settings
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
@@ -26,6 +26,8 @@ from api.serializers.cart import (
 )
 from api.serializers.common import ErrorResponseSerializer
 from api.services.pricing import calculate_price
+from api.services.cookies import cart_token_cookie_kwargs
+from carts.services.tokens import generate_cart_token
 from api.exceptions import ProductUnavailableException
 from api.exceptions.cart import (
     # Cart checkout exceptions
@@ -63,15 +65,20 @@ CART_TOKEN_PARAMETERS = [
 ]
 
 
-def _cart_token_cookie_kwargs():
-    return {
-        "httponly": True,
-        "samesite": "Lax",
-        "secure": getattr(settings, "CART_TOKEN_COOKIE_SECURE", False),
-    }
-
-
 def _resolve_or_create_cart(request):
+    """
+    Resolve or create a cart for the given request.
+
+    Behavior:
+    - Authenticated users: return (or lazily create) the user's ACTIVE cart.
+    - Anonymous users: resolve an ACTIVE anonymous cart via token (header/cookie),
+      or create a new anonymous ACTIVE cart when missing/invalid.
+
+    Returns:
+        A tuple (cart, created, raw_token_or_none) where raw_token_or_none is the newly generated
+        guest token when a new anonymous cart was created (used to set the cookie).
+    """
+
     if request.user.is_authenticated:
         cart, created = Cart.objects.get_or_create(
             user=request.user,
@@ -85,15 +92,19 @@ def _resolve_or_create_cart(request):
         if cart:
             return cart, False, None
 
-    raw_token = secrets.token_urlsafe(32)
-    cart = Cart.objects.create(
-        status=Cart.Status.ACTIVE,
-        anonymous_token_hash=hash_cart_token(raw_token),
-    )
+    cart, raw_token = _create_anonymous_cart_with_unique_token()
     return cart, True, raw_token
 
 
 def _get_active_cart_for_request(request):
+    """
+    Return the current ACTIVE cart for the request context.
+
+    - If authenticated: resolves/creates the user's ACTIVE cart.
+    - If anonymous: resolves an ACTIVE anonymous cart by token; may return None
+      if no valid token is present (depending on implementation).
+    """
+
     if request.user.is_authenticated:
         return Cart.objects.filter(
             user=request.user,
@@ -105,6 +116,45 @@ def _get_active_cart_for_request(request):
         return None
 
     return get_active_anonymous_cart_by_token(raw_token)
+
+
+def _create_anonymous_cart_with_unique_token(max_attempts: int = 3):
+    """
+    Create an anonymous ACTIVE cart with a freshly generated token hash.
+
+    Retries on DB unique constraint collision for anonymous_token_hash.
+    This is a deterministic stand-in for rare token collisions / race conditions.
+
+    Returns:
+        (cart, raw_token)
+
+    Raises:
+        IntegrityError: if collisions persist beyond max_attempts.
+    """
+    last_error = None
+    for _ in range(max_attempts):
+        raw_token = generate_cart_token()
+        token_hash = hash_cart_token(raw_token)
+        try:
+            cart = Cart.objects.create(
+                user=None,
+                status=Cart.Status.ACTIVE,
+                anonymous_token_hash=token_hash,
+            )
+            return cart, raw_token
+        except IntegrityError as e:
+            last_error = e
+            continue
+        except DjangoValidationError as e:
+            # With Cart.save() calling full_clean(), uniqueness collisions may surface
+            # as ValidationError before hitting the DB layer.
+            msg_dict = getattr(e, "message_dict", None) or {}
+            if "anonymous_token_hash" in msg_dict:
+                last_error = e
+                continue
+            raise
+    # If we still fail, bubble up (global handler should turn into {code,message} not 500).
+    raise last_error
 
 
 class CartView(APIView):
@@ -177,7 +227,7 @@ HTTP semantics:
             response.set_cookie(
                 "cart_token",
                 raw_token,
-                **_cart_token_cookie_kwargs(),
+                **cart_token_cookie_kwargs(),
             )
         return response
 
@@ -310,7 +360,7 @@ Notes:
             response.set_cookie(
                 "cart_token",
                 raw_token,
-                **_cart_token_cookie_kwargs(),
+                **cart_token_cookie_kwargs(),
             )
         return response
 

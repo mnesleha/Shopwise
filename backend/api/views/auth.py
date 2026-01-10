@@ -13,6 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from carts.services.merge import merge_or_adopt_guest_cart
 from carts.services.resolver import extract_cart_token
+from api.services.cookies import cart_token_cookie_kwargs
 from api.serializers.auth import (
     RegisterRequestSerializer,
     LoginRequestSerializer,
@@ -125,9 +126,7 @@ class LoginView(APIView):
             "cart_token",
             "",
             max_age=0,
-            httponly=True,
-            samesite="Lax",
-            secure=getattr(settings, "CART_TOKEN_COOKIE_SECURE", False),
+            **cart_token_cookie_kwargs()
         )
         return response
 
