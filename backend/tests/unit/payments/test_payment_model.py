@@ -3,6 +3,7 @@ from payments.models import Payment
 from orders.models import Order
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from tests.conftest import create_valid_order
 
 
 @pytest.mark.django_db
@@ -11,7 +12,7 @@ def test_payment_created_with_default_status():
     User = get_user_model()
     user = User.objects.create_user(
         email="payuser1@example.com", password="pass")
-    order = Order.objects.create(user=user)
+    order = create_valid_order(user=user)
 
     payment = Payment.objects.create(order=order)
 
@@ -33,7 +34,7 @@ def test_payment_invalid_status_is_rejected():
     User = get_user_model()
     user = User.objects.create_user(
         email="payuser2@example.com", password="pass")
-    order = Order.objects.create(user=user)
+    order = create_valid_order(user=user)
 
     payment = Payment(
         order=order,
@@ -50,7 +51,7 @@ def test_valid_payment_is_valid():
     User = get_user_model()
     user = User.objects.create_user(
         email="payuser3@example.com", password="pass")
-    order = Order.objects.create(user=user)
+    order = create_valid_order(user=user)
 
     payment = Payment(
         order=order,

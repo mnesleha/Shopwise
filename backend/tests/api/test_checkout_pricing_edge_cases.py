@@ -3,6 +3,7 @@ from products.models import Product
 from discounts.models import Discount
 from datetime import date
 from decimal import Decimal
+from tests.conftest import checkout_payload
 
 
 # Test for fixed discount greater than product price
@@ -31,7 +32,11 @@ def test_fixed_discount_greater_than_product_price_clamps_to_zero(auth_client):
         format="json",
     )
 
-    response = auth_client.post("/api/v1/cart/checkout/")
+    response = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(),
+        format="json",
+    )
     data = response.json()
 
     assert response.status_code == 201
@@ -73,7 +78,11 @@ def test_only_one_discount_is_applied_per_product(auth_client):
         format="json",
     )
 
-    response = auth_client.post("/api/v1/cart/checkout/")
+    response = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(),
+        format="json",
+    )
     data = response.json()
 
     assert data["total"] == "80.00"  # FIXED wins
@@ -125,7 +134,11 @@ def test_price_rounding_is_consistent(auth_client):
         format="json",
     )
 
-    response = auth_client.post("/api/v1/cart/checkout/")
+    response = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(),
+        format="json",
+    )
     assert response.status_code == 201
 
     data = response.json()
@@ -155,7 +168,11 @@ def test_price_change_after_add_to_cart_does_not_affect_checkout(auth_client):
     product.price = Decimal("200.00")
     product.save()
 
-    response = auth_client.post("/api/v1/cart/checkout/")
+    response = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(),
+        format="json",
+    )
     data = response.json()
 
     assert response.status_code == 201

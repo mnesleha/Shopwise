@@ -5,6 +5,7 @@ from orders.models import Order
 from orderitems.models import OrderItem
 from products.models import Product
 from django.contrib.auth import get_user_model
+from tests.conftest import create_valid_order
 
 
 @pytest.mark.django_db
@@ -35,7 +36,7 @@ def test_orderitem_must_have_product():
 
     User = get_user_model()
     user = User.objects.create_user(email="user2@example.com", password="pass")
-    order = Order.objects.create(user=user)
+    order = create_valid_order(user=user)
 
     item = OrderItem(
         order=order,
@@ -53,7 +54,7 @@ def test_orderitem_quantity_must_be_positive():
 
     User = get_user_model()
     user = User.objects.create_user(email="user3@example.com", password="pass")
-    order = Order.objects.create(user=user)
+    order = create_valid_order(user=user)
     product = Product.objects.create(
         name="Laptop",
         price=2000,
@@ -76,7 +77,7 @@ def test_orderitem_quantity_must_be_positive():
 def test_orderitem_price_snapshot_allows_zero():
     User = get_user_model()
     user = User.objects.create_user(email="user4@example.com", password="pass")
-    order = Order.objects.create(user=user)
+    order = create_valid_order(user=user)
     product = Product.objects.create(
         name="Tablet",
         price=Decimal("500.00"),
@@ -99,7 +100,7 @@ def test_orderitem_price_snapshot_allows_zero():
 def test_orderitem_price_snapshot_rejects_negative():
     User = get_user_model()
     user = User.objects.create_user(email="user5@example.com", password="pass")
-    order = Order.objects.create(user=user)
+    order = create_valid_order(user=user)
     product = Product.objects.create(
         name="Tablet",
         price=Decimal("500.00"),
@@ -123,7 +124,7 @@ def test_valid_orderitem_is_valid():
 
     User = get_user_model()
     user = User.objects.create_user(email="user6@example.com", password="pass")
-    order = Order.objects.create(user=user)
+    order = create_valid_order(user=user)
     product = Product.objects.create(
         name="Camera",
         price=800,

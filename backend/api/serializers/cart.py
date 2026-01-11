@@ -64,5 +64,66 @@ class CartItemCreateRequestSerializer(serializers.Serializer):
     )
 
 
+class CartCheckoutRequestSerializer(serializers.Serializer):
+    customer_email = serializers.EmailField()
+    shipping_name = serializers.CharField()
+    shipping_address_line1 = serializers.CharField()
+    shipping_address_line2 = serializers.CharField(
+        required=False,
+        allow_blank=True,
+    )
+    shipping_city = serializers.CharField()
+    shipping_postal_code = serializers.CharField()
+    shipping_country = serializers.CharField()
+    shipping_phone = serializers.CharField()
+    billing_same_as_shipping = serializers.BooleanField(default=True)
+    billing_name = serializers.CharField(
+        required=False,
+        allow_blank=True,
+    )
+    billing_address_line1 = serializers.CharField(
+        required=False,
+        allow_blank=True,
+    )
+    billing_address_line2 = serializers.CharField(
+        required=False,
+        allow_blank=True,
+    )
+    billing_city = serializers.CharField(
+        required=False,
+        allow_blank=True,
+    )
+    billing_postal_code = serializers.CharField(
+        required=False,
+        allow_blank=True,
+    )
+    billing_country = serializers.CharField(
+        required=False,
+        allow_blank=True,
+    )
+    billing_phone = serializers.CharField(
+        required=False,
+        allow_blank=True,
+    )
+
+    def validate(self, attrs):
+        if attrs.get("billing_same_as_shipping") is False:
+            required_fields = [
+                "billing_name",
+                "billing_address_line1",
+                "billing_city",
+                "billing_postal_code",
+                "billing_country",
+            ]
+            errors = {}
+            for field in required_fields:
+                value = attrs.get(field)
+                if value is None or (isinstance(value, str) and not value.strip()):
+                    errors[field] = ["This field is required."]
+            if errors:
+                raise serializers.ValidationError(errors)
+        return attrs
+
+
 class CartCheckoutResponseSerializer(OrderResponseSerializer):
     """Checkout response shares the same contract as Orders endpoints."""

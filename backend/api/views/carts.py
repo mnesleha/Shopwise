@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework import status
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import APIException, ValidationError as DRFValidationError
 from carts.models import Cart, CartItem
 from carts.services.resolver import (
     extract_cart_token,
@@ -22,6 +22,7 @@ from api.serializers.cart import (
     CartSerializer,
     CartItemCreateRequestSerializer,
     CartItemSerializer,
+    CartCheckoutRequestSerializer,
     CartCheckoutResponseSerializer,
 )
 from api.serializers.common import ErrorResponseSerializer
@@ -407,6 +408,7 @@ Notes:
 - Error handling reflects the target API contract.
 - Some conflict scenarios may not be fully implemented yet.
 """,
+        request=CartCheckoutRequestSerializer,
         parameters=CART_TOKEN_PARAMETERS,
         responses={
             201: CartCheckoutResponseSerializer,
@@ -456,6 +458,10 @@ Notes:
         ],
     )
     def post(self, request):
+        serializer = CartCheckoutRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        checkout_data = serializer.validated_data
+
         try:
             with transaction.atomic():
                 try:
@@ -473,7 +479,34 @@ Notes:
                 if not cart.items.exists():
                     raise CartEmptyException()
 
-                order = Order.objects.create(user=request.user)
+                order = Order(
+                    user=request.user if request.user.is_authenticated else None,
+                    customer_email=checkout_data["customer_email"],
+                    shipping_name=checkout_data["shipping_name"],
+                    shipping_address_line1=checkout_data["shipping_address_line1"],
+                    shipping_address_line2=checkout_data.get(
+                        "shipping_address_line2", ""
+                    ),
+                    shipping_city=checkout_data["shipping_city"],
+                    shipping_postal_code=checkout_data["shipping_postal_code"],
+                    shipping_country=checkout_data["shipping_country"],
+                    shipping_phone=checkout_data["shipping_phone"],
+                    billing_same_as_shipping=checkout_data.get(
+                        "billing_same_as_shipping", True
+                    ),
+                    billing_name=checkout_data.get("billing_name"),
+                    billing_address_line1=checkout_data.get("billing_address_line1"),
+                    billing_address_line2=checkout_data.get("billing_address_line2"),
+                    billing_city=checkout_data.get("billing_city"),
+                    billing_postal_code=checkout_data.get("billing_postal_code"),
+                    billing_country=checkout_data.get("billing_country"),
+                    billing_phone=checkout_data.get("billing_phone"),
+                )
+                try:
+                    order.full_clean()
+                except DjangoValidationError as exc:
+                    raise DRFValidationError(exc.message_dict)
+                order.save()
 
                 for item in cart.items.all():
                     pricing = calculate_price(
@@ -506,6 +539,9 @@ Notes:
 
         except APIException:
             raise
+
+        except DjangoValidationError as exc:
+            raise DRFValidationError(exc.message_dict)
 
         except Exception:
             # atomic block guarantees rollback

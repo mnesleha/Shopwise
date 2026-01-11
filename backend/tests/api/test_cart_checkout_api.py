@@ -6,6 +6,7 @@ from products.models import Product
 from carts.models import Cart
 from orders.models import Order
 from orderitems.models import OrderItem
+from tests.conftest import checkout_payload
 
 
 def assert_checkout_contract(order: dict) -> None:
@@ -74,7 +75,11 @@ def test_checkout_creates_order_with_items_and_total(auth_client, user):
         format="json",
     )
 
-    response = auth_client.post("/api/v1/cart/checkout/")
+    response = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(customer_email=user.email),
+        format="json",
+    )
     assert response.status_code == 201
 
     order = response.json()
@@ -106,7 +111,11 @@ def test_checkout_converts_cart_status(auth_client):
         format="json",
     )
 
-    response = auth_client.post("/api/v1/cart/checkout/")
+    response = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(),
+        format="json",
+    )
     assert response.status_code == 201
 
     cart = Cart.objects.get()
@@ -116,7 +125,11 @@ def test_checkout_converts_cart_status(auth_client):
 @pytest.mark.django_db
 def test_new_cart_created_after_checkout(auth_client):
     auth_client.get("/api/v1/cart/")
-    auth_client.post("/api/v1/cart/checkout/")
+    auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(),
+        format="json",
+    )
     response = auth_client.get("/api/v1/cart/")
 
     assert response.status_code == 200
@@ -126,7 +139,11 @@ def test_new_cart_created_after_checkout(auth_client):
 @pytest.mark.django_db
 def test_checkout_empty_cart_fails(auth_client):
     auth_client.get("/api/v1/cart/")
-    response = auth_client.post("/api/v1/cart/checkout/")
+    response = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(),
+        format="json",
+    )
     assert response.status_code == 400
 
     cart = Cart.objects.get()
@@ -150,11 +167,19 @@ def test_double_checkout_returns_404(auth_client):
     )
 
     # First checkout – OK
-    first = auth_client.post("/api/v1/cart/checkout/")
+    first = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(),
+        format="json",
+    )
     assert first.status_code == 201
 
     # Second checkout – MUST FAIL
-    second = auth_client.post("/api/v1/cart/checkout/")
+    second = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(),
+        format="json",
+    )
     assert second.status_code == 404
     assert second.json()["code"] == "NO_ACTIVE_CART"
 
@@ -191,7 +216,11 @@ def test_checkout_rolls_back_on_order_item_failure(auth_client, user):
         "api.views.carts.OrderItem.objects.create",
         side_effect=Exception("Boom during order item creation"),
     ):
-        response = auth_client.post("/api/v1/cart/checkout/")
+        response = auth_client.post(
+            "/api/v1/cart/checkout/",
+            checkout_payload(customer_email=user.email),
+            format="json",
+        )
 
     # response can be 500 or mapped error – not the focus here
     assert response.status_code >= 400

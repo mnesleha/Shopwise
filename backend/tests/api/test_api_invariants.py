@@ -1,5 +1,6 @@
 import re
 import pytest
+from tests.conftest import checkout_payload
 
 UPPER_SNAKE_CASE = re.compile(r"^[A-Z][A-Z0-9_]*$")
 MONEY_2DP = re.compile(r"^\d+\.\d{2}$")
@@ -12,7 +13,11 @@ def test_error_response_code_is_uppercase_snake_case(auth_client):
     All API error responses must use UPPER_SNAKE_CASE error codes.
     """
     # Trigger a known error deterministically: checkout with no active cart
-    response = auth_client.post("/api/v1/cart/checkout/")
+    response = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(),
+        format="json",
+    )
     assert response.status_code == 404
 
     payload = response.json()
@@ -36,7 +41,11 @@ def test_checkout_success_response_uses_unified_contract(auth_client, product):
     assert r.status_code in (200, 201)
 
     # Act: checkout
-    response = auth_client.post("/api/v1/cart/checkout/")
+    response = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(),
+        format="json",
+    )
     assert response.status_code == 201
     data = response.json()
 
@@ -91,7 +100,11 @@ def test_money_fields_are_strings_with_two_decimals(auth_client, product):
         {"product_id": product.id, "quantity": 2},
         format="json",
     )
-    response = auth_client.post("/api/v1/cart/checkout/")
+    response = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(),
+        format="json",
+    )
     assert response.status_code == 201
     data = response.json()
 
@@ -110,7 +123,11 @@ def test_error_payload_has_code_and_message_or_detail(auth_client):
     Error responses must include a stable error 'code' and human-readable text
     in 'message' (preferred) or 'detail' (legacy/DRF default).
     """
-    response = auth_client.post("/api/v1/cart/checkout/")
+    response = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(),
+        format="json",
+    )
     assert response.status_code == 404
 
     payload = response.json()
