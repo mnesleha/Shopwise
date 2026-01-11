@@ -1,6 +1,5 @@
 import pytest
 from django.contrib.auth import get_user_model
-from django.utils import timezone
 
 from orders.models import Order
 from orders.services.claim import claim_guest_orders_for_user
