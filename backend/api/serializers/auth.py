@@ -46,3 +46,12 @@ class UserResponseSerializer(serializers.Serializer):
 
     def get_role(self, obj):
         return "ADMIN" if obj.is_staff or obj.is_superuser else "CUSTOMER"
+
+
+class VerifyEmailRequestSerializer(serializers.Serializer):
+    token = serializers.CharField()
+
+
+class VerifyEmailResponseSerializer(serializers.Serializer):
+    email_verified = serializers.BooleanField(read_only=True)
+    claimed_orders = serializers.IntegerField(read_only=True)

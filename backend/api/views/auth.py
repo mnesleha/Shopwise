@@ -13,13 +13,17 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from carts.services.merge import merge_or_adopt_guest_cart
 from carts.services.resolver import extract_cart_token
+from accounts.services.email_verification import verify_email_verification_token
+from orders.services.claim import claim_guest_orders_for_user
 from api.services.cookies import cart_token_cookie_kwargs
 from api.serializers.auth import (
     RegisterRequestSerializer,
     LoginRequestSerializer,
     TokenResponseSerializer,
     UserResponseSerializer,
-    RefreshRequestSerializer
+    RefreshRequestSerializer,
+    VerifyEmailRequestSerializer,
+    VerifyEmailResponseSerializer,
 )
 from api.serializers.common import ErrorResponseSerializer
 
@@ -118,6 +122,9 @@ class LoginView(APIView):
         cart_token = extract_cart_token(request)
         merge_or_adopt_guest_cart(user=user, raw_token=cart_token)
 
+        if getattr(user, "email_verified", False):
+            claim_guest_orders_for_user(user)
+
         token_data = TokenResponseSerializer(
             {"access": str(refresh.access_token), "refresh": str(refresh)}
         )
@@ -173,3 +180,28 @@ class RefreshView(APIView):
             # Map any refresh problems to our unified validation shape
             raise ValidationError(
                 {"refresh": ["Invalid or expired refresh token."]})
+
+
+class VerifyEmailView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=["Auth"],
+        summary="Verify email via token",
+        request=VerifyEmailRequestSerializer,
+        responses={200: VerifyEmailResponseSerializer},
+    )
+    def post(self, request):
+        serializer = VerifyEmailRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        _, claimed = verify_email_verification_token(
+            serializer.validated_data["token"],
+            request=request,
+        )
+
+        return Response(
+            {"email_verified": True, "claimed_orders": claimed},
+            status=200,
+        )

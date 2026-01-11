@@ -1,0 +1,88 @@
+import pytest
+from django.contrib.auth import get_user_model
+from rest_framework.test import APIClient
+from accounts.services.email_verification import issue_email_verification_token
+from orders.models import Order
+
+
+@pytest.mark.django_db
+def test_verify_email_token_claims_guest_orders(checkout_payload):
+    """
+    Guest order claiming should occur only after email ownership is verified via token.
+    Endpoint must NOT require auth.
+    """
+    # 1) Create a guest order via ORM (fast + deterministic)
+    guest_order = Order.objects.create(
+        user=None,
+        **checkout_payload(customer_email="customer@example.com"),
+    )
+    assert guest_order.user_id is None
+    assert guest_order.is_claimed is False
+
+    # 2) Create user (unverified)
+    User = get_user_model()
+    user = User.objects.create_user(
+        email="customer@example.com", password="Passw0rd!123")
+    assert user.email_verified is False
+
+    # 3) Create verification token (how depends on implementation)
+    # Convention for tests: use a helper endpoint to mint token or a service function.
+    # The PR should provide a service: accounts.services.email_verification.issue_token(user) -> str
+
+    token = issue_email_verification_token(user)
+
+    # 4) Call verify endpoint WITHOUT auth
+    client = APIClient()
+    res = client.post("/api/v1/auth/verify-email/",
+                      {"token": token}, format="json")
+    assert res.status_code == 200, res.content
+
+    # 5) User should be verified, order claimed
+    user.refresh_from_db()
+    assert user.email_verified is True
+
+    guest_order.refresh_from_db()
+    assert guest_order.user_id == user.id
+    assert guest_order.is_claimed is True
+    assert guest_order.claimed_by_user_id == user.id
+    assert guest_order.claimed_at is not None
+
+
+@pytest.mark.django_db
+def test_verify_email_is_idempotent(checkout_payload):
+    User = get_user_model()
+    user = User.objects.create_user(
+        email="customer@example.com", password="Passw0rd!123")
+
+    Order.objects.create(
+        user=None, **checkout_payload(customer_email="customer@example.com"))
+
+    token = issue_email_verification_token(user)
+
+    client = APIClient()
+
+    first = client.post("/api/v1/auth/verify-email/",
+                        {"token": token}, format="json")
+    assert first.status_code == 200, first.content
+
+    # second call with same token should be safe:
+    # either:
+    # - 200 with claimed_orders=0 (idempotent)
+    # - or 400 INVALID_TOKEN (one-time token)
+    second = client.post("/api/v1/auth/verify-email/",
+                         {"token": token}, format="json")
+
+    assert second.status_code in (200, 400), second.content
+
+    user.refresh_from_db()
+    assert user.email_verified is True
+
+
+@pytest.mark.django_db
+def test_verify_email_invalid_token_returns_400_unified_error_shape():
+    client = APIClient()
+    res = client.post("/api/v1/auth/verify-email/",
+                      {"token": "invalid"}, format="json")
+    assert res.status_code == 400
+    data = res.json()
+    assert data["code"] == "VALIDATION_ERROR" or data["code"] == "INVALID_TOKEN"
