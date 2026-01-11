@@ -10,6 +10,28 @@ def _normalize_email(value: str) -> str:
 
 
 def claim_guest_orders_for_user(user) -> int:
+    """
+    Claim guest orders for the given user by attaching previously anonymous
+    orders that match the user's verified email address.
+
+    Guest orders are orders that have no associated user (`user` is NULL) and
+    have not yet been marked as claimed. When the provided user has a truthy
+    `email_verified` attribute, this function searches for such guest orders
+    whose stored customer email (normalized or raw) matches the user's email,
+    and then assigns those orders to the user within a single database
+    transaction.
+
+    If the user is not verified (`email_verified` is falsy), no orders are
+    claimed and the function returns 0.
+
+    Args:
+        user: A user instance with at least `email` and `email_verified`
+            attributes, used to identify and claim matching guest orders.
+
+    Returns:
+        int: The number of guest orders that were successfully claimed for
+        the user.
+    """
     if not getattr(user, "email_verified", False):
         return 0
 
