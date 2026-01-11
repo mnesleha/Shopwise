@@ -1,4 +1,5 @@
 import hashlib
+from django.conf import settings
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -74,3 +75,24 @@ class User(AbstractUser):
         parts = [p for p in (self.first_name, self.last_name) if p]
         full_name = " ".join(parts).strip()
         return full_name or self.email
+
+
+class EmailVerificationToken(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="email_verification_tokens",
+    )
+    token_hash = models.CharField(
+        max_length=64,
+        unique=True,
+        db_index=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+    used_ip = models.GenericIPAddressField(null=True, blank=True)
+    used_user_agent = models.TextField(null=True, blank=True)
+
+    def __str__(self) -> str:
+        return f"EmailVerificationToken(user_id={self.user_id})"
