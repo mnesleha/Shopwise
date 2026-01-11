@@ -1,5 +1,6 @@
 import pytest
 from products.models import Product
+from tests.conftest import checkout_payload
 
 
 @pytest.mark.django_db
@@ -22,7 +23,11 @@ def test_checkout_returns_unit_price_and_line_total(auth_client, user, fixed_dis
         format="json",
     )
 
-    response = auth_client.post("/api/v1/cart/checkout/")
+    response = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(customer_email=user.email),
+        format="json",
+    )
     assert response.status_code == 201
 
     data = response.json()

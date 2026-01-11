@@ -5,6 +5,7 @@ from django.urls import resolve, Resolver404
 from orderitems.models import OrderItem
 from orders.models import Order
 from products.models import Product
+from tests.conftest import checkout_payload
 
 
 @pytest.mark.mysql
@@ -33,7 +34,11 @@ def test_checkout_is_atomic_on_mysql(auth_client, user, product):
 
     # Simulate DB-level failure (e.g. constraint / precision issue)
     with patch("orderitems.models.OrderItem.save", side_effect=Exception):
-        response = auth_client.post("/api/v1/cart/checkout/")
+        response = auth_client.post(
+            "/api/v1/cart/checkout/",
+            checkout_payload(customer_email=user.email),
+            format="json",
+        )
         assert response.status_code in (409, 500)
 
     assert Order.objects.filter(user=user).count() == 0

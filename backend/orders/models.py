@@ -7,10 +7,23 @@ from django.utils import timezone
 
 class Order(models.Model):
     def _normalize_customer_email(self) -> None:
+        """
+        Keep customer_email_normalized consistent and non-empty whenever possible.
+
+        NOTE:
+        - We normalize early (before field validation) to avoid EmailField rejecting
+        values with surrounding whitespace.
+        - If customer_email is empty/whitespace, we set normalized to "" and let clean()
+        raise a proper validation error for customer_email.
+        """
         if self.customer_email is None:
-            self.customer_email_normalized = None
+            self.customer_email_normalized = ""
             return
-        self.customer_email_normalized = self.customer_email.strip().lower()
+
+        raw = str(self.customer_email)
+        stripped = raw.strip()
+        self.customer_email = stripped
+        self.customer_email_normalized = stripped.lower()
 
     class Status(models.TextChoices):
         CREATED = "CREATED", "Created"
@@ -89,6 +102,11 @@ class Order(models.Model):
                 "customer_email_normalized": _("customer_email_normalized must match normalized customer_email.")
             })
 
+        expected = self.customer_email.strip().lower()
+        if self.customer_email_normalized != expected:
+            raise ValidationError({"customer_email_normalized": _(
+                "customer_email_normalized must match normalized customer_email.")})
+
         # --- shipping required snapshots (shipping_phone included) ---
         required_shipping = [
             "shipping_name",
@@ -151,6 +169,11 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order #{self.pk} ({self.status})"
+
+    def clean_fields(self, exclude=None):
+        # Normalize BEFORE Django runs field-level validation (EmailField, required fields).
+        self._normalize_customer_email()
+        return super().clean_fields(exclude=exclude)
 
     class Meta:
         indexes = [

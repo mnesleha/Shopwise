@@ -1,7 +1,7 @@
 import pytest
 from orders.models import Order
 from products.models import Product
-from tests.conftest import create_order_via_checkout
+from tests.conftest import checkout_payload, create_order_via_checkout
 
 
 @pytest.mark.django_db
@@ -21,7 +21,11 @@ def test_successful_payment_creates_payment_and_updates_order(auth_client, user)
         format="json",
     )
 
-    checkout_response = auth_client.post("/api/v1/cart/checkout/").json()
+    checkout_response = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(customer_email=user.email),
+        format="json",
+    ).json()
     order_id = checkout_response["id"]
 
     response = auth_client.post(
@@ -35,8 +39,12 @@ def test_successful_payment_creates_payment_and_updates_order(auth_client, user)
 
 
 @pytest.mark.django_db
-def test_failed_payment_marks_order_as_failed(auth_client, product):
-    order = create_order_via_checkout(auth_client, product)
+def test_failed_payment_marks_order_as_failed(auth_client, user, product):
+    order = create_order_via_checkout(
+        auth_client,
+        product,
+        customer_email=user.email,
+    )
 
     response = auth_client.post(
         "/api/v1/payments/",
@@ -48,8 +56,12 @@ def test_failed_payment_marks_order_as_failed(auth_client, product):
 
 
 @pytest.mark.django_db
-def test_payment_cannot_be_created_twice(auth_client, product):
-    order = create_order_via_checkout(auth_client, product)
+def test_payment_cannot_be_created_twice(auth_client, user, product):
+    order = create_order_via_checkout(
+        auth_client,
+        product,
+        customer_email=user.email,
+    )
 
     auth_client.post(
         "/api/v1/payments/",

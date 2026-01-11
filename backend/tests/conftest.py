@@ -13,6 +13,53 @@ from orders.models import Order
 from orderitems.models import OrderItem
 
 
+def checkout_payload(customer_email: str = "customer@example.com", **overrides) -> dict:
+    data = {
+        "customer_email": customer_email,
+        "shipping_name": "E2E Customer",
+        "shipping_address_line1": "E2E Main Street 1",
+        "shipping_address_line2": "",
+        "shipping_city": "E2E City",
+        "shipping_postal_code": "00000",
+        "shipping_country": "US",
+        "shipping_phone": "+10000000000",
+        "billing_same_as_shipping": True,
+    }
+    data.update(overrides)
+    return data
+
+
+def create_valid_order(*, user=None, status=None, **overrides) -> Order:
+    if "customer_email" not in overrides and user is not None:
+        overrides["customer_email"] = user.email
+
+    payload = checkout_payload(**overrides)
+    order_kwargs = {
+        "user": user,
+        "status": status or Order.Status.CREATED,
+        "customer_email": payload["customer_email"],
+        "shipping_name": payload["shipping_name"],
+        "shipping_address_line1": payload["shipping_address_line1"],
+        "shipping_address_line2": payload.get("shipping_address_line2", ""),
+        "shipping_city": payload["shipping_city"],
+        "shipping_postal_code": payload["shipping_postal_code"],
+        "shipping_country": payload["shipping_country"],
+        "shipping_phone": payload["shipping_phone"],
+        "billing_same_as_shipping": payload.get("billing_same_as_shipping", True),
+        "billing_name": payload.get("billing_name"),
+        "billing_address_line1": payload.get("billing_address_line1"),
+        "billing_address_line2": payload.get("billing_address_line2"),
+        "billing_city": payload.get("billing_city"),
+        "billing_postal_code": payload.get("billing_postal_code"),
+        "billing_country": payload.get("billing_country"),
+        "billing_phone": payload.get("billing_phone"),
+    }
+
+    order = Order(**order_kwargs)
+    order.save()
+    return order
+
+
 def _wants_mysql(args: list[str]) -> bool:
     """
     Heuristic:
@@ -137,10 +184,7 @@ def order(db, user):
         is_active=True,
     )
 
-    order = Order.objects.create(
-        user=user,
-        status=Order.Status.CREATED,
-    )
+    order = create_valid_order(user=user, status=Order.Status.CREATED)
 
     OrderItem.objects.create(
         order=order,
@@ -184,10 +228,7 @@ def order_factory(db):
             is_active=True,
         )
 
-        order = Order.objects.create(
-            user=user,
-            status=status,
-        )
+        order = create_valid_order(user=user, status=status)
 
         if line_total is None:
             line_total = Decimal(unit_price) * quantity
@@ -219,10 +260,7 @@ def order_without_discount(db, user):
         is_active=True,
     )
 
-    order = Order.objects.create(
-        user=user,
-        status=Order.Status.CREATED,
-    )
+    order = create_valid_order(user=user, status=Order.Status.CREATED)
 
     OrderItem.objects.create(
         order=order,
@@ -288,7 +326,11 @@ def percent_discount(db):
     return _create
 
 
-def create_order_via_checkout(auth_client, product):
+def create_order_via_checkout(
+    auth_client,
+    product,
+    customer_email: str = "customer@example.com",
+):
     auth_client.get("/api/v1/cart/")
     auth_client.post(
         "/api/v1/cart/items/",
@@ -296,7 +338,11 @@ def create_order_via_checkout(auth_client, product):
         format="json",
     )
 
-    response = auth_client.post("/api/v1/cart/checkout/")
+    response = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(customer_email=customer_email),
+        format="json",
+    )
     assert response.status_code == 201
 
     data = response.json()
