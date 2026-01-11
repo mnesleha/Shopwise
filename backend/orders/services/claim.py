@@ -21,10 +21,8 @@ def claim_guest_orders_for_user(user) -> int:
             .filter(user__isnull=True, is_claimed=False)
             .filter(
                 Q(customer_email_normalized=normalized_email)
-                | Q(customer_email__icontains=normalized_email)
             )
         )
-
         now = timezone.now()
         to_update = []
 
