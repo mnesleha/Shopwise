@@ -31,12 +31,14 @@ def issue_email_verification_token(user, *, ttl_minutes: int = 60 * 24) -> str:
             continue
         return raw_token
 
-    raise ValidationError({"token": ["Unable to issue email verification token."]})
+    raise ValidationError(
+        {"token": ["Unable to issue email verification token."]})
 
 
 def verify_email_verification_token(raw_token: str, *, request=None):
     if not isinstance(raw_token, str) or not raw_token.strip():
-        raise ValidationError({"token": ["Email verification token is required."]})
+        raise ValidationError(
+            {"token": ["Email verification token is required."]})
 
     token_hash = sha256_hex(raw_token.strip())
     now = timezone.now()
@@ -61,7 +63,8 @@ def verify_email_verification_token(raw_token: str, *, request=None):
         token.used_at = now
         if request is not None:
             token.used_ip = request.META.get("REMOTE_ADDR")
-            token.used_user_agent = request.META.get("HTTP_USER_AGENT", "")
+            ua = request.META.get("HTTP_USER_AGENT") or ""
+            token.used_user_agent = ua[:512] or None
         token.save(update_fields=["used_at", "used_ip", "used_user_agent"])
 
         user = token.user

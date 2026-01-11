@@ -1,12 +1,13 @@
 import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
+from tests.conftest import checkout_payload
 from accounts.services.email_verification import issue_email_verification_token
 from orders.models import Order
 
 
 @pytest.mark.django_db
-def test_verify_email_token_claims_guest_orders(checkout_payload):
+def test_verify_email_token_claims_guest_orders():
     """
     Guest order claiming should occur only after email ownership is verified via token.
     Endpoint must NOT require auth.
@@ -49,7 +50,7 @@ def test_verify_email_token_claims_guest_orders(checkout_payload):
 
 
 @pytest.mark.django_db
-def test_verify_email_is_idempotent(checkout_payload):
+def test_verify_email_is_idempotent():
     User = get_user_model()
     user = User.objects.create_user(
         email="customer@example.com", password="Passw0rd!123")
@@ -85,4 +86,4 @@ def test_verify_email_invalid_token_returns_400_unified_error_shape():
                       {"token": "invalid"}, format="json")
     assert res.status_code == 400
     data = res.json()
-    assert data["code"] == "VALIDATION_ERROR" or data["code"] == "INVALID_TOKEN"
+    assert data["code"] == "VALIDATION_ERROR"
