@@ -6,6 +6,7 @@ from orders.models import Order
 
 
 def _normalize_email(value: str) -> str:
+    """Normalize an email address by stripping whitespace and converting to lowercase for comparison."""
     return value.strip().lower()
 
 
