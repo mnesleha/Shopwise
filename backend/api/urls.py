@@ -8,6 +8,7 @@ from api.views.discounts import DiscountViewSet
 from api.views.carts import CartView, CartItemCreateView
 from api.views.payments import PaymentCreateView
 from api.views.auth import LoginView, RegisterView, MeView, RefreshView, VerifyEmailView
+from api.views.dev import DevEmailVerificationTokenView
 from api.views import health_check
 
 app_name = "api"
@@ -31,4 +32,8 @@ urlpatterns = [
     path("auth/refresh/", RefreshView.as_view()),
     path("auth/verify-email/", VerifyEmailView.as_view()),
     path("auth/me/", MeView.as_view(), name="auth-me"),
+    path(
+        "dev/email-verification-token/",
+        DevEmailVerificationTokenView.as_view(),
+    ),
 ]
