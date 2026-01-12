@@ -1,6 +1,8 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.conf import settings
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 
@@ -32,6 +34,19 @@ class Order(models.Model):
         SHIPPED = "SHIPPED", "Shipped"
         DELIVERED = "DELIVERED", "Delivered"
         CANCELED = "CANCELED", "Canceled"
+
+    class CancelReason(models.TextChoices):
+        CUSTOMER_REQUEST = "CUSTOMER_REQUEST", "Customer request"
+        PAYMENT_FAILED = "PAYMENT_FAILED", "Payment failed"
+        PAYMENT_EXPIRED = "PAYMENT_EXPIRED", "Payment expired"
+        OUT_OF_STOCK = "OUT_OF_STOCK", "Out of stock"
+        SHOP_REQUEST = "SHOP_REQUEST", "Shop request"
+        FRAUD_SUSPECTED = "FRAUD_SUSPECTED", "Fraud suspected"
+
+    class CancelledBy(models.TextChoices):
+        CUSTOMER = "CUSTOMER", "Customer"
+        ADMIN = "ADMIN", "Admin"
+        SYSTEM = "SYSTEM", "System"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -75,6 +90,19 @@ class Order(models.Model):
         on_delete=models.SET_NULL,
         related_name="claimed_orders",
     )
+    cancel_reason = models.CharField(
+        max_length=32,
+        choices=CancelReason.choices,
+        null=True,
+        blank=True,
+    )
+    cancelled_by = models.CharField(
+        max_length=16,
+        choices=CancelledBy.choices,
+        null=True,
+        blank=True,
+    )
+    cancelled_at = models.DateTimeField(null=True, blank=True)
 
     status = models.CharField(
         max_length=20,
@@ -184,5 +212,70 @@ class Order(models.Model):
             models.Index(
                 fields=["is_claimed", "customer_email_normalized"],
                 name="orders_claimed_email_idx",
+            ),
+        ]
+
+
+class InventoryReservation(models.Model):
+    class Status(models.TextChoices):
+        ACTIVE = "ACTIVE"
+        COMMITTED = "COMMITTED"
+        RELEASED = "RELEASED"
+        EXPIRED = "EXPIRED"
+
+    class ReleaseReason(models.TextChoices):
+        PAYMENT_FAILED = "PAYMENT_FAILED"
+        PAYMENT_EXPIRED = "PAYMENT_EXPIRED"
+        CUSTOMER_REQUEST = "CUSTOMER_REQUEST"
+        ADMIN_CANCEL = "ADMIN_CANCEL"
+        OUT_OF_STOCK = "OUT_OF_STOCK"
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="inventory_reservations",
+    )
+    product = models.ForeignKey(
+        "products.Product",
+        on_delete=models.PROTECT,
+        related_name="inventory_reservations",
+    )
+    quantity = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.ACTIVE,
+    )
+    expires_at = models.DateTimeField()
+    committed_at = models.DateTimeField(null=True, blank=True)
+    released_at = models.DateTimeField(null=True, blank=True)
+    release_reason = models.CharField(
+        max_length=32,
+        choices=ReleaseReason.choices,
+        null=True,
+        blank=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def is_active(self) -> bool:
+        return self.status == self.Status.ACTIVE
+
+    @property
+    def is_expired(self) -> bool:
+        return self.status == self.Status.ACTIVE and self.expires_at < timezone.now()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["order", "product"],
+                name="inventory_reservation_order_product_uniq",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["status", "expires_at"],
+                name="inv_res_status_exp_idx",
             ),
         ]
