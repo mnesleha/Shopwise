@@ -161,6 +161,71 @@ JWT-related errors follow the unified error payload conventions.
 
 ---
 
+## Identity (Current)
+
+The project uses a custom Django user model (`accounts.User`) with email-based authentication.
+Email is required, normalized and unique at the database level. (ADR-020)
+All domain relations reference `settings.AUTH_USER_MODEL`.
+
+---
+
+## Anonymous Cart (Current)
+
+Anonymous carts are supported via an opaque guest cart token. (ADR-022)
+
+Token transport:
+
+- Primary: HttpOnly cookie `cart_token`
+- Secondary: `X-Cart-Token` header (takes precedence over cookie)
+
+The database stores only a SHA-256 hash of the token (`anonymous_token_hash`).
+
+Cart resolution:
+
+- Authenticated requests resolve the user’s ACTIVE cart (created lazily if missing).
+- Anonymous requests resolve an ACTIVE anonymous cart by token hash; if missing/invalid, a new anonymous cart is created and a cookie is set.
+
+Login behavior:
+
+- On successful login, the system adopts or merges the guest cart according to ADR-018.
+- After adopt/merge, the token is invalidated and the cookie is cleared.
+- Merge conflicts return HTTP 409 `CART_MERGE_STOCK_CONFLICT`.
+
+Cart status model includes terminal `MERGED` for merged anonymous carts.
+
+---
+
+## Order Lifecycle (Current)
+
+MVP order status flow: `CREATED -> PAID -> SHIPPED`. (ADR-017)
+
+Inventory is reserved by decrementing `product.stock_quantity` when an order transitions to `PAID`.
+This transition and stock decrement are idempotent; repeated payment success processing must not decrement stock twice.
+`SHIPPED` is an admin-triggered fulfillment state with no additional pricing or inventory effects.
+
+---
+
+## Guest Checkout and Order Claiming (Current)
+
+The checkout endpoint supports both authenticated and anonymous clients. (ADR-023)
+
+- Anonymous checkout requires customer contact and address snapshot fields (minimum: `customer_email`).
+- Orders can be created with `user = NULL` and store customer/contact snapshots for auditability.
+
+### Verified claim policy
+
+Guest orders are only attached to a user account after the user’s email is verified (double opt-in). (ADR-023)
+
+Claim eligibility:
+
+- `order.user IS NULL`
+- `order.customer_email` matches the user email (case-insensitive / normalized)
+- `user.email_verified == true`
+
+Claim is transactional and idempotent and may run on auth success and/or on email verification.
+
+---
+
 ## Testing Strategy (Current)
 
 ### Test pyramid
@@ -222,6 +287,13 @@ Responsibilities:
 - Postman CLI validates API workflows, authentication, and response behavior.
 
 This layer complements unit and integration tests by validating the system from a consumer perspective.
+
+---
+
+## Migration Policy (Pre-1.0)
+
+Before v1.0, controlled migration resets are allowed for foundational schema changes.
+Resets must be documented, reproducible, and validated by CI from a clean state (migrate → seed → tests). (ADR-021)
 
 ---
 
