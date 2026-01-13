@@ -47,6 +47,7 @@ from drf_spectacular.utils import (
     OpenApiExample,
     OpenApiParameter,
 )
+from orders.services.inventory_reservation_service import reserve_for_checkout
 
 CART_TOKEN_PARAMETERS = [
     OpenApiParameter(
@@ -508,6 +509,11 @@ Notes:
                     raise DRFValidationError(exc.message_dict)
                 order.save()
 
+                reservation_items = [
+                    {"product_id": item.product_id, "quantity": item.quantity}
+                    for item in cart.items.all()
+                ]
+
                 for item in cart.items.all():
                     pricing = calculate_price(
                         unit_price=item.price_at_add_time,
@@ -533,6 +539,8 @@ Notes:
                             else None
                         ),
                     )
+
+                reserve_for_checkout(order=order, items=reservation_items)
 
                 cart.status = Cart.Status.CONVERTED
                 cart.save()

@@ -10,8 +10,12 @@ from api.exceptions.payment import (
     PaymentAlreadyExistsException,
     OrderNotPayableException
 )
-from orders.models import Order
+from orders.models import Order, InventoryReservation
 from payments.models import Payment
+from orders.services.inventory_reservation_service import (
+    commit_reservations_for_paid,
+    release_reservations,
+)
 
 
 class PaymentCreateView(APIView):
@@ -132,11 +136,14 @@ Notes:
             status=status_map[payment_result],
         )
 
-        order.status = (
-            Order.Status.PAID
-            if payment.status == Payment.Status.SUCCESS
-            else Order.Status.PAYMENT_FAILED
-        )
-        order.save()
+        if payment.status == Payment.Status.SUCCESS:
+            commit_reservations_for_paid(order=order)
+        else:
+            release_reservations(
+                order=order,
+                reason=InventoryReservation.ReleaseReason.PAYMENT_FAILED,
+                cancelled_by=Order.CancelledBy.SYSTEM,
+                cancel_reason=Order.CancelReason.PAYMENT_FAILED,
+            )
 
         return Response(PaymentResponseSerializer(payment).data, status=201)
