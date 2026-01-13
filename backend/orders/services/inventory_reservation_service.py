@@ -4,7 +4,11 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from api.exceptions.orders import OutOfStockException
+from api.exceptions.orders import (
+    OutOfStockException,
+    ReservationAlreadyExistsException,
+    InvalidOrderStateException,
+)
 from orders.models import InventoryReservation, Order
 from products.models import Product
 
@@ -31,6 +35,11 @@ def reserve_for_checkout(*, order, items, ttl_minutes=None) -> None:
     product_ids = sorted(requested.keys())
 
     with transaction.atomic():
+        # Guardrail: reserving twice for the same order would violate (order, product) uniqueness.
+        # Checkout orchestration must reserve exactly once per order.
+        if InventoryReservation.objects.filter(order=order).exists():
+            raise ReservationAlreadyExistsException()
+
         products = (
             Product.objects.select_for_update()
             .filter(id__in=product_ids)
@@ -58,7 +67,8 @@ def reserve_for_checkout(*, order, items, ttl_minutes=None) -> None:
             product = product_map.get(product_id)
             if product is None:
                 raise OutOfStockException()
-            available = product.stock_quantity - reserved_totals.get(product_id, 0)
+            available = product.stock_quantity - \
+                reserved_totals.get(product_id, 0)
             if requested[product_id] > available:
                 raise OutOfStockException()
 
@@ -81,23 +91,30 @@ def commit_reservations_for_paid(*, order) -> None:
     Idempotent: if all reservations are already COMMITTED, this is a no-op.
     """
     with transaction.atomic():
-        reservations = (
+        # Validate order state early to prevent committing inventory for cancelled/shipped orders.
+        if order.status == _order_status_paid_value():
+            return
+        if order.status != _order_status_created_value():
+            raise InvalidOrderStateException()
+
+        reservations_qs = (
             InventoryReservation.objects.select_for_update()
             .filter(order=order)
             .order_by("product_id")
         )
-        if not reservations.exists():
+        reservations = list(reservations_qs)
+        if not reservations:
             return
 
-        if not reservations.exclude(status=InventoryReservation.Status.COMMITTED).exists():
+        # Idempotence: all committed -> no-op.
+        if all(r.status == InventoryReservation.Status.COMMITTED for r in reservations):
             return
 
-        if reservations.filter(status=InventoryReservation.Status.ACTIVE).count() == 0:
+        active_reservations = [
+            r for r in reservations if r.status == InventoryReservation.Status.ACTIVE]
+        if not active_reservations:
             return
 
-        active_reservations = list(
-            reservations.filter(status=InventoryReservation.Status.ACTIVE)
-        )
         order_quantities = {}
         for reservation in active_reservations:
             order_quantities[reservation.product_id] = (
@@ -113,6 +130,8 @@ def commit_reservations_for_paid(*, order) -> None:
         )
         product_map = {product.id: product for product in products}
 
+        # ADR-025 semantics: availability for reserve is physical - SUM(ACTIVE reservations).
+        # Commit must remain consistent and never allow physical stock to go negative.
         active_reservations_all = (
             InventoryReservation.objects.select_for_update()
             .filter(
@@ -136,6 +155,7 @@ def commit_reservations_for_paid(*, order) -> None:
                 raise OutOfStockException()
             active_sum = active_sum_map.get(product_id, 0) or 0
             available = product.stock_quantity - active_sum
+            # Commit can race with other commits; enforce physical stock constraint.
             if available < 0 or product.stock_quantity < order_quantities[product_id]:
                 _cancel_order_out_of_stock(order, active_reservations, now)
                 raise OutOfStockException()
@@ -153,9 +173,8 @@ def commit_reservations_for_paid(*, order) -> None:
             ["status", "committed_at"],
         )
 
-        if order.status == _order_status_created_value():
-            order.status = _order_status_paid_value()
-            order.save(update_fields=["status"])
+        order.status = _order_status_paid_value()
+        order.save(update_fields=["status"])
 
 
 def release_reservations(*, order, reason, cancelled_by, cancel_reason) -> None:
@@ -240,9 +259,12 @@ def expire_overdue_reservations(*, now=None) -> int:
 
             for reservation in overdue_reservations:
                 reservation.status = InventoryReservation.Status.EXPIRED
+                # Treat EXPIRED as a release with PAYMENT_EXPIRED metadata (ADR-025 consistency).
+                reservation.released_at = current_time
+                reservation.release_reason = InventoryReservation.ReleaseReason.PAYMENT_EXPIRED
             InventoryReservation.objects.bulk_update(
                 overdue_reservations,
-                ["status"],
+                ["status", "released_at", "release_reason"],
             )
             affected += len(overdue_reservations)
 

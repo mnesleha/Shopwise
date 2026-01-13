@@ -2,7 +2,7 @@
 
 **Decision type**: Architecture
 
-**Status**: Proposed
+**Status**: Accepted
 
 **Date**: Sprint 9
 
@@ -14,7 +14,9 @@
 
 [ADR-021](./ADR-021-Pre-1.0-Migration-Reset-Policy.md) (Pre-1.0 Migration Reset),
 
-[ADR-022](./ADR-022-Anonymous_Cart_Introduction.md) (Anonymous Cart), ADR-023 (Guest Checkout)
+[ADR-022](./ADR-022-Anonymous_Cart_Introduction.md) (Anonymous Cart),
+
+[ADR-023](./ADR-023-Guest-Checkout-and-Verified-Claim-of-Guest-Orders.md) (Guest Checkout)
 
 ## Context
 

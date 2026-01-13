@@ -24,7 +24,7 @@ def test_mysql_two_concurrent_reserves_compete_for_last_stock():
     """
     Two concurrent reservations for the last unit of stock:
     - exactly one succeeds
-    - the other fails with OutOfStockError
+    - the other fails with OutOfStockException
     """
     product = Product.objects.create(
         name="Race Product",
