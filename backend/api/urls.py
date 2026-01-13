@@ -9,6 +9,7 @@ from api.views.carts import CartView, CartItemCreateView
 from api.views.payments import PaymentCreateView
 from api.views.auth import LoginView, RegisterView, MeView, RefreshView, VerifyEmailView
 from api.views.dev import DevEmailVerificationTokenView
+from api.views.admin_inventory_reservations import InventoryReservationAdminViewSet
 from api.views import health_check
 
 app_name = "api"
@@ -18,6 +19,11 @@ router.register("products", ProductViewSet, basename="product")
 router.register("categories", CategoryViewSet, basename="category")
 router.register(r"orders", OrderViewSet, basename="order")
 router.register("discounts", DiscountViewSet, basename="discount")
+router.register(
+    r"admin/inventory-reservations",
+    InventoryReservationAdminViewSet,
+    basename="admin-inventory-reservations",
+)
 
 
 urlpatterns = [
