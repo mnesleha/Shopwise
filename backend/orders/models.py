@@ -33,7 +33,7 @@ class Order(models.Model):
         PAYMENT_FAILED = "PAYMENT_FAILED"
         SHIPPED = "SHIPPED", "Shipped"
         DELIVERED = "DELIVERED", "Delivered"
-        CANCELED = "CANCELED", "Canceled"
+        CANCELLED = "CANCELLED", "Cancelled"
 
     class CancelReason(models.TextChoices):
         CUSTOMER_REQUEST = "CUSTOMER_REQUEST", "Customer request"
