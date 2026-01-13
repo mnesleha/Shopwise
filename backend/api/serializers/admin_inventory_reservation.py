@@ -15,8 +15,10 @@ class InventoryReservationAdminSerializer(serializers.ModelSerializer):
             "product_id",
             "quantity",
             "status",
+            "created_at",
             "expires_at",
             "committed_at",
             "released_at",
             "release_reason",
         ]
+        read_only_fields = fields

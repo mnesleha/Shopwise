@@ -1,4 +1,6 @@
 import pytest
+from datetime import timedelta
+
 from rest_framework.test import APIClient
 
 from django.contrib.auth import get_user_model
@@ -73,7 +75,7 @@ def test_admin_can_retrieve_inventory_reservation_detail():
         order=order,
         product=product,
         quantity=2,
-        expires_at=timezone.now(),
+        expires_at=timezone.now() + timedelta(minutes=15),
         status=InventoryReservation.Status.ACTIVE,
     )
 

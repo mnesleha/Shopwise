@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "payments",
     "carts",
     "utils",
+    'django_filters',
     "rest_framework",
     'drf_spectacular',
     'drf_spectacular_sidecar',
@@ -83,6 +84,7 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "api.exceptions.handler.custom_exception_handler",
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
 
 SIMPLE_JWT = {

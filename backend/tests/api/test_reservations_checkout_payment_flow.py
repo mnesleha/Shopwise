@@ -34,8 +34,8 @@ def test_checkout_creates_active_inventory_reservations(auth_client, user):
 
     reservations = InventoryReservation.objects.filter(order_id=order_id)
     assert reservations.exists()
-    assert reservations.filter(
-        status=InventoryReservation.Status.ACTIVE).count() == reservations.count()
+    assert all(
+        r.status == InventoryReservation.Status.ACTIVE for r in reservations)
 
     r = reservations.get(product_id=product.id)
     assert r.quantity == 2
@@ -82,8 +82,8 @@ def test_payment_success_commits_reservations_and_decrements_stock(auth_client, 
 
     assert order.status == Order.Status.PAID
     assert reservations.exists()
-    assert reservations.filter(
-        status=InventoryReservation.Status.COMMITTED).count() == reservations.count()
+    assert all(
+        r.status == InventoryReservation.Status.COMMITTED for r in reservations)
     assert all(r.committed_at is not None for r in reservations)
 
     # physical stock decrement happens on commit
@@ -124,8 +124,8 @@ def test_payment_fail_releases_reservations_and_cancels_order(auth_client, user)
     assert order.status == Order.Status.CANCELLED
     assert order.cancel_reason == Order.CancelReason.PAYMENT_FAILED
     assert reservations.exists()
-    assert reservations.filter(
-        status=InventoryReservation.Status.RELEASED).count() == reservations.count()
+    assert all(
+        r.status == InventoryReservation.Status.RELEASED for r in reservations)
     assert all(r.released_at is not None for r in reservations)
     assert all(r.release_reason ==
                InventoryReservation.ReleaseReason.PAYMENT_FAILED for r in reservations)
