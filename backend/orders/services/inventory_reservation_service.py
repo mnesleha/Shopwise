@@ -286,6 +286,24 @@ def expire_overdue_reservations(*, now=None) -> int:
     return affected
 
 
+def count_overdue_reservations(*, now=None) -> int:
+    """
+    Read-only helper for tooling (management command --dry-run).
+
+    Counts how many ACTIVE reservations are currently overdue (expires_at < now)
+    for orders that are still in CREATED state.
+
+    Note: This function intentionally does not take locks and does not perform any updates,
+    so the result is a best-effort snapshot under concurrent activity.
+    """
+    current_time = now or timezone.now()
+    return InventoryReservation.objects.filter(
+        status=InventoryReservation.Status.ACTIVE,
+        expires_at__lt=current_time,
+        order__status=_order_status_created_value(),
+    ).count()
+
+
 def _order_status_created_value():
     return getattr(Order.Status, "CREATED", "CREATED")
 

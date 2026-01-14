@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from datetime import timedelta
 
@@ -70,6 +71,11 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
+
+RESERVATION_TTL_GUEST_SECONDS = int(
+    os.getenv("RESERVATION_TTL_GUEST_SECONDS", 15 * 60))
+RESERVATION_TTL_AUTH_SECONDS = int(
+    os.getenv("RESERVATION_TTL_AUTH_SECONDS", 2 * 60 * 60))
 
 STATIC_URL = "static/"
 

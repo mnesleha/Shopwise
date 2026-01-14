@@ -226,6 +226,91 @@ Claim is transactional and idempotent and may run on auth success and/or on emai
 
 ---
 
+## Cart → Order → Inventory (Current)
+
+The system uses a **two-phase inventory model** that separates stock holding from physical stock decrement.
+This design supersedes earlier approaches that decremented stock directly at checkout.
+
+**Key principles**:
+
+- `Cart` represents a mutable shopping intent with **no inventory impact**.
+- `Order` is an immutable snapshot created at checkout (`status = CREATED`).
+- `Product.stock_quantity` represents **physical stock only**.
+- Overselling is prevented via **explicit inventory reservations**.
+
+### Inventory Reservation Model (Current)
+
+At checkout, inventory is **reserved**, not decremented.
+
+- For each order item, an `InventoryReservation` is created with:
+  - `status = ACTIVE`
+  - explicit `expires_at`` (TTL)
+- Availability is computed as:
+
+```python
+available = product.stock_quantity
+           - sum(quantity of ACTIVE reservations for product)
+```
+
+- Physical stock is decremented only after successful payment (`CREATED → PAID`).
+- Reservations are terminally resolved as:
+  - `COMMITTED` on payment success
+  - `RELEASED / EXPIRED` on cancellation or TTL expiry
+
+Reservation TTL is applied at checkout and is environment-configurable
+(guest vs authenticated users).
+
+### Order Lifecycle (Current)
+
+Orders follow a minimal, explicit lifecycle:
+
+- `CREATED`
+  - inventory reserved
+  - awaiting payment
+- `PAID`
+  - reservations committed
+  - physical stock decremented
+- `CANCELLED`
+  - reservations released or expired
+  - physical stock unchanged
+
+Cancellation **reasons are metadata**, not separate states
+(e.g. `PAYMENT_FAILED`, `PAYMENT_EXPIRED`, `CUSTOMER_REQUEST`, `OUT_OF_STOCK`).
+
+Planned terminal states:
+
+- `SHIPPED`
+- `DELIVERED`
+
+### Time-Based Expiration (TTL)
+
+Inventory reservations are time-bound.
+
+- TTL is evaluated only for:
+  - `ACTIVE` reservations
+  - orders still in `CREATED`
+- Expiration:
+  - releases reservations
+  - cancels the order with system metadata
+- Paid orders are **never expired**.
+
+Expiration is executed by a background runner / management command
+(prepared for later scheduling via django-q2).
+
+### Architectural Notes
+
+- Inventory and order state side effects are executed **only via service layer orchestration**.
+- Models enforce invariants but contain no side-effect logic.
+- The design is **WMS-friendly** and prepared for future external fulfillment integration without refactoring core order models.
+
+### References
+
+- [Cart–Order Lifecycle (current)](./Cart-Order%20Lifecycle.md)
+- [Inventory Reservation TTL Lifecycle](./Inventory%20Reservation%20Lifecycle.md)
+- [ADR-025: Inventory Reservation Model](../decisions/ADR-025-Inventory-Reservation-Model.md)
+
+---
+
 ## Testing Strategy (Current)
 
 ### Test pyramid
