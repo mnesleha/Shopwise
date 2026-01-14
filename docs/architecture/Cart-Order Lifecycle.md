@@ -1,194 +1,216 @@
 # Cart–Order Lifecycle
 
-## Purpose of This Document
+This document describes the current Cart → Order lifecycle in Shopwise,
+including inventory reservation, payment interaction, and cancellation semantics.
 
-This document describes the **lifecycle and workflow transitions** between Cart and Order
-in the Shopwise system.
+It reflects the architecture as of Sprint 9 and supersedes earlier snapshots
+that relied on direct stock decrement during checkout.
 
-Its goal is to explain:
+---
 
-- how user intent evolves into a finalized order
-- which states exist and why
-- where business rules are enforced
-- how the lifecycle is validated through tests
+## High-Level Principles
 
-This document focuses on **process flow and state transitions**, not implementation details.
+- **Cart** represents a mutable shopping intent.
+- **Order** represents an immutable snapshot of checkout intent.
+- **InventoryReservation** separates _holding stock_ from _physical stock decrement_.
+- **Product.stock_quantity** always represents **physical stock only**.
+- Stock is decremented **only after successful payment**.
+- Time-based expiration is a first-class concept (TTL).
 
-## Conceptual Overview
+---
 
-In Shopwise, the purchasing process is intentionally split into two distinct phases:
+## Cart Phase
 
-1. **Intent phase** – represented by Cart
-2. **Result phase** – represented by Order
+The cart is a temporary, mutable structure that exists before checkout.
 
-This separation ensures clarity between:
+Characteristics:
 
-- what the user _plans_ to buy
-- what the system has _committed_ to as a transaction
+- Items can be freely added, updated, or removed.
+- Cart can be anonymous (guest) or associated with an authenticated user.
+- Cart has no impact on inventory availability.
 
-## Cart Lifecycle
+The cart is not persisted as an order until checkout.
 
-Cart represents a mutable container of user intent.
+---
 
-A cart can exist in one of the following states:
+## Checkout Phase
 
-- ACTIVE
-- CONVERTED
+Checkout transforms a cart into an order snapshot.
 
-### ACTIVE
+At checkout:
 
-An ACTIVE cart:
+- An **Order** is created with status `CREATED`.
+- **OrderItems** are created as an immutable snapshot of cart contents.
+- **InventoryReservation** records are created for each product in the order.
 
-- is automatically created when requested by the user
-- can be freely modified (add / remove items, change quantities)
-- enforces validation rules on cart items
-- is the only cart state eligible for checkout
+### Inventory Reservation at Checkout
 
-A user can have at most one ACTIVE cart at any time.
+Checkout does **not** decrement physical stock.
 
-### CONVERTED
+Instead, the system creates inventory reservations with:
 
-A CONVERTED cart:
+- `status = ACTIVE`
+- explicit expiration timestamp (`expires_at`)
+- quantity per product
 
-- represents a cart that has been successfully checked out
-- is no longer modifiable
-- exists only for historical and traceability purposes
+Reservation availability is computed as:
 
-Once a cart is CONVERTED, it cannot transition back to ACTIVE.
+available = product.stock_quantity - sum(quantity of ACTIVE reservations for that product)
 
-## Checkout Process
+This prevents overselling under concurrency while keeping physical stock unchanged.
 
-Checkout is the **only operation** that converts a Cart into an Order.
+### Reservation TTL
 
-Checkout:
+Each reservation has a time-to-live (TTL), applied at checkout time.
 
-- validates cart contents
-- creates an Order as a snapshot of cart state
-- transitions cart state from ACTIVE to CONVERTED
-- creates a new empty ACTIVE cart for the user
+TTL values are environment-configurable:
 
-Checkout is allowed only if:
+- `RESERVATION_TTL_GUEST_SECONDS`
+- `RESERVATION_TTL_AUTH_SECONDS`
 
-- the cart is ACTIVE
-- the cart contains at least one item
-- all cart items pass validation rules
+The computed TTL is stored directly on the reservation as `expires_at`.
 
-If these conditions are not met, checkout fails with a client error.
+---
 
 ## Order Lifecycle
 
-Order represents the result of a completed checkout.
+Orders represent a finalized snapshot of checkout intent.
 
-Orders are created in a controlled and explicit manner and are not user-modifiable.
+### Order States
 
 Orders can exist in the following states:
 
-- CREATED
-- PAID
-- PAYMENT_FAILED
+- `CREATED`
+- `PAID`
+- `CANCELLED`
+
+Additional terminal states (planned):
+
+- `SHIPPED`
+- `DELIVERED`
 
 ### CREATED
 
-CREATED is the initial state of an Order.
-
-An order in this state:
-
-- has been created from a cart
-- contains a snapshot of items and prices
-- awaits payment outcome
+- Order was created from checkout.
+- Inventory is reserved (`ACTIVE` reservations).
+- Physical stock is unchanged.
+- Awaiting payment.
 
 ### PAID
 
-PAID indicates that payment for the order was successful.
+- Payment completed successfully.
+- Inventory reservations are **committed**:
+  - reservation status: `ACTIVE → COMMITTED`
+  - physical stock is decremented
+- Order becomes immutable.
 
-In this state:
+### CANCELLED
 
-- the order is considered finalized
-- no further state transitions related to payment are expected
+- Terminal state.
+- Order was not paid or was explicitly cancelled.
+- Inventory reservations were released or expired.
+- Physical stock remains unchanged.
 
-### PAYMENT_FAILED
+Cancellation reasons are stored as metadata, not as order states:
 
-PAYMENT_FAILED indicates that a payment attempt was made but did not succeed.
+- `CUSTOMER_REQUEST`
+- `PAYMENT_FAILED`
+- `PAYMENT_EXPIRED`
+- `OUT_OF_STOCK`
+- `SHOP_REQUEST`
+- `FRAUD_SUSPECTED` (planned)
 
-In this state:
-
-- the order remains immutable
-- payment may be retried depending on future extensions
-- no cart rollback occurs
+---
 
 ## Payment Interaction
 
-Payment is an explicit action performed after checkout.
+Payment resolves the inventory reservation lifecycle.
 
-Key characteristics:
+### Payment Success
 
-- one-to-one relationship between Order and Payment
-- payment outcome drives order state transition
-- payment does not modify order contents
+On successful payment:
 
-Payment is intentionally modeled as a separate step to:
+- Inventory reservations are **committed**.
+- Physical stock is decremented.
+- Order transitions: `CREATED → PAID`.
 
-- reflect real-world workflows
-- simplify testing and reasoning
+This operation is idempotent and protected against race conditions.
 
-## State Transition Summary
+### Payment Failure
 
-Cart:
+On payment failure:
 
-ACTIVE → CONVERTED
+- Order is cancelled.
+- Inventory reservations are released.
+- Physical stock is not decremented.
 
-Order:
+Result:
 
-CREATED → PAID
+CREATED → CANCELLED
 
-CREATED → PAYMENT_FAILED
+cancel_reason = PAYMENT_FAILED
 
-No ther transitions are allowed.
+Retrying payment is not supported; a new checkout is required.
 
-## Error Scenarios and Safeguards
+---
 
-The lifecycle enforces several safeguards:
+## Time-Based Expiration (TTL)
 
-- checkout of empty cart is rejected
-- checkout of non-ACTIVE cart is rejected
-- order cannot be created directly via API
-- duplicate payments are rejected
-- unauthorized access to orders is blocked
+Orders in `CREATED` state are not valid indefinitely.
 
-These safeguards are enforced through:
+If payment is not completed before reservation TTL expires:
 
-- application-level validation
-- API permissions
-- automated tests
+- Reservations are expired.
+- Order is cancelled automatically by the system.
 
-## Validation Through Testing
+Expiration rules:
 
-The Cart–Order lifecycle is validated through multiple layers of tests:
+- Applies only to `ACTIVE` reservations.
+- Applies only if the order is still `CREATED`.
+- Paid orders are never expired.
 
-- unit tests:
+Result:
 
-  - cart invariants
-  - item validation rules
+CREATED → CANCELLED
 
-- API integration tests:
+cancel_reason = PAYMENT_EXPIRED
 
-  - checkout behavior
-  - state transitions
-  - permission enforcement
+Expiration is executed by a background runner (later via django-q2),
+and can be triggered manually via a management command for testing.
 
-- E2E tests (Postman):
-  - full user workflow from cart creation to payment
+---
 
-The lifecycle is considered stable only if all test layers are green.
+## Cancellation Paths Summary
 
-## Summary
+| Scenario                  | Order State | Reservation Result | Stock |
+| ------------------------- | ----------- | ------------------ | ----- |
+| Payment success           | PAID        | COMMITTED          | ↓     |
+| Payment failure           | CANCELLED   | RELEASED           | =     |
+| TTL expiration            | CANCELLED   | EXPIRED            | =     |
+| Customer cancel (CREATED) | CANCELLED   | RELEASED           | =     |
+| Out-of-stock on checkout  | —           | —                  | =     |
 
-The Cart–Order lifecycle is a central design element of Shopwise.
+---
 
-By explicitly separating intent from result and enforcing strict state transitions,
-the system achieves:
+## Architectural Rationale
 
-- clarity of responsibility
-- realistic workflow modeling
-- improved testability
-- stronger guarantees around data integrity
+This lifecycle design ensures that:
+
+- Overselling is prevented without prematurely decrementing stock.
+- Inventory logic is explicit, auditable, and WMS-friendly.
+- Time-based behavior is deterministic and testable.
+- Order states remain minimal; reasons are expressed as metadata.
+
+This separation enables future integrations such as:
+
+- External WMS systems
+- Asynchronous fulfillment workflows
+- Detailed audit logging and reconciliation
+
+---
+
+## Related Documents
+
+- [ADR-025: Inventory Reservation Model](../decisions/ADR-025-Inventory-Reservation-Model.md)
+- [Current Architecture Baseline](Current%20Architecture%20Baseline.md)
+- Order Fulfillment Architecture (planned)

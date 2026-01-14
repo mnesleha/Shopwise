@@ -166,7 +166,7 @@ jobs:
           api-key: ${{ secrets.POSTMAN_API_KEY }}
           command: >
             collection run ${{ matrix.collection_id }}
-            --environment 50963019-4274f153-a0d9-4495-a621-e0fb23fc18eb
+            --environment 50963019-cce78deb-378b-4740-92df-d5f37e4b23d3
             --env-var fixtures_b64="${{ env.FIXTURES_B64 }}"
             --reporters cli,junit
             --reporter-junit-export postman-junit.xml

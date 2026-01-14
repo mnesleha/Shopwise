@@ -1,13 +1,19 @@
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.decorators import action
+from rest_framework.exceptions import MethodNotAllowed
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
     OpenApiExample,
+    OpenApiResponse,
 )
-from orders.models import Order
+from orders.models import Order, InventoryReservation
 from api.serializers.order import OrderResponseSerializer
 from api.serializers.common import ErrorResponseSerializer
+from orders.services.inventory_reservation_service import release_reservations
+from api.exceptions.orders import InvalidOrderStateException
 
 
 @extend_schema_view(
@@ -101,7 +107,70 @@ class OrderViewSet(ModelViewSet):
 
     queryset = Order.objects.all()
     serializer_class = OrderResponseSerializer
-    http_method_names = ["get", "head", "options"]
+    http_method_names = ["post", "get", "head", "options"]
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        # Prevent direct order creation. Orders must be created via checkout only.
+        raise MethodNotAllowed("POST")
+
+    @extend_schema(
+        summary="Cancel an order",
+        description=(
+            "Cancels a customer's own order if it is still in CREATED state. "
+            "This releases ACTIVE inventory reservations and transitions the order to CANCELLED "
+            "with cancel_reason=CUSTOMER_REQUEST."
+        ),
+        responses={
+            200: OrderResponseSerializer,
+            401: OpenApiResponse(description="Unauthorized"),
+            404: OpenApiResponse(description="Order not found"),
+            409: OpenApiResponse(description="Invalid order state"),
+        },
+        examples=[
+            OpenApiExample(
+                "Success",
+                value={
+                    "id": 123,
+                    "status": "CANCELLED",
+                    "cancel_reason": "CUSTOMER_REQUEST",
+                    "cancelled_by": "CUSTOMER",
+                    "cancelled_at": "2026-01-14T12:00:00Z",
+                },
+                response_only=True,
+            ),
+            OpenApiExample(
+                "Invalid state",
+                value={"code": "INVALID_ORDER_STATE",
+                       "message": "...", "errors": {}},
+                response_only=True,
+                status_codes=["409"],
+            ),
+        ],
+    )
+    @action(detail=True, methods=["post"], url_path="cancel")
+    def cancel(self, request, pk=None):
+        order = order = self.get_object()
+
+        if order.status != Order.Status.CREATED:
+            raise InvalidOrderStateException()
+
+        release_reservations(
+            order=order,
+            reason=InventoryReservation.ReleaseReason.CUSTOMER_REQUEST,
+            cancelled_by=Order.CancelledBy.CUSTOMER,
+            cancel_reason=Order.CancelReason.CUSTOMER_REQUEST,
+        )
+
+        order.refresh_from_db()
+        data = self.get_serializer(order).data
+        data.update(
+            {
+                "cancel_reason": order.cancel_reason,
+                "cancelled_by": order.cancelled_by,
+                "cancelled_at": order.cancelled_at,
+            }
+        )
+        return Response(data, status=200)
