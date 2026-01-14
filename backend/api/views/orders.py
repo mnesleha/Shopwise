@@ -1,12 +1,13 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
+from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
     OpenApiExample,
+    OpenApiResponse,
 )
 from orders.models import Order, InventoryReservation
 from api.serializers.order import OrderResponseSerializer
@@ -111,9 +112,47 @@ class OrderViewSet(ModelViewSet):
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user)
 
+    def create(self, request, *args, **kwargs):
+        # Prevent direct order creation. Orders must be created via checkout only.
+        raise MethodNotAllowed("POST")
+
+    @extend_schema(
+        summary="Cancel an order",
+        description=(
+            "Cancels a customer's own order if it is still in CREATED state. "
+            "This releases ACTIVE inventory reservations and transitions the order to CANCELLED "
+            "with cancel_reason=CUSTOMER_REQUEST."
+        ),
+        responses={
+            200: OrderResponseSerializer,
+            401: OpenApiResponse(description="Unauthorized"),
+            404: OpenApiResponse(description="Order not found"),
+            409: OpenApiResponse(description="Invalid order state"),
+        },
+        examples=[
+            OpenApiExample(
+                "Success",
+                value={
+                    "id": 123,
+                    "status": "CANCELLED",
+                    "cancel_reason": "CUSTOMER_REQUEST",
+                    "cancelled_by": "CUSTOMER",
+                    "cancelled_at": "2026-01-14T12:00:00Z",
+                },
+                response_only=True,
+            ),
+            OpenApiExample(
+                "Invalid state",
+                value={"code": "INVALID_ORDER_STATE",
+                       "message": "...", "errors": {}},
+                response_only=True,
+                status_codes=["409"],
+            ),
+        ],
+    )
     @action(detail=True, methods=["post"], url_path="cancel")
     def cancel(self, request, pk=None):
-        order = get_object_or_404(Order, id=pk, user=request.user)
+        order = order = self.get_object()
 
         if order.status != Order.Status.CREATED:
             raise InvalidOrderStateException()
@@ -126,7 +165,7 @@ class OrderViewSet(ModelViewSet):
         )
 
         order.refresh_from_db()
-        data = OrderResponseSerializer(order).data
+        data = self.get_serializer(order).data
         data.update(
             {
                 "cancel_reason": order.cancel_reason,
