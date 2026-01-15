@@ -22,6 +22,7 @@ from api.serializers.cart import (
     CartSerializer,
     CartItemCreateRequestSerializer,
     CartItemSerializer,
+    CartItemUpdateRequestSerializer,
     CartCheckoutRequestSerializer,
     CartCheckoutResponseSerializer,
 )
@@ -30,6 +31,7 @@ from api.services.pricing import calculate_price
 from api.services.cookies import cart_token_cookie_kwargs
 from carts.services.tokens import generate_cart_token
 from api.exceptions import ProductUnavailableException
+from api.exceptions.orders import OutOfStockException
 from api.exceptions.cart import (
     # Cart checkout exceptions
     NoActiveCartException,
@@ -346,6 +348,9 @@ Notes:
         if not product.is_sellable():
             raise ProductUnavailableException()
 
+        if quantity > product.stock_quantity:
+            raise OutOfStockException()
+
         # --- create item ---
         item = CartItem.objects.create(
             cart=cart,
@@ -358,6 +363,94 @@ Notes:
             CartItemSerializer(item).data,
             status=status.HTTP_201_CREATED,
         )
+        if raw_token:
+            response.set_cookie(
+                "cart_token",
+                raw_token,
+                **cart_token_cookie_kwargs(),
+            )
+        return response
+
+
+class CartItemDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=["Cart Items"],
+        summary="Set cart item quantity",
+        request=CartItemUpdateRequestSerializer,
+        parameters=CART_TOKEN_PARAMETERS,
+        responses={
+            200: CartSerializer,
+            201: CartSerializer,
+            400: ErrorResponseSerializer,
+            404: ErrorResponseSerializer,
+            409: ErrorResponseSerializer,
+        },
+    )
+    def put(self, request, product_id: int):
+        serializer = CartItemUpdateRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        quantity = serializer.validated_data["quantity"]
+
+        cart, _, raw_token = _resolve_or_create_cart(request)
+
+        if quantity == 0:
+            CartItem.objects.filter(cart=cart, product_id=product_id).delete()
+            response = Response(CartSerializer(cart).data, status=200)
+            if raw_token:
+                response.set_cookie(
+                    "cart_token",
+                    raw_token,
+                    **cart_token_cookie_kwargs(),
+                )
+            return response
+
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            raise ProductNotFoundException()
+
+        if not product.is_sellable():
+            raise ProductUnavailableException()
+
+        if quantity > product.stock_quantity:
+            raise OutOfStockException()
+
+        item, created = CartItem.objects.get_or_create(
+            cart=cart,
+            product=product,
+            defaults={"quantity": quantity, "price_at_add_time": product.price},
+        )
+        if not created:
+            item.quantity = quantity
+            item.save(update_fields=["quantity"])
+
+        response = Response(
+            CartSerializer(cart).data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+        if raw_token:
+            response.set_cookie(
+                "cart_token",
+                raw_token,
+                **cart_token_cookie_kwargs(),
+            )
+        return response
+
+    @extend_schema(
+        tags=["Cart Items"],
+        summary="Remove cart item",
+        parameters=CART_TOKEN_PARAMETERS,
+        responses={
+            200: CartSerializer,
+        },
+    )
+    def delete(self, request, product_id: int):
+        cart, _, raw_token = _resolve_or_create_cart(request)
+        CartItem.objects.filter(cart=cart, product_id=product_id).delete()
+
+        response = Response(CartSerializer(cart).data, status=200)
         if raw_token:
             response.set_cookie(
                 "cart_token",

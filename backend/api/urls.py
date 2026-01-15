@@ -5,7 +5,7 @@ from api.views.categories import CategoryViewSet
 from api.views.carts import CartCheckoutView
 from api.views.orders import OrderViewSet
 from api.views.discounts import DiscountViewSet
-from api.views.carts import CartView, CartItemCreateView
+from api.views.carts import CartView, CartItemCreateView, CartItemDetailView
 from api.views.payments import PaymentCreateView
 from api.views.auth import LoginView, RegisterView, MeView, RefreshView, VerifyEmailView
 from api.views.dev import DevEmailVerificationTokenView
@@ -31,6 +31,11 @@ urlpatterns = [
     path("", include(router.urls)),
     path("cart/", CartView.as_view(), name="cart"),
     path("cart/items/", CartItemCreateView.as_view(), name="cart-item-create"),
+    path(
+        "cart/items/<int:product_id>/",
+        CartItemDetailView.as_view(),
+        name="cart-item-detail",
+    ),
     path("cart/checkout/", CartCheckoutView.as_view()),
     path("payments/", PaymentCreateView.as_view(), name="payment-create"),
     path("auth/register/", RegisterView.as_view(), name="auth-register"),

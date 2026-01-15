@@ -64,6 +64,10 @@ class CartItemCreateRequestSerializer(serializers.Serializer):
     )
 
 
+class CartItemUpdateRequestSerializer(serializers.Serializer):
+    quantity = serializers.IntegerField(min_value=0)
+
+
 class CartCheckoutRequestSerializer(serializers.Serializer):
     customer_email = serializers.EmailField()
     shipping_name = serializers.CharField()
