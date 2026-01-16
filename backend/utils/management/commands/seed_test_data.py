@@ -14,6 +14,8 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils.timezone import now, timedelta
 
+from carts.services.active_cart_service import get_or_create_active_cart_for_user
+
 from products.models import Product
 from discounts.models import Discount
 from carts.models import Cart, CartItem
@@ -135,6 +137,7 @@ class Command(BaseCommand):
         safe_delete_all("orderitems", "OrderItem")
         safe_delete_all("orders", "Order")
         safe_delete_all("carts", "CartItem")
+        safe_delete_all("carts", "ActiveCart")
         safe_delete_all("carts", "Cart")
 
         # Reference data (in correct dependency order)
@@ -322,14 +325,11 @@ class Command(BaseCommand):
             user = user_obj_map[user_key]
 
             # Create cart (deterministic: always create fresh after reset; update if exists)
-            cart, created = Cart.objects.get_or_create(
-                user=user,
-                status=status,
-            )
-            if not created:
-                # ensure deterministic status
-                Cart.objects.filter(id=cart.id).update(status=status)
-                cart.refresh_from_db()
+            if status == Cart.Status.ACTIVE:
+                cart, created = get_or_create_active_cart_for_user(user)
+            else:
+                cart = Cart.objects.create(user=user, status=status)
+                created = True
 
             # Clear existing items to keep deterministic
             CartItem.objects.filter(cart=cart).delete()

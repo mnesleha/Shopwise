@@ -12,7 +12,7 @@ def test_get_cart_creates_new_cart(auth_client, user):
 
     response = auth_client.get("/api/v1/cart/")
 
-    assert response.status_code == 201
+    assert response.status_code == 200
 
     data = response.json()
     assert data["status"] == "ACTIVE"

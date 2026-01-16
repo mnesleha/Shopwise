@@ -9,12 +9,13 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework import status
 from rest_framework.exceptions import APIException, ValidationError as DRFValidationError
-from carts.models import Cart, CartItem
+from carts.models import Cart, CartItem, ActiveCart
 from carts.services.resolver import (
     extract_cart_token,
     get_active_anonymous_cart_by_token,
     hash_cart_token,
 )
+from carts.services.active_cart_service import get_or_create_active_cart_for_user
 from orders.models import Order
 from orderitems.models import OrderItem
 from products.models import Product
@@ -22,6 +23,7 @@ from api.serializers.cart import (
     CartSerializer,
     CartItemCreateRequestSerializer,
     CartItemSerializer,
+    CartItemUpdateRequestSerializer,
     CartCheckoutRequestSerializer,
     CartCheckoutResponseSerializer,
 )
@@ -30,6 +32,7 @@ from api.services.pricing import calculate_price
 from api.services.cookies import cart_token_cookie_kwargs
 from carts.services.tokens import generate_cart_token
 from api.exceptions import ProductUnavailableException
+from api.exceptions.orders import OutOfStockException
 from api.exceptions.cart import (
     # Cart checkout exceptions
     NoActiveCartException,
@@ -82,11 +85,22 @@ def _resolve_or_create_cart(request):
     """
 
     if request.user.is_authenticated:
-        cart, created = Cart.objects.get_or_create(
-            user=request.user,
-            status=Cart.Status.ACTIVE,
-        )
-        return cart, created, None
+        try:
+            with transaction.atomic():
+                cart, created = get_or_create_active_cart_for_user(
+                    request.user)
+                return cart, created, None
+        except IntegrityError:
+            # In case of rare pointer races, resolve via ActiveCart row
+            ptr = (
+                ActiveCart.objects.select_related("cart")
+                .filter(user=request.user)
+                .first()
+            )
+            if ptr and ptr.cart and ptr.cart.status == Cart.Status.ACTIVE:
+                return ptr.cart, False, None
+            cart, created = get_or_create_active_cart_for_user(request.user)
+            return cart, created, None
 
     raw_token = extract_cart_token(request)
     if raw_token:
@@ -223,7 +237,7 @@ HTTP semantics:
         serializer = CartSerializer(cart)
         response = Response(
             serializer.data,
-            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+            status=status.HTTP_200_OK,
         )
         if raw_token:
             response.set_cookie(
@@ -346,18 +360,78 @@ Notes:
         if not product.is_sellable():
             raise ProductUnavailableException()
 
+        if quantity > product.stock_quantity:
+            raise OutOfStockException()
+
         # --- create item ---
-        item = CartItem.objects.create(
-            cart=cart,
-            product=product,
-            quantity=quantity,
-            price_at_add_time=product.price,
-        )
+        # Legacy POST acts as UPSERT (set quantity), aligned with previous behavior.
+        created = False
+        with transaction.atomic():
+            try:
+                # INSERT attempt must be in its own savepoint. If it fails on unique constraint,
+                # we can still run the fallback SELECT/UPDATE inside this outer transaction.
+                with transaction.atomic():
+                    item = CartItem.objects.create(
+                        cart=cart,
+                        product=product,
+                        quantity=quantity,
+                        price_at_add_time=product.price,
+                    )
+                created = True
+
+            except DjangoValidationError as e:
+                # CartItem.save() calls full_clean(); uniqueness may surface as ValidationError.
+                # Only treat the "__all__" unique collision as upsert; otherwise re-raise.
+                if "__all__" not in getattr(e, "message_dict", {}):
+                    raise
+
+                try:
+                    item = (
+                        CartItem.objects.select_for_update()
+                        .get(cart=cart, product=product)
+                    )
+                except CartItem.DoesNotExist:
+                    # Rare race (e.g., concurrent delete). Retry insert once.
+                    with transaction.atomic():
+                        item = CartItem.objects.create(
+                            cart=cart,
+                            product=product,
+                            quantity=quantity,
+                            price_at_add_time=product.price,
+                        )
+                    created = True
+                else:
+                    item.quantity = quantity
+                    item.save(update_fields=["quantity"])
+                    created = False
+
+            except IntegrityError:
+                # Duplicate key at DB level -> fallback update
+                try:
+                    item = (
+                        CartItem.objects.select_for_update()
+                        .get(cart=cart, product=product)
+                    )
+                except CartItem.DoesNotExist:
+                    # Race with delete: row disappeared, retry insert once
+                    with transaction.atomic():
+                        item = CartItem.objects.create(
+                            cart=cart,
+                            product=product,
+                            quantity=quantity,
+                            price_at_add_time=product.price,
+                        )
+                    created = True
+                else:
+                    item.quantity = quantity
+                    item.save(update_fields=["quantity"])
+                    created = False
 
         response = Response(
             CartItemSerializer(item).data,
-            status=status.HTTP_201_CREATED,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
+
         if raw_token:
             response.set_cookie(
                 "cart_token",
@@ -365,6 +439,137 @@ Notes:
                 **cart_token_cookie_kwargs(),
             )
         return response
+
+
+class CartItemDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def _delete_cart_item_and_respond(self, *, cart, product_id: int, raw_token: str | None) -> Response:
+        CartItem.objects.filter(cart=cart, product_id=product_id).delete()
+
+        # Ensure serializer sees the updated state
+        cart.refresh_from_db()
+
+        response = Response(CartSerializer(cart).data,
+                            status=status.HTTP_200_OK)
+        if raw_token:
+            response.set_cookie(
+                "cart_token",
+                raw_token,
+                **cart_token_cookie_kwargs(),
+            )
+        return response
+
+    @extend_schema(
+        tags=["Cart Items"],
+        summary="Set cart item quantity",
+        request=CartItemUpdateRequestSerializer,
+        parameters=CART_TOKEN_PARAMETERS,
+        responses={
+            200: CartSerializer,
+            201: CartSerializer,
+            400: ErrorResponseSerializer,
+            404: ErrorResponseSerializer,
+            409: ErrorResponseSerializer,
+        },
+    )
+    def put(self, request, product_id: int):
+        serializer = CartItemUpdateRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        quantity = serializer.validated_data["quantity"]
+
+        cart, _, raw_token = _resolve_or_create_cart(request)
+
+        # quantity=0 is DELETE alias
+        if quantity == 0:
+            return self._delete_cart_item_and_respond(
+                cart=cart, product_id=product_id, raw_token=raw_token
+            )
+
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            raise ProductNotFoundException()
+
+        if not product.is_sellable():
+            raise ProductUnavailableException()
+
+        if quantity > product.stock_quantity:
+            raise OutOfStockException()
+
+        # Race-safe UPSERT:
+        # - try INSERT in a savepoint (so DB errors don't poison the outer tx)
+        # - if unique collision -> lock & UPDATE
+        # - if DELETE wins mid-flight -> fallback get() may 404 -> retry once
+        created = False
+        item = None
+
+        for _ in range(2):  # max 2 attempts is enough for delete-vs-put race
+            with transaction.atomic():
+                try:
+                    # INSERT attempt in savepoint
+                    with transaction.atomic():
+                        item = CartItem.objects.create(
+                            cart=cart,
+                            product=product,
+                            quantity=quantity,
+                            price_at_add_time=product.price,
+                        )
+                    created = True
+                    break
+
+                except DjangoValidationError as e:
+                    # Only treat unique collision as upsert fallback
+                    if "__all__" not in getattr(e, "message_dict", {}):
+                        raise
+
+                except IntegrityError:
+                    # DB-level unique collision -> fallback update
+                    pass
+
+                # Fallback: row should exist, lock it and update
+                try:
+                    item = (
+                        CartItem.objects.select_for_update()
+                        .get(cart=cart, product=product)
+                    )
+                except CartItem.DoesNotExist:
+                    # DELETE won the race; retry loop -> try create again
+                    continue
+
+                item.quantity = quantity
+                item.save(update_fields=["quantity"])
+                created = False
+                break
+
+        # If after retries we still don't have item, something is genuinely wrong
+        if item is None:
+            # safest behavior: treat as internal error (should never happen)
+            raise RuntimeError(
+                "CartItem upsert failed unexpectedly (no item).")
+
+        cart.refresh_from_db()
+
+        response = Response(
+            CartSerializer(cart).data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+        if raw_token:
+            response.set_cookie("cart_token", raw_token, **
+                                cart_token_cookie_kwargs())
+        return response
+
+    @extend_schema(
+        tags=["Cart Items"],
+        summary="Remove cart item",
+        parameters=CART_TOKEN_PARAMETERS,
+        responses={
+            200: CartSerializer,
+        },
+    )
+    def delete(self, request, product_id: int):
+        cart, _, raw_token = _resolve_or_create_cart(request)
+        return self._delete_cart_item_and_respond(cart=cart, product_id=product_id, raw_token=raw_token)
 
 
 class CartCheckoutView(APIView):
@@ -496,10 +701,13 @@ Notes:
                         "billing_same_as_shipping", True
                     ),
                     billing_name=checkout_data.get("billing_name"),
-                    billing_address_line1=checkout_data.get("billing_address_line1"),
-                    billing_address_line2=checkout_data.get("billing_address_line2"),
+                    billing_address_line1=checkout_data.get(
+                        "billing_address_line1"),
+                    billing_address_line2=checkout_data.get(
+                        "billing_address_line2"),
                     billing_city=checkout_data.get("billing_city"),
-                    billing_postal_code=checkout_data.get("billing_postal_code"),
+                    billing_postal_code=checkout_data.get(
+                        "billing_postal_code"),
                     billing_country=checkout_data.get("billing_country"),
                     billing_phone=checkout_data.get("billing_phone"),
                 )

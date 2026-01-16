@@ -1,4 +1,6 @@
 from django.db import models
+from django.db import IntegrityError
+from django.db.models import UniqueConstraint, Q
 from django.conf import settings
 from products.models import Product
 from django.core.exceptions import ValidationError
@@ -85,14 +87,9 @@ class Cart(models.Model):
             })
 
     def save(self, *args, **kwargs):
-        """
-        Persist Cart while enforcing domain invariants.
-
-        We call full_clean() to ensure clean() validation always runs, even when objects
-        are saved via ORM directly (not through serializers/forms).
-        """
+        # Enforce invariants + unique validation at model level (tests expect ValidationError)
         self.full_clean()
-        return super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
 
 class CartItem(models.Model):
@@ -104,6 +101,14 @@ class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     price_at_add_time = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=["cart", "product"],
+                             name="cart_item_cart_product_uniq"),
+        ]
 
     def clean(self):
         if self.quantity <= 0:
@@ -112,3 +117,28 @@ class CartItem(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+class ActiveCart(models.Model):
+    """
+    Pointer table enforcing a single current ACTIVE cart per authenticated user.
+    MySQL-safe replacement for partial unique constraints.
+    """
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="active_cart_ptr",
+    )
+    cart = models.ForeignKey(
+        "Cart",
+        on_delete=models.CASCADE,
+        related_name="+",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"]),
+            models.Index(fields=["cart"]),
+        ]
