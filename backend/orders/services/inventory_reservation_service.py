@@ -11,6 +11,9 @@ from api.exceptions.orders import (
 )
 from orders.models import InventoryReservation, Order
 from products.models import Product
+from auditlog.actions import AuditAction
+from auditlog.actors import ActorType
+from auditlog.services import AuditService
 
 
 def reserve_for_checkout(*, order, items, ttl_minutes=None) -> None:
@@ -281,6 +284,21 @@ def expire_overdue_reservations(*, now=None) -> int:
                     "cancelled_by",
                     "cancelled_at",
                 ]
+            )
+
+            AuditService.emit(
+                entity_type="inventory_reservation",
+                entity_id=str(order_locked.id),
+                action=AuditAction.INVENTORY_RESERVATIONS_EXPIRED,
+                actor_type=ActorType.SYSTEM,
+                metadata={"affected_reservations": len(overdue_reservations)},
+            )
+            AuditService.emit(
+                entity_type="order",
+                entity_id=str(order_locked.id),
+                action=AuditAction.ORDER_CANCELLED,
+                actor_type=ActorType.SYSTEM,
+                metadata={"cancel_reason": order_locked.cancel_reason},
             )
 
     return affected

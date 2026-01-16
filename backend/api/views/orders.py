@@ -14,6 +14,9 @@ from api.serializers.order import OrderResponseSerializer
 from api.serializers.common import ErrorResponseSerializer
 from orders.services.inventory_reservation_service import release_reservations
 from api.exceptions.orders import InvalidOrderStateException
+from auditlog.actions import AuditAction
+from auditlog.actors import ActorType
+from auditlog.services import AuditService
 
 
 @extend_schema_view(
@@ -165,6 +168,17 @@ class OrderViewSet(ModelViewSet):
         )
 
         order.refresh_from_db()
+        AuditService.emit(
+            entity_type="order",
+            entity_id=str(order.id),
+            action=AuditAction.ORDER_CANCELLED,
+            actor_type=ActorType.CUSTOMER,
+            actor_user=request.user,
+            metadata={
+                "cancel_reason": order.cancel_reason,
+                "cancelled_by": order.cancelled_by,
+            },
+        )
         data = self.get_serializer(order).data
         data.update(
             {
