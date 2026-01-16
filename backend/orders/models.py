@@ -214,6 +214,10 @@ class Order(models.Model):
                 name="orders_claimed_email_idx",
             ),
         ]
+        permissions = [
+            ("can_fulfill", "Can fulfill orders (ship/deliver)"),
+            ("can_cancel_admin", "Can cancel orders as admin"),
+        ]
 
 
 class InventoryReservation(models.Model):
