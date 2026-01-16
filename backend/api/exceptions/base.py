@@ -18,3 +18,9 @@ class ConflictException(APIException):
     status_code = status.HTTP_409_CONFLICT
     default_detail = "Conflict."
     default_code = "CONFLICT"
+
+
+class InternalServerException(APIException):
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    default_detail = "Internal server error."
+    default_code = "INTERNAL_ERROR"

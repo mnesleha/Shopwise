@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-
+from api.exceptions.accounts import MissingRBACPermissionsError
 from accounts.rbac import sync_rbac
 
 
@@ -24,11 +24,10 @@ class Command(BaseCommand):
                 dry_run=options["dry_run"],
                 strict=options["strict"],
             )
-        except Exception as exc:
-            raise CommandError(str(exc))
+        except MissingRBACPermissionsError as exc:
+            raise CommandError(str(exc)) from exc
 
         self.stdout.write("RBAC sync summary:")
         self.stdout.write(f"created_groups: {summary['created_groups']}")
         self.stdout.write(f"updated_groups: {summary['updated_groups']}")
         self.stdout.write(f"removed_perms: {summary['removed_perms']}")
-        self.stdout.write(f"missing_perms: {summary['missing_perms']}")

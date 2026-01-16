@@ -1,13 +1,12 @@
 import pytest
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from rest_framework.test import APIRequestFactory
 
 from orders.models import Order
 
-# New modules introduced by RBAC PR:
-from api.permissions import IsStaffOrHasDjangoPerm
+from api.permissions import require_staff_or_perm
 from accounts.permissions import ORDERS_CAN_FULFILL
 
 
@@ -21,7 +20,8 @@ def test_permission_denies_unauthenticated():
     factory = APIRequestFactory()
     request = factory.get("/api/v1/admin/something/")
 
-    perm = IsStaffOrHasDjangoPerm(ORDERS_CAN_FULFILL)
+    PermClass = require_staff_or_perm(ORDERS_CAN_FULFILL)
+    perm = PermClass()
     assert perm.has_permission(request, DummyView()) is False
 
 
@@ -29,13 +29,15 @@ def test_permission_denies_unauthenticated():
 def test_permission_allows_superuser():
     User = get_user_model()
     su = User.objects.create_superuser(
-        email="su@example.com", password="Passw0rd!123")
+        email="su@example.com", password="Passw0rd!123"
+    )
 
     factory = APIRequestFactory()
     request = factory.get("/api/v1/admin/something/")
     request.user = su
 
-    perm = IsStaffOrHasDjangoPerm(ORDERS_CAN_FULFILL)
+    PermClass = require_staff_or_perm(ORDERS_CAN_FULFILL)
+    perm = PermClass()
     assert perm.has_permission(request, DummyView()) is True
 
 
@@ -52,7 +54,8 @@ def test_permission_allows_staff_fallback_mvp():
     request = factory.get("/api/v1/admin/something/")
     request.user = staff
 
-    perm = IsStaffOrHasDjangoPerm(ORDERS_CAN_FULFILL)
+    PermClass = require_staff_or_perm(ORDERS_CAN_FULFILL)
+    perm = PermClass()
     assert perm.has_permission(request, DummyView()) is True
 
 
@@ -71,7 +74,30 @@ def test_permission_allows_user_with_explicit_django_permission():
     request = factory.get("/api/v1/admin/something/")
     request.user = u
 
-    perm = IsStaffOrHasDjangoPerm(ORDERS_CAN_FULFILL)
+    PermClass = require_staff_or_perm(ORDERS_CAN_FULFILL)
+    perm = PermClass()
+    assert perm.has_permission(request, DummyView()) is True
+
+
+@pytest.mark.django_db
+def test_permission_allows_user_with_permission_via_group_membership():
+    User = get_user_model()
+    u = User.objects.create_user(
+        email="group@example.com", password="Passw0rd!123")
+
+    ct = ContentType.objects.get_for_model(Order)
+    p = Permission.objects.get(content_type=ct, codename="can_fulfill")
+
+    g = Group.objects.create(name="ops_fulfillment")
+    g.permissions.add(p)
+    u.groups.add(g)
+
+    factory = APIRequestFactory()
+    request = factory.get("/api/v1/admin/something/")
+    request.user = u
+
+    PermClass = require_staff_or_perm(ORDERS_CAN_FULFILL)
+    perm = PermClass()
     assert perm.has_permission(request, DummyView()) is True
 
 
@@ -85,5 +111,6 @@ def test_permission_denies_user_without_staff_or_permission():
     request = factory.get("/api/v1/admin/something/")
     request.user = u
 
-    perm = IsStaffOrHasDjangoPerm(ORDERS_CAN_FULFILL)
+    PermClass = require_staff_or_perm(ORDERS_CAN_FULFILL)
+    perm = PermClass()
     assert perm.has_permission(request, DummyView()) is False

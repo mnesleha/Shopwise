@@ -1,5 +1,6 @@
 import pytest
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 
@@ -8,7 +9,8 @@ from orders.models import Order
 # New modules introduced by RBAC PR:
 from accounts.roles import Role
 from accounts import permissions as perm_consts
-from accounts.rbac import ROLE_GROUP, ROLE_PERMISSIONS
+from accounts.rbac import sync_rbac, ROLE_GROUP
+from api.exceptions.accounts import MissingRBACPermissionsError
 
 
 @pytest.mark.django_db
@@ -108,5 +110,19 @@ def test_sync_rbac_fails_fast_if_required_permission_missing():
     ct = ContentType.objects.get_for_model(Order)
     Permission.objects.filter(content_type=ct, codename="can_fulfill").delete()
 
-    with pytest.raises(Exception):
+    # Unit-level: the sync function must raise a specific error type
+    with pytest.raises(MissingRBACPermissionsError, match="Missing permissions in DB"):
+        sync_rbac()
+
+
+@pytest.mark.django_db
+def test_sync_rbac_management_command_wraps_missing_permissions_as_command_error():
+    """
+    CLI-level: management command should convert MissingRBACPermissionsError into CommandError
+    for proper command UX / non-zero exit code.
+    """
+    ct = ContentType.objects.get_for_model(Order)
+    Permission.objects.filter(content_type=ct, codename="can_fulfill").delete()
+
+    with pytest.raises(CommandError, match="Missing permissions in DB"):
         call_command("sync_rbac")
