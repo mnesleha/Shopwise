@@ -6,7 +6,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.db import connection
-from rest_framework.test import APIClient, force_authenticate
+from rest_framework.test import APIClient
 from products.models import Product
 from discounts.models import Discount
 from orders.models import Order
@@ -157,7 +157,7 @@ def auth_client(db, user):
 @pytest.fixture
 def forced_auth_client(db, user):
     client = APIClient()
-    force_authenticate(client, user=user)
+    client.force_authenticate(user=user)
     return client
 
 

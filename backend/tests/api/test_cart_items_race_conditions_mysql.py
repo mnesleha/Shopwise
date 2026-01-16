@@ -1,8 +1,11 @@
 import pytest
 import threading
+import traceback
 from typing import Callable, Any
-from rest_framework.test import APIClient, force_authenticate
+from rest_framework.test import APIClient
 from products.models import Product
+from carts.models import ActiveCart, Cart, CartItem
+from carts.services.active_cart_service import get_or_create_active_cart_for_user
 
 
 def _client_for_user(user) -> APIClient:
@@ -11,7 +14,7 @@ def _client_for_user(user) -> APIClient:
     This avoids relying on the login/JWT endpoint for concurrency tests.
     """
     client = APIClient()
-    force_authenticate(client, user=user)
+    client.force_authenticate(user=user)
     return client
 
 
@@ -28,8 +31,10 @@ def _run_concurrently(fn1: Callable[[], Any], fn2: Callable[[], Any]) -> tuple[A
         try:
             barrier.wait()
             out[i] = fn()
-        except Exception as e:  # noqa: BLE001
-            err[i] = e
+        except Exception as e:
+            err[i] = RuntimeError(
+                f"Thread {i} raised {type(e).__name__}: {e}\n{traceback.format_exc()}"
+            )
 
     t1 = threading.Thread(target=wrap, args=(0, fn1))
     t2 = threading.Thread(target=wrap, args=(1, fn2))
@@ -92,27 +97,47 @@ def test_mysql_race_put_create_same_item_no_unique_violation(user, forced_auth_c
     product = Product.objects.create(
         name="P", price=10, stock_quantity=100, is_active=True)
 
-    c1 = forced_auth_client
-    c2 = _client_for_user(user)
-
-    c1.get("/api/v1/cart/")
-    c2.get("/api/v1/cart/")
-
+    # IMPORTANT:
+    # APIClient is not thread-safe. Do NOT share a client (or forced_auth_client fixture)
+    # across concurrent threads. Each thread gets its own authenticated client.
     def put_qty_1():
-        return c1.put(f"/api/v1/cart/items/{product.id}/", {"quantity": 1}, format="json")
+        c = _client_for_user(user)
+        me = c.get("/api/v1/auth/me/")
+        assert me.status_code == 200, me.content
+        c.get("/api/v1/cart/")
+        return c.put(
+            f"/api/v1/cart/items/{product.id}/",
+            {"quantity": 1},
+            format="json",
+        )
 
     def put_qty_1_again():
-        return c2.put(f"/api/v1/cart/items/{product.id}/", {"quantity": 1}, format="json")
+        c = _client_for_user(user)
+        me = c.get("/api/v1/auth/me/")
+        assert me.status_code == 200, me.content
+        c.get("/api/v1/cart/")
+        return c.put(
+            f"/api/v1/cart/items/{product.id}/",
+            {"quantity": 1},
+            format="json",
+        )
 
     r1, r2 = _run_concurrently(put_qty_1, put_qty_1_again)
 
     assert r1.status_code in (200, 201), r1.content
     assert r2.status_code in (200, 201), r2.content
 
-    final = c1.get("/api/v1/cart/").json()["items"]
+    # Use a fresh authenticated client for verification
+    verifier = _client_for_user(user)
+    final = verifier.get("/api/v1/cart/").json()["items"]
     matches = [i for i in final if i["product"]["id"] == product.id]
     assert len(matches) == 1
     assert matches[0]["quantity"] == 1
+
+    # Strong DB-level assertion: never more than one row per (cart, product) in ACTIVE cart
+    cart, _ = get_or_create_active_cart_for_user(user)
+    assert CartItem.objects.filter(
+        cart=cart, product_id=product.id).count() == 1
 
 
 @pytest.mark.mysql(transaction=True)
@@ -223,3 +248,25 @@ def test_mysql_race_out_of_stock_puts_do_not_create_item(user, forced_auth_clien
 
     final_items = c1.get("/api/v1/cart/").json()["items"]
     assert all(i["product"]["id"] != product.id for i in final_items)
+
+
+@pytest.mark.mysql(transaction=True)
+@pytest.mark.django_db(transaction=True)
+def test_mysql_race_get_cart_creates_single_active_cart(user):
+    c1 = _client_for_user(user)
+    c2 = _client_for_user(user)
+
+    def get1():
+        return c1.get("/api/v1/cart/")
+
+    def get2():
+        return c2.get("/api/v1/cart/")
+
+    r1, r2 = _run_concurrently(get1, get2)
+
+    assert r1.status_code == 200, r1.content
+    assert r2.status_code == 200, r2.content
+
+    assert ActiveCart.objects.filter(user=user).count() == 1
+    assert Cart.objects.filter(
+        user=user, status=Cart.Status.ACTIVE).count() == 1
