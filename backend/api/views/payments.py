@@ -6,16 +6,8 @@ from api.serializers.payment import PaymentCreateRequestSerializer
 from api.serializers.payment_response import PaymentResponseSerializer
 from api.serializers.common import ErrorResponseSerializer
 from api.exceptions.base import NotFoundException
-from api.exceptions.payment import (
-    PaymentAlreadyExistsException,
-    OrderNotPayableException
-)
-from orders.models import Order, InventoryReservation
-from payments.models import Payment
-from orders.services.inventory_reservation_service import (
-    commit_reservations_for_paid,
-    release_reservations,
-)
+from orders.models import Order
+from orders.services.order_service import OrderService
 
 
 class PaymentCreateView(APIView):
@@ -120,30 +112,10 @@ Notes:
         except Order.DoesNotExist:
             raise NotFoundException("Order not found.")
 
-        if Payment.objects.filter(order=order).exists():
-            raise PaymentAlreadyExistsException()
-
-        if order.status != Order.Status.CREATED:
-            raise OrderNotPayableException()
-
-        status_map = {
-            "success": Payment.Status.SUCCESS,
-            "fail": Payment.Status.FAILED,
-        }
-
-        payment = Payment.objects.create(
+        payment = OrderService.create_payment_and_apply_result(
             order=order,
-            status=status_map[payment_result],
+            result=payment_result,
+            actor_user=request.user,
         )
-
-        if payment.status == Payment.Status.SUCCESS:
-            commit_reservations_for_paid(order=order)
-        else:
-            release_reservations(
-                order=order,
-                reason=InventoryReservation.ReleaseReason.PAYMENT_FAILED,
-                cancelled_by=Order.CancelledBy.SYSTEM,
-                cancel_reason=Order.CancelReason.PAYMENT_FAILED,
-            )
 
         return Response(PaymentResponseSerializer(payment).data, status=201)

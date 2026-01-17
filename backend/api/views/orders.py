@@ -9,13 +9,12 @@ from drf_spectacular.utils import (
     OpenApiExample,
     OpenApiResponse,
 )
-from orders.models import Order, InventoryReservation
+from orders.models import Order
 from api.serializers.order import OrderResponseSerializer
 from api.serializers.common import ErrorResponseSerializer
-from orders.services.inventory_reservation_service import release_reservations
-from api.exceptions.orders import InvalidOrderStateException
-from auditlog.actions import AuditActions
+from orders.services.order_service import OrderService
 from auditlog.models import AuditEvent
+from auditlog.actions import AuditActions
 from auditlog.services import AuditService
 
 
@@ -155,31 +154,27 @@ class OrderViewSet(ModelViewSet):
     )
     @action(detail=True, methods=["post"], url_path="cancel")
     def cancel(self, request, pk=None):
-        order = order = self.get_object()
+        order = self.get_object()
 
-        if order.status != Order.Status.CREATED:
-            raise InvalidOrderStateException()
-
-        release_reservations(
+        order = OrderService.cancel_by_customer(
             order=order,
-            reason=InventoryReservation.ReleaseReason.CUSTOMER_REQUEST,
-            cancelled_by=Order.CancelledBy.CUSTOMER,
-            cancel_reason=Order.CancelReason.CUSTOMER_REQUEST,
+            actor_user=request.user,
         )
 
-        order.refresh_from_db()
-        AuditService.emit(
-            entity_type="order",
-            entity_id=str(order.id),
-            action=AuditActions.ORDER_CANCELLED,
-            actor_type=AuditEvent.ActorType.CUSTOMER,
-            actor_user=request.user,
-            metadata={
-                "cancel_reason": order.cancel_reason,
-                "cancelled_by": order.cancelled_by,
-            },
-            fail_silently=True,
-        )
+        try:
+            AuditService.emit(
+                entity_type="order",
+                entity_id=str(order.id),
+                action=AuditActions.ORDER_CANCELLED,
+                actor_type=AuditEvent.ActorType.CUSTOMER,
+                actor_user=request.user,
+                metadata={
+                    "cancel_reason": order.cancel_reason,
+                    "cancelled_by": order.cancelled_by,
+                },
+            )
+        except Exception:
+            pass
         data = self.get_serializer(order).data
         data.update(
             {

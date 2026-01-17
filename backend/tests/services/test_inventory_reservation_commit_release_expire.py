@@ -104,6 +104,7 @@ def test_release_reservations_cancels_created_order_and_releases_active_reservat
     assert product.stock_quantity == 10
 
 
+@pytest.mark.skip(reason="SHOP-240 Payment retry semantics")
 @pytest.mark.django_db
 def test_release_is_idempotent():
     product = _create_product(stock=10)

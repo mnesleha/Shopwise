@@ -203,7 +203,13 @@ def release_reservations(*, order, reason, cancelled_by, cancel_reason) -> None:
             )
 
         if order.status == _order_status_created_value():
-            order.status = _order_status_cancelled_value()
+            # Domain semantics:
+            # - PAYMENT_FAILED is NOT a cancellation; it represents a failed payment attempt.
+            # - Other reasons (customer/admin/system) represent a real cancellation.
+            if str(cancel_reason) == "PAYMENT_FAILED":
+                order.status = _order_status_payment_failed_value()
+            else:
+                order.status = _order_status_cancelled_value()
             order.cancel_reason = cancel_reason
             order.cancelled_by = cancelled_by
             order.cancelled_at = now
@@ -334,6 +340,10 @@ def _order_status_created_value():
 
 def _order_status_paid_value():
     return getattr(Order.Status, "PAID", "PAID")
+
+
+def _order_status_payment_failed_value():
+    return getattr(Order.Status, "PAYMENT_FAILED", "PAYMENT_FAILED")
 
 
 def _order_status_cancelled_value():
