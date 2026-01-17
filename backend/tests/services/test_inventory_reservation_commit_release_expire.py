@@ -16,8 +16,7 @@ from orders.services.inventory_reservation_service import (
 )
 
 from auditlog.models import AuditEvent
-from auditlog.actions import AuditAction
-from auditlog.actors import ActorType
+from auditlog.actions import AuditActions
 
 
 def _create_product(stock=10):
@@ -169,21 +168,21 @@ def test_expire_overdue_reservations_expires_active_and_cancels_created_order():
 
     # Audit: system TTL expiry should emit inventory + order cancellation events
     inv_ev = AuditEvent.objects.filter(
-        entity_type="inventory_reservation",
+        entity_type="inventory_reservation_batch",
         entity_id=str(order.id),
-        action=AuditAction.INVENTORY_RESERVATIONS_EXPIRED,
-    ).order_by("-created_at").first()
+        action=AuditActions.INVENTORY_RESERVATIONS_EXPIRED,
+    ).order_by("-created_at", "-id").first()
     assert inv_ev is not None
-    assert inv_ev.actor_type == ActorType.SYSTEM
+    assert inv_ev.actor_type == AuditEvent.ActorType.SYSTEM
     assert inv_ev.metadata.get("affected_reservations", 0) >= 1
 
     order_ev = AuditEvent.objects.filter(
         entity_type="order",
         entity_id=str(order.id),
-        action=AuditAction.ORDER_CANCELLED,
-    ).order_by("-created_at").first()
+        action=AuditActions.ORDER_CANCELLED,
+    ).order_by("-created_at", "-id").first()
     assert order_ev is not None
-    assert order_ev.actor_type == ActorType.SYSTEM
+    assert order_ev.actor_type == AuditEvent.ActorType.SYSTEM
     assert order_ev.metadata.get(
         "cancel_reason") == Order.CancelReason.PAYMENT_EXPIRED
 

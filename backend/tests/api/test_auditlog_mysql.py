@@ -2,8 +2,7 @@ import pytest
 from django.db import connection
 
 from auditlog.models import AuditEvent
-from auditlog.actions import AuditAction
-from auditlog.actors import ActorType
+from auditlog.actions import AuditActions
 
 
 pytestmark = pytest.mark.django_db
@@ -39,8 +38,8 @@ def test_audit_event_jsonfield_roundtrip_and_mysql_json_extract():
     ev = AuditEvent.objects.create(
         entity_type="order",
         entity_id="test-order-1",
-        action=AuditAction.ORDER_CANCELLED,
-        actor_type=ActorType.SYSTEM,
+        action=AuditActions.ORDER_CANCELLED,
+        actor_type=AuditEvent.ActorType.SYSTEM,
         metadata=metadata,
         context=context,
         scope_key=None,
@@ -81,8 +80,8 @@ def test_audit_event_ordering_is_deterministic_with_created_at_and_id():
     ev1 = AuditEvent.objects.create(
         entity_type="order",
         entity_id="test-order-2",
-        action=AuditAction.ORDER_CANCELLED,
-        actor_type=ActorType.SYSTEM,
+        action=AuditActions.ORDER_CANCELLED,
+        actor_type=AuditEvent.ActorType.SYSTEM,
         metadata={"seq": 1},
         context={},
         scope_key=None,
@@ -90,8 +89,8 @@ def test_audit_event_ordering_is_deterministic_with_created_at_and_id():
     ev2 = AuditEvent.objects.create(
         entity_type="order",
         entity_id="test-order-2",
-        action=AuditAction.ORDER_CANCELLED,
-        actor_type=ActorType.SYSTEM,
+        action=AuditActions.ORDER_CANCELLED,
+        actor_type=AuditEvent.ActorType.SYSTEM,
         metadata={"seq": 2},
         context={},
         scope_key=None,

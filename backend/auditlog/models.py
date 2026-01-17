@@ -3,6 +3,14 @@ from django.db import models
 
 
 class AuditEvent(models.Model):
+    """
+    AuditEvent is a best-effort business audit record.
+
+    Notes:
+    - `action` is intentionally NOT a Django choices field because audit actions are an evolving taxonomy.
+    - `scope_key` and `context` are tenant-friendly placeholders (no multi-tenant behavior in MVP).
+    """
+
     class ActorType(models.TextChoices):
         SYSTEM = "system", "System"
         CUSTOMER = "customer", "Customer"
@@ -29,4 +37,10 @@ class AuditEvent(models.Model):
         indexes = [
             models.Index(fields=["entity_type", "entity_id"]),
             models.Index(fields=["created_at"]),
+            models.Index(fields=["action"]),
+            models.Index(fields=["actor_type"]),
+            models.Index(fields=["action", "created_at"]),
         ]
+
+    def __str__(self) -> str:
+        return f"{self.action} {self.entity_type}:{self.entity_id} ({self.actor_type})"
