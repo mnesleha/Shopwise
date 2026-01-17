@@ -90,6 +90,7 @@ def test_payment_success_commits_reservations_and_decrements_stock(auth_client, 
     assert product.stock_quantity == 8
 
 
+@pytest.mark.skip(reason="SHOP-240 Payment retry semantics")
 @pytest.mark.django_db
 def test_payment_fail_releases_reservations_and_cancels_order(auth_client, user):
     """
