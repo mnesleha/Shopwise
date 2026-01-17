@@ -15,6 +15,9 @@ from orders.services.inventory_reservation_service import (
     expire_overdue_reservations,
 )
 
+from auditlog.models import AuditEvent
+from auditlog.actions import AuditActions
+
 
 def _create_product(stock=10):
     return Product.objects.create(
@@ -162,6 +165,26 @@ def test_expire_overdue_reservations_expires_active_and_cancels_created_order():
     if r.status == InventoryReservation.Status.RELEASED:
         assert r.release_reason == InventoryReservation.ReleaseReason.PAYMENT_EXPIRED
     assert r.released_at is not None or r.status == InventoryReservation.Status.EXPIRED
+
+    # Audit: system TTL expiry should emit inventory + order cancellation events
+    inv_ev = AuditEvent.objects.filter(
+        entity_type="inventory_reservation_batch",
+        entity_id=str(order.id),
+        action=AuditActions.INVENTORY_RESERVATIONS_EXPIRED,
+    ).order_by("-created_at", "-id").first()
+    assert inv_ev is not None
+    assert inv_ev.actor_type == AuditEvent.ActorType.SYSTEM
+    assert inv_ev.metadata.get("affected_reservations", 0) >= 1
+
+    order_ev = AuditEvent.objects.filter(
+        entity_type="order",
+        entity_id=str(order.id),
+        action=AuditActions.ORDER_CANCELLED,
+    ).order_by("-created_at", "-id").first()
+    assert order_ev is not None
+    assert order_ev.actor_type == AuditEvent.ActorType.SYSTEM
+    assert order_ev.metadata.get(
+        "cancel_reason") == Order.CancelReason.PAYMENT_EXPIRED
 
 
 @pytest.mark.django_db

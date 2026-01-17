@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "orders",
     "orderitems",
     "payments",
+    "auditlog",
     "carts",
     "utils",
     'django_filters',
