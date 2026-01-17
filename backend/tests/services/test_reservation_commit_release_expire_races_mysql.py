@@ -221,3 +221,113 @@ def test_mysql_commit_vs_release_race_is_consistent():
         assert product.stock_quantity == 10
     else:
         raise AssertionError(f"Unexpected final order status: {order.status}")
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.mysql
+def test_release_is_idempotent():
+    """
+    Releasing the same order twice must be idempotent:
+    - no exception
+    - reservations end in RELEASED
+    - physical stock is not decremented
+    - order ends in CANCELLED (customer cancel semantics)
+    """
+    product = Product.objects.create(
+        name="Release Idempotent",
+        price="10.00",
+        stock_quantity=10,
+        is_active=True,
+    )
+    order = create_valid_order(
+        user=None, status=Order.Status.CREATED, customer_email="g@example.com"
+    )
+
+    reserve_for_checkout(
+        order=order,
+        items=[{"product_id": product.id, "quantity": 2}],
+        ttl_minutes=15,
+    )
+
+    # First release (customer cancel)
+    with transaction.atomic():
+        release_reservations(
+            order=order,
+            reason=InventoryReservation.ReleaseReason.CUSTOMER_REQUEST,
+            cancelled_by=Order.CancelledBy.CUSTOMER,
+            cancel_reason=Order.CancelReason.CUSTOMER_REQUEST,
+        )
+
+    # Second release must be a no-op
+    with transaction.atomic():
+        release_reservations(
+            order=order,
+            reason=InventoryReservation.ReleaseReason.CUSTOMER_REQUEST,
+            cancelled_by=Order.CancelledBy.CUSTOMER,
+            cancel_reason=Order.CancelReason.CUSTOMER_REQUEST,
+        )
+
+    product.refresh_from_db()
+    order.refresh_from_db()
+    r = InventoryReservation.objects.get(order=order, product=product)
+
+    assert order.status == Order.Status.CANCELLED
+    assert order.cancel_reason == Order.CancelReason.CUSTOMER_REQUEST
+    assert r.status == InventoryReservation.Status.RELEASED
+    assert r.released_at is not None
+    assert r.release_reason == InventoryReservation.ReleaseReason.CUSTOMER_REQUEST
+
+    # Stock must not be decremented by release
+    assert product.stock_quantity == 10
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.mysql
+def test_expire_overdue_reservations_cancels_payment_failed_orders():
+    """
+    Overdue ACTIVE reservations must cancel the order even when the order is PAYMENT_FAILED.
+    This supports payment retry semantics: failed orders stay open until TTL, then expire.
+    """
+    product = Product.objects.create(
+        name="Expire Payment Failed",
+        price="10.00",
+        stock_quantity=10,
+        is_active=True,
+    )
+    order = create_valid_order(
+        user=None, status=Order.Status.CREATED, customer_email="g@example.com"
+    )
+
+    reserve_for_checkout(
+        order=order,
+        items=[{"product_id": product.id, "quantity": 2}],
+        ttl_minutes=15,
+    )
+
+    # Payment attempt failed -> order remains open for retry (PAYMENT_FAILED)
+    order.status = Order.Status.PAYMENT_FAILED
+    order.cancel_reason = Order.CancelReason.PAYMENT_FAILED
+    order.save(update_fields=["status", "cancel_reason"])
+
+    # Force reservation overdue
+    InventoryReservation.objects.filter(order=order, product=product).update(
+        expires_at=timezone.now() - timedelta(seconds=1)
+    )
+
+    # Run expiration job/service
+    expire_overdue_reservations(now=timezone.now())
+
+    order.refresh_from_db()
+    product.refresh_from_db()
+    r = InventoryReservation.objects.get(order=order, product=product)
+
+    assert order.status == Order.Status.CANCELLED
+    assert order.cancel_reason == Order.CancelReason.PAYMENT_EXPIRED
+    assert order.cancelled_by == Order.CancelledBy.SYSTEM
+    assert order.cancelled_at is not None
+
+    assert r.status == InventoryReservation.Status.EXPIRED
+    assert r.expires_at is not None and r.expires_at <= timezone.now()
+
+    # Expiry must not decrement physical stock
+    assert product.stock_quantity == 10

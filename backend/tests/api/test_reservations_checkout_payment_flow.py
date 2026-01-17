@@ -3,6 +3,7 @@ from django.utils import timezone
 
 from orders.models import Order, InventoryReservation
 from products.models import Product
+from payments.models import Payment
 from tests.conftest import checkout_payload, create_order_via_checkout
 
 
@@ -90,13 +91,12 @@ def test_payment_success_commits_reservations_and_decrements_stock(auth_client, 
     assert product.stock_quantity == 8
 
 
-@pytest.mark.skip(reason="SHOP-240 Payment retry semantics")
 @pytest.mark.django_db
-def test_payment_fail_releases_reservations_and_cancels_order(auth_client, user):
+def test_payment_fail_marks_order_payment_failed_and_keeps_reservations_active(auth_client, user):
     """
     Expected behaviour:
-    - payment fail cancels order (CREATED -> CANCELLED, reason PAYMENT_FAILED)
-    - reservations are released (ACTIVE -> RELEASED, release_reason PAYMENT_FAILED)
+    - payment fail transitions order to PAYMENT_FAILED (retryable)
+    - reservations stay ACTIVE until TTL expiry (no release on fail)
     - physical stock is NOT decremented
     """
     product = Product.objects.create(
@@ -122,17 +122,86 @@ def test_payment_fail_releases_reservations_and_cancels_order(auth_client, user)
     order = Order.objects.get(id=order_id)
     reservations = InventoryReservation.objects.filter(order_id=order_id)
 
-    assert order.status == Order.Status.CANCELLED
+    assert order.status == Order.Status.PAYMENT_FAILED
     assert order.cancel_reason == Order.CancelReason.PAYMENT_FAILED
     assert reservations.exists()
     assert all(
-        r.status == InventoryReservation.Status.RELEASED for r in reservations)
-    assert all(r.released_at is not None for r in reservations)
-    assert all(r.release_reason ==
-               InventoryReservation.ReleaseReason.PAYMENT_FAILED for r in reservations)
+        r.status == InventoryReservation.Status.ACTIVE for r in reservations)
 
     # stock not decremented
     assert product.stock_quantity == 10
+
+    # one failed payment attempt recorded
+    assert Payment.objects.filter(order_id=order_id).count() == 1
+    assert Payment.objects.filter(
+        order_id=order_id, status=Payment.Status.FAILED).count() == 1
+
+
+@pytest.mark.django_db
+def test_payment_retry_creates_new_attempt_and_succeeds(auth_client, user):
+    """
+    Expected behaviour:
+    - first payment attempt fails -> order PAYMENT_FAILED, reservations remain ACTIVE
+    - second attempt succeeds -> new Payment row is created, order PAID, reservations COMMITTED
+    """
+    product = Product.objects.create(
+        name="Product",
+        price=100,
+        stock_quantity=10,
+        is_active=True,
+    )
+
+    order_data = create_order_via_checkout(
+        auth_client, product, customer_email=user.email)
+    order_id = order_data["id"]
+
+    # attempt 1: fail
+    r1 = auth_client.post(
+        "/api/v1/payments/",
+        {"order_id": order_id, "result": "fail"},
+        format="json",
+    )
+    assert r1.status_code == 201
+    assert r1.json()["status"] == "FAILED"
+
+    order = Order.objects.get(id=order_id)
+    assert order.status == Order.Status.PAYMENT_FAILED
+
+    reservations = InventoryReservation.objects.filter(order_id=order_id)
+    assert reservations.exists()
+    assert all(
+        r.status == InventoryReservation.Status.ACTIVE for r in reservations)
+
+    assert Payment.objects.filter(order_id=order_id).count() == 1
+    assert Payment.objects.filter(
+        order_id=order_id, status=Payment.Status.FAILED).count() == 1
+
+    # attempt 2: success (new payment row)
+    r2 = auth_client.post(
+        "/api/v1/payments/",
+        {"order_id": order_id, "result": "success"},
+        format="json",
+    )
+    print(r2.json())
+    assert r2.status_code == 201
+    assert r2.json()["status"] == "SUCCESS"
+
+    product.refresh_from_db()
+    order.refresh_from_db()
+    reservations = InventoryReservation.objects.filter(order_id=order_id)
+    # Derive expected decrement from actual reserved quantity to keep the test stable
+    # regardless of helper implementation details.
+    reserved_qty = sum(r.quantity for r in reservations)
+    starting_stock = 10
+
+    assert order.status == Order.Status.PAID
+    assert all(
+        r.status == InventoryReservation.Status.COMMITTED for r in reservations)
+    assert product.stock_quantity == starting_stock - reserved_qty
+
+    assert Payment.objects.filter(order_id=order_id).count() == 2
+    assert Payment.objects.filter(
+        order_id=order_id, status=Payment.Status.SUCCESS).count() == 1
 
 
 @pytest.mark.django_db

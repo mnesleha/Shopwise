@@ -97,7 +97,13 @@ def commit_reservations_for_paid(*, order) -> None:
         # Validate order state early to prevent committing inventory for cancelled/shipped orders.
         if order.status == _order_status_paid_value():
             return
-        if order.status != _order_status_created_value():
+        # Payment retry semantics:
+        # - First attempt: order is CREATED
+        # - Retry after failure: order can be PAYMENT_FAILED
+        if order.status not in (
+            _order_status_created_value(),
+            getattr(Order.Status, "PAYMENT_FAILED", "PAYMENT_FAILED"),
+        ):
             raise InvalidOrderStateException()
 
         reservations_qs = (
@@ -250,7 +256,10 @@ def expire_overdue_reservations(*, now=None) -> int:
             if not order_locked:
                 continue
 
-            if order_locked.status != _order_status_created_value():
+            if order_locked.status not in (
+                _order_status_created_value(),
+                _order_status_payment_failed_value(),
+            ):
                 continue
 
             overdue_reservations = list(
@@ -330,7 +339,10 @@ def count_overdue_reservations(*, now=None) -> int:
     return InventoryReservation.objects.filter(
         status=InventoryReservation.Status.ACTIVE,
         expires_at__lt=current_time,
-        order__status=_order_status_created_value(),
+        order__status__in=[
+            _order_status_created_value(),
+            _order_status_payment_failed_value(),
+        ],
     ).count()
 
 

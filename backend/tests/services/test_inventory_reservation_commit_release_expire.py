@@ -116,16 +116,16 @@ def test_release_is_idempotent():
 
     release_reservations(
         order=order,
-        reason=InventoryReservation.ReleaseReason.PAYMENT_FAILED,
-        cancelled_by=Order.CancelledBy.SYSTEM,
-        cancel_reason=Order.CancelReason.PAYMENT_FAILED,
+        reason=InventoryReservation.ReleaseReason.CUSTOMER_REQUEST,
+        cancelled_by=Order.CancelledBy.CUSTOMER,
+        cancel_reason=Order.CancelReason.CUSTOMER_REQUEST,
     )
     # second call should not blow up and should not change stock
     release_reservations(
         order=order,
-        reason=InventoryReservation.ReleaseReason.PAYMENT_FAILED,
-        cancelled_by=Order.CancelledBy.SYSTEM,
-        cancel_reason=Order.CancelReason.PAYMENT_FAILED,
+        reason=InventoryReservation.ReleaseReason.CUSTOMER_REQUEST,
+        cancelled_by=Order.CancelledBy.CUSTOMER,
+        cancel_reason=Order.CancelReason.CUSTOMER_REQUEST,
     )
 
     product.refresh_from_db()
