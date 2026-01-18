@@ -10,6 +10,7 @@ from api.views.payments import PaymentCreateView
 from api.views.auth import LoginView, RegisterView, MeView, RefreshView, VerifyEmailView
 from api.views.dev import DevEmailVerificationTokenView
 from api.views.admin_inventory_reservations import InventoryReservationAdminViewSet
+from api.views.admin_orders import AdminOrderViewSet
 from api.views import health_check
 
 app_name = "api"
@@ -23,6 +24,11 @@ router.register(
     r"admin/inventory-reservations",
     InventoryReservationAdminViewSet,
     basename="admin-inventory-reservations",
+)
+router.register(
+    r"admin/orders",
+    AdminOrderViewSet,
+    basename="admin-orders",
 )
 
 
