@@ -139,33 +139,14 @@ def commit_reservations_for_paid(*, order) -> None:
         )
         product_map = {product.id: product for product in products}
 
-        # ADR-025 semantics: availability for reserve is physical - SUM(ACTIVE reservations).
-        # Commit must remain consistent and never allow physical stock to go negative.
-        active_reservations_all = (
-            InventoryReservation.objects.select_for_update()
-            .filter(
-                product_id__in=product_ids,
-                status=InventoryReservation.Status.ACTIVE,
-            )
-            .order_by("product_id")
-        )
-        active_sum_map = {}
-        for reservation in active_reservations_all:
-            active_sum_map[reservation.product_id] = (
-                active_sum_map.get(reservation.product_id, 0)
-                + reservation.quantity
-            )
-
         now = timezone.now()
         for product_id in product_ids:
             product = product_map.get(product_id)
             if product is None:
                 _cancel_order_out_of_stock(order, active_reservations, now)
                 raise OutOfStockException()
-            active_sum = active_sum_map.get(product_id, 0) or 0
-            available = product.stock_quantity - active_sum
-            # Commit can race with other commits; enforce physical stock constraint.
-            if available < 0 or product.stock_quantity < order_quantities[product_id]:
+            # Commit can race with other commits; enforce physical stock constraint only.
+            if product.stock_quantity < order_quantities[product_id]:
                 _cancel_order_out_of_stock(order, active_reservations, now)
                 raise OutOfStockException()
 
