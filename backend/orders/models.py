@@ -42,6 +42,7 @@ class Order(models.Model):
         OUT_OF_STOCK = "OUT_OF_STOCK", "Out of stock"
         SHOP_REQUEST = "SHOP_REQUEST", "Shop request"
         FRAUD_SUSPECTED = "FRAUD_SUSPECTED", "Fraud suspected"
+        ADMIN_CANCELLED = "ADMIN_CANCELLED", "Admin cancelled"
 
     class CancelledBy(models.TextChoices):
         CUSTOMER = "CUSTOMER", "Customer"
