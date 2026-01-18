@@ -23,7 +23,7 @@ This endpoint creates a payment for an order and immediately updates
 the order status based on the simulated payment result.
 
 Behavior:
-- Only orders in CREATED status can be paid.
+- Only orders in CREATED or PAYMENT_FAILED status can be paid.
 - Each order can have only one payment.
 - Payment result is simulated via request payload.
 
@@ -33,7 +33,7 @@ Side effects:
 
 Notes:
 - This is a fake payment gateway used for development and testing.
-- Payments are synchronous and non-retryable.
+- Payments are synchronous and retryable for failed attempts.
 """,
         request=PaymentCreateRequestSerializer,
         responses={

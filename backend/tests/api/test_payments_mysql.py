@@ -2,6 +2,8 @@ import pytest
 from django.db import IntegrityError
 from orders.models import Order
 from payments.models import Payment
+from orders.services.order_service import OrderService
+from api.exceptions.payment import PaymentAlreadyExistsException
 
 
 @pytest.mark.mysql
@@ -19,14 +21,26 @@ def test_payment_double_submit_mysql_returns_409(auth_client, user, order_factor
 
 @pytest.mark.mysql
 @pytest.mark.django_db(transaction=True)
-def test_payment_is_one_to_one_with_order_mysql(order_factory, user):
+def test_payment_allows_multiple_attempts_but_blocks_second_success(order_factory, user):
     """
-    DB-level guard: there must not be two payments for the same order.
+    Payment attempts semantics:
+    - multiple FAILED attempts per order are allowed (retry)
+    - once a SUCCESS payment exists, further payment attempts are blocked by service logic
     """
     order = order_factory(user=user, status=Order.Status.CREATED)
 
-    Payment.objects.create(order=order, status=Payment.Status.SUCCESS)
+    # multiple failed attempts are allowed at DB level
+    Payment.objects.create(order=order, status=Payment.Status.FAILED)
+    Payment.objects.create(order=order, status=Payment.Status.FAILED)
+    assert Payment.objects.filter(order=order).count() == 2
 
-    # Creating another payment for the same order must fail on DB constraint
-    with pytest.raises(IntegrityError):
-        Payment.objects.create(order=order, status=Payment.Status.FAILED)
+    # first success attempt via service should work
+    OrderService.create_payment_and_apply_result(
+        order=order, result="success", actor_user=user)
+    assert Payment.objects.filter(
+        order=order, status=Payment.Status.SUCCESS).count() == 1
+
+    # second success attempt must be blocked
+    with pytest.raises(PaymentAlreadyExistsException):
+        OrderService.create_payment_and_apply_result(
+            order=order, result="success", actor_user=user)

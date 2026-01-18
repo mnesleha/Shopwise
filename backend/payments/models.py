@@ -22,14 +22,6 @@ class Payment(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["order"],
-                name="unique_payment_per_order",
-            )
-        ]
-
     def clean(self):
         valid_statuses = {choice.value for choice in self.Status}
         if self.status not in valid_statuses:
