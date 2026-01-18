@@ -330,7 +330,7 @@ def count_overdue_reservations(*, now=None) -> int:
     Read-only helper for tooling (management command --dry-run).
 
     Counts how many ACTIVE reservations are currently overdue (expires_at < now)
-    for orders that are still in CREATED state.
+    for orders that are in CREATED or PAYMENT_FAILED state.
 
     Note: This function intentionally does not take locks and does not perform any updates,
     so the result is a best-effort snapshot under concurrent activity.

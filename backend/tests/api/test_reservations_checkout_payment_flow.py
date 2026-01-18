@@ -182,7 +182,6 @@ def test_payment_retry_creates_new_attempt_and_succeeds(auth_client, user):
         {"order_id": order_id, "result": "success"},
         format="json",
     )
-    print(r2.json())
     assert r2.status_code == 201
     assert r2.json()["status"] == "SUCCESS"
 
