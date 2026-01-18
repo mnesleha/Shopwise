@@ -91,7 +91,6 @@ class OrderService:
             status_from = order.status
             order.status = Order.Status.SHIPPED
             order.save(update_fields=["status"])
-            order.refresh_from_db()
 
             AuditService.emit(
                 entity_type="order",
@@ -99,7 +98,8 @@ class OrderService:
                 action=AuditActions.ORDER_SHIPPED,
                 actor_type=AuditEvent.ActorType.ADMIN,
                 actor_user=actor_user,
-                metadata={"status_from": status_from, "status_to": order.status},
+                metadata={"status_from": status_from,
+                          "status_to": order.status},
                 fail_silently=True,
             )
             return order
@@ -122,7 +122,8 @@ class OrderService:
                 action=AuditActions.ORDER_DELIVERED,
                 actor_type=AuditEvent.ActorType.ADMIN,
                 actor_user=actor_user,
-                metadata={"status_from": status_from, "status_to": order.status},
+                metadata={"status_from": status_from,
+                          "status_to": order.status},
                 fail_silently=True,
             )
             return order
@@ -138,15 +139,13 @@ class OrderService:
                 raise InvalidOrderStateException()
 
             status_from = order.status
-            cancel_reason = getattr(
-                Order.CancelReason, "ADMIN_CANCELLED", "ADMIN_CANCELLED"
-            )
+
             now = timezone.now()
 
             Order.objects.filter(pk=order.pk).update(
                 status=Order.Status.CANCELLED,
                 cancelled_by=Order.CancelledBy.ADMIN,
-                cancel_reason=cancel_reason,
+                cancel_reason=Order.CancelReason.ADMIN_CANCELLED,
                 cancelled_at=now,
             )
             order.refresh_from_db()
@@ -157,7 +156,8 @@ class OrderService:
                 action=AuditActions.ORDER_CANCELLED_ADMIN,
                 actor_type=AuditEvent.ActorType.ADMIN,
                 actor_user=actor_user,
-                metadata={"status_from": status_from, "status_to": order.status},
+                metadata={"status_from": status_from,
+                          "status_to": order.status},
                 fail_silently=True,
             )
             return order
