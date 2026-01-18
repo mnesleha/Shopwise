@@ -14,13 +14,16 @@ from auditlog.models import AuditEvent
 from auditlog.services import AuditService
 
 
-if not hasattr(Order.CancelReason, "ADMIN_CANCELLED"):
-    Order.CancelReason.ADMIN_CANCELLED = "ADMIN_CANCELLED"
-
-
 class OrderService:
     @staticmethod
     def cancel_by_customer(order: Order, actor_user) -> Order:
+        """Cancel order by customer.
+
+        Note:
+            The ``actor_user`` argument is intentionally kept even though it is not
+            used yet. We keep it to make future auditing / authorization refactors
+            straightforward without changing the public service signature.
+        """
         if order.status != Order.Status.CREATED:
             raise InvalidOrderStateException()
 
@@ -37,6 +40,11 @@ class OrderService:
     def create_payment_and_apply_result(
         order: Order, result: str, actor_user
     ) -> Payment:
+        """Create a new payment attempt for an order and apply its result.
+
+        Note:
+            ``actor_user`` is reserved for future auditing/authorization.
+        """
         with transaction.atomic():
             order = (
                 Order.objects.select_for_update()
@@ -50,6 +58,11 @@ class OrderService:
                 "success": Payment.Status.SUCCESS,
                 "fail": Payment.Status.FAILED,
             }
+
+            if result not in status_map:
+                # Defensive guard: serializer should validate this, but service layer
+                # must never rely on API validation.
+                raise ValueError(f"Invalid payment result: {result!r}")
 
             # If a SUCCESS payment already exists, block any further attempts.
             # This must take precedence over order status checks to return the expected error code.
@@ -114,7 +127,6 @@ class OrderService:
             status_from = order.status
             order.status = Order.Status.DELIVERED
             order.save(update_fields=["status"])
-            order.refresh_from_db()
 
             AuditService.emit(
                 entity_type="order",

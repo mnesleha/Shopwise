@@ -3,7 +3,6 @@ import pytest
 from payments.models import Payment
 from orders.models import Order
 from tests.conftest import create_valid_order  # uses full required payload
-from tests.conftest import checkout_payload
 
 
 pytestmark = pytest.mark.django_db

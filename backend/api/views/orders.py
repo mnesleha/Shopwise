@@ -161,20 +161,20 @@ class OrderViewSet(ModelViewSet):
             actor_user=request.user,
         )
 
-        try:
-            AuditService.emit(
-                entity_type="order",
-                entity_id=str(order.id),
-                action=AuditActions.ORDER_CANCELLED,
-                actor_type=AuditEvent.ActorType.CUSTOMER,
-                actor_user=request.user,
-                metadata={
-                    "cancel_reason": order.cancel_reason,
-                    "cancelled_by": order.cancelled_by,
-                },
-            )
-        except Exception:
-            pass
+        # Best-effort audit logging: cancellation must not fail the business flow.
+        AuditService.emit(
+            entity_type="order",
+            entity_id=str(order.id),
+            action=AuditActions.ORDER_CANCELLED,
+            actor_type=AuditEvent.ActorType.CUSTOMER,
+            actor_user=request.user,
+            metadata={
+                "cancel_reason": order.cancel_reason,
+                "cancelled_by": order.cancelled_by,
+            },
+            fail_silently=True,
+        )
+
         data = self.get_serializer(order).data
         data.update(
             {

@@ -210,23 +210,31 @@ def release_reservations(*, order, reason, cancelled_by, cancel_reason) -> None:
 
         if order.status == _order_status_created_value():
             # Domain semantics:
-            # - PAYMENT_FAILED is NOT a cancellation; it represents a failed payment attempt.
+            # - PAYMENT_FAILED represents a failed payment attempt and keeps the order open for retry.
             # - Other reasons (customer/admin/system) represent a real cancellation.
-            if str(cancel_reason) == "PAYMENT_FAILED":
+            cancel_reason_value = getattr(
+                cancel_reason, "value", cancel_reason)
+            if cancel_reason_value == _cancel_reason_payment_failed_value():
                 order.status = _order_status_payment_failed_value()
+                order.cancel_reason = cancel_reason
+                # Not a cancellation -> do not set cancelled fields.
+                order.cancelled_by = None
+                order.cancelled_at = None
+                order.save(update_fields=[
+                           "status", "cancel_reason", "cancelled_by", "cancelled_at"])
             else:
                 order.status = _order_status_cancelled_value()
-            order.cancel_reason = cancel_reason
-            order.cancelled_by = cancelled_by
-            order.cancelled_at = now
-            order.save(
-                update_fields=[
-                    "status",
-                    "cancel_reason",
-                    "cancelled_by",
-                    "cancelled_at",
-                ]
-            )
+                order.cancel_reason = cancel_reason
+                order.cancelled_by = cancelled_by
+                order.cancelled_at = now
+                order.save(
+                    update_fields=[
+                        "status",
+                        "cancel_reason",
+                        "cancelled_by",
+                        "cancelled_at",
+                    ]
+                )
 
 
 def expire_overdue_reservations(*, now=None) -> int:
@@ -356,6 +364,10 @@ def _order_status_paid_value():
 
 def _order_status_payment_failed_value():
     return getattr(Order.Status, "PAYMENT_FAILED", "PAYMENT_FAILED")
+
+
+def _cancel_reason_payment_failed_value():
+    return getattr(Order.CancelReason, "PAYMENT_FAILED", "PAYMENT_FAILED")
 
 
 def _order_status_cancelled_value():
