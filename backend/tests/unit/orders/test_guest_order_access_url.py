@@ -1,4 +1,5 @@
 import pytest
+from urllib.parse import urlparse, parse_qs
 
 from orders.models import Order
 from tests.conftest import create_valid_order
@@ -17,6 +18,8 @@ def test_generate_guest_access_url_contains_order_id_and_token(settings):
     settings.PUBLIC_BASE_URL = "http://127.0.0.1:8000"
 
     url = generate_guest_access_url(order=order, token=token)
-    assert str(order.id) in url
-    assert "token=tok_123" in url
-    assert url.startswith("http://127.0.0.1:8000")
+    parsed = urlparse(url)
+    assert parsed.scheme == "http"
+    assert parsed.netloc == "127.0.0.1:8000"
+    assert parsed.path == f"/api/v1/guest/orders/{order.id}/"
+    assert parse_qs(parsed.query)["token"] == [token]

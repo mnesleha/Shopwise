@@ -1,5 +1,7 @@
 import pytest
 
+from django.utils import timezone
+
 from orders.models import Order
 from tests.conftest import create_valid_order
 
@@ -41,3 +43,34 @@ def test_validate_token_returns_none_for_invalid_token():
         order_id=order.id, token="invalid-token")
 
     assert got is None
+
+
+def test_issue_token_raises_for_non_guest_order(user):
+    order = create_valid_order(
+        user=user, status=Order.Status.CREATED, customer_email=user.email)
+    with pytest.raises(ValueError):
+        GuestOrderAccessService.issue_token(order=order)
+
+
+def test_validate_returns_none_for_empty_token():
+    order = create_valid_order(
+        user=None, status=Order.Status.CREATED, customer_email="guest@example.com")
+    GuestOrderAccessService.issue_token(order=order)
+
+    assert GuestOrderAccessService.validate(
+        order_id=order.id, token="") is None
+    assert GuestOrderAccessService.validate(
+        order_id=order.id, token=None) is None
+
+
+def test_validate_returns_none_when_no_hash_stored():
+    order = create_valid_order(
+        user=None, status=Order.Status.CREATED, customer_email="guest@example.com")
+    # no token issued -> hash is None
+    assert GuestOrderAccessService.validate(
+        order_id=order.id, token="anything") is None
+
+
+def test_validate_returns_none_for_nonexistent_order_id():
+    assert GuestOrderAccessService.validate(
+        order_id=999999999, token="anything") is None
