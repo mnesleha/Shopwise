@@ -195,6 +195,18 @@ Cart status model includes terminal `MERGED` for merged anonymous carts.
 
 ---
 
+## Active Cart Resolution (Current)
+
+For authenticated users, the system no longer derives the “active cart” by querying `Cart` rows by status.
+Instead, it uses a dedicated **ActiveCart pointer** persisted in the database. (ADR-026)
+
+- `ActiveCart` enforces a cross-database invariant: **exactly one active cart reference per user** (unique on `ActiveCart.user`).
+- `Cart` rows represent cart history (multiple rows per user may exist over time with lifecycle statuses such as ACTIVE/CONVERTED/MERGED).
+- All authenticated cart flows (GET cart, add/update/remove items, merge/adopt on login, checkout conversion) resolve the current cart via `ActiveCartService`.
+- Anonymous carts remain token-based and do not use the ActiveCart pointer.
+
+---
+
 ## Order Lifecycle (Current)
 
 MVP order status flow: `CREATED -> PAID -> SHIPPED`. (ADR-017)

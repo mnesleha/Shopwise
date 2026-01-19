@@ -31,6 +31,11 @@ Characteristics:
 
 The cart is not persisted as an order until checkout.
 
+Note:
+For authenticated users, the “current cart” is not derived from cart status.
+It is resolved via a dedicated ActiveCart pointer ([ADR-026](../decisions/ADR-026-ActiveCart-Pointer-Refactor.md)), which decouples
+cart history from the active cart reference.
+
 ---
 
 ## Checkout Phase
