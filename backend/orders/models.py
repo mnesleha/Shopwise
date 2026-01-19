@@ -104,6 +104,13 @@ class Order(models.Model):
         blank=True,
     )
     cancelled_at = models.DateTimeField(null=True, blank=True)
+    guest_access_token_hash = models.CharField(
+        max_length=64,
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+    guest_access_token_created_at = models.DateTimeField(null=True, blank=True)
 
     status = models.CharField(
         max_length=20,

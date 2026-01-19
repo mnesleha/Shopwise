@@ -11,6 +11,7 @@ from api.views.auth import LoginView, RegisterView, MeView, RefreshView, VerifyE
 from api.views.dev import DevEmailVerificationTokenView
 from api.views.admin_inventory_reservations import InventoryReservationAdminViewSet
 from api.views.admin_orders import AdminOrderViewSet
+from api.views.guest_orders import GuestOrderRetrieveView
 from api.views import health_check
 
 app_name = "api"
@@ -35,6 +36,11 @@ router.register(
 urlpatterns = [
     path("health/", health_check, name="health"),
     path("", include(router.urls)),
+    path(
+        "guest/orders/<int:order_id>/",
+        GuestOrderRetrieveView.as_view(),
+        name="guest-order-detail",
+    ),
     path("cart/", CartView.as_view(), name="cart"),
     path("cart/items/", CartItemCreateView.as_view(), name="cart-item-create"),
     path(

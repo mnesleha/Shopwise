@@ -4,11 +4,17 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-SECRET_KEY = "unsafe-placeholder-key"
+SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-placeholder-key")
+
+# Guest token hashing pepper (capability token hashing).
+# Keep it in env for dev/prod; tests override it in config.settings.test.
+GUEST_ACCESS_TOKEN_PEPPER = os.getenv("GUEST_ACCESS_TOKEN_PEPPER", "")
 
 DEBUG = False
 
 ALLOWED_HOSTS = []
+
+PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "http://127.0.0.1:8000")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
