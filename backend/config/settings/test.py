@@ -23,7 +23,7 @@ Q_CLUSTER = {
     "sync": True,
     "workers": 1,
     "timeout": 10,
-    "retry": 0,
+    "retry": 20,
 }
 
 PASSWORD_HASHERS = [
