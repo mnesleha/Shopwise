@@ -10,7 +10,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-placeholder-key")
 # Keep it in env for dev/prod; tests override it in config.settings.test.
 GUEST_ACCESS_TOKEN_PEPPER = os.getenv("GUEST_ACCESS_TOKEN_PEPPER", "")
 
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = []
 
@@ -24,6 +24,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework_simplejwt.token_blacklist",
+    "rest_framework",
+    "django_q",
     "accounts",
     "categories",
     "products",
@@ -35,7 +37,6 @@ INSTALLED_APPS = [
     "carts",
     "utils",
     'django_filters',
-    "rest_framework",
     'drf_spectacular',
     'drf_spectacular_sidecar',
     "debug_toolbar"
@@ -78,6 +79,18 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
+
+Q_CLUSTER = {
+    "name": "shopwise",
+    "orm": "default",
+    "workers": 4,
+    "timeout": 60,
+    "retry": 120,
+    "queue_limit": 50,
+}
+
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DEFAULT_FROM_EMAIL", "Shopwise <no-reply@shopwise.local>")
 
 RESERVATION_TTL_GUEST_SECONDS = int(
     os.getenv("RESERVATION_TTL_GUEST_SECONDS", 15 * 60))

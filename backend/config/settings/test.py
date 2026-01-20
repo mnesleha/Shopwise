@@ -17,6 +17,21 @@ DATABASES = {
     }
 }
 
+Q_CLUSTER = {
+    "name": "shopwise-test",
+    "orm": "default",
+    "sync": True,
+    "workers": 1,
+    "timeout": 10,
+    "retry": 0,
+}
+
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",
 ]
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.getenv("EMAIL_HOST", "127.0.0.1")  # Mailpit runs locally
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "1025"))
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = False
