@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.db import IntegrityError, transaction
+from django.http import HttpResponseBadRequest
+from django.shortcuts import render
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -13,8 +15,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from carts.services.merge import merge_or_adopt_guest_cart
 from carts.services.resolver import extract_cart_token
-from accounts.services.email_verification import verify_email_verification_token
+from accounts.services.email_verification import (
+    issue_email_verification_token,
+    verify_email_verification_token,
+)
 from orders.services.claim import claim_guest_orders_for_user
+from django_q.tasks import async_task
 from api.services.cookies import cart_token_cookie_kwargs
 from api.serializers.auth import (
     RegisterRequestSerializer,
@@ -24,6 +30,8 @@ from api.serializers.auth import (
     RefreshRequestSerializer,
     VerifyEmailRequestSerializer,
     VerifyEmailResponseSerializer,
+    RequestEmailVerificationRequestSerializer,
+    RequestEmailVerificationResponseSerializer,
 )
 from api.serializers.common import ErrorResponseSerializer
 
@@ -193,6 +201,10 @@ class VerifyEmailView(APIView):
         responses={200: VerifyEmailResponseSerializer},
     )
     def post(self, request):
+        """
+        Performs the actual email verification.
+        Used by API clients and by the confirmation form.
+        """
         serializer = VerifyEmailRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -205,3 +217,62 @@ class VerifyEmailView(APIView):
             {"email_verified": True, "claimed_orders": claimed},
             status=200,
         )
+
+    def get(self, request):
+        """
+        Used by clickable email links.
+        Renders confirmation page only.
+        """
+        token = request.query_params.get("token")
+        if not token:
+            return HttpResponseBadRequest("Missing verification token")
+
+        # We do NOT verify here — only render confirmation page
+        return render(
+            request,
+            "auth/verify_email_confirm.html",
+            {"token": token},
+        )
+
+
+class RequestEmailVerificationView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=["Auth"],
+        summary="Request email verification",
+        request=RequestEmailVerificationRequestSerializer,
+        responses={202: RequestEmailVerificationResponseSerializer},
+    )
+    def post(self, request):
+        serializer = RequestEmailVerificationRequestSerializer(
+            data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+        user = User.objects.filter(email=email).first()
+
+        if user and not user.email_verified:
+            try:
+                raw_token = issue_email_verification_token(user)
+                verification_url = (
+                    f"{settings.PUBLIC_BASE_URL}"
+                    f"/api/v1/auth/verify-email/?token={raw_token}"
+                )
+
+                def _enqueue():
+                    try:
+                        async_task(
+                            "notifications.jobs.send_email_verification",
+                            recipient_email=user.email,
+                            verification_url=verification_url,
+                        )
+                    except Exception:
+                        pass
+
+                transaction.on_commit(_enqueue)
+            except Exception:
+                pass
+
+        return Response({"queued": True}, status=202)

@@ -51,6 +51,11 @@ from drf_spectacular.utils import (
     OpenApiParameter,
 )
 from orders.services.inventory_reservation_service import reserve_for_checkout
+from orders.services.guest_order_access_service import (
+    GuestOrderAccessService,
+    generate_guest_access_url,
+)
+from django_q.tasks import async_task
 
 CART_TOKEN_PARAMETERS = [
     OpenApiParameter(
@@ -716,6 +721,34 @@ Notes:
                 except DjangoValidationError as exc:
                     raise DRFValidationError(exc.message_dict)
                 order.save()
+
+                if not request.user.is_authenticated:
+                    try:
+                        token = GuestOrderAccessService.issue_token(order=order)
+                        guest_url = generate_guest_access_url(
+                            order=order,
+                            token=token,
+                        )
+                        order_number = getattr(
+                            order,
+                            "order_number",
+                            str(order.id),
+                        )
+
+                        def _enqueue():
+                            try:
+                                async_task(
+                                    "notifications.jobs.send_guest_order_link",
+                                    recipient_email=order.customer_email,
+                                    order_number=order_number,
+                                    guest_order_url=guest_url,
+                                )
+                            except Exception:
+                                pass
+
+                        transaction.on_commit(_enqueue)
+                    except Exception:
+                        pass
 
                 reservation_items = [
                     {"product_id": item.product_id, "quantity": item.quantity}
