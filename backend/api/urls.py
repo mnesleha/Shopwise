@@ -7,7 +7,14 @@ from api.views.orders import OrderViewSet
 from api.views.discounts import DiscountViewSet
 from api.views.carts import CartView, CartItemCreateView, CartItemDetailView
 from api.views.payments import PaymentCreateView
-from api.views.auth import LoginView, RegisterView, MeView, RefreshView, VerifyEmailView
+from api.views.auth import (
+    LoginView,
+    RegisterView,
+    MeView,
+    RefreshView,
+    VerifyEmailView,
+    RequestEmailVerificationView,
+)
 from api.views.dev import DevEmailVerificationTokenView
 from api.views.admin_inventory_reservations import InventoryReservationAdminViewSet
 from api.views.admin_orders import AdminOrderViewSet
@@ -53,7 +60,11 @@ urlpatterns = [
     path("auth/register/", RegisterView.as_view(), name="auth-register"),
     path("auth/login/", LoginView.as_view(), name="auth-login"),
     path("auth/refresh/", RefreshView.as_view()),
-    path("auth/verify-email/", VerifyEmailView.as_view()),
+    path("auth/verify-email/", VerifyEmailView.as_view(), name="verify-email"),
+    path(
+        "auth/request-email-verification/",
+        RequestEmailVerificationView.as_view(),
+    ),
     path("auth/me/", MeView.as_view(), name="auth-me"),
     path(
         "dev/email-verification-token/",

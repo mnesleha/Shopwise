@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.db import IntegrityError, transaction
+from django.http import HttpResponseBadRequest
+from django.shortcuts import render
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -13,8 +15,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from carts.services.merge import merge_or_adopt_guest_cart
 from carts.services.resolver import extract_cart_token
-from accounts.services.email_verification import verify_email_verification_token
+from accounts.services.email_verification import (
+    issue_email_verification_token,
+    verify_email_verification_token,
+)
 from orders.services.claim import claim_guest_orders_for_user
+from django_q.tasks import async_task
 from api.services.cookies import cart_token_cookie_kwargs
 from api.serializers.auth import (
     RegisterRequestSerializer,
@@ -24,8 +30,14 @@ from api.serializers.auth import (
     RefreshRequestSerializer,
     VerifyEmailRequestSerializer,
     VerifyEmailResponseSerializer,
+    RequestEmailVerificationRequestSerializer,
+    RequestEmailVerificationResponseSerializer,
 )
 from api.serializers.common import ErrorResponseSerializer
+from api.services.rate_limit import rate_limit_hit
+from notifications.enqueue import enqueue_best_effort
+from notifications.error_handler import NotificationErrorHandler
+from notifications.exceptions import NotificationSendError
 
 User = get_user_model()
 
@@ -193,6 +205,10 @@ class VerifyEmailView(APIView):
         responses={200: VerifyEmailResponseSerializer},
     )
     def post(self, request):
+        """
+        Performs the actual email verification.
+        Used by API clients and by the confirmation form.
+        """
         serializer = VerifyEmailRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -205,3 +221,97 @@ class VerifyEmailView(APIView):
             {"email_verified": True, "claimed_orders": claimed},
             status=200,
         )
+
+    def get(self, request):
+        """
+        Used by clickable email links.
+        Renders confirmation page only.
+        """
+        token = request.query_params.get("token")
+        if not token:
+            return HttpResponseBadRequest("Missing verification token")
+
+        # We do NOT verify here — only render confirmation page
+        return render(
+            request,
+            "auth/verify_email_confirm.html",
+            {"token": token},
+        )
+
+
+class RequestEmailVerificationView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=["Auth"],
+        summary="Request email verification",
+        request=RequestEmailVerificationRequestSerializer,
+        responses={202: RequestEmailVerificationResponseSerializer},
+    )
+    def post(self, request):
+        serializer = RequestEmailVerificationRequestSerializer(
+            data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # IMPORTANT:
+        # - Always respond 202 to avoid user enumeration.
+        # - Best-effort side effect: if anything goes wrong, we do not block the request.
+        email = serializer.validated_data["email"].strip().lower()
+
+        # Lightweight throttling to prevent abuse (best-effort).
+        # Defaults can be overridden in settings.
+        per_email_limit = int(
+            getattr(settings, "EMAIL_VERIFICATION_RL_PER_EMAIL", 3))
+        per_ip_limit = int(
+            getattr(settings, "EMAIL_VERIFICATION_RL_PER_IP", 20))
+        window_s = int(
+            getattr(settings, "EMAIL_VERIFICATION_RL_WINDOW_S", 300))
+
+        ip = (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[
+            0].strip() or request.META.get("REMOTE_ADDR") or "unknown"
+        limited = rate_limit_hit(
+            key=f"rl:email_verification:email:{email}",
+            limit=per_email_limit,
+            window_s=window_s,
+        ) or rate_limit_hit(
+            key=f"rl:email_verification:ip:{ip}",
+            limit=per_ip_limit,
+            window_s=window_s,
+        )
+
+        if limited:
+            return Response({"queued": True}, status=202)
+
+        user = User.objects.filter(email=email).first()
+
+        if user and not user.email_verified:
+            try:
+                raw_token = issue_email_verification_token(user)
+                verification_url = (
+                    f"{settings.PUBLIC_BASE_URL}"
+                    f"/api/v1/auth/verify-email/?token={raw_token}"
+                )
+
+                def _enqueue() -> None:
+                    enqueue_best_effort(
+                        "notifications.jobs.send_email_verification",
+                        recipient_email=user.email,
+                        verification_url=verification_url,
+                    )
+
+                transaction.on_commit(_enqueue)
+            except Exception:
+                NotificationErrorHandler.handle(
+                    NotificationSendError(
+                        code="EMAIL_VERIFICATION_INTENT_FAILED",
+                        message="Failed to prepare email verification notification intent.",
+                        context={
+                            "email": email,
+                            "user_id": getattr(user, "id", None),
+                        },
+                    )
+                )
+                return Response({"queued": True}, status=202)
+
+        return Response({"queued": True}, status=202)

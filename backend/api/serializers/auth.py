@@ -55,3 +55,14 @@ class VerifyEmailRequestSerializer(serializers.Serializer):
 class VerifyEmailResponseSerializer(serializers.Serializer):
     email_verified = serializers.BooleanField(read_only=True)
     claimed_orders = serializers.IntegerField(read_only=True)
+
+
+class RequestEmailVerificationRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        return value.strip().lower()
+
+
+class RequestEmailVerificationResponseSerializer(serializers.Serializer):
+    queued = serializers.BooleanField(read_only=True)
