@@ -57,6 +57,11 @@ from orders.services.guest_order_access_service import (
 )
 from django_q.tasks import async_task
 
+from notifications.enqueue import enqueue_best_effort
+from notifications.error_handler import NotificationErrorHandler
+from notifications.exceptions import NotificationSendError
+
+
 CART_TOKEN_PARAMETERS = [
     OpenApiParameter(
         name="X-Cart-Token",
@@ -724,7 +729,8 @@ Notes:
 
                 if not request.user.is_authenticated:
                     try:
-                        token = GuestOrderAccessService.issue_token(order=order)
+                        token = GuestOrderAccessService.issue_token(
+                            order=order)
                         guest_url = generate_guest_access_url(
                             order=order,
                             token=token,
@@ -735,20 +741,26 @@ Notes:
                             str(order.id),
                         )
 
-                        def _enqueue():
-                            try:
-                                async_task(
-                                    "notifications.jobs.send_guest_order_link",
-                                    recipient_email=order.customer_email,
-                                    order_number=order_number,
-                                    guest_order_url=guest_url,
-                                )
-                            except Exception:
-                                pass
+                        def _enqueue() -> None:
+                            enqueue_best_effort(
+                                "notifications.jobs.send_guest_order_link",
+                                recipient_email=order.customer_email,
+                                order_number=order_number,
+                                guest_order_url=guest_url,
+                            )
 
                         transaction.on_commit(_enqueue)
                     except Exception:
-                        pass
+                        NotificationErrorHandler.handle(
+                            NotificationSendError(
+                                code="GUEST_ORDER_EMAIL_INTENT_FAILED",
+                                message="Failed to prepare guest order notification intent.",
+                                context={
+                                    "order_id": getattr(order, "id", None),
+                                    "customer_email": getattr(order, "customer_email", None),
+                                },
+                            )
+                        )
 
                 reservation_items = [
                     {"product_id": item.product_id, "quantity": item.quantity}

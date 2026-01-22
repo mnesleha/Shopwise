@@ -28,7 +28,7 @@ def test_request_verification_enqueues_q2_task_on_commit(monkeypatch, client, se
         email="u1@example.com", password="pw")
     settings.PUBLIC_BASE_URL = "https://example.test"
 
-    with patch("api.views.auth.async_task") as async_task_mock:
+    with patch("notifications.enqueue.async_task") as async_task_mock:
         # Replace this URL with the actual endpoint implemented in PR2:
         # e.g. POST /api/v1/auth/request-email-verification/
         resp = client.post("/api/v1/auth/request-email-verification/",
@@ -42,6 +42,11 @@ def test_request_verification_enqueues_q2_task_on_commit(monkeypatch, client, se
         callbacks[0]()
 
         assert async_task_mock.call_count == 1
+
+        job, = async_task_mock.call_args[0]
+        assert job == "notifications.jobs.send_email_verification"
+        kwargs = async_task_mock.call_args.kwargs
+        assert kwargs["recipient_email"] == "u1@example.com"
 
     args, kwargs = async_task_mock.call_args
     assert args[0] == "notifications.jobs.send_email_verification"

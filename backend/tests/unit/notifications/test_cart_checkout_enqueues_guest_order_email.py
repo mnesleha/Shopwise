@@ -6,6 +6,7 @@ from rest_framework.test import APIRequestFactory
 from api.views.carts import CartCheckoutView
 from carts.models import Cart, CartItem
 from products.models import Product
+from notifications import enqueue
 
 
 pytestmark = pytest.mark.django_db
@@ -66,7 +67,7 @@ def test_anonymous_checkout_enqueues_guest_order_link_email(monkeypatch, setting
     with patch("api.views.carts._get_active_cart_for_request", return_value=cart):
         with patch("api.views.carts.GuestOrderAccessService.issue_token", return_value="guest_tok_456"):
             with patch("api.views.carts.generate_guest_access_url", return_value="https://example.test/orders/1?token=guest_tok_456"):
-                with patch("api.views.carts.async_task") as async_task_mock:
+                with patch("notifications.enqueue.async_task") as async_task_mock:
                     resp = CartCheckoutView.as_view()(request)
 
                     assert resp.status_code == 201
@@ -75,6 +76,11 @@ def test_anonymous_checkout_enqueues_guest_order_link_email(monkeypatch, setting
                     callbacks[0]()  # simulate commit
 
                     assert async_task_mock.call_count == 1
+                    job, = async_task_mock.call_args[0]
+                    assert job == "notifications.jobs.send_guest_order_link"
+                    kwargs = async_task_mock.call_args.kwargs
+                    assert kwargs["recipient_email"] == "guest@example.com"
+                    assert "guest_order_url" in kwargs
 
     args, kwargs = async_task_mock.call_args
     assert args[0] == "notifications.jobs.send_guest_order_link"

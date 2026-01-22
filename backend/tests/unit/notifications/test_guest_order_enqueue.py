@@ -59,13 +59,17 @@ def test_guest_checkout_enqueues_guest_order_email_on_commit(monkeypatch, client
     request.user = type("Anon", (), {"is_authenticated": False})()
 
     with patch("api.views.carts._get_active_cart_for_request", return_value=cart):
-        with patch("api.views.carts.async_task") as async_task_mock:
+        with patch("notifications.enqueue.async_task") as async_task_mock:
             resp = CartCheckoutView.as_view()(request)
 
             assert resp.status_code == 201
             assert len(callbacks) == 1
             callbacks[0]()
             assert async_task_mock.call_count == 1
+            job, = async_task_mock.call_args[0]
+            assert job == "notifications.jobs.send_guest_order_link"
+            kwargs = async_task_mock.call_args.kwargs
+            assert kwargs["recipient_email"] == "guest@example.com"
 
     assert len(callbacks) == 1
 

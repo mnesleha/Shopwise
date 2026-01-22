@@ -28,7 +28,7 @@ def test_request_email_verification_enqueues_on_commit(client, monkeypatch, sett
     callbacks = _capture_on_commit(monkeypatch)
 
     with patch("api.views.auth.issue_email_verification_token", return_value="tok_123"):
-        with patch("api.views.auth.async_task") as async_task_mock:
+        with patch("notifications.enqueue.async_task") as async_task_mock:
             resp = client.post(
                 "/api/v1/auth/request-email-verification/",
                 data={"email": "u1@example.com"},
@@ -42,6 +42,12 @@ def test_request_email_verification_enqueues_on_commit(client, monkeypatch, sett
             callbacks[0]()  # simulate commit
 
             assert async_task_mock.call_count == 1
+
+            job, = async_task_mock.call_args[0]
+            assert job == "notifications.jobs.send_email_verification"
+            kwargs = async_task_mock.call_args.kwargs
+            assert kwargs["recipient_email"] == "u1@example.com"
+            assert "verification_url" in kwargs
 
     args, kwargs = async_task_mock.call_args
     assert args[0] == "notifications.jobs.send_email_verification"

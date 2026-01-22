@@ -34,6 +34,10 @@ from api.serializers.auth import (
     RequestEmailVerificationResponseSerializer,
 )
 from api.serializers.common import ErrorResponseSerializer
+from api.services.rate_limit import rate_limit_hit
+from notifications.enqueue import enqueue_best_effort
+from notifications.error_handler import NotificationErrorHandler
+from notifications.exceptions import NotificationSendError
 
 User = get_user_model()
 
@@ -250,7 +254,35 @@ class RequestEmailVerificationView(APIView):
             data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        email = serializer.validated_data["email"]
+        # IMPORTANT:
+        # - Always respond 202 to avoid user enumeration.
+        # - Best-effort side effect: if anything goes wrong, we do not block the request.
+        email = serializer.validated_data["email"].strip().lower()
+
+        # Lightweight throttling to prevent abuse (best-effort).
+        # Defaults can be overridden in settings.
+        per_email_limit = int(
+            getattr(settings, "EMAIL_VERIFICATION_RL_PER_EMAIL", 3))
+        per_ip_limit = int(
+            getattr(settings, "EMAIL_VERIFICATION_RL_PER_IP", 20))
+        window_s = int(
+            getattr(settings, "EMAIL_VERIFICATION_RL_WINDOW_S", 300))
+
+        ip = (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[
+            0].strip() or request.META.get("REMOTE_ADDR") or "unknown"
+        limited = rate_limit_hit(
+            key=f"rl:email_verification:email:{email}",
+            limit=per_email_limit,
+            window_s=window_s,
+        ) or rate_limit_hit(
+            key=f"rl:email_verification:ip:{ip}",
+            limit=per_ip_limit,
+            window_s=window_s,
+        )
+
+        if limited:
+            return Response({"queued": True}, status=202)
+
         user = User.objects.filter(email=email).first()
 
         if user and not user.email_verified:
@@ -261,18 +293,25 @@ class RequestEmailVerificationView(APIView):
                     f"/api/v1/auth/verify-email/?token={raw_token}"
                 )
 
-                def _enqueue():
-                    try:
-                        async_task(
-                            "notifications.jobs.send_email_verification",
-                            recipient_email=user.email,
-                            verification_url=verification_url,
-                        )
-                    except Exception:
-                        pass
+                def _enqueue() -> None:
+                    enqueue_best_effort(
+                        "notifications.jobs.send_email_verification",
+                        recipient_email=user.email,
+                        verification_url=verification_url,
+                    )
 
                 transaction.on_commit(_enqueue)
             except Exception:
-                pass
+                NotificationErrorHandler.handle(
+                    NotificationSendError(
+                        code="EMAIL_VERIFICATION_INTENT_FAILED",
+                        message="Failed to prepare email verification notification intent.",
+                        context={
+                            "email": email,
+                            "user_id": getattr(user, "id", None),
+                        },
+                    )
+                )
+                return Response({"queued": True}, status=202)
 
         return Response({"queued": True}, status=202)
