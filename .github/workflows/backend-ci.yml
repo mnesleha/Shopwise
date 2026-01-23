@@ -174,6 +174,8 @@ jobs:
 
       - name: Run Postman Collection (cloud IDs)
         uses: postmanlabs/postman-cli-action@v1
+        env:
+          FIXTURES_B64: ${{ env.FIXTURES_B64 }}  # Set in "Load fixtures JSON into env var" step
         with:
           api-key: ${{ secrets.POSTMAN_API_KEY }}
           command: >
