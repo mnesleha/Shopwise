@@ -1,3 +1,5 @@
+from sentry_sdk.integrations.django import DjangoIntegration
+import sentry_sdk
 import os
 from pathlib import Path
 from datetime import timedelta
@@ -99,11 +101,32 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "user-agent",
+    "x-csrf-token",
+    "x-requested-with",
+    "sentry-trace",
+    "baggage",
+]
+
 SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SECURE = True
 
 CSRF_COOKIE_SAMESITE = 'None'
 CSRF_COOKIE_SECURE = True
+
+
+sentry_sdk.init(
+    dsn="https://2becc686d197008cfe9d5b4bd58b42f7@o4510765395476480.ingest.de.sentry.io/4510765407862864",
+    integrations=[DjangoIntegration()],
+    traces_sample_rate=1.0,
+    enable_tracing=True,
+    environment="development",
+    send_default_pii=True,
+)
 
 DEFAULT_FROM_EMAIL = os.getenv(
     "DEFAULT_FROM_EMAIL", "Shopwise <no-reply@shopwise.local>")

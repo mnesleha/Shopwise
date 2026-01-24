@@ -9,6 +9,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@sentry/nextjs": "^10.36.0",
     "axios": "^1.13.2",
     "next": "latest",
     "react": "^19.1.1",
