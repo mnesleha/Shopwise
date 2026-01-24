@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { api } from "@/lib/api";
 
 type Product = {
@@ -30,7 +31,9 @@ export default function ProductsPage() {
         <ul className="list-disc pl-6">
           {data.map((p) => (
             <li key={String(p.id)}>
-              {p.name} – {p.price}
+              <Link href={`/products/${p.id}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                {p.name} – {p.price}
+              </Link>
             </li>
           ))}
         </ul>
