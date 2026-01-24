@@ -21,13 +21,13 @@ export default function ProductsPage() {
 
   return (
     <main style={{ padding: 16 }}>
-      <h1>Products connectivity test</h1>
+      <h1 className="text-3xl font-bold mb-4">Products connectivity test</h1>
 
       {err && <pre style={{ whiteSpace: "pre-wrap" }}>ERROR: {err}</pre>}
       {!err && !data && <p>Loading…</p>}
 
       {data && (
-        <ul>
+        <ul className="list-disc pl-6">
           {data.map((p) => (
             <li key={String(p.id)}>
               {p.name} – {p.price}
