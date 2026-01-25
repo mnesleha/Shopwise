@@ -13,6 +13,7 @@ __pycache__/
 __pycache__/
 STDOUT
 artifacts/
+locust_env/
 
 # Frontend
 # dependencies
