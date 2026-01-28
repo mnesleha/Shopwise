@@ -1,7 +1,20 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000",
+  baseURL: "/api/v1",
   timeout: 10_000,
   withCredentials: true,
+});
+
+api.interceptors.request.use((config) => {
+
+  const url = config.url;
+  if (!url || url.startsWith("http")) return config;
+
+  const [path, query] = url.split("?");
+  if (!path.endsWith("/")) {
+    config.url = query ? `${path}/?${query}` : `${path}/`;
+  }
+
+  return config;
 });
