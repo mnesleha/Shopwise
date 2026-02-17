@@ -1,14 +1,8 @@
 import { api } from "@/lib/api";
 import type { CheckoutValues } from "@/components/checkout/CheckoutForm";
+import type { OrderDto } from "@/lib/api/orders";
 
-export type CheckoutResponseDto = {
-  id: number;
-  // pokud backend vrací víc (status, guest_token, totals…), přidej sem později
-};
-
-export async function checkoutCart(values: CheckoutValues): Promise<CheckoutResponseDto> {
-  // Step 1 placeholders neposíláme (pokud backend nečeká)
-  // ale klidně je můžeš poslat – dnes je ignorujme, ať je payload minimální
+export async function checkoutCart(values: CheckoutValues): Promise<OrderDto> {
   const payload = {
     customer_email: values.customer_email,
 
@@ -35,8 +29,6 @@ export async function checkoutCart(values: CheckoutValues): Promise<CheckoutResp
         }),
   };
 
-  // Tady doplň přesnou URL podle backendu:
-  // často to bývá POST /cart/checkout/ nebo /cart/convert-to-order/
-  const res = await api.post<CheckoutResponseDto>("/cart/checkout/", payload);
+  const res = await api.post<OrderDto>("/cart/checkout/", payload);
   return res.data;
 }

@@ -84,7 +84,7 @@ function CartItemRow({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted to-muted-foreground/20">
+              <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-muted to-muted-foreground/20">
                 <ShoppingBag className="h-6 w-6 text-muted-foreground" />
               </div>
             )}

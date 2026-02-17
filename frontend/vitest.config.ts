@@ -14,7 +14,7 @@ export default defineConfig({
     environment: "happy-dom",
     globals: true,
     setupFiles: './vitest.setup.ts',
-    exclude: ["e2e/**", "playwright/**", "**/*.spec.{ts,tsx}"],
+    exclude: ["e2e/**", "playwright/**", "**/*.spec.{ts,tsx}", "node_modules/**"],
     // Performance optimizations
     poolOptions: {
       threads: {

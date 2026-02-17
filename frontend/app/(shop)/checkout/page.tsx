@@ -1,7 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { CheckoutForm, type CheckoutValues } from "@/components/checkout/CheckoutForm";
+import {
+  CheckoutForm,
+  type CheckoutValues,
+} from "@/components/checkout/CheckoutForm";
 import { checkoutCart } from "@/lib/api/checkout";
 
 export default function CheckoutPage() {
@@ -11,8 +14,8 @@ export default function CheckoutPage() {
 
   const onSubmit = async (values: CheckoutValues) => {
     const order = await checkoutCart(values);
-    // order detail route – uprav dle svého existujícího routingu
-    router.push(`/orders/${order.id}`);
+    router.push("/guest/checkout/success");
+    //    router.push(`/orders/${order.id}`);
   };
 
   return (
