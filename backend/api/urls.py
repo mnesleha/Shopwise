@@ -9,6 +9,7 @@ from api.views.carts import CartView, CartItemCreateView, CartItemDetailView
 from api.views.payments import PaymentCreateView
 from api.views.auth import (
     LoginView,
+    LogoutView,
     RegisterView,
     MeView,
     RefreshView,
@@ -59,7 +60,8 @@ urlpatterns = [
     path("payments/", PaymentCreateView.as_view(), name="payment-create"),
     path("auth/register/", RegisterView.as_view(), name="auth-register"),
     path("auth/login/", LoginView.as_view(), name="auth-login"),
-    path("auth/refresh/", RefreshView.as_view()),
+    path("auth/logout/", LogoutView.as_view(), name="auth-logout"),
+    path("auth/refresh/", RefreshView.as_view(), name="auth-refresh"),
     path("auth/verify-email/", VerifyEmailView.as_view(), name="verify-email"),
     path(
         "auth/request-email-verification/",

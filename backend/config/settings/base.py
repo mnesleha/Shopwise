@@ -118,6 +118,20 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = 'None'
 CSRF_COOKIE_SECURE = True
 
+AUTH_COOKIE_ACCESS = "access_token"
+AUTH_COOKIE_REFRESH = "refresh_token"
+AUTH_COOKIE_SECURE = not DEBUG
+AUTH_COOKIE_SAMESITE = "Lax"   # pro Next rewrites ideální
+AUTH_COOKIE_PATH = "/"
+
+def auth_cookie_kwargs():
+    return dict(
+        httponly=True,
+        secure=AUTH_COOKIE_SECURE,
+        samesite=AUTH_COOKIE_SAMESITE,
+        path=AUTH_COOKIE_PATH,
+    )
+
 
 # Sentry - can be disabled via SENTRY_ENABLED=false
 SENTRY_ENABLED = os.getenv("SENTRY_ENABLED", "true").lower() == "true"
@@ -149,6 +163,7 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.AllowAny",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "api.authentication.CookieJWTAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",

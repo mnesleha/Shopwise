@@ -1,3 +1,4 @@
+from requests import request
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed
@@ -110,6 +111,28 @@ class OrderViewSet(ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderResponseSerializer
     http_method_names = ["post", "get", "head", "options"]
+
+    def initial(self, request, *args, **kwargs):
+        """Runs before authentication and permissions - perfect for debugging"""
+        print("=" * 80)
+        print("DEBUG OrderViewSet.initial() - BEFORE AUTH")
+        print("All COOKIES:", dict(request.COOKIES))
+        print("HAS access_token:", "access_token" in request.COOKIES)
+        print("HAS refresh_token:", "refresh_token" in request.COOKIES)
+        print("Authorization header:", request.META.get('HTTP_AUTHORIZATION', 'NOT SET'))
+        print("Available authenticators:", [a.__class__.__name__ for a in self.get_authenticators()])
+        print("HTTP_COOKIE header:", request.META.get("HTTP_COOKIE", "NOT SET"))
+        print("=" * 80)
+        
+        super().initial(request, *args, **kwargs)
+        
+        print("=" * 80)
+        print("DEBUG OrderViewSet.initial() - AFTER AUTH")
+        print("request.user:", request.user)
+        print("request.user.is_authenticated:", request.user.is_authenticated)
+        print("Successful authenticator:", request.successful_authenticator.__class__.__name__ if hasattr(request, 'successful_authenticator') and request.successful_authenticator else "NONE")
+        print("HTTP_COOKIE header:", request.META.get("HTTP_COOKIE", "NOT SET"))
+        print("=" * 80)
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user)

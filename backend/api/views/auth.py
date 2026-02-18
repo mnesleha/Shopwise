@@ -13,6 +13,7 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from drf_spectacular.utils import extend_schema, OpenApiExample
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from config.settings.base import auth_cookie_kwargs
 from carts.services.merge import merge_or_adopt_guest_cart
 from carts.services.resolver import extract_cart_token
 from accounts.services.email_verification import (
@@ -140,6 +141,10 @@ class LoginView(APIView):
         token_data = TokenResponseSerializer(
             {"access": str(refresh.access_token), "refresh": str(refresh)}
         )
+
+        access_str = str(refresh.access_token)
+        refresh_str = str(refresh)
+
         response = Response(token_data.data, status=200)
         response.set_cookie(
             "cart_token",
@@ -147,7 +152,27 @@ class LoginView(APIView):
             max_age=0,
             **cart_token_cookie_kwargs()
         )
+
+        response.set_cookie(settings.AUTH_COOKIE_ACCESS, access_str, **auth_cookie_kwargs())
+        response.set_cookie(settings.AUTH_COOKIE_REFRESH, refresh_str, **auth_cookie_kwargs())
+
         return response
+
+
+class LogoutView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        resp = Response({"ok": True}, status=200)
+
+        access_cookie_name = getattr(settings, "AUTH_COOKIE_ACCESS", "access_token")
+        refresh_cookie_name = getattr(settings, "AUTH_COOKIE_REFRESH", "refresh_token")
+
+        resp.delete_cookie(access_cookie_name, path=getattr(settings, "AUTH_COOKIE_PATH", "/"))
+        resp.delete_cookie(refresh_cookie_name, path=getattr(settings, "AUTH_COOKIE_PATH", "/"))
+
+        return resp
 
 
 class MeView(APIView):
@@ -163,7 +188,7 @@ class MeView(APIView):
 
 
 class RefreshView(APIView):
-    authentication_classes = []  # refresh uses the refresh token in body
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     @extend_schema(
@@ -172,26 +197,37 @@ class RefreshView(APIView):
         request=RefreshRequestSerializer,
         responses={200: TokenResponseSerializer},
     )
+    
     def post(self, request):
-        serializer = RefreshRequestSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        # Prefer cookie (httpOnly) for refresh
+        refresh_cookie_name = getattr(settings, "AUTH_COOKIE_REFRESH", "refresh_token")
+        refresh_str = request.COOKIES.get(refresh_cookie_name)
 
-        refresh_str = serializer.validated_data["refresh"]
+        # Fallback to body for backwards compatibility (optional)
+        if not refresh_str:
+          refresh_str = request.data.get("refresh")
+
+        if not refresh_str:
+            raise ValidationError({"refresh": ["Missing refresh token."]})
 
         try:
-            # This serializer applies:
-            # - ROTATE_REFRESH_TOKENS
-            # - BLACKLIST_AFTER_ROTATION (requires token_blacklist app + migrations)
-            refresh_serializer = TokenRefreshSerializer(
-                data={"refresh": refresh_str})
+            refresh_serializer = TokenRefreshSerializer(data={"refresh": refresh_str})
             refresh_serializer.is_valid(raise_exception=True)
-            # dict with "access" and, when rotating, "refresh"
-            data = refresh_serializer.validated_data
-            return Response(TokenResponseSerializer(data).data, status=200)
+            data = refresh_serializer.validated_data  # has "access" and sometimes "refresh" if rotating
+
+            resp = Response(TokenResponseSerializer(data).data, status=200)
+
+            # Always set new access cookie
+            access_cookie_name = getattr(settings, "AUTH_COOKIE_ACCESS", "access_token")
+            resp.set_cookie(access_cookie_name, data["access"], **auth_cookie_kwargs())
+
+            # If rotation is enabled, set new refresh cookie too
+            if "refresh" in data:
+                resp.set_cookie(refresh_cookie_name, data["refresh"], **auth_cookie_kwargs())
+
+            return resp
         except Exception:
-            # Map any refresh problems to our unified validation shape
-            raise ValidationError(
-                {"refresh": ["Invalid or expired refresh token."]})
+            raise ValidationError({"refresh": ["Invalid or expired refresh token."]})
 
 
 class VerifyEmailView(APIView):
