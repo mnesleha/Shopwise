@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getAccessToken } from "@/lib/auth/tokens";
 
 export const api = axios.create({
   baseURL: "/api/v1",
@@ -7,6 +8,11 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  const token = getAccessToken();
+  if (token) {
+    config.headers = config.headers ?? {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
 
   const url = config.url;
   if (!url || url.startsWith("http")) return config;

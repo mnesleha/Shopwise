@@ -13,6 +13,9 @@ export default function Header() {
         </div>
 
         <nav className="flex items-center gap-4 text-sm">
+          <Link href="/login" className="underline-offset-4 hover:underline">
+            Login
+          </Link>
           <Link href="/cart" className="underline-offset-4 hover:underline">
             Cart
           </Link>
