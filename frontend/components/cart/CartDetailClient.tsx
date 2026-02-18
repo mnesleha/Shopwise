@@ -3,9 +3,14 @@
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CartDetail } from "@/components/cart/CartDetail"; // tvůj v0 component (export CartDetail)
-import { deleteCartItem, getCart, updateCartItemQuantity } from "@/lib/api/cart";
+import {
+  deleteCartItem,
+  getCart,
+  updateCartItemQuantity,
+} from "@/lib/api/cart";
 import type { CartVm } from "@/lib/mappers/cart";
 import { mapCartToVm } from "@/lib/mappers/cart";
+import { hasAccessToken } from "@/lib/auth/client";
 
 type Props = {
   initialCartVm: CartVm;
@@ -26,7 +31,8 @@ export default function CartDetailClient({ initialCartVm }: Props) {
   }, [router]);
 
   const onCheckout = useCallback(() => {
-    router.push("/checkout");
+    const authed = hasAccessToken();
+    router.push(authed ? "/checkout" : "/guest/checkout");
   }, [router]);
 
   const onRemoveItem = useCallback(
@@ -39,7 +45,7 @@ export default function CartDetailClient({ initialCartVm }: Props) {
         setBusy(false);
       }
     },
-    [refresh]
+    [refresh],
   );
 
   const changeQty = useCallback(
@@ -47,13 +53,16 @@ export default function CartDetailClient({ initialCartVm }: Props) {
       if (nextQty < 1) return;
       setBusy(true);
       try {
-        await updateCartItemQuantity({ productId: Number(productIdStr), quantity: nextQty });
+        await updateCartItemQuantity({
+          productId: Number(productIdStr),
+          quantity: nextQty,
+        });
         await refresh();
       } finally {
         setBusy(false);
       }
     },
-    [refresh]
+    [refresh],
   );
 
   const onDecreaseQty = useCallback(
@@ -62,7 +71,7 @@ export default function CartDetailClient({ initialCartVm }: Props) {
       if (!item) return;
       await changeQty(productIdStr, item.quantity - 1);
     },
-    [cart.items, changeQty]
+    [cart.items, changeQty],
   );
 
   const onIncreaseQty = useCallback(
@@ -71,7 +80,7 @@ export default function CartDetailClient({ initialCartVm }: Props) {
       if (!item) return;
       await changeQty(productIdStr, item.quantity + 1);
     },
-    [cart.items, changeQty]
+    [cart.items, changeQty],
   );
 
   const onClearCart = useCallback(async () => {
