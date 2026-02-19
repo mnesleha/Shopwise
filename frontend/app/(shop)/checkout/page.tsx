@@ -6,15 +6,20 @@ import {
   type CheckoutValues,
 } from "@/components/checkout/CheckoutForm";
 import { checkoutCart } from "@/lib/api/checkout";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
   const onBackToCart = () => router.push("/cart");
 
   const onSubmit = async (values: CheckoutValues) => {
     const order = await checkoutCart(values);
-    router.push("/guest/checkout/success");
+    router.push(
+      isAuthenticated ? `/orders/${order.id}` : "/guest/checkout/success",
+    );
+    //    router.push("/guest/checkout/success");
     //    router.push(`/orders/${order.id}`);
   };
 

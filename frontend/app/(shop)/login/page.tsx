@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import LoginForm from "@/components/auth/LoginForm";
 import { login } from "@/lib/api/auth";
 import { setTokens } from "@/lib/auth/tokens";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { refresh } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(
     undefined,
@@ -18,8 +20,8 @@ export default function LoginPage() {
     setErrorMessage(undefined);
 
     try {
-      const tokens = await login(values);
-      setTokens(tokens);
+      await login(values);
+      await refresh();
 
       // MVP redirect: back to products (later you can redirect to /orders)
       router.push("/products");

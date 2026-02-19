@@ -176,7 +176,7 @@ class LogoutView(APIView):
 
 
 class MeView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     @extend_schema(
         tags=["Auth"],
@@ -184,7 +184,12 @@ class MeView(APIView):
         responses={200: UserResponseSerializer},
     )
     def get(self, request):
-        return Response(UserResponseSerializer(request.user).data)
+        if request.user.is_authenticated:
+            data = UserResponseSerializer(request.user).data
+            data["is_authenticated"] = True
+            return Response(data, status=200)
+
+        return Response({"is_authenticated": False}, status=200)
 
 
 class RefreshView(APIView):
@@ -201,7 +206,7 @@ class RefreshView(APIView):
     def post(self, request):
         # Prefer cookie (httpOnly) for refresh
         refresh_cookie_name = getattr(settings, "AUTH_COOKIE_REFRESH", "refresh_token")
-        refresh_str = request.COOKIES.get(refresh_cookie_name)
+        refresh_str = request.COOKIES.get(refresh_cookie_name) or request.data.get("refresh")
 
         # Fallback to body for backwards compatibility (optional)
         if not refresh_str:

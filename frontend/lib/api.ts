@@ -14,12 +14,6 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = getAccessToken();
-  if (token) {
-    config.headers = config.headers ?? {};
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
   const url = config.url;
   if (!url || url.startsWith("http")) return config;
 
@@ -43,6 +37,7 @@ api.interceptors.response.use(
 
     const url = original.url ?? "";
     if (
+      url.includes("/auth/me/") ||
       url.includes("/auth/login/") ||
       url.includes("/auth/refresh/") ||
       url.includes("/auth/logout/")
