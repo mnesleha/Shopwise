@@ -79,6 +79,6 @@ class GuestOrderAccessService:
 def generate_guest_access_url(*, order: Order, token: str) -> str:
     # PUBLIC_BASE_URL may or may not include trailing slash -> normalize using urljoin.
     base = settings.PUBLIC_BASE_URL
-    path = f"/api/v1/guest/orders/{order.id}/"
+    path = f"/guest/orders/{order.id}/"
     query = urlencode({"token": token})
     return f"{urljoin(base.rstrip('/') + '/', path.lstrip('/'))}?{query}"
