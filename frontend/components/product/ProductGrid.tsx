@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react"
+import * as React from "react";
+import { ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -11,36 +11,36 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 
 interface Product {
-  id: string
-  name: string
-  shortDescription?: string
-  price: string
-  currency?: string
-  stockQuantity: number
-  imageUrl?: string
+  id: string;
+  name: string;
+  shortDescription?: string;
+  price: string;
+  currency?: string;
+  stockQuantity: number;
+  imageUrl?: string;
 }
 
 interface ProductGridProps {
-  products: Product[]
-  page: number
-  pageSize: number
-  totalItems: number
-  onPageChange: (nextPage: number) => void
-  onAddToCart: (productId: string) => void
-  onOpenProduct: (productId: string) => void
+  products: Product[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  onPageChange: (nextPage: number) => void;
+  onAddToCart: (productId: string) => void;
+  onOpenProduct: (productId: string) => void;
 }
 
 function ProductCard({
@@ -48,26 +48,26 @@ function ProductCard({
   onAddToCart,
   onOpenProduct,
 }: {
-  product: Product
-  onAddToCart: (productId: string) => void
-  onOpenProduct: (productId: string) => void
+  product: Product;
+  onAddToCart: (productId: string) => void;
+  onOpenProduct: (productId: string) => void;
 }) {
-  const isInStock = product.stockQuantity > 0
-  const currency = product.currency ?? "USD"
+  const isInStock = product.stockQuantity > 0;
+  const currency = product.currency ?? "USD";
 
   const handleCardClick = () => {
-    onOpenProduct(product.id)
-  }
+    onOpenProduct(product.id);
+  };
 
   const handleAddToCart = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    onAddToCart(product.id)
-  }
+    e.stopPropagation();
+    onAddToCart(product.id);
+  };
 
   const handleViewDetails = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    onOpenProduct(product.id)
-  }
+    e.stopPropagation();
+    onOpenProduct(product.id);
+  };
 
   return (
     <Card
@@ -91,12 +91,15 @@ function ProductCard({
 
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="line-clamp-1 text-base">{product.name}</CardTitle>
+          <CardTitle className="line-clamp-1 text-base">
+            {product.name}
+          </CardTitle>
           <Badge
             variant={isInStock ? "secondary" : "destructive"}
             className={cn(
               "shrink-0",
-              isInStock && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+              isInStock &&
+                "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
             )}
           >
             {isInStock ? "In stock" : "Out of stock"}
@@ -111,13 +114,13 @@ function ProductCard({
 
       <CardContent className="pb-2">
         <p className="text-foreground text-xl font-bold">
-          {currency === "USD" ? "$" : currency}{" "}
-          {product.price}
+          {currency === "USD" ? "$" : currency} {product.price}
         </p>
       </CardContent>
 
       <CardFooter className="flex gap-2 pt-2">
         <Button
+          data-testid={`add-to-cart-${product.id}`}
           onClick={handleAddToCart}
           disabled={!isInStock}
           className="flex-1"
@@ -126,16 +129,12 @@ function ProductCard({
           <ShoppingCart className="mr-1 h-4 w-4" />
           Add to cart
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleViewDetails}
-        >
+        <Button variant="outline" size="sm" onClick={handleViewDetails}>
           View details
         </Button>
       </CardFooter>
     </Card>
-  )
+  );
 }
 
 export function ProductGrid({
@@ -147,26 +146,26 @@ export function ProductGrid({
   onAddToCart,
   onOpenProduct,
 }: ProductGridProps) {
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
-  const canGoPrevious = page > 1
-  const canGoNext = page < totalPages
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const canGoPrevious = page > 1;
+  const canGoNext = page < totalPages;
 
   const handlePreviousPage = () => {
     if (canGoPrevious) {
-      onPageChange(page - 1)
+      onPageChange(page - 1);
     }
-  }
+  };
 
   const handleNextPage = () => {
     if (canGoNext) {
-      onPageChange(page + 1)
+      onPageChange(page + 1);
     }
-  }
+  };
 
   const handlePageSizeChange = (value: string) => {
     // Reset to page 1 when page size changes
-    onPageChange(1)
-  }
+    onPageChange(1);
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -175,6 +174,7 @@ export function ProductGrid({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {products.map((product) => (
             <ProductCard
+              data-testid={`product-card-${product.id}`}
               key={product.id}
               product={product}
               onAddToCart={onAddToCart}
@@ -194,8 +194,15 @@ export function ProductGrid({
         {/* Page Size Selector */}
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground text-sm">Show</span>
-          <Select defaultValue={String(pageSize)} onValueChange={handlePageSizeChange}>
-            <SelectTrigger className="w-17.5" size="sm" aria-label="Select page size">
+          <Select
+            defaultValue={String(pageSize)}
+            onValueChange={handlePageSizeChange}
+          >
+            <SelectTrigger
+              className="w-17.5"
+              size="sm"
+              aria-label="Select page size"
+            >
               <SelectValue placeholder={String(pageSize)} />
             </SelectTrigger>
             <SelectContent>
@@ -242,5 +249,5 @@ export function ProductGrid({
         </div>
       </div>
     </div>
-  )
+  );
 }

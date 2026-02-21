@@ -19,7 +19,10 @@ export function CheckoutSuccess({
   onContinueShopping,
 }: CheckoutSuccessProps) {
   return (
-    <div className="mx-auto flex w-full max-w-lg items-center justify-center py-8 md:py-16">
+    <div
+      data-testid="guest-checkout-success"
+      className="mx-auto flex w-full max-w-lg items-center justify-center py-8 md:py-16"
+    >
       <Card className="w-full shadow-lg">
         {/* Top Section - Success */}
         <CardHeader className="items-center gap-4 pb-4 text-center">

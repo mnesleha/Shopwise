@@ -1,56 +1,64 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, ArrowLeft, ShoppingBag } from "lucide-react"
+import * as React from "react";
+import {
+  ShoppingCart,
+  Trash2,
+  Plus,
+  Minus,
+  ArrowRight,
+  ArrowLeft,
+  ShoppingBag,
+} from "lucide-react";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 
 interface CartItem {
-  productId: string
-  productName: string
-  productUrl?: string
-  shortDescription?: string
-  unitPrice: string
-  quantity: number
-  stockQuantity?: number
-  imageUrl?: string
+  productId: string;
+  productName: string;
+  productUrl?: string;
+  shortDescription?: string;
+  unitPrice: string;
+  quantity: number;
+  stockQuantity?: number;
+  imageUrl?: string;
 }
 
 interface CartDiscount {
-  code?: string
-  description?: string
-  amount?: string
+  code?: string;
+  description?: string;
+  amount?: string;
 }
 
 interface Cart {
-  id: string
-  currency?: string
-  items: CartItem[]
-  discount?: CartDiscount
-  subtotal: string
-  tax?: string
-  total: string
+  id: string;
+  currency?: string;
+  items: CartItem[];
+  discount?: CartDiscount;
+  subtotal: string;
+  tax?: string;
+  total: string;
 }
 
 interface CartDetailProps {
-  cart: Cart
-  onContinueShopping: () => void
-  onRemoveItem: (productId: string) => void
-  onDecreaseQty: (productId: string) => void
-  onIncreaseQty: (productId: string) => void
-  onClearCart: () => void
-  onCheckout: () => void
-  onApplyDiscountCode?: (code: string) => void
+  cart: Cart;
+  onContinueShopping: () => void;
+  onRemoveItem: (productId: string) => void;
+  onDecreaseQty: (productId: string) => void;
+  onIncreaseQty: (productId: string) => void;
+  onClearCart: () => void;
+  onCheckout: () => void;
+  onApplyDiscountCode?: (code: string) => void;
 }
 
 function CartItemRow({
@@ -61,15 +69,16 @@ function CartItemRow({
   onDecreaseQty,
   onIncreaseQty,
 }: {
-  item: CartItem
-  currency: string
-  currencySymbol: string
-  onRemoveItem: (productId: string) => void
-  onDecreaseQty: (productId: string) => void
-  onIncreaseQty: (productId: string) => void
+  item: CartItem;
+  currency: string;
+  currencySymbol: string;
+  onRemoveItem: (productId: string) => void;
+  onDecreaseQty: (productId: string) => void;
+  onIncreaseQty: (productId: string) => void;
 }) {
-  const canDecrease = item.quantity > 1
-  const canIncrease = item.stockQuantity === undefined || item.quantity < item.stockQuantity
+  const canDecrease = item.quantity > 1;
+  const canIncrease =
+    item.stockQuantity === undefined || item.quantity < item.stockQuantity;
 
   return (
     <Card className="overflow-hidden">
@@ -125,7 +134,8 @@ function CartItemRow({
             <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-2">
               {/* Price */}
               <p className="text-foreground font-semibold">
-                {currencySymbol}{item.unitPrice}
+                {currencySymbol}
+                {item.unitPrice}
               </p>
 
               {/* Quantity Controls */}
@@ -162,7 +172,7 @@ function CartItemRow({
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function OrderSummary({
@@ -171,19 +181,19 @@ function OrderSummary({
   onCheckout,
   onApplyDiscountCode,
 }: {
-  cart: Cart
-  currencySymbol: string
-  onCheckout: () => void
-  onApplyDiscountCode?: (code: string) => void
+  cart: Cart;
+  currencySymbol: string;
+  onCheckout: () => void;
+  onApplyDiscountCode?: (code: string) => void;
 }) {
-  const [discountCode, setDiscountCode] = React.useState("")
+  const [discountCode, setDiscountCode] = React.useState("");
 
   const handleApplyDiscount = () => {
     if (discountCode.trim() && onApplyDiscountCode) {
-      onApplyDiscountCode(discountCode.trim())
-      setDiscountCode("")
+      onApplyDiscountCode(discountCode.trim());
+      setDiscountCode("");
     }
-  }
+  };
 
   return (
     <Card>
@@ -194,7 +204,10 @@ function OrderSummary({
         {/* Subtotal */}
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Subtotal</span>
-          <span className="text-foreground">{currencySymbol}{cart.subtotal}</span>
+          <span className="text-foreground">
+            {currencySymbol}
+            {cart.subtotal}
+          </span>
         </div>
 
         {/* Discount */}
@@ -207,7 +220,8 @@ function OrderSummary({
               )}
             </span>
             <span className="text-emerald-600 dark:text-emerald-400">
-              -{currencySymbol}{cart.discount.amount}
+              -{currencySymbol}
+              {cart.discount.amount}
             </span>
           </div>
         )}
@@ -216,7 +230,9 @@ function OrderSummary({
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Tax</span>
           <span className="text-foreground">
-            {cart.tax ? `${currencySymbol}${cart.tax}` : "Calculated at checkout"}
+            {cart.tax
+              ? `${currencySymbol}${cart.tax}`
+              : "Calculated at checkout"}
           </span>
         </div>
 
@@ -226,7 +242,8 @@ function OrderSummary({
         <div className="flex justify-between">
           <span className="text-foreground font-semibold">Total</span>
           <span className="text-foreground text-lg font-bold">
-            {currencySymbol}{cart.total}
+            {currencySymbol}
+            {cart.total}
           </span>
         </div>
 
@@ -235,7 +252,10 @@ function OrderSummary({
           <>
             <Separator className="my-1" />
             <div className="flex flex-col gap-2">
-              <label htmlFor="discount-code" className="text-sm text-muted-foreground">
+              <label
+                htmlFor="discount-code"
+                className="text-sm text-muted-foreground"
+              >
                 Discount code
               </label>
               <div className="flex gap-2">
@@ -261,6 +281,7 @@ function OrderSummary({
       </CardContent>
       <CardFooter className="flex flex-col gap-3 pt-2">
         <Button
+          data-testid="cart-checkout"
           className="w-full"
           size="lg"
           onClick={onCheckout}
@@ -273,7 +294,7 @@ function OrderSummary({
         </p>
       </CardFooter>
     </Card>
-  )
+  );
 }
 
 function EmptyCart({ onContinueShopping }: { onContinueShopping: () => void }) {
@@ -283,9 +304,12 @@ function EmptyCart({ onContinueShopping }: { onContinueShopping: () => void }) {
         <ShoppingCart className="h-10 w-10 text-muted-foreground" />
       </div>
       <div className="flex flex-col items-center gap-2 text-center">
-        <h2 className="text-foreground text-xl font-semibold">Your cart is empty</h2>
+        <h2 className="text-foreground text-xl font-semibold">
+          Your cart is empty
+        </h2>
         <p className="text-muted-foreground max-w-sm">
-          Looks like you haven't added any items to your cart yet. Start shopping to find something you'll love!
+          Looks like you haven't added any items to your cart yet. Start
+          shopping to find something you'll love!
         </p>
       </div>
       <Button onClick={onContinueShopping} size="lg">
@@ -293,7 +317,7 @@ function EmptyCart({ onContinueShopping }: { onContinueShopping: () => void }) {
         Browse products
       </Button>
     </div>
-  )
+  );
 }
 
 export function CartDetail({
@@ -306,24 +330,24 @@ export function CartDetail({
   onCheckout,
   onApplyDiscountCode,
 }: CartDetailProps) {
-  const [showClearConfirm, setShowClearConfirm] = React.useState(false)
+  const [showClearConfirm, setShowClearConfirm] = React.useState(false);
 
-  const currency = cart.currency ?? "USD"
-  const currencySymbol = currency === "USD" ? "$" : currency
-  const isEmpty = cart.items.length === 0
+  const currency = cart.currency ?? "USD";
+  const currencySymbol = currency === "USD" ? "$" : currency;
+  const isEmpty = cart.items.length === 0;
 
   const handleClearCart = () => {
     if (showClearConfirm) {
-      onClearCart()
-      setShowClearConfirm(false)
+      onClearCart();
+      setShowClearConfirm(false);
     } else {
-      setShowClearConfirm(true)
+      setShowClearConfirm(true);
     }
-  }
+  };
 
   const handleCancelClear = () => {
-    setShowClearConfirm(false)
-  }
+    setShowClearConfirm(false);
+  };
 
   // Empty state
   if (isEmpty) {
@@ -331,7 +355,9 @@ export function CartDetail({
       <div className="flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-foreground text-2xl font-bold tracking-tight">Your Cart</h1>
+          <h1 className="text-foreground text-2xl font-bold tracking-tight">
+            Your Cart
+          </h1>
           <Button
             variant="ghost"
             onClick={onContinueShopping}
@@ -343,7 +369,7 @@ export function CartDetail({
         </div>
         <EmptyCart onContinueShopping={onContinueShopping} />
       </div>
-    )
+    );
   }
 
   return (
@@ -351,7 +377,8 @@ export function CartDetail({
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-foreground text-2xl font-bold tracking-tight">
-          Your Cart ({cart.items.length} {cart.items.length === 1 ? "item" : "items"})
+          Your Cart ({cart.items.length}{" "}
+          {cart.items.length === 1 ? "item" : "items"})
         </h1>
         <div className="flex items-center gap-2">
           <Button
@@ -365,18 +392,10 @@ export function CartDetail({
           {showClearConfirm ? (
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Clear all?</span>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleClearCart}
-              >
+              <Button variant="destructive" size="sm" onClick={handleClearCart}>
                 Confirm
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCancelClear}
-              >
+              <Button variant="outline" size="sm" onClick={handleCancelClear}>
                 Cancel
               </Button>
             </div>
@@ -399,6 +418,7 @@ export function CartDetail({
         <div className="flex flex-col gap-4 lg:col-span-2">
           {cart.items.map((item) => (
             <CartItemRow
+              data-testid={`cart-item-${item.productId}`}
               key={item.productId}
               item={item}
               currency={currency}
@@ -423,5 +443,5 @@ export function CartDetail({
         </div>
       </div>
     </div>
-  )
+  );
 }

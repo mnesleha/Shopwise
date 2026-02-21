@@ -30,8 +30,9 @@ export default function Header() {
         <nav className="flex items-center gap-4 text-sm">
           {isAuthenticated ? (
             <>
-              <span>{email}</span>
+              <span data-testid="auth-email">{email}</span>
               <button
+                data-testid="nav-logout"
                 onClick={onLogout}
                 className="underline-offset-4 hover:underline"
               >
@@ -43,7 +44,11 @@ export default function Header() {
               Login
             </Link>
           )}
-          <Link href="/cart" className="underline-offset-4 hover:underline">
+          <Link
+            data-testid="nav-cart"
+            href="/cart"
+            className="underline-offset-4 hover:underline"
+          >
             Cart
           </Link>
         </nav>

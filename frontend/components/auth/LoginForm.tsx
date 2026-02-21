@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react"
+import * as React from "react";
+import { Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -11,29 +11,32 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // ------------------------------------------------------------------ Types
 interface LoginFormProps {
-  onSubmit: (values: { email: string; password: string }) => void | Promise<void>
-  isSubmitting?: boolean
-  errorMessage?: string
-  onForgotPassword?: () => void
-  onGoToRegister?: () => void
+  onSubmit: (values: {
+    email: string;
+    password: string;
+  }) => void | Promise<void>;
+  isSubmitting?: boolean;
+  errorMessage?: string;
+  onForgotPassword?: () => void;
+  onGoToRegister?: () => void;
 }
 
 interface FieldErrors {
-  email?: string
-  password?: string
+  email?: string;
+  password?: string;
 }
 
 // Simple email regex
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // ------------------------------------------------------------------ Component
 export default function LoginForm({
@@ -43,50 +46,50 @@ export default function LoginForm({
   onForgotPassword,
   onGoToRegister,
 }: LoginFormProps) {
-  const [email, setEmail] = React.useState("")
-  const [password, setPassword] = React.useState("")
-  const [showPassword, setShowPassword] = React.useState(false)
-  const [errors, setErrors] = React.useState<FieldErrors>({})
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [errors, setErrors] = React.useState<FieldErrors>({});
 
-  const emailRef = React.useRef<HTMLInputElement>(null)
-  const passwordRef = React.useRef<HTMLInputElement>(null)
+  const emailRef = React.useRef<HTMLInputElement>(null);
+  const passwordRef = React.useRef<HTMLInputElement>(null);
 
   // ---- Validation (on submit only) ----
   function validate(): FieldErrors {
-    const errs: FieldErrors = {}
+    const errs: FieldErrors = {};
 
     if (!email.trim()) {
-      errs.email = "Email is required."
+      errs.email = "Email is required.";
     } else if (!EMAIL_RE.test(email.trim())) {
-      errs.email = "Please enter a valid email address."
+      errs.email = "Please enter a valid email address.";
     }
 
     if (!password) {
-      errs.password = "Password is required."
+      errs.password = "Password is required.";
     }
 
-    return errs
+    return errs;
   }
 
   function focusFirstError(errs: FieldErrors) {
     if (errs.email) {
-      emailRef.current?.focus()
+      emailRef.current?.focus();
     } else if (errs.password) {
-      passwordRef.current?.focus()
+      passwordRef.current?.focus();
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const errs = validate()
-    setErrors(errs)
+    e.preventDefault();
+    const errs = validate();
+    setErrors(errs);
 
     if (Object.keys(errs).length > 0) {
-      focusFirstError(errs)
-      return
+      focusFirstError(errs);
+      return;
     }
 
-    await onSubmit({ email: email.trim(), password })
+    await onSubmit({ email: email.trim(), password });
   }
 
   return (
@@ -110,7 +113,12 @@ export default function LoginForm({
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
+          <form
+            data-testid="login-form"
+            onSubmit={handleSubmit}
+            noValidate
+            className="flex flex-col gap-5"
+          >
             {/* ---- Email ---- */}
             <div className="flex flex-col gap-2">
               <Label htmlFor="login-email">Email</Label>
@@ -124,12 +132,19 @@ export default function LoginForm({
                   autoComplete="email"
                   value={email}
                   onChange={(e) => {
-                    setEmail(e.target.value)
-                    if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }))
+                    setEmail(e.target.value);
+                    if (errors.email)
+                      setErrors((prev) => ({ ...prev, email: undefined }));
                   }}
-                  className={cn("pl-10", errors.email && "border-destructive focus-visible:ring-destructive")}
+                  className={cn(
+                    "pl-10",
+                    errors.email &&
+                      "border-destructive focus-visible:ring-destructive",
+                  )}
                   aria-invalid={!!errors.email}
-                  aria-describedby={errors.email ? "login-email-error" : undefined}
+                  aria-describedby={
+                    errors.email ? "login-email-error" : undefined
+                  }
                 />
               </div>
               {errors.email && (
@@ -163,15 +178,19 @@ export default function LoginForm({
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => {
-                    setPassword(e.target.value)
-                    if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }))
+                    setPassword(e.target.value);
+                    if (errors.password)
+                      setErrors((prev) => ({ ...prev, password: undefined }));
                   }}
                   className={cn(
                     "pl-10 pr-10",
-                    errors.password && "border-destructive focus-visible:ring-destructive"
+                    errors.password &&
+                      "border-destructive focus-visible:ring-destructive",
                   )}
                   aria-invalid={!!errors.password}
-                  aria-describedby={errors.password ? "login-password-error" : undefined}
+                  aria-describedby={
+                    errors.password ? "login-password-error" : undefined
+                  }
                 />
                 <button
                   type="button"
@@ -179,11 +198,18 @@ export default function LoginForm({
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
               {errors.password && (
-                <p id="login-password-error" className="text-sm text-destructive">
+                <p
+                  id="login-password-error"
+                  className="text-sm text-destructive"
+                >
                   {errors.password}
                 </p>
               )}
@@ -192,13 +218,21 @@ export default function LoginForm({
             {/* ---- Remember me ---- */}
             <div className="flex items-center gap-2">
               <Checkbox id="login-remember" />
-              <Label htmlFor="login-remember" className="text-sm font-normal text-muted-foreground cursor-pointer">
+              <Label
+                htmlFor="login-remember"
+                className="text-sm font-normal text-muted-foreground cursor-pointer"
+              >
                 Remember me
               </Label>
             </div>
 
             {/* ---- Submit ---- */}
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button
+              data-testid="login-submit"
+              type="submit"
+              className="w-full"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Signing in..." : "Sign in"}
             </Button>
           </form>
@@ -221,5 +255,5 @@ export default function LoginForm({
         )}
       </Card>
     </div>
-  )
+  );
 }
