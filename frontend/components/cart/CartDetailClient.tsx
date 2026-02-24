@@ -10,7 +10,7 @@ import {
 } from "@/lib/api/cart";
 import type { CartVm } from "@/lib/mappers/cart";
 import { mapCartToVm } from "@/lib/mappers/cart";
-import { hasAccessToken } from "@/lib/auth/client";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 type Props = {
   initialCartVm: CartVm;
@@ -18,6 +18,7 @@ type Props = {
 
 export default function CartDetailClient({ initialCartVm }: Props) {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [cart, setCart] = useState<CartVm>(initialCartVm);
   const [busy, setBusy] = useState(false);
 
@@ -31,9 +32,8 @@ export default function CartDetailClient({ initialCartVm }: Props) {
   }, [router]);
 
   const onCheckout = useCallback(() => {
-    const authed = hasAccessToken();
-    router.push(authed ? "/checkout" : "/guest/checkout");
-  }, [router]);
+    router.push(isAuthenticated ? "/checkout" : "/guest/checkout");
+  }, [router, isAuthenticated]);
 
   const onRemoveItem = useCallback(
     async (productIdStr: string) => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   CheckoutForm,
@@ -11,16 +12,20 @@ import { useAuth } from "@/components/auth/AuthProvider";
 export default function CheckoutPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
+  const isAuthenticatedRef = useRef(isAuthenticated);
+  useEffect(() => {
+    isAuthenticatedRef.current = isAuthenticated;
+  }, [isAuthenticated]);
 
   const onBackToCart = () => router.push("/cart");
 
   const onSubmit = async (values: CheckoutValues) => {
     const order = await checkoutCart(values);
     router.push(
-      isAuthenticated ? `/orders/${order.id}` : "/guest/checkout/success",
+      isAuthenticatedRef.current
+        ? `/orders/${order.id}`
+        : "/guest/checkout/success",
     );
-    //    router.push("/guest/checkout/success");
-    //    router.push(`/orders/${order.id}`);
   };
 
   return (
