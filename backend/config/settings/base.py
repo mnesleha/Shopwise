@@ -14,6 +14,8 @@ GUEST_ACCESS_TOKEN_PEPPER = os.getenv("GUEST_ACCESS_TOKEN_PEPPER", "")
 
 DEBUG = True
 
+APPEND_SLASH = False  # Pure API backend — trailing slash handled by clients
+
 ALLOWED_HOSTS = []
 
 PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "http://127.0.0.1:8000")

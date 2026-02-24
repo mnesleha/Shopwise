@@ -305,7 +305,7 @@ function ShippingPaymentStep({
           <ArrowLeft className="h-4 w-4" />
           Back to cart
         </Button>
-        <Button onClick={onContinue} className="gap-2">
+        <Button data-testid="checkout-continue" onClick={onContinue} className="gap-2">
           Continue
           <ArrowRight className="h-4 w-4" />
         </Button>
@@ -354,6 +354,7 @@ function DetailsStep({
             error={errors.customer_email}
           >
             <Input
+              name="customer_email"
               id="customer_email"
               type="email"
               placeholder="you@example.com"
@@ -381,6 +382,7 @@ function DetailsStep({
                 error={errors.shipping_name}
               >
                 <Input
+                  name="shipping_name"
                   id="shipping_name"
                   type="text"
                   placeholder="John Doe"
@@ -399,6 +401,7 @@ function DetailsStep({
                 error={errors.shipping_address_line1}
               >
                 <Input
+                  name="shipping_address_line1"
                   id="shipping_address_line1"
                   type="text"
                   placeholder="123 Main Street"
@@ -414,6 +417,7 @@ function DetailsStep({
             <div className="sm:col-span-2">
               <FormField id="shipping_address_line2" label="Address line 2">
                 <Input
+                  name="shipping_address_line2"
                   id="shipping_address_line2"
                   type="text"
                   placeholder="Apt, suite, unit (optional)"
@@ -431,6 +435,7 @@ function DetailsStep({
               error={errors.shipping_city}
             >
               <Input
+                name="shipping_city"
                 id="shipping_city"
                 type="text"
                 placeholder="New York"
@@ -448,6 +453,7 @@ function DetailsStep({
             >
               <Input
                 id="shipping_postal_code"
+                name="shipping_postal_code"
                 type="text"
                 placeholder="10001"
                 value={values.shipping_postal_code}
@@ -466,6 +472,7 @@ function DetailsStep({
             >
               <Input
                 id="shipping_country"
+                name="shipping_country"
                 type="text"
                 placeholder="United States"
                 value={values.shipping_country}
@@ -482,6 +489,7 @@ function DetailsStep({
             >
               <Input
                 id="shipping_phone"
+                name="shipping_phone"
                 type="tel"
                 placeholder="+1 (555) 123-4567"
                 value={values.shipping_phone}
@@ -524,6 +532,7 @@ function DetailsStep({
                 >
                   <Input
                     id="billing_name"
+                    name="billing_name"
                     type="text"
                     placeholder="John Doe"
                     value={values.billing_name}
@@ -542,6 +551,7 @@ function DetailsStep({
                 >
                   <Input
                     id="billing_address_line1"
+                    name="billing_address_line1"
                     type="text"
                     placeholder="123 Main Street"
                     value={values.billing_address_line1}
@@ -557,6 +567,7 @@ function DetailsStep({
                 <FormField id="billing_address_line2" label="Address line 2">
                   <Input
                     id="billing_address_line2"
+                    name="billing_address_line2"
                     type="text"
                     placeholder="Apt, suite, unit (optional)"
                     value={values.billing_address_line2}
@@ -574,6 +585,7 @@ function DetailsStep({
               >
                 <Input
                   id="billing_city"
+                  name="billing_city"
                   type="text"
                   placeholder="New York"
                   value={values.billing_city}
@@ -590,6 +602,7 @@ function DetailsStep({
               >
                 <Input
                   id="billing_postal_code"
+                  name="billing_postal_code"
                   type="text"
                   placeholder="10001"
                   value={values.billing_postal_code}
@@ -608,6 +621,7 @@ function DetailsStep({
               >
                 <Input
                   id="billing_country"
+                  name="billing_country"
                   type="text"
                   placeholder="United States"
                   value={values.billing_country}
@@ -624,6 +638,7 @@ function DetailsStep({
               >
                 <Input
                   id="billing_phone"
+                  name="billing_phone"
                   type="tel"
                   placeholder="+1 (555) 123-4567"
                   value={values.billing_phone}
@@ -648,7 +663,7 @@ function DetailsStep({
           Back
         </Button>
         <Button
-          data-testid="cart-checkout"
+          data-testid="checkout-submit"
           onClick={onSubmit}
           className="gap-2"
         >

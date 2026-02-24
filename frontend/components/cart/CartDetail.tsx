@@ -68,6 +68,7 @@ function CartItemRow({
   onRemoveItem,
   onDecreaseQty,
   onIncreaseQty,
+  "data-testid": dataTestId,
 }: {
   item: CartItem;
   currency: string;
@@ -75,13 +76,14 @@ function CartItemRow({
   onRemoveItem: (productId: string) => void;
   onDecreaseQty: (productId: string) => void;
   onIncreaseQty: (productId: string) => void;
+  "data-testid"?: string;
 }) {
   const canDecrease = item.quantity > 1;
   const canIncrease =
     item.stockQuantity === undefined || item.quantity < item.stockQuantity;
 
   return (
-    <Card className="overflow-hidden">
+    <Card data-testid={dataTestId} className="overflow-hidden">
       <CardContent className="p-4">
         <div className="flex gap-4">
           {/* Image */}

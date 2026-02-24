@@ -7,8 +7,23 @@ import {
   fillCheckoutForm,
   submitCheckout,
 } from "./helpers";
+import { fixtures } from "./fixtures";
+
+const SELLABLE_ID = fixtures.products.SELLABLE_MOUSE.id;
+const E2E_EMAIL = process.env.E2E_USER_EMAIL ?? "admin@example.com";
+const E2E_PASSWORD = process.env.E2E_USER_PASSWORD ?? "admin";
 
 test.describe("Authenticated checkout flow", () => {
+  // Log in via API and clear any leftover cart item before each test.
+  // Prevents dirty state when a previous run failed mid-checkout.
+  test.beforeEach(async ({ request }) => {
+    await request.post("/api/v1/auth/login/", {
+      data: { email: E2E_EMAIL, password: E2E_PASSWORD },
+    });
+    // Best-effort: ignore 404 if item is not in cart
+    await request.delete(`/api/v1/cart/items/${SELLABLE_ID}/`);
+  });
+
   test("user can login and checkout and is redirected to /orders/{id}", async ({
     page,
   }) => {
@@ -16,24 +31,14 @@ test.describe("Authenticated checkout flow", () => {
     await page.goto("/login");
     await expect(page.locator("[data-testid='login-form']")).toBeVisible();
 
-    await page.fill(
-      'input[name="email"]',
-      process.env.E2E_USER_EMAIL ?? "admin@example.com",
-    );
-    await page.fill(
-      'input[name="password"]',
-      process.env.E2E_USER_PASSWORD ?? "Passw0rd!123",
-    );
-
-    const loginResp = page.waitForResponse(
-      (r) =>
-        r.url().includes("/api/v1/auth/login/") &&
-        r.request().method() === "POST",
-    );
+    await page.fill('input[name="email"]', E2E_EMAIL);
+    await page.fill('input[name="password"]', E2E_PASSWORD);
 
     await page.locator("[data-testid='login-submit']").click();
-    const lr = await loginResp;
-    expect(lr.ok()).toBeTruthy();
+
+    // Wait for the app's post-login redirect to /products and auth UI to confirm
+    // success — avoids waitForResponse URL-matching issues in WebKit/Firefox.
+    await page.waitForURL(/\/products/, { timeout: 15_000 });
 
     // Header should show logout + email
     await expect(page.locator("[data-testid='nav-logout']")).toBeVisible();
@@ -41,26 +46,14 @@ test.describe("Authenticated checkout flow", () => {
 
     // Proceed with purchase
     await gotoProducts(page);
-    await addProductToCart(page, 1);
+    await addProductToCart(page, SELLABLE_ID);
 
     await openCart(page);
     await checkoutFromCart(page);
 
-    // For auth checkout, customer_email might be prefilled or required – fill anyway
-    await fillCheckoutForm(
-      page,
-      process.env.E2E_USER_EMAIL ?? "admin@example.com",
-    );
-
-    const checkoutResponse = page.waitForResponse(
-      (r) =>
-        r.url().includes("/api/v1/cart/checkout/") &&
-        r.request().method() === "POST",
-    );
+    await fillCheckoutForm(page, E2E_EMAIL);
 
     await submitCheckout(page);
-    const res = await checkoutResponse;
-    expect(res.ok()).toBeTruthy();
 
     // Auth flow should redirect to /orders/{id}
     await expect(page).toHaveURL(/\/orders\/\d+/);

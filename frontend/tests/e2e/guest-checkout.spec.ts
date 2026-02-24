@@ -7,6 +7,9 @@ import {
   fillCheckoutForm,
   submitCheckout,
 } from "./helpers";
+import { fixtures } from "./fixtures";
+
+const SELLABLE_ID = fixtures.products.SELLABLE_MOUSE.id;
 
 test.describe("Guest checkout flow", () => {
   test("anonymous user can checkout and sees guest success page", async ({
@@ -14,25 +17,17 @@ test.describe("Guest checkout flow", () => {
   }) => {
     await gotoProducts(page);
 
-    // Use a stable seed product ID from your fixtures (E2E_SELLABLE_MOUSE)
-    await addProductToCart(page, 1);
+    await addProductToCart(page, SELLABLE_ID);
 
     await openCart(page);
-    await expect(page.locator('[data-testid="cart-item-1"]')).toBeVisible();
+    await expect(
+      page.locator(`[data-testid="cart-item-${SELLABLE_ID}"]`),
+    ).toBeVisible();
 
     await checkoutFromCart(page);
     await fillCheckoutForm(page, "guest-e2e@example.com");
 
-    // Wait for checkout API call (adjust endpoint if needed)
-    const checkoutResponse = page.waitForResponse(
-      (r) =>
-        r.url().includes("/api/v1/cart/checkout/") &&
-        r.request().method() === "POST",
-    );
-
     await submitCheckout(page);
-    const res = await checkoutResponse;
-    expect(res.ok()).toBeTruthy();
 
     // guest path should go to /guest/checkout/success
     await expect(page).toHaveURL(/\/guest\/checkout\/success/);

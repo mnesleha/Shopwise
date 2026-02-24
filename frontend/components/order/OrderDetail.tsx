@@ -155,7 +155,6 @@ function AddressBlock({
     <Card className="h-full">
       <CardHeader className="pb-3">
         <CardTitle
-          data-testid="order-title"
           className="text-sm font-semibold text-muted-foreground uppercase tracking-wide"
         >
           {title}
@@ -390,7 +389,7 @@ export function OrderDetail({
           <div className="flex flex-col gap-1">
             {/* Logo placeholder */}
             <span className="text-2xl font-bold text-foreground">Shopwise</span>
-            <h1 className="text-lg text-muted-foreground">
+            <h1 data-testid="order-title" className="text-lg text-muted-foreground">
               Order:{" "}
               <span className="font-semibold text-foreground">
                 {order.orderNumber}

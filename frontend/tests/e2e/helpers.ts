@@ -1,7 +1,6 @@
 import { Page, expect } from "@playwright/test";
 
 export async function gotoProducts(page: Page) {
-  // adjust if your products route differs
   await page.goto("/products");
   await expect(
     page.locator("[data-testid^='product-card-']").first(),
@@ -23,6 +22,9 @@ export async function checkoutFromCart(page: Page) {
 }
 
 export async function fillCheckoutForm(page: Page, email: string) {
+  // Step 1 → Step 2
+  await page.locator('[data-testid="checkout-continue"]').click();
+
   await page.fill('input[name="customer_email"]', email);
   await page.fill('input[name="shipping_name"]', "E2E Customer");
   await page.fill('input[name="shipping_address_line1"]', "E2E Street 1");

@@ -107,6 +107,14 @@ Introduces Postman CLI execution in CI to validate real API workflows against a 
 
 [ADR-016](ADR-016-Postman-CLI-for-API-Contract-and-E2E-Testing-in-CI.md)
 
+## ADR-031 – Do Not Use `waitForResponse` for Proxied API Calls in Playwright
+
+Decision type: **Testing**
+
+Documents why `page.waitForResponse()` with URL-pattern matching is unreliable when Next.js proxy rewrites are in use, and defines the approved pattern of asserting on resulting UI state (`toHaveURL`, visible elements) instead.
+
+[ADR-031](ADR-031-Playwright-No-waitForResponse-with-Next-Proxy.md)
+
 ## Notes
 
 - ADRs explain why decisions were made.

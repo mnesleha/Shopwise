@@ -47,10 +47,12 @@ function ProductCard({
   product,
   onAddToCart,
   onOpenProduct,
+  "data-testid": dataTestId,
 }: {
   product: Product;
   onAddToCart: (productId: string) => void;
   onOpenProduct: (productId: string) => void;
+  "data-testid"?: string;
 }) {
   const isInStock = product.stockQuantity > 0;
   const currency = product.currency ?? "USD";
@@ -71,6 +73,7 @@ function ProductCard({
 
   return (
     <Card
+      data-testid={dataTestId}
       className="group cursor-pointer overflow-hidden transition-shadow hover:shadow-md"
       onClick={handleCardClick}
     >

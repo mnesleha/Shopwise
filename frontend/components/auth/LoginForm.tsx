@@ -127,6 +127,7 @@ export default function LoginForm({
                 <Input
                   ref={emailRef}
                   id="login-email"
+                  name="email"
                   type="email"
                   placeholder="you@example.com"
                   autoComplete="email"
@@ -173,6 +174,7 @@ export default function LoginForm({
                 <Input
                   ref={passwordRef}
                   id="login-password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   autoComplete="current-password"
