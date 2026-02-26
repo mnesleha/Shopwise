@@ -131,6 +131,7 @@ export default function LoginForm({
                   type="email"
                   placeholder="you@example.com"
                   autoComplete="email"
+                  suppressHydrationWarning={true}
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -178,6 +179,7 @@ export default function LoginForm({
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   autoComplete="current-password"
+                  suppressHydrationWarning={true}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
