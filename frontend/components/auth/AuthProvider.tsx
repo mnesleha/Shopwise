@@ -19,9 +19,19 @@ type AuthState = {
 
 const AuthContext = createContext<AuthState | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [email, setEmail] = useState<string | undefined>(undefined);
+export function AuthProvider({
+  children,
+  initialIsAuthenticated = false,
+  initialEmail,
+}: {
+  children: React.ReactNode;
+  initialIsAuthenticated?: boolean;
+  initialEmail?: string;
+}) {
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    initialIsAuthenticated,
+  );
+  const [email, setEmail] = useState<string | undefined>(initialEmail);
 
   const refresh = useCallback(async () => {
     const res = await api.get("/auth/me/");

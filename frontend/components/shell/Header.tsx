@@ -1,55 +1,31 @@
-"use client";
-
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/components/auth/AuthProvider";
-import { logout } from "@/lib/api/auth";
-import CategoriesNav from "./CategoriesNav";
-import { use } from "react";
+import { ShoppingCart } from "lucide-react";
+import HeaderAuthClient from "@/components/shell/HeaderAuthClient";
+import HeaderLeftSlotClient from "@/components/shell/HeaderLeftSlotClient";
+import { CartBadgeClient } from "@/components/shell/CartBadgeClient";
 
 export default function Header() {
-  const { isAuthenticated, email, refresh, setAnonymous } = useAuth();
-  const router = useRouter();
-
-  const onLogout = async () => {
-    await logout();
-    setAnonymous();
-    router.push("/products");
-  };
-
   return (
     <header className="border-b">
       <div className="mx-auto w-full max-w-6xl px-4 py-4 flex items-center justify-between gap-6">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3">
+          <HeaderLeftSlotClient />
           <Link href="/products" className="font-semibold tracking-tight">
             Shopwise
           </Link>
-          <CategoriesNav />
         </div>
 
         <nav className="flex items-center gap-4 text-sm">
-          {isAuthenticated ? (
-            <>
-              <span data-testid="auth-email">{email}</span>
-              <button
-                data-testid="nav-logout"
-                onClick={onLogout}
-                className="underline-offset-4 hover:underline"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <Link href="/login" className="underline-offset-4 hover:underline">
-              Login
-            </Link>
-          )}
+          <HeaderAuthClient />
+
           <Link
             data-testid="nav-cart"
             href="/cart"
-            className="underline-offset-4 hover:underline"
+            className="relative inline-flex items-center gap-2 underline-offset-4 hover:underline"
+            aria-label="Cart"
           >
-            Cart
+            <ShoppingCart className="h-5 w-5" />
+            <CartBadgeClient />
           </Link>
         </nav>
       </div>

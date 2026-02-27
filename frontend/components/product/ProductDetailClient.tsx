@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ProductDetail } from "@/components/product/ProductDetail";
 import { api } from "@/lib/api";
 import { addCartItem } from "@/lib/api/cart";
+import { useCart } from "@/components/cart/CartProvider";
 
 type Props = {
   product: {
@@ -26,13 +27,22 @@ export default function ProductDetailClient({ product }: Props) {
     router.push("/products");
   }, [router]);
 
-const onAddToCart = useCallback(
-  async (productId: string) => {
-    await addCartItem({ productId: Number(productId), quantity: 1 });
-    router.push("/cart");
-  },
-  [router]
-);
+  const { refreshCart } = useCart();
 
-  return <ProductDetail product={product} onBack={onBack} onAddToCart={onAddToCart} />;
+  const onAddToCart = useCallback(
+    async (productId: string) => {
+      await addCartItem({ productId: Number(productId), quantity: 1 });
+      await refreshCart();
+      router.push("/cart");
+    },
+    [router, refreshCart],
+  );
+
+  return (
+    <ProductDetail
+      product={product}
+      onBack={onBack}
+      onAddToCart={onAddToCart}
+    />
+  );
 }

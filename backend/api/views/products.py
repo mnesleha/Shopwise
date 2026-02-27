@@ -1,6 +1,7 @@
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework import generics, permissions, filters
-from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiExample
+from django_filters.rest_framework import DjangoFilterBackend   
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiExample, OpenApiParameter, OpenApiTypes
 from api.serializers.common import ErrorResponseSerializer
 from products.models import Product
 from api.serializers.product import ProductSerializer
@@ -29,6 +30,22 @@ Notes:
 - Products are read-only.
 - Stock quantity is informational and does not represent reservation.
 """,
+        parameters=[
+            OpenApiParameter(
+               name="category",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description="Filter products by category id.",
+            ),
+            OpenApiParameter(
+                name="include_unavailable",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description="If true, include inactive or out-of-stock products.",
+            ),
+        ],
         responses={
             200: ProductSerializer,
         },
@@ -79,8 +96,11 @@ Otherwise, it will not be accessible via the API.
 )
 class ProductViewSet(ReadOnlyModelViewSet):
     serializer_class = ProductSerializer
-    filter_backends = [filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     search_fields = ["name"]
+    filterset_fields = {
+        "category": ["exact"],
+    }
 
     def get_queryset(self):
         qs = Product.objects.all()

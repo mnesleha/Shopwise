@@ -21,7 +21,7 @@ export default function LoginPage() {
 
     try {
       await login(values);
-      await refresh();
+      await refresh(); // updates AuthProvider context — HeaderAuthClient reacts instantly
 
       // MVP redirect: back to products (later you can redirect to /orders)
       router.push("/products");

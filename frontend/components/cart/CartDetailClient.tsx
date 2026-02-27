@@ -11,6 +11,7 @@ import {
 import type { CartVm } from "@/lib/mappers/cart";
 import { mapCartToVm } from "@/lib/mappers/cart";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useCart } from "@/components/cart/CartProvider";
 
 type Props = {
   initialCartVm: CartVm;
@@ -19,13 +20,15 @@ type Props = {
 export default function CartDetailClient({ initialCartVm }: Props) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
+  const { refreshCart } = useCart();
   const [cart, setCart] = useState<CartVm>(initialCartVm);
   const [busy, setBusy] = useState(false);
 
   const refresh = useCallback(async () => {
     const dto = await getCart();
     setCart(mapCartToVm(dto));
-  }, []);
+    await refreshCart();
+  }, [refreshCart]);
 
   const onContinueShopping = useCallback(() => {
     router.push("/products");
