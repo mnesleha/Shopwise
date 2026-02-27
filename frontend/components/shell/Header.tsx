@@ -21,11 +21,14 @@ export default function Header() {
           <Link
             data-testid="nav-cart"
             href="/cart"
-            className="relative inline-flex items-center gap-2 underline-offset-4 hover:underline"
+            className="group relative inline-flex items-center gap-2 underline-offset-4 hover:underline"
             aria-label="Cart"
           >
             <ShoppingCart className="h-5 w-5" />
             <CartBadgeClient />
+            <span className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+              Cart
+            </span>
           </Link>
         </nav>
       </div>
