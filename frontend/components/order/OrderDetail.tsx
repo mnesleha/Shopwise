@@ -87,6 +87,7 @@ type OrderViewModel = {
 interface OrderDetailProps {
   order: OrderViewModel;
   onBackToShop: () => void;
+  headerActions?: React.ReactNode;
   onPrint?: () => void;
   onDownloadPdf?: () => void;
 }
@@ -154,9 +155,7 @@ function AddressBlock({
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
-        <CardTitle
-          className="text-sm font-semibold text-muted-foreground uppercase tracking-wide"
-        >
+        <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
           {title}
         </CardTitle>
       </CardHeader>
@@ -341,6 +340,7 @@ function TotalsSummary({ order }: { order: OrderViewModel }) {
 export function OrderDetail({
   order,
   onBackToShop,
+  headerActions,
   onPrint,
   onDownloadPdf,
 }: OrderDetailProps) {
@@ -359,6 +359,7 @@ export function OrderDetail({
           Back to shop
         </Button>
         <div className="flex gap-2">
+          {headerActions}
           {onPrint && (
             <Button
               variant="outline"
@@ -389,7 +390,10 @@ export function OrderDetail({
           <div className="flex flex-col gap-1">
             {/* Logo placeholder */}
             <span className="text-2xl font-bold text-foreground">Shopwise</span>
-            <h1 data-testid="order-title" className="text-lg text-muted-foreground">
+            <h1
+              data-testid="order-title"
+              className="text-lg text-muted-foreground"
+            >
               Order:{" "}
               <span className="font-semibold text-foreground">
                 {order.orderNumber}
