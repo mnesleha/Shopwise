@@ -8,6 +8,11 @@ export type LoginRequest = {
 export type LoginResponse = {
   access: string;
   refresh?: string;
+  cart_merge?: {
+    performed: boolean;
+    warnings?: Array<any>;
+    discount_decision?: any;
+  };
 };
 
 export async function login(values: LoginRequest): Promise<LoginResponse> {

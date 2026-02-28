@@ -1,4 +1,4 @@
-# ADR-0XX: Handling Next.js Router Cache Race Conditions for User-Specific Header Data
+# ADR-032: Handling Next.js Router Cache Race Conditions for User-Specific Header Data
 
 **Status**: Accepted
 
