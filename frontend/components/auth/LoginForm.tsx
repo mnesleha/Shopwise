@@ -175,6 +175,7 @@ export default function LoginForm({
                 <Input
                   ref={passwordRef}
                   id="login-password"
+                  data-testid="login-password"
                   name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"

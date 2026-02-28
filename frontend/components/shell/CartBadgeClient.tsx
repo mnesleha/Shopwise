@@ -7,6 +7,7 @@ export function CartBadgeClient() {
   if (count <= 0) return null;
   return (
     <span
+      data-testid="cart-badge"
       className="absolute -right-2 -top-2 min-w-4 h-4 px-1 rounded-full bg-primary text-white text-[10px] leading-4 text-center"
       aria-label={`Cart items: ${count}`}
     >
