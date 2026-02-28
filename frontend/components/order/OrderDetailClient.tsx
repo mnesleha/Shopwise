@@ -30,6 +30,13 @@ export default function OrderDetailClient({
   const [open, setOpen] = React.useState(false);
   const [isCancelling, setIsCancelling] = React.useState(false);
 
+  // Sync SSR prop changes into local state (e.g. after router.refresh() re-fetches the page).
+  // useState only uses its argument as the *initial* value, so without this effect
+  // a fresh `order` prop from Next.js reconciliation would be silently ignored.
+  React.useEffect(() => {
+    setOrderVm(order);
+  }, [order]);
+
   const canCancel = orderVm.status === "CREATED";
 
   type CancelOrderResponseDto = {
@@ -76,8 +83,12 @@ export default function OrderDetailClient({
       const status = e?.response?.status;
       const data = e?.response?.data as ApiErrorDto | undefined;
 
-      if (status === 409 && data?.message) {
-        toast.error(data.message);
+      if (status === 409) {
+        toast.error(data?.message ?? "Order cannot be cancelled.");
+        // Important for stale UI: close dialog and re-fetch latest order snapshot via SSR.
+        // Otherwise user can keep clicking confirm and only sees repeated toasts.
+        setOpen(false);
+        router.refresh();
       } else {
         toast.error("Cancellation failed. Please try again.");
       }
