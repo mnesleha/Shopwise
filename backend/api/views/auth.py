@@ -135,8 +135,9 @@ class LoginView(APIView):
         cart_token = extract_cart_token(request)
         merge_or_adopt_guest_cart(user=user, raw_token=cart_token)
 
+        claimed_orders = 0
         if getattr(user, "email_verified", False):
-            claim_guest_orders_for_user(user)
+            claimed_orders = claim_guest_orders_for_user(user)
 
         token_data = TokenResponseSerializer(
             {"access": str(refresh.access_token), "refresh": str(refresh)}
@@ -145,7 +146,13 @@ class LoginView(APIView):
         access_str = str(refresh.access_token)
         refresh_str = str(refresh)
 
-        response = Response(token_data.data, status=200)
+        # Include claim report so frontend can show a toast and E2E tests can assert behavior.
+        # NOTE: TokenResponseSerializer/OpenAPI schema should be updated accordingly in a follow-up refactor.
+        response_payload = dict(token_data.data)
+        response_payload["claimed_orders"] = claimed_orders
+
+        response = Response(response_payload, status=200)
+        
         response.set_cookie(
             "cart_token",
             "",
@@ -189,7 +196,7 @@ class MeView(APIView):
             data["is_authenticated"] = True
             return Response(data, status=200)
 
-        return Response({"is_authenticated": False}, status=200)
+        return Response({"is_authenticated": False, "email_verified": False}, status=200)
 
 
 class RefreshView(APIView):
@@ -331,7 +338,7 @@ class RequestEmailVerificationView(APIView):
                 raw_token = issue_email_verification_token(user)
                 verification_url = (
                     f"{settings.PUBLIC_BASE_URL}"
-                    f"/api/v1/auth/verify-email/?token={raw_token}"
+                    f"/verify-email/?token={raw_token}"
                 )
 
                 def _enqueue() -> None:

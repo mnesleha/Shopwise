@@ -44,6 +44,7 @@ class UserResponseSerializer(serializers.Serializer):
     first_name = serializers.CharField(read_only=True)
     last_name = serializers.CharField(read_only=True)
     role = serializers.SerializerMethodField()
+    email_verified = serializers.BooleanField(read_only=True)
 
     def get_role(self, obj):
         return "ADMIN" if obj.is_staff or obj.is_superuser else "CUSTOMER"

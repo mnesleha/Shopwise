@@ -39,6 +39,12 @@ export default function LoginPage() {
         toast.success("Your guest cart was merged into your account.");
       }
 
+      if ((resp.claimed_orders ?? 0) > 0) {
+        toast.success(
+          `Found ${resp.claimed_orders} guest order(s) and linked them to your account.`,
+        );
+      }
+
       // MVP redirect: back to products (later you can redirect to /orders)
       router.push("/products");
     } catch (e: any) {
