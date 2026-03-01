@@ -4,6 +4,6 @@
  * Always run the seed before running e2e tests:
  *   scripts/manage-dev.ps1 seed_test_data --reset --export-fixtures backend/artifacts/fixtures.json
  */
-import fixturesData from "../../../backend/artifacts/fixtures.json";
+import fixturesData from "../../../../backend/artifacts/fixtures.json";
 
 export const fixtures = fixturesData;

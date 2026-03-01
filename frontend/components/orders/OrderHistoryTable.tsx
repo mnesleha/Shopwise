@@ -49,7 +49,7 @@ export function OrderHistoryTable({ title, orders }: OrderHistoryTableProps) {
             </TableHeader>
             <TableBody>
               {orders.map((order) => (
-                <TableRow key={order.id}>
+                <TableRow key={order.id} data-testid={`order-${order.id}`}>
                   <TableCell className="font-medium">#{order.id}</TableCell>
                   <TableCell>
                     <OrderStatusBadge status={order.status} />

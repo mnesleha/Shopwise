@@ -52,4 +52,4 @@ def test_request_email_verification_enqueues_on_commit(client, monkeypatch, sett
     args, kwargs = async_task_mock.call_args
     assert args[0] == "notifications.jobs.send_email_verification"
     assert kwargs["recipient_email"] == "u1@example.com"
-    assert kwargs["verification_url"] == "https://example.test/api/v1/auth/verify-email/?token=tok_123"
+    assert kwargs["verification_url"] == "https://example.test/verify-email/?token=tok_123"

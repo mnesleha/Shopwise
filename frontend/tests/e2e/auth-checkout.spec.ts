@@ -6,8 +6,8 @@ import {
   checkoutFromCart,
   fillCheckoutForm,
   submitCheckout,
-} from "./helpers";
-import { fixtures } from "./fixtures";
+} from "./helpers/helpers";
+import { fixtures } from "./helpers/fixtures";
 
 const SELLABLE_ID = fixtures.products.SELLABLE_MOUSE.id;
 const E2E_EMAIL = process.env.E2E_USER_EMAIL ?? "admin@example.com";
