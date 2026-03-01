@@ -6,14 +6,17 @@ import { useRouter } from "next/navigation";
 import { logout } from "@/lib/api/auth";
 import { ClipboardList } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useCart } from "@/components/cart/CartProvider";
 
 export default function HeaderAuthClient() {
   const router = useRouter();
   const { isAuthenticated, email, setAnonymous } = useAuth();
+  const { refreshCart } = useCart();
 
   const onLogout = async () => {
     await logout();
-    setAnonymous(); // immediately clear auth context — no router.refresh() needed
+    setAnonymous();
+    await refreshCart(); // re-fetch anonymous (empty) cart — resets badge to 0
     router.push("/products");
   };
 

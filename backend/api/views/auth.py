@@ -28,6 +28,7 @@ from api.serializers.auth import (
     LoginRequestSerializer,
     TokenResponseSerializer,
     UserResponseSerializer,
+    RegisterResponseSerializer,
     RefreshRequestSerializer,
     VerifyEmailRequestSerializer,
     VerifyEmailResponseSerializer,
@@ -57,7 +58,7 @@ class RegisterView(APIView):
         tags=["Auth"],
         summary="Register user",
         request=RegisterRequestSerializer,
-        responses={201: UserResponseSerializer},
+        responses={201: RegisterResponseSerializer},
     )
     def post(self, request):
         serializer = RegisterRequestSerializer(data=request.data)
@@ -90,7 +91,50 @@ class RegisterView(APIView):
 
             raise ValidationError(errors)
 
-        return Response(UserResponseSerializer(user).data, status=201)
+        # Best-effort: send verification email after registration.
+        # Registration must not fail if email dispatch fails.
+        verification_email_sent = False
+        if not getattr(user, "email_verified", False):
+            try:
+                raw_token = issue_email_verification_token(user)
+                verification_url = (
+                    f"{settings.PUBLIC_BASE_URL}"
+                    f"/verify-email?token={raw_token}"
+                )
+
+                enqueue_best_effort(
+                    "notifications.jobs.send_email_verification",
+                    recipient_email=user.email,
+                    verification_url=verification_url,
+                )
+                verification_email_sent = True
+            except Exception:
+                # Keep silent for the client; capture for observability.
+                NotificationErrorHandler().capture()
+                verification_email_sent = False
+
+        # Serialize response with side-effect report field.
+        setattr(user, "verification_email_sent", verification_email_sent)
+        # NOTE: user.is_authenticated is a read-only property on AbstractBaseUser
+        # that always returns True for an active user — no setattr needed.
+
+        # Issue JWT tokens and set auth cookies — same as LoginView so the
+        # client is immediately authenticated without a second round-trip.
+        refresh_token = RefreshToken.for_user(user)
+        access_str = str(refresh_token.access_token)
+        refresh_str = str(refresh_token)
+
+        # Adopt any guest cart present in the request (best-effort).
+        cart_token = extract_cart_token(request)
+        merge_or_adopt_guest_cart(user=user, raw_token=cart_token)
+
+        response = Response(RegisterResponseSerializer(user).data, status=201)
+        response.set_cookie(
+            "cart_token", "", max_age=0, **cart_token_cookie_kwargs()
+        )
+        response.set_cookie(settings.AUTH_COOKIE_ACCESS, access_str, **auth_cookie_kwargs())
+        response.set_cookie(settings.AUTH_COOKIE_REFRESH, refresh_str, **auth_cookie_kwargs())
+        return response
 
 
 class LoginView(APIView):

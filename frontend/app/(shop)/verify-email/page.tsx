@@ -34,7 +34,9 @@ export default function VerifyEmailPage() {
         const resp = await verifyEmail(token);
         if (cancelled) return;
 
-        await refresh();
+        // refresh() returns the current auth state — use it to decide the
+        // redirect target without an extra round-trip or stale-closure issues.
+        const authState = await refresh();
 
         toast.success("Email verified.");
         if (resp?.claimed_orders && resp.claimed_orders > 0) {
@@ -44,7 +46,10 @@ export default function VerifyEmailPage() {
         }
 
         setStatus("success");
-        router.replace("/orders");
+        // Authenticated → orders; otherwise → login with flag to show a toast.
+        router.replace(
+          authState.isAuthenticated ? "/orders" : "/login?verified=1",
+        );
       } catch (e: any) {
         if (cancelled) return;
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import LoginForm from "@/components/auth/LoginForm";
 import { login } from "@/lib/api/auth";
@@ -10,12 +10,19 @@ import { useCart } from "@/components/cart/CartProvider";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { refresh } = useAuth();
   const { count: guestCartCount, refreshCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(
     undefined,
   );
+
+  useEffect(() => {
+    if (searchParams.get("verified") === "1") {
+      toast.success("Email verified! Please log in to continue.");
+    }
+  }, [searchParams]);
 
   const onSubmit = async (values: { email: string; password: string }) => {
     setIsSubmitting(true);
@@ -77,6 +84,7 @@ export default function LoginPage() {
         onSubmit={onSubmit}
         isSubmitting={isSubmitting}
         errorMessage={errorMessage}
+        onGoToRegister={() => router.push("/register")}
       />
     </div>
   );

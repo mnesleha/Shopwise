@@ -20,6 +20,8 @@ class RegisterRequestSerializer(serializers.Serializer):
         return normalized
 
 
+
+
 class LoginRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -48,6 +50,15 @@ class UserResponseSerializer(serializers.Serializer):
 
     def get_role(self, obj):
         return "ADMIN" if obj.is_staff or obj.is_superuser else "CUSTOMER"
+
+
+class RegisterResponseSerializer(UserResponseSerializer):
+    """
+    Register endpoint returns an authenticated user snapshot plus metadata
+    about side-effects (verification email dispatch).
+    """
+    is_authenticated = serializers.BooleanField(read_only=True)
+    verification_email_sent = serializers.BooleanField(read_only=True)
 
 
 class VerifyEmailRequestSerializer(serializers.Serializer):

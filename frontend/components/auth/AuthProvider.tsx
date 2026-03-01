@@ -13,7 +13,7 @@ import { api } from "@/lib/api";
 type AuthState = {
   isAuthenticated: boolean;
   email?: string;
-  refresh: () => Promise<void>;
+  refresh: () => Promise<{ isAuthenticated: boolean; email?: string }>;
   setAnonymous: () => void;
 };
 
@@ -36,8 +36,10 @@ export function AuthProvider({
   const refresh = useCallback(async () => {
     const res = await api.get("/auth/me/");
     const data = res.data as { is_authenticated: boolean; email?: string };
-    setIsAuthenticated(Boolean(data.is_authenticated));
+    const isAuth = Boolean(data.is_authenticated);
+    setIsAuthenticated(isAuth);
     setEmail(data.email);
+    return { isAuthenticated: isAuth, email: data.email };
   }, []);
 
   const setAnonymous = useCallback(() => {

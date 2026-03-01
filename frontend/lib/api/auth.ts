@@ -26,6 +26,26 @@ export type MeResponse = {
   email_verified?: boolean;
 };
 
+export type RegisterRequest = {
+  email: string;
+  password: string;
+};
+
+export type RegisterResponse = {
+  is_authenticated: boolean;
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  email_verified: boolean;
+};
+
+export type VerifyEmailResponse = {
+  email_verified: boolean;
+  claimed_orders: number;
+};
+
 export async function login(values: LoginRequest): Promise<LoginResponse> {
   const res = await api.post<LoginResponse>("/auth/login/", values);
   return res.data;
@@ -34,11 +54,6 @@ export async function login(values: LoginRequest): Promise<LoginResponse> {
 export async function requestEmailVerification(email: string): Promise<void> {
   await api.post("/auth/request-email-verification/", { email });
 }
-
-export type VerifyEmailResponse = {
-  email_verified: boolean;
-  claimed_orders: number;
-};
 
 export async function verifyEmail(token: string): Promise<VerifyEmailResponse> {
   const resp = await api.post<VerifyEmailResponse>("/auth/verify-email/", {
@@ -49,4 +64,11 @@ export async function verifyEmail(token: string): Promise<VerifyEmailResponse> {
 
 export async function logout(): Promise<void> {
   await api.post("/auth/logout/");
+}
+
+export async function register(
+  values: RegisterRequest,
+): Promise<RegisterResponse> {
+  const res = await api.post<RegisterResponse>("/auth/register/", values);
+  return res.data;
 }
