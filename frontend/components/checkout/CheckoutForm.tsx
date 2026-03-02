@@ -305,7 +305,11 @@ function ShippingPaymentStep({
           <ArrowLeft className="h-4 w-4" />
           Back to cart
         </Button>
-        <Button data-testid="checkout-continue" onClick={onContinue} className="gap-2">
+        <Button
+          data-testid="checkout-continue"
+          onClick={onContinue}
+          className="gap-2"
+        >
           Continue
           <ArrowRight className="h-4 w-4" />
         </Button>
@@ -358,7 +362,7 @@ function DetailsStep({
               id="customer_email"
               type="email"
               placeholder="you@example.com"
-              value={values.customer_email}
+              defaultValue={values.customer_email}
               onChange={(e) => onChange("customer_email", e.target.value)}
               aria-invalid={!!errors.customer_email}
               ref={getInputRef("customer_email")}
@@ -386,7 +390,7 @@ function DetailsStep({
                   id="shipping_name"
                   type="text"
                   placeholder="John Doe"
-                  value={values.shipping_name}
+                  defaultValue={values.shipping_name}
                   onChange={(e) => onChange("shipping_name", e.target.value)}
                   aria-invalid={!!errors.shipping_name}
                   ref={getInputRef("shipping_name")}
@@ -405,7 +409,7 @@ function DetailsStep({
                   id="shipping_address_line1"
                   type="text"
                   placeholder="123 Main Street"
-                  value={values.shipping_address_line1}
+                  defaultValue={values.shipping_address_line1}
                   onChange={(e) =>
                     onChange("shipping_address_line1", e.target.value)
                   }
@@ -421,7 +425,7 @@ function DetailsStep({
                   id="shipping_address_line2"
                   type="text"
                   placeholder="Apt, suite, unit (optional)"
-                  value={values.shipping_address_line2}
+                  defaultValue={values.shipping_address_line2}
                   onChange={(e) =>
                     onChange("shipping_address_line2", e.target.value)
                   }
@@ -439,7 +443,7 @@ function DetailsStep({
                 id="shipping_city"
                 type="text"
                 placeholder="New York"
-                value={values.shipping_city}
+                defaultValue={values.shipping_city}
                 onChange={(e) => onChange("shipping_city", e.target.value)}
                 aria-invalid={!!errors.shipping_city}
                 ref={getInputRef("shipping_city")}
@@ -456,7 +460,7 @@ function DetailsStep({
                 name="shipping_postal_code"
                 type="text"
                 placeholder="10001"
-                value={values.shipping_postal_code}
+                defaultValue={values.shipping_postal_code}
                 onChange={(e) =>
                   onChange("shipping_postal_code", e.target.value)
                 }
@@ -475,7 +479,7 @@ function DetailsStep({
                 name="shipping_country"
                 type="text"
                 placeholder="United States"
-                value={values.shipping_country}
+                defaultValue={values.shipping_country}
                 onChange={(e) => onChange("shipping_country", e.target.value)}
                 aria-invalid={!!errors.shipping_country}
                 ref={getInputRef("shipping_country")}
@@ -492,7 +496,7 @@ function DetailsStep({
                 name="shipping_phone"
                 type="tel"
                 placeholder="+1 (555) 123-4567"
-                value={values.shipping_phone}
+                defaultValue={values.shipping_phone}
                 onChange={(e) => onChange("shipping_phone", e.target.value)}
                 aria-invalid={!!errors.shipping_phone}
                 ref={getInputRef("shipping_phone")}
@@ -535,7 +539,7 @@ function DetailsStep({
                     name="billing_name"
                     type="text"
                     placeholder="John Doe"
-                    value={values.billing_name}
+                    defaultValue={values.billing_name}
                     onChange={(e) => onChange("billing_name", e.target.value)}
                     aria-invalid={!!errors.billing_name}
                     ref={getInputRef("billing_name")}
@@ -554,7 +558,7 @@ function DetailsStep({
                     name="billing_address_line1"
                     type="text"
                     placeholder="123 Main Street"
-                    value={values.billing_address_line1}
+                    defaultValue={values.billing_address_line1}
                     onChange={(e) =>
                       onChange("billing_address_line1", e.target.value)
                     }
@@ -570,7 +574,7 @@ function DetailsStep({
                     name="billing_address_line2"
                     type="text"
                     placeholder="Apt, suite, unit (optional)"
-                    value={values.billing_address_line2}
+                    defaultValue={values.billing_address_line2}
                     onChange={(e) =>
                       onChange("billing_address_line2", e.target.value)
                     }
@@ -588,7 +592,7 @@ function DetailsStep({
                   name="billing_city"
                   type="text"
                   placeholder="New York"
-                  value={values.billing_city}
+                  defaultValue={values.billing_city}
                   onChange={(e) => onChange("billing_city", e.target.value)}
                   aria-invalid={!!errors.billing_city}
                   ref={getInputRef("billing_city")}
@@ -605,7 +609,7 @@ function DetailsStep({
                   name="billing_postal_code"
                   type="text"
                   placeholder="10001"
-                  value={values.billing_postal_code}
+                  defaultValue={values.billing_postal_code}
                   onChange={(e) =>
                     onChange("billing_postal_code", e.target.value)
                   }
@@ -624,7 +628,7 @@ function DetailsStep({
                   name="billing_country"
                   type="text"
                   placeholder="United States"
-                  value={values.billing_country}
+                  defaultValue={values.billing_country}
                   onChange={(e) => onChange("billing_country", e.target.value)}
                   aria-invalid={!!errors.billing_country}
                   ref={getInputRef("billing_country")}
@@ -641,7 +645,7 @@ function DetailsStep({
                   name="billing_phone"
                   type="tel"
                   placeholder="+1 (555) 123-4567"
-                  value={values.billing_phone}
+                  defaultValue={values.billing_phone}
                   onChange={(e) => onChange("billing_phone", e.target.value)}
                   aria-invalid={!!errors.billing_phone}
                   ref={getInputRef("billing_phone")}

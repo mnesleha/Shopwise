@@ -65,12 +65,16 @@ Documentation:
 - Markdown-based documentation
 - OpenAPI / Swagger (drf-spectacular)
 
-Frontend (planned):
+Frontend:
 
-- Vite
 - React
+- Next.js
 - Vitest
 - React Testing Library
+
+E2E:
+
+- Playwright
 
 ## Development Methodology
 
@@ -84,7 +88,6 @@ Shopwise follows a Scrum-inspired, iterative approach with strong emphasis on qu
 
 - **Documentation-Driven Development** (DDD\*)
   Documentation is used to:
-
   - explain intent
   - validate API consistency
   - reveal missing tests and unclear behavior

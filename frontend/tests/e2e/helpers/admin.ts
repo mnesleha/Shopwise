@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 export async function adminCancelOrder(orderId: number) {
   // Adjust this to your backend folder location
   const backendDir =
-    process.env.BACKEND_DIR ?? path.resolve(process.cwd(), ".", "backend");
+    process.env.BACKEND_DIR ?? path.resolve(process.cwd(), "..", "backend");
 
   const python =
     process.env.PYTHON ??

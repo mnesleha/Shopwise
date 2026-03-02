@@ -46,8 +46,6 @@ export default function LoginForm({
   onForgotPassword,
   onGoToRegister,
 }: LoginFormProps) {
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
   const [errors, setErrors] = React.useState<FieldErrors>({});
 
@@ -55,7 +53,7 @@ export default function LoginForm({
   const passwordRef = React.useRef<HTMLInputElement>(null);
 
   // ---- Validation (on submit only) ----
-  function validate(): FieldErrors {
+  function validate(email: string, password: string): FieldErrors {
     const errs: FieldErrors = {};
 
     if (!email.trim()) {
@@ -79,9 +77,13 @@ export default function LoginForm({
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const errs = validate();
+    const fd = new FormData(e.currentTarget);
+    const email = ((fd.get("email") as string) ?? "").trim();
+    const password = (fd.get("password") as string) ?? "";
+
+    const errs = validate(email, password);
     setErrors(errs);
 
     if (Object.keys(errs).length > 0) {
@@ -89,7 +91,7 @@ export default function LoginForm({
       return;
     }
 
-    await onSubmit({ email: email.trim(), password });
+    await onSubmit({ email, password });
   }
 
   return (
@@ -131,10 +133,8 @@ export default function LoginForm({
                   type="email"
                   placeholder="you@example.com"
                   autoComplete="email"
-                  suppressHydrationWarning={true}
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
+                  defaultValue=""
+                  onChange={() => {
                     if (errors.email)
                       setErrors((prev) => ({ ...prev, email: undefined }));
                   }}
@@ -180,10 +180,8 @@ export default function LoginForm({
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   autoComplete="current-password"
-                  suppressHydrationWarning={true}
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
+                  defaultValue=""
+                  onChange={() => {
                     if (errors.password)
                       setErrors((prev) => ({ ...prev, password: undefined }));
                   }}

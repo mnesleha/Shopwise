@@ -5,7 +5,9 @@ import dotenv from "dotenv";
 import fs from "node:fs";
 
 function getBackendDir(): string {
-  return process.env.BACKEND_DIR ?? path.resolve(process.cwd(), ".", "backend");
+  return (
+    process.env.BACKEND_DIR ?? path.resolve(process.cwd(), "..", "backend")
+  );
 }
 
 function getPythonExe(backendDir: string): string {

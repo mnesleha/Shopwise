@@ -55,8 +55,6 @@ export default function RegisterForm() {
   const { refresh } = useAuth();
   const { refreshCart } = useCart();
 
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
   const [errors, setErrors] = React.useState<FieldErrors>({});
   const [serverError, setServerError] = React.useState<string | undefined>();
@@ -66,7 +64,7 @@ export default function RegisterForm() {
   const passwordRef = React.useRef<HTMLInputElement>(null);
 
   // ---- Validation (on submit only) ----
-  function validate(): FieldErrors {
+  function validate(email: string, password: string): FieldErrors {
     const errs: FieldErrors = {};
 
     if (!email.trim()) {
@@ -92,11 +90,15 @@ export default function RegisterForm() {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setServerError(undefined);
 
-    const errs = validate();
+    const fd = new FormData(e.currentTarget);
+    const email = ((fd.get("email") as string) ?? "").trim();
+    const password = (fd.get("password") as string) ?? "";
+
+    const errs = validate(email, password);
     setErrors(errs);
 
     if (Object.keys(errs).length > 0) {
@@ -108,7 +110,7 @@ export default function RegisterForm() {
 
     try {
       const data = (await register({
-        email: email.trim(),
+        email,
         password,
       })) as RegisterResponse;
 
@@ -169,12 +171,12 @@ export default function RegisterForm() {
                 <Input
                   ref={emailRef}
                   id="register-email"
+                  name="email"
                   type="email"
                   placeholder="you@example.com"
                   autoComplete="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
+                  defaultValue=""
+                  onChange={() => {
                     if (errors.email)
                       setErrors((prev) => ({ ...prev, email: undefined }));
                   }}
@@ -208,12 +210,12 @@ export default function RegisterForm() {
                   data-testid="register-password"
                   ref={passwordRef}
                   id="register-password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Min. 8 characters"
                   autoComplete="new-password"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
+                  defaultValue=""
+                  onChange={() => {
                     if (errors.password)
                       setErrors((prev) => ({ ...prev, password: undefined }));
                   }}
