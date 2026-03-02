@@ -21,6 +21,7 @@ from api.views.admin_inventory_reservations import InventoryReservationAdminView
 from api.views.admin_orders import AdminOrderViewSet
 from api.views.guest_orders import GuestOrderRetrieveView
 from api.views import health_check
+from api.views.profile import ProfileView, AddressViewSet
 
 app_name = "api"
 
@@ -39,10 +40,12 @@ router.register(
     AdminOrderViewSet,
     basename="admin-orders",
 )
+router.register(r"addresses", AddressViewSet, basename="address")
 
 
 urlpatterns = [
     path("health/", health_check, name="health"),
+    path("profile/", ProfileView.as_view(), name="profile"),
     path("", include(router.urls)),
     path(
         "guest/orders/<int:order_id>/",
