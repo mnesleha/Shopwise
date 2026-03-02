@@ -77,6 +77,78 @@ class User(AbstractUser):
         return full_name or self.email
 
 
+class CustomerProfile(models.Model):
+    """
+    Extends the built-in User with e-commerce profile data (1:1).
+    Created automatically via a post_save signal on User.
+    """
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="customer_profile",
+    )
+    default_shipping_address = models.ForeignKey(
+        "Address",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+    )
+    default_billing_address = models.ForeignKey(
+        "Address",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+    )
+
+    def clean(self) -> None:
+        """
+        Validate that default addresses belong to this profile.
+        Called by full_clean().
+        """
+        from django.core.exceptions import ValidationError
+
+        errors = {}
+        for field_name in ("default_shipping_address", "default_billing_address"):
+            address = getattr(self, field_name)
+            if address is not None and address.profile_id != self.pk:
+                errors[field_name] = (
+                    "Address does not belong to this profile."
+                )
+        if errors:
+            raise ValidationError(errors)
+
+    def __str__(self) -> str:
+        return f"CustomerProfile(user_id={self.user_id})"
+
+
+class Address(models.Model):
+    """
+    A physical address belonging to a CustomerProfile.
+    One profile can have many addresses.
+    """
+
+    profile = models.ForeignKey(
+        CustomerProfile,
+        on_delete=models.CASCADE,
+        related_name="addresses",
+    )
+    full_name = models.CharField(max_length=255)
+    street_line_1 = models.CharField(max_length=255)
+    street_line_2 = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=255)
+    postal_code = models.CharField(max_length=32)
+    # ISO 3166-1 alpha-2 country code (e.g. "CZ", "DE", "US")
+    country = models.CharField(max_length=2)
+    company = models.CharField(max_length=255, blank=True)
+    vat_id = models.CharField(max_length=64, blank=True)
+
+    def __str__(self) -> str:
+        return f"Address(profile_id={self.profile_id}, city={self.city})"
+
+
 class EmailVerificationToken(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
