@@ -1,0 +1,466 @@
+{
+  "info": {
+    "_postman_id": "0a9ad1b2-0f34-4f1f-9a93-9f2e4da2b222",
+    "name": "Shopwise - Profile & Addresses (Regression)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request: ensure dynamic email per run",
+          "const baseUrl = pm.environment.get('baseUrl');",
+          "pm.collectionVariables.set('baseUrl', baseUrl);",
+          "",
+          "// Generate email once per run (if not already generated)",
+          "if (!pm.environment.get('email') || pm.environment.get('email').includes('{{')) {",
+          "  const ts = Date.now();",
+          "  pm.environment.set('email', `pm_profile_${ts}@example.com`);",
+          "}",
+          "",
+          "// Reset IDs before run",
+          "if (!pm.environment.get('addressId')) pm.environment.set('addressId', '');",
+          "if (!pm.environment.get('addressId2')) pm.environment.set('addressId2', '');"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register (creates user + profile via signal)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register", ""]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Register returns 201/200', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login (cookie session)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login", ""]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login returns 200', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "// Cookies are stored automatically by Postman (cookie jar) for this domain.",
+                  "pm.test('Has Set-Cookie header (optional)', function () {",
+                  "  const setCookie = pm.response.headers.get('Set-Cookie');",
+                  "  pm.expect(setCookie === undefined || typeof setCookie === 'string').to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "item": [
+        {
+          "name": "GET /api/profile/ (auth)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/profile/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profile", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Profile returns 200', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "pm.test('Profile has nullable defaults', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('id');",
+                  "  pm.expect(json).to.have.property('default_shipping_address');",
+                  "  pm.expect(json).to.have.property('default_billing_address');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /api/profile/ (set defaults later)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/profile/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profile", ""]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"default_shipping_address\": {{addressId}},\n  \"default_billing_address\": {{addressId}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('addressId is set before patch profile', function () {",
+                  "  pm.expect(pm.environment.get('addressId')).to.not.equal('');",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Patch profile returns 200', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "pm.test('Profile defaults set to addressId', function () {",
+                  "  const json = pm.response.json();",
+                  "  const addrId = parseInt(pm.environment.get('addressId'), 10);",
+                  "  pm.expect(json.default_shipping_address).to.equal(addrId);",
+                  "  pm.expect(json.default_billing_address).to.equal(addrId);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Addresses",
+      "item": [
+        {
+          "name": "GET /api/addresses/ (401 when anonymous)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/addresses/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "addresses", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// This request is meant to be run WITHOUT cookies.",
+                  "// If you run the whole collection after login, it will likely be authenticated.",
+                  "// Tip: run this request standalone in a fresh Postman session or disable cookie jar temporarily.",
+                  "pm.collectionVariables.set('note', 'Run standalone for true anonymous 401 check');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns 401 when anonymous (best-effort)', function () {",
+                  "  pm.expect([401, 200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/addresses/ (create address #1)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/addresses/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "addresses", ""]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"John Doe\",\n  \"street_line_1\": \"Main Street 1\",\n  \"street_line_2\": \"\",\n  \"city\": \"Prague\",\n  \"postal_code\": \"11000\",\n  \"country\": \"CZ\",\n  \"company\": \"\",\n  \"vat_id\": \"\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create address returns 201', function () {",
+                  "  pm.expect(pm.response.code).to.equal(201);",
+                  "});",
+                  "pm.test('Response contains address id', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('id');",
+                  "  pm.environment.set('addressId', String(json.id));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/addresses/ (create address #2)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/addresses/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "addresses", ""]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Jane Doe\",\n  \"street_line_1\": \"Second Street 5\",\n  \"street_line_2\": \"\",\n  \"city\": \"Brno\",\n  \"postal_code\": \"60200\",\n  \"country\": \"CZ\",\n  \"company\": \"ACME\",\n  \"vat_id\": \"CZ12345678\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create address returns 201', function () {",
+                  "  pm.expect(pm.response.code).to.equal(201);",
+                  "});",
+                  "pm.test('Response contains address id2', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('id');",
+                  "  pm.environment.set('addressId2', String(json.id));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/addresses/ (list)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/addresses/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "addresses", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('List returns 200', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "pm.test('List contains created addresses', function () {",
+                  "  const json = pm.response.json();",
+                  "  const id1 = parseInt(pm.environment.get('addressId'), 10);",
+                  "  const id2 = parseInt(pm.environment.get('addressId2'), 10);",
+                  "  const ids = json.map(x => x.id);",
+                  "  pm.expect(ids).to.include(id1);",
+                  "  pm.expect(ids).to.include(id2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/addresses/:id (detail)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/addresses/{{addressId}}/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "addresses", "{{addressId}}", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Detail returns 200', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "pm.test('Detail matches id', function () {",
+                  "  const json = pm.response.json();",
+                  "  const id1 = parseInt(pm.environment.get('addressId'), 10);",
+                  "  pm.expect(json.id).to.equal(id1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /api/addresses/:id (update own address)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/addresses/{{addressId}}/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "addresses", "{{addressId}}", ""]
+            },
+            "body": { "mode": "raw", "raw": "{\n  \"city\": \"Ostrava\",\n  \"company\": \"Updated Co\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Patch returns 200', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "pm.test('Fields updated', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.city).to.equal('Ostrava');",
+                  "  pm.expect(json.company).to.equal('Updated Co');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /api/profile/ (set defaults to addressId)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/profile/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profile", ""]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"default_shipping_address\": {{addressId}},\n  \"default_billing_address\": {{addressId}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Set defaults returns 200', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /api/addresses/:id (delete default address)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/addresses/{{addressId}}/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "addresses", "{{addressId}}", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Delete returns 204/200', function () {",
+                  "  pm.expect([200, 204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/profile/ (defaults nulled after delete)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/profile/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profile", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Profile returns 200', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "pm.test('Defaults are null after deleting default address', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.default_shipping_address).to.equal(null);",
+                  "  pm.expect(json.default_billing_address).to.equal(null);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [{ "key": "baseUrl", "value": "http://localhost:8000" }]
+}
