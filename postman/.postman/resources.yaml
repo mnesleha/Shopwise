@@ -18,3 +18,34 @@ localResources:
     - ..\environments\Shopwise Local.postman_environment.json
   specs:
     - ..\specs\Shopwise API\index.yaml
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+cloudResources:
+  collections:
+    ..\postman\collections\Shopwise Cart API: 50963019-176b2866-19e4-41eb-a9e9-6ff107349033
+    ..\postman\collections\Shopwise API Cart Items: 50963019-2604f22a-37e4-4f85-afe7-8cd894f8d994
+    ..\postman\collections\Shopwise Category API: 50963019-33670a13-941f-4607-a301-f1f6ff0ec749
+    ..\postman\collections\Cancellation: 50963019-41909fa7-03cc-4028-87c3-1a157509d442
+    ..\postman\collections\Shopwise API Cart Items Copy 2: 50963019-4a65ffbc-e6bd-40fb-9375-4bfb070abd1a
+    ..\postman\collections\Shopwise Product API: 50963019-4eed003e-bfc7-4799-9369-f03a356edbe8
+    ..\postman\collections\Cart - PUT, DELETE: 50963019-52ce84b1-c7f4-4677-a13e-5ba0a845ca7d
+    ..\postman\collections\Order fulfillment: 50963019-59ec7292-f1ab-4ac4-a6d0-098e84332e05
+    ..\postman\collections\Shopwise Auth API: 50963019-5a0e0099-fc8d-4520-b2cd-e75ad4caf870
+    ..\postman\collections\_Misc: 50963019-6d18256a-a29e-4638-ab68-f2e83a45eba8
+    ..\postman\collections\Test Anon: 50963019-6da3243b-c889-4942-9cf0-5a6bb01a22c2
+    ..\postman\collections\Merge Carts: 50963019-76e9f6a0-602a-471b-86a3-1c1b08b9be19
+    ..\postman\collections\Shopwise Discounts API: 50963019-8c51735f-5dac-440a-9c86-3a50cf4194ce
+    ..\postman\collections\Test Guest Order Claim: 50963019-9d98af71-9cbd-40cf-ad1b-6f1a3f1859a1
+    ..\postman\collections\Shopwise E2E Cart2Payment: 50963019-ae6d35fd-e823-4491-ac65-687c4748a13f
+    ..\postman\collections\Reservation: 50963019-b3e5907d-0bc7-4de8-8dfb-51b374cc94d3
+    ..\postman\collections\Shopwise Healthcheck: 50963019-c6a28007-b434-49e7-b67a-50595060de3c
+    ..\postman\collections\Shopwise Order API: 50963019-c83718d7-ac43-4af5-8485-0b9a02baf6e4
+    ..\postman\collections\Shopwise API Cart Items Copy: 50963019-cf6b6cce-3e0e-402e-a70b-2ae1762faa75
+    ..\postman\collections\Shopwise Anon Cart API: 50963019-d24574ee-d882-4957-9e9c-762bcca0b310
+    ..\postman\collections\Shopwise Payment API: 50963019-db17eca2-24a2-4a4b-a466-057664d4246b
+    ..\postman\collections\Shopwise API: 50963019-f4b6190f-161b-496e-b4bd-aef2efbb7339
+    ..\postman\collections\Shopwise - Profile & Addresses (Regression): 50963019-f571140f-3168-4670-8d97-61393c1c5ac5
+    ..\postman\collections\Merge Carts Out of stock: 50963019-fa52d264-5033-48de-ba0e-2f20dd71bb68
+  environments:
+    ..\postman\environments\Shopwise Test.environment.yaml: 50963019-4274f153-a0d9-4495-a621-e0fb23fc18eb
+    ..\postman\environments\Shopwise Dev.environment.yaml: 50963019-cce78deb-378b-4740-92df-d5f37e4b23d3

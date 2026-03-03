@@ -1,0 +1,26 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/cart/"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Get new cart returns 201\", function () {\r
+
+      \    pm.response.to.have.status(201);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Cart has ACTIVE status\", function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \    pm.expect(data.status).to.eql(\"ACTIVE\");\r
+
+      });\r
+
+      \r
+
+      \r\n"
+    language: text/javascript
+order: 1000

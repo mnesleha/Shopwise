@@ -1,0 +1,168 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/categories/"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 200\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Response is an array of categories\", function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \    pm.expect(data).to.be.an(\"array\");\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Each parent category has required fields\", function () {\r
+
+      \    const categories = pm.response.json();\r
+
+      \r
+
+      \    categories.forEach(category => {\r
+
+      \        pm.expect(category).to.have.property(\"id\");\r
+
+      \        pm.expect(category).to.have.property(\"name\");\r
+
+      \        pm.expect(category).to.have.property(\"is_parent\", true);\r
+
+      \        pm.expect(category).to.have.property(\"children\");\r
+
+      \        pm.expect(category.children).to.be.an(\"array\");\r
+
+      \    });\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Children categories are leaf categories\", function () {\r
+
+      \    const categories = pm.response.json();\r
+
+      \r
+
+      \    categories.forEach(parent => {\r
+
+      \        parent.children.forEach(child => {\r
+
+      \            pm.expect(child.is_parent).to.eql(false);\r
+
+      \            pm.expect(child.children).to.be.an(\"array\").that.is.empty;\
+      \r
+
+      \        });\r
+
+      \    });\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Category tree depth is max 2 levels\", function () {\r
+
+      \    const categories = pm.response.json();\r
+
+      \r
+
+      \    categories.forEach(parent => {\r
+
+      \        parent.children.forEach(child => {\r
+
+      \            pm.expect(child.children.length).to.eql(0);\r
+
+      \        });\r
+
+      \    });\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Category names are not empty\", function () {\r
+
+      \    const categories = pm.response.json();\r
+
+      \r
+
+      \    categories.forEach(parent => {\r
+
+      \        pm.expect(parent.name).to.be.a(\"string\").and.not.empty;\r
+
+      \r
+
+      \        parent.children.forEach(child => {\r
+
+      \            pm.expect(child.name).to.be.a(\"string\").and.not.empty;\r
+
+      \        });\r
+
+      \    });\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Root categories are always parent categories\", function () {\r
+
+      \    const categories = pm.response.json();\r
+
+      \r
+
+      \    categories.forEach(category => {\r
+
+      \        pm.expect(category.is_parent).to.eql(true);\r
+
+      \    });\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Store first leaf category ID\", function () {\r
+
+      \    const categories = pm.response.json();\r
+
+      \r
+
+      \    for (let parent of categories) {\r
+
+      \        if (parent.children.length > 0) {\r
+
+      \            pm.environment.set(\"leaf_category_id\",
+      parent.children[0].id);\r
+
+      \            break;\r
+
+      \        }\r
+
+      \    }\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Store first parent category ID\", function () {\r
+
+      \    const categories = pm.response.json();\r
+
+      \r
+
+      \    pm.expect(categories.length).to.be.above(0);\r
+
+      \r
+
+      \    pm.environment.set(\"parent_category_id\", categories[0].id);\r
+
+      });\r\n"
+    language: text/javascript
+order: 1000

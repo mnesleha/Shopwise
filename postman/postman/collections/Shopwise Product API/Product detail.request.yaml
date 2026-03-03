@@ -1,0 +1,44 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/products/{{product_id}}/"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Product detail returns 200\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Product detail has correct structure\", function () {\r
+
+      \    const product = pm.response.json();\r
+
+      \r
+
+      \    pm.expect(product).to.have.property(\"id\");\r
+
+      \    pm.expect(product).to.have.property(\"name\");\r
+
+      \    pm.expect(product).to.have.property(\"price\");\r
+
+      \    pm.expect(product).to.have.property(\"stock_quantity\");\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Returned product ID matches requested ID\", function () {\r
+
+      \    const product = pm.response.json();\r
+
+      \    const requestedId = pm.environment.get(\"product_id\");\r
+
+      \r
+
+      \    pm.expect(product.id).to.eql(parseInt(requestedId));\r
+
+      });\r\n"
+    language: text/javascript
+order: 2000

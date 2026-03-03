@@ -1,0 +1,33 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/payments/"
+method: POST
+headers:
+  Authorization: Bearer {{access_token}}
+body:
+  type: json
+  content: "{\r
+
+    \  \"order_id\": 4,\r
+
+    \  \"result\": \"success\"\r
+
+    }\r
+
+    \r\n"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Payment success\", function () {\r
+
+      \    pm.response.to.have.status(201);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Payment status is SUCCESS\", function () {\r
+
+      \    pm.expect(pm.response.json().status).to.eql(\"SUCCESS\");\r
+
+      });\r\n"
+    language: text/javascript
+order: 8000

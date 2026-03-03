@@ -1,0 +1,30 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/cart/"
+method: GET
+headers:
+  Authorization: Bearer {{access_token}}
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Get cart returns 200\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Cart has ACTIVE status\", function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \    pm.expect(data.status).to.eql(\"ACTIVE\");\r
+
+      });\r
+
+      \r
+
+      \r
+
+      \r\n"
+    language: text/javascript
+order: 2000

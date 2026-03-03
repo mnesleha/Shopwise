@@ -1,0 +1,9 @@
+$kind: collection
+scripts:
+  - type: http:beforeRequest
+    code: "pm.environment.set(\"auth_email\", \"customer_1@example.com\");\r
+
+      pm.environment.set(\"auth_password\", \"customer_1\");\r
+
+      pm.environment.set(\"product_id\", 1);"
+    language: text/javascript

@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/admin/orders/{{order_id}}/ship/"
+method: POST
+headers:
+  Authorization: Bearer {{access_token}}
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Order detail returns 200\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Order status is Shipped\"), function () {\r
+
+      \    pm.response.to.have.jsonBody('status', 'Shipped');\r
+
+      }"
+    language: text/javascript
+order: 8000

@@ -1,0 +1,12 @@
+$kind: http-request
+name: DELETE /api/addresses/:id (delete default address)
+url: "{{baseUrl}}/api/addresses/{{addressId}}/"
+method: DELETE
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Delete returns 204/200', function () {
+        pm.expect([200, 204]).to.include(pm.response.code);
+      });
+    language: text/javascript
+order: 8000

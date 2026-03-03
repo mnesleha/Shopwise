@@ -1,0 +1,70 @@
+$kind: http-request
+description: >
+  
+  Adds a product to the user's active cart.
+
+
+  Business rules:
+
+  - If no active cart exists, a new one is created automatically.
+
+  - Quantity must be greater than zero.
+
+  - Product price is snapshotted at add time.
+
+
+  Error handling strategy:
+
+  - 400 Bad Request: request is malformed or fails validation (e.g. invalid
+  quantity)
+
+  - 404 Not Found: referenced product does not exist
+
+  - 409 Conflict: product exists but cannot be added to the cart
+    (e.g. out of stock, inactive, business rule violation)
+
+  Notes:
+
+  - Error handling behavior reflects the target API contract.
+
+  - Not all scenarios may be fully implemented yet.
+url: "{{base_url}}/api/v1/cart/items/"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: application/json
+  Authorization: Bearer {{access_token}}
+body:
+  type: json
+  content: |-
+    {
+      "product_id": {{product_id}},
+      "quantity": 3
+    }
+auth:
+  type: apikey
+  credentials:
+    key: sessionid
+    value: "{{apiKey}}"
+    in: header
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"returns 409 for inactive product\", function () {\r
+
+      \    pm.response.to.have.status(409);\r
+
+      });\r\n"
+    language: text/javascript
+  - type: beforeRequest
+    code: "const resolveProductIdByName = eval(\r
+
+      \  \"(\" + pm.variables.get(\"resolveProductIdByName\") + \")\"\r
+
+      );\r
+
+      \r
+
+      resolveProductIdByName(\"E2E_INACTIVE_MOUSE\", \"product_id\", true);"
+    language: text/javascript
+examples: ./.resources/Add item - inactive product.resources/examples
+order: 6000

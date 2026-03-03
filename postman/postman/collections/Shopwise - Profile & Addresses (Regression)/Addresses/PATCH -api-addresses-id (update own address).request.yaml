@@ -1,0 +1,26 @@
+$kind: http-request
+name: PATCH /api/addresses/:id (update own address)
+url: "{{baseUrl}}/api/addresses/{{addressId}}/"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "city": "Ostrava",
+      "company": "Updated Co"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Patch returns 200', function () {
+        pm.expect(pm.response.code).to.equal(200);
+      });
+      pm.test('Fields updated', function () {
+        const json = pm.response.json();
+        pm.expect(json.city).to.equal('Ostrava');
+        pm.expect(json.company).to.equal('Updated Co');
+      });
+    language: text/javascript
+order: 6000

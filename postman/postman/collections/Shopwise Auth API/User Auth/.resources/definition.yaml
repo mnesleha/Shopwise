@@ -1,0 +1,12 @@
+$kind: collection
+scripts:
+  - type: http:beforeRequest
+    code: "pm.test(\"Username and password set\", function () {\r
+
+      \    pm.environment.set(\"auth_username\", \"customer_12\");\r
+
+      \    pm.environment.set(\"auth_password\", \"customer_12\")\r
+
+      });"
+    language: text/javascript
+order: 1000

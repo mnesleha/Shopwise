@@ -1,0 +1,46 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/discounts/{{discount_id}}/"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Discount detail returns 200\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Discount has correct structure\", function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \r
+
+      \    pm.expect(data).to.have.property(\"id\");\r
+
+      \    pm.expect(data).to.have.property(\"discount_type\");\r
+
+      \    pm.expect(data).to.have.property(\"value\");\r
+
+      \    pm.expect(data).to.have.property(\"product\");\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Discount is linked to a product\", function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \r
+
+      \    pm.expect(data.product).to.exist;\r
+
+      \    pm.expect(data.product).to.have.property(\"id\");\r
+
+      \    pm.expect(data.product).to.have.property(\"name\");\r
+
+      });\r\n"
+    language: text/javascript
+order: 2000

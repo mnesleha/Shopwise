@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/health/"
+method: GET
+auth:
+  type: apikey
+  credentials:
+    key: sessionid
+    value: "{{apiKey}}"
+    in: header
+examples: ./.resources/v1 health retrieve.resources/examples
+order: 1000

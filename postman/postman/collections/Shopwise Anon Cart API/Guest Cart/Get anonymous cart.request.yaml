@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/cart/"
+method: GET
+scripts:
+  - type: beforeRequest
+    code: attachCartToken();
+    language: text/javascript
+  - type: afterResponse
+    code: "pm.test(\"Guest cart returned\", () => {\r
+
+      \  const json = pm.response.json();\r
+
+      \  pm.expect(json.status).to.eql(\"ACTIVE\");\r
+
+      });"
+    language: text/javascript
+order: 2000

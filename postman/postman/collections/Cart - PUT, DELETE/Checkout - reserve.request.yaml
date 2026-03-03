@@ -1,0 +1,49 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/cart/checkout/"
+method: POST
+headers:
+  Authorization: Bearer {{access_token}}
+body:
+  type: json
+  content: "{\r
+
+    \  \"customer_email\": \"{{auth_email}}\",\r
+
+    \  \"shipping_name\": \"John Mills\",\r
+
+    \  \"shipping_address_line1\": \"123 Main St\",\r
+
+    \  \"shipping_address_line2\": \"\",\r
+
+    \  \"shipping_city\": \"Chicago\",\r
+
+    \  \"shipping_postal_code\": \"60601\",\r
+
+    \  \"shipping_country\": \"US\",\r
+
+    \  \"shipping_phone\": \"+14155552671\",\r
+
+    \  \"billing_same_as_shipping\": true\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Checkout returns 201\", function () {\r
+
+      \    pm.response.to.have.status(201);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Order ID is returned\", function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \    pm.expect(data.id).to.be.a(\"number\");\r
+
+      \    pm.environment.set(\"order_id\", data.id);\r
+
+      });"
+    language: text/javascript
+order: 6000

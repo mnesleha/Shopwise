@@ -1,0 +1,41 @@
+$kind: http-request
+description: |
+  
+  Simulates a payment gateway interaction.
+
+  This endpoint creates a payment for an order and immediately updates
+  the order status based on the simulated payment result.
+
+  Behavior:
+  - Only orders in CREATED status can be paid.
+  - Each order can have only one payment.
+  - Payment result is simulated via request payload.
+
+  Side effects:
+  - On success: Order status is set to PAID.
+  - On failure: Order status is set to PAYMENT_FAILED.
+
+  Notes:
+  - This is a fake payment gateway used for development and testing.
+  - Payments are synchronous and non-retryable.
+url: "{{base_url}}/api/v1/payments/"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: application/json
+  X-CSRFToken: "{{csrftoken}}"
+body:
+  type: json
+  content: |-
+    {
+      "order_id": 123,
+      "result": "success"
+    }
+auth:
+  type: apikey
+  credentials:
+    key: sessionid
+    value: "{{apiKey}}"
+    in: header
+examples: ./.resources/Create payment for an order.resources/examples
+order: 1000

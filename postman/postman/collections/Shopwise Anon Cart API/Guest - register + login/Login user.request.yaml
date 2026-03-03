@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/auth/login/"
+method: GET
+scripts:
+  - type: beforeRequest
+    code: attachCartToken();
+    language: text/javascript
+  - type: afterResponse
+    code: "pm.test(\"Login OK\", () => {\r
+
+      \  pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      setAuthTokens();\r\n"
+    language: text/javascript
+order: 1000

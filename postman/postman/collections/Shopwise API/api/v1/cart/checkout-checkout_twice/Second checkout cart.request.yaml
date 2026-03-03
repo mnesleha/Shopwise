@@ -1,0 +1,54 @@
+$kind: http-request
+description: |
+  
+  Converts the user's active cart into an order.
+
+  Workflow:
+  1. Validates that an ACTIVE cart exists
+  2. Validates that the cart is not empty
+  3. Creates an Order and associated OrderItems
+  4. Marks the cart as CONVERTED
+
+  Business rules:
+  - A cart can be checked out only once
+  - Orders are immutable
+  - After checkout, a new ACTIVE cart will be created on next cart retrieval
+
+  Error handling strategy:
+  - 400 Bad Request: cart exists but is empty
+  - 404 Not Found: no ACTIVE cart exists
+  - 409 Conflict: cart cannot be checked out due to state conflict
+    (e.g. already converted, concurrent checkout)
+
+  Notes:
+  - Error handling reflects the target API contract.
+  - Some conflict scenarios may not be fully implemented yet.
+url: "{{base_url}}/api/v1/cart/checkout/"
+method: POST
+headers:
+  Accept: application/json
+  X-CSRFToken: "{{csrftoken}}"
+auth:
+  type: apikey
+  credentials:
+    key: sessionid
+    value: "{{apiKey}}"
+    in: header
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"returns error when checking out twice\", function () {\r
+
+      \    pm.response.to.have.status(404); // ctive cart does not exists\r
+
+      });\r
+
+      \r
+
+      pm.test(\"returns error message\", function () {\r
+
+      \    pm.expect(pm.response.json().code).to.eql(\"NO_ACTIVE_CART\");\r
+
+      });"
+    language: text/javascript
+examples: ./.resources/Second checkout cart.resources/examples
+order: 4000

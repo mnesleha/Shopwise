@@ -1,0 +1,43 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/cart/items/"
+method: POST
+headers:
+  Authorization: Bearer {{access_token}}
+body:
+  type: json
+  content: "{\r
+
+    \  \"product_id\": 1,\r
+
+    \  \"quantity\": 4\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Add item returns 200 or 201\", function () {\r
+
+      \    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Item quantity is correct\", function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \    pm.expect(data.quantity).to.eql(4);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Price snapshot exists\", function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \    pm.expect(data.price_at_add_time).to.exist;\r
+
+      });\r\n"
+    language: text/javascript
+order: 3000

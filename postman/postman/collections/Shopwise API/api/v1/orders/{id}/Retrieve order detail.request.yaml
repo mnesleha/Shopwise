@@ -1,0 +1,24 @@
+$kind: http-request
+description: |
+  
+  Returns details of a specific order.
+
+  Notes:
+  - Only orders belonging to the authenticated user are accessible.
+  - Orders cannot be modified after creation.
+url: "{{base_url}}/api/v1/orders/:id/"
+method: GET
+headers:
+  Accept: application/json
+pathVariables:
+  - key: id
+    value: "1904"
+    description: A unique integer value identifying this order.
+auth:
+  type: apikey
+  credentials:
+    key: sessionid
+    value: "{{apiKey}}"
+    in: header
+examples: ./.resources/Retrieve order detail.resources/examples
+order: 1000

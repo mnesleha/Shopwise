@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/orders/"
+method: POST
+headers:
+  - key: Cookie
+    value: sessionid={{sessionid}}
+  - key: Cookie
+    value: csrftoken={{csrftoken}}
+  - key: X-CSRFToken
+    value: "{{csrftoken}}"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 405\", function () {\r
+
+      \    pm.response.to.have.status(405);\r
+
+      });"
+    language: text/javascript
+order: 4000

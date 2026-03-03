@@ -1,0 +1,27 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/cart/items/{{product_id}}/"
+method: DELETE
+headers:
+  Authorization: Bearer {{access_token}}
+body:
+  type: json
+  content: ""
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Delete item returns 200\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Item quantity is correct\", function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \    pm.expect(data.items[0].quantity).to.eql(1);\r
+
+      });\r\n"
+    language: text/javascript
+order: 5000

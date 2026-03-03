@@ -1,0 +1,20 @@
+$kind: http-request
+name: GET /api/addresses/ (list)
+url: "{{baseUrl}}/api/addresses/"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('List returns 200', function () {
+        pm.expect(pm.response.code).to.equal(200);
+      });
+      pm.test('List contains created addresses', function () {
+        const json = pm.response.json();
+        const id1 = parseInt(pm.environment.get('addressId'), 10);
+        const id2 = parseInt(pm.environment.get('addressId2'), 10);
+        const ids = json.map(x => x.id);
+        pm.expect(ids).to.include(id1);
+        pm.expect(ids).to.include(id2);
+      });
+    language: text/javascript
+order: 4000

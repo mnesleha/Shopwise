@@ -1,0 +1,30 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/payments/"
+method: POST
+headers:
+  - key: Cookie
+    value: sessionid={{sessionid}}
+  - key: Cookie
+    value: csrftoken={{csrftoken}}
+  - key: X-CSRFToken
+    value: "{{csrftoken}}"
+body:
+  type: json
+  content: "{\r
+
+    \  \"order_id\": {{order_id}},\r
+
+    \  \"result\": \"success\"\r
+
+    }\r
+
+    \r\n"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Second payment attempt is rejected\", function () {\r
+
+      \    pm.response.to.have.status(400);\r
+
+      });\r\n"
+    language: text/javascript
+order: 3000

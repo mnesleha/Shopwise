@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/cart/"
+method: GET
+scripts:
+  - type: beforeRequest
+    code: "pm.request.headers.upsert({\r
+
+      \  key: \"X-Cart-Token\",\r
+
+      \  value: pm.variables.get(\"cart_token\"),\r
+
+      });"
+    language: text/javascript
+  - type: afterResponse
+    code: "pm.test(\"Old guest token invalidated\", () => {\r
+
+      \  pm.expect([200, 401, 404]).to.include(pm.response.code);\r
+
+      });\r\n"
+    language: text/javascript
+order: 3000

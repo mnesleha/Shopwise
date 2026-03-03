@@ -1,0 +1,26 @@
+$kind: http-request
+description: |
+  
+  Returns a list of products available for purchase.
+
+  Only products that are:
+  - active
+  - in stock (stock_quantity > 0)
+
+  are returned by this endpoint.
+
+  Notes:
+  - Products are read-only.
+  - Stock quantity is informational and does not represent reservation.
+url: "{{base_url}}/api/v1/products/"
+method: GET
+headers:
+  Accept: application/json
+auth:
+  type: apikey
+  credentials:
+    key: sessionid
+    value: "{{apiKey}}"
+    in: header
+examples: ./.resources/List available products.resources/examples
+order: 2000

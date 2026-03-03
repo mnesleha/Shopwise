@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/cart/items/4/"
+method: PUT
+headers:
+  Authorization: Bearer {{access_token}}
+body:
+  type: json
+  content: "{\r\n  \"quantity\": 1\r\n}"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Add item returns 201\", function () {\r
+
+      \    pm.response.to.have.status(201);\r
+
+      });"
+    language: text/javascript
+order: 4000

@@ -1,0 +1,37 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/auth/login/"
+method: POST
+body:
+  type: json
+  content: '{"email":"customer_1@example.com","password":"customer_1"}'
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status is 200\", function () {\r
+
+      \  pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Response contains access token\", function () {\r
+
+      \  const json = pm.response.json();\r
+
+      \  pm.expect(json).to.have.property(\"access\");\r
+
+      \  pm.expect(json.access).to.be.a(\"string\");\r
+
+      \  pm.expect(json.access.length).to.be.greaterThan(10);\r
+
+      \  pm.expect(json).to.have.property(\"refresh\");\r
+
+      \r
+
+      \  pm.environment.set(\"access_token\", json.access);\r
+
+      \  pm.environment.set(\"refresh_token\", json.refresh);\r
+
+      });\r\n"
+    language: text/javascript
+order: 7000

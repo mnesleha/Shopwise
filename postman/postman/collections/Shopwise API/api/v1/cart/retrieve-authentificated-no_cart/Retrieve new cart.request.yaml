@@ -1,0 +1,53 @@
+$kind: http-request
+description: |
+  
+  Returns the user's active cart.
+
+  Behavior:
+  - If an ACTIVE cart exists, it is returned.
+  - If no ACTIVE cart exists, a new cart is created automatically.
+
+  Important notes:
+  - This endpoint has a side-effect (cart creation).
+  - The operation is not strictly read-only.
+  - This behavior is intentional to simplify frontend integration.
+
+  HTTP semantics:
+  - 200 OK: an existing active cart is returned
+  - 201 Created: a new active cart was created (target behavior)
+
+  Note:
+  - Current implementation always returns 200 OK.
+  - Returning 201 Created when a cart is created is a planned improvement.
+url: "{{base_url}}/api/v1/cart/"
+method: GET
+headers:
+  Accept: application/json
+auth:
+  type: apikey
+  credentials:
+    key: sessionid
+    value: "{{apiKey}}"
+    in: header
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"returns 201 when active cart is created\", function () {\r
+
+      \    pm.response.to.have.status(201);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"cart is ACTIVE and empty\", function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \    pm.expect(data.status).to.eql(\"ACTIVE\");\r
+
+      \    pm.expect(data.items).to.be.an(\"array\").that.is.empty;\r
+
+      });\r\n"
+    language: text/javascript
+examples: ./.resources/Retrieve new cart.resources/examples
+order: 3000

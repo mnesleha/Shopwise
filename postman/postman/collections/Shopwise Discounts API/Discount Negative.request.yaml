@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/discounts/999999/"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Non-existing discount returns 404\", function () {\r
+
+      \    pm.response.to.have.status(404);\r
+
+      });\r\n"
+    language: text/javascript
+order: 3000

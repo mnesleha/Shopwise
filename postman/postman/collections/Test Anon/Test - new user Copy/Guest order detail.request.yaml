@@ -1,0 +1,48 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/orders/{{order_id}}/"
+method: GET
+headers:
+  X-Cart-Token: "{{cart_token}}"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Order detail returns 200\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Order contains items\", function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \    pm.expect(data.items.length).to.be.above(0);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Total price is quantity × price\", function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \    const item = data.items[0];\r
+
+      \r
+
+      \    const quantity = item.quantity;\r
+
+      \    const price = parseFloat(item.unit_price);\r
+
+      \    const expectedTotal = (quantity * price).toFixed(2);\r
+
+      \r
+
+      \    pm.expect(data.total).to.eql(expectedTotal);\r
+
+      });\r
+
+      \r\n"
+    language: text/javascript
+order: 6000

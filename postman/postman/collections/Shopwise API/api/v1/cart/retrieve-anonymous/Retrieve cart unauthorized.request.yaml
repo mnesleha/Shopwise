@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/cart/"
+method: GET
+headers:
+  Authorization: ""
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"unauthenticated user is rejected\", function () {\r
+
+      \    pm.response.to.have.status(403);\r
+
+      });"
+    language: text/javascript
+order: 1000

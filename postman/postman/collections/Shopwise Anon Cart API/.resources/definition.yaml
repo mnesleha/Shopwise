@@ -1,0 +1,105 @@
+$kind: collection
+scripts:
+  - type: http:beforeRequest
+    code: "pm.variables.set(\"cart_token\", null);\r
+
+      \r
+
+      function setCartTokenFromResponse() {\r
+
+      \  const cookies = pm.cookies.toObject();\r
+
+      \r
+
+      \  if (cookies.cart_token) {\r
+
+      \    pm.variables.set(\"cart_token\", cookies.cart_token);\r
+
+      \    return;\r
+
+      \  }\r
+
+      \r
+
+      \  // optional fallback, pokud někdy vrátíš token i v body\r
+
+      \  const json = pm.response.json();\r
+
+      \  if (json.cart_token) {\r
+
+      \    pm.variables.set(\"cart_token\", json.cart_token);\r
+
+      \  }\r
+
+      }\r
+
+      \r
+
+      function attachCartToken() {\r
+
+      \  const token = pm.variables.get(\"cart_token\");\r
+
+      \  if (!token) return;\r
+
+      \r
+
+      \  pm.request.headers.upsert({\r
+
+      \    key: \"X-Cart-Token\",\r
+
+      \    value: token,\r
+
+      \  });\r
+
+      }\r
+
+      \r
+
+      function setAuthTokens() {\r
+
+      \  const json = pm.response.json();\r
+
+      \  pm.environment.set(\"access_token\", json.access);\r
+
+      \  pm.environment.set(\"refresh_token\", json.refresh);\r
+
+      }\r
+
+      \r
+
+      function attachAccessToken() {\r
+
+      \  const token = pm.environment.get(\"access_token\");\r
+
+      \  if (!token) return;\r
+
+      \r
+
+      \  pm.request.headers.upsert({\r
+
+      \    key: \"Authorization\",\r
+
+      \    value: `Bearer ${token}`,\r
+
+      \  });\r
+
+      }\r
+
+      \r
+
+      function getProductIdByKey(productKey) {\r
+
+      \  const products = pm.variables.get(\"seed_products\");\r
+
+      \  const found = products.find(p => p.key === productKey);\r
+
+      \  if (!found) {\r
+
+      \    throw new Error(`Product with key ${productKey} not found`);\r
+
+      \  }\r
+
+      \  return found.id;\r
+
+      }\r\n"
+    language: text/javascript

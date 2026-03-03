@@ -1,0 +1,26 @@
+$kind: http-request
+description: |
+  
+  Returns details of a single product.
+
+  The product must be:
+  - active
+  - in stock
+
+  Otherwise, it will not be accessible via the API.
+url: "{{base_url}}/api/v1/products/:id/"
+method: GET
+headers:
+  Accept: application/json
+pathVariables:
+  - key: id
+    value: "1904"
+    description: A unique integer value identifying this product.
+auth:
+  type: apikey
+  credentials:
+    key: sessionid
+    value: "{{apiKey}}"
+    in: header
+examples: ./.resources/Retrieve product detail.resources/examples
+order: 1000

@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/products/?search=MOUSE&include_unavailable=true"
+method: GET
+queryParams:
+  search: MOUSE
+  include_unavailable: "true"
+body:
+  type: json
+  content: '{"email":"customer_2@example.com","password":"customer_2"}'
+order: 3000

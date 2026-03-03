@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/cart/items/"
+method: POST
+headers:
+  - key: Cookie
+    value: sessionid={{sessionid}}
+  - key: Cookie
+    value: csrftoken={{csrftoken}}
+  - key: X-CSRFToken
+    value: "{{csrftoken}}"
+body:
+  type: json
+  content: "{\r
+
+    \  \"product_id\": {{product_id}},\r
+
+    \  \"quantity\": 0\r
+
+    }\r\n"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Zero quantity is rejected\", function () {\r
+
+      \    pm.response.to.have.status(400);\r
+
+      });\r\n"
+    language: text/javascript
+order: 4000

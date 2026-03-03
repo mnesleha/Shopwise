@@ -1,0 +1,33 @@
+$kind: http-request
+name: PATCH /api/profile/ (set defaults later)
+url: "{{baseUrl}}/api/profile/"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "default_shipping_address": {{addressId}},
+      "default_billing_address": {{addressId}}
+    }
+scripts:
+  - type: beforeRequest
+    code: |-
+      pm.test('addressId is set before patch profile', function () {
+        pm.expect(pm.environment.get('addressId')).to.not.equal('');
+      });
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Patch profile returns 200', function () {
+        pm.expect(pm.response.code).to.equal(200);
+      });
+      pm.test('Profile defaults set to addressId', function () {
+        const json = pm.response.json();
+        const addrId = parseInt(pm.environment.get('addressId'), 10);
+        pm.expect(json.default_shipping_address).to.equal(addrId);
+        pm.expect(json.default_billing_address).to.equal(addrId);
+      });
+    language: text/javascript
+order: 2000

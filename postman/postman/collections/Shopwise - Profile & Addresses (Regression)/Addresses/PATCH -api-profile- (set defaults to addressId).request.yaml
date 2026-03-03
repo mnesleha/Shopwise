@@ -1,0 +1,21 @@
+$kind: http-request
+name: PATCH /api/profile/ (set defaults to addressId)
+url: "{{baseUrl}}/api/profile/"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "default_shipping_address": {{addressId}},
+      "default_billing_address": {{addressId}}
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Set defaults returns 200', function () {
+        pm.expect(pm.response.code).to.equal(200);
+      });
+    language: text/javascript
+order: 7000

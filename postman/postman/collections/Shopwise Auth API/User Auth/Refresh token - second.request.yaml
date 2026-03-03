@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/auth/refresh/"
+method: POST
+body:
+  type: json
+  content: '{ "refresh": "{{old_refresh_token}}" }'
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Old refresh token is blacklisted after rotation\", function ()
+      {\r
+
+      \  pm.expect(pm.response.code).to.be.oneOf([400, 401]);\r
+
+      \  const json = pm.response.json();\r
+
+      \  pm.expect(json).to.have.property(\"code\");\r
+
+      \  pm.expect(json).to.have.property(\"message\");\r
+
+      });\r\n"
+    language: text/javascript
+order: 9000

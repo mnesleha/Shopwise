@@ -1,0 +1,42 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/discounts/"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Discounts list returns 200\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Each discount targets a product\", function () {\r
+
+      \    const discounts = pm.response.json();\r
+
+      \r
+
+      \    discounts.forEach(discount => {\r
+
+      \        pm.expect(discount.product).to.exist;\r
+
+      \        pm.expect(discount.product.id).to.be.a(\"number\");\r
+
+      \    });\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Store discount ID\", function () {\r
+
+      \    const discounts = pm.response.json();\r
+
+      \    pm.expect(discounts.length).to.be.above(0);\r
+
+      \    pm.environment.set(\"discount_id\", discounts[0].id);\r
+
+      });\r\n"
+    language: text/javascript
+order: 1000

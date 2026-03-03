@@ -1,0 +1,58 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/cart/checkout/"
+method: POST
+headers:
+  - key: Cookie
+    value: sessionid={{sessionid}}
+  - key: Cookie
+    value: csrftoken={{csrftoken}}
+  - key: X-CSRFToken
+    value: "{{csrftoken}}"
+body:
+  type: json
+  content: ""
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Checkout returns 201\", function () {\r
+
+      \    pm.response.to.have.status(201);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Order ID is returned\", function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \    pm.expect(data.id).to.be.a(\"number\");\r
+
+      \    pm.environment.set(\"order_id\", data.id);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Order status is CREATED\", function () {\r
+
+      \    pm.expect(pm.response.json().status).to.eql(\"CREATED\");\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Order contains items\", function () {\r
+
+      \    pm.expect(pm.response.json().items.length).to.be.above(0);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Total price exists\", function () {\r
+
+      \    pm.expect(pm.response.json().total_price).to.exist;\r
+
+      });\r\n"
+    language: text/javascript
+order: 5000

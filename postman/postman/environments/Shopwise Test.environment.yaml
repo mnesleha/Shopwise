@@ -1,0 +1,148 @@
+name: Shopwise Test
+values:
+  - key: base_url
+    value: http://127.0.0.1:8000
+    enabled: true
+  - key: product_id
+    value: 115
+    enabled: true
+  - key: leaf_category_id
+    value: "17"
+    enabled: true
+  - key: parent_category_id
+    value: 1
+    enabled: true
+  - key: order_id
+    value: 38
+    enabled: true
+  - key: discount_id
+    value: "1"
+    enabled: true
+  - key: cart_id
+    value: 29
+    enabled: true
+  - key: sessionid
+    value: mnnm798zmdl1kxxzzh9hpz87pawezhon
+    enabled: true
+  - key: csrftoken
+    value: n3dcMqv7ZyAAfre43adjxRU5RzfcPYLe
+    enabled: true
+  - key: username
+    value: johndoe
+    enabled: true
+  - key: password
+    value: Maxipes.
+    enabled: true
+  - key: auth_username
+    value: ""
+    enabled: true
+  - key: auth_password
+    value: ""
+    enabled: true
+  - key: access_token
+    value: ""
+    enabled: true
+  - key: refresh_token
+    value: ""
+    enabled: true
+  - key: old_refresh_token
+    value: ""
+    enabled: true
+  - key: fixtures_json
+    value: |-
+      {
+        "users": {
+          "CUSTOMER_1": {
+            "email": "customer_1@example.com",
+            "password": "customer_1"
+          },
+          "CUSTOMER_2": {
+            "email": "customer_2@example.com",
+            "password": "customer_2"
+          }
+        },
+        "products": {
+          "SELLABLE_MOUSE": {
+            "id": 1,
+            "name": "E2E_SELLABLE_MOUSE"
+          },
+          "OUT_OF_STOCK_MOUSE": {
+            "id": 2,
+            "name": "E2E_OUT_OF_STOCK_MOUSE"
+          },
+          "INACTIVE_MOUSE": {
+            "id": 3,
+            "name": "E2E_INACTIVE_MOUSE"
+          },
+          "FIXED_WINS_PRODUCT": {
+            "id": 4,
+            "name": "E2E_FIXED_WINS_PRODUCT"
+          },
+          "__bulk__": {
+            "count": 0
+          }
+        },
+        "discounts": {
+          "FIXED_150_ACTIVE": {
+            "id": 1,
+            "name": "E2E_FIXED_150_ACTIVE"
+          },
+          "PERCENT_10_ACTIVE": {
+            "id": 2,
+            "name": "E2E_PERCENT_10_ACTIVE"
+          },
+          "PERCENT_20_EXPIRED": {
+            "id": 3,
+            "name": "E2E_PERCENT_20_EXPIRED"
+          },
+          "FIXED_20_INACTIVE": {
+            "id": 4,
+            "name": "E2E_FIXED_20_INACTIVE"
+          }
+        },
+        "carts": {
+          "CUSTOMER_1_ACTIVE_CART": {
+            "id": 1,
+            "user_id": 2,
+            "status": "ACTIVE"
+          }
+        },
+        "orders": {
+          "ORDER_CREATED_1": {
+            "id": 3,
+            "user_id": 2,
+            "status": "CREATED"
+          },
+          "ORDER_PAID_1": {
+            "id": 4,
+            "user_id": 3,
+            "status": "PAID"
+          }
+        },
+        "payments": {
+          "PAYMENT_FAILED_1": {
+            "id": 3,
+            "order_id": 3,
+            "status": "FAILED"
+          },
+          "PAYMENT_SUCCESS_1": {
+            "id": 4,
+            "order_id": 4,
+            "status": "SUCCESS"
+          }
+        }
+      }
+    enabled: true
+  - key: fx_cache
+    value: ""
+    enabled: true
+  - key: auth_email
+    value: ""
+    enabled: true
+  - key: mint_token
+    value: ""
+    enabled: true
+  - key: cart_token
+    value: ""
+    enabled: true
+color: null

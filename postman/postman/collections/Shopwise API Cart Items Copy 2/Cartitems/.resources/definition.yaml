@@ -1,0 +1,26 @@
+$kind: collection
+scripts:
+  - type: http:beforeRequest
+    code: "pm.variables.set(\r
+
+      \  \"fxGet\",\r
+
+      \  `\r
+
+      \  function fxGet(path) {\r
+
+      \    const raw = pm.environment.get(\"fixtures_json\");\r
+
+      \    if (!raw) { throw new Error(\"Missing env var: fixtures_json\"); }\r
+
+      \    const fx = JSON.parse(raw);\r
+
+      \    return path.split(\".\").reduce((acc, key) => acc[key], fx);\r
+
+      \  }\r
+
+      \  `\r
+
+      );"
+    language: text/javascript
+order: 1000

@@ -1,0 +1,72 @@
+$kind: http-request
+description: |
+  
+  Converts the user's active cart into an order.
+
+  Workflow:
+  1. Validates that an ACTIVE cart exists
+  2. Validates that the cart is not empty
+  3. Creates an Order and associated OrderItems
+  4. Marks the cart as CONVERTED
+
+  Business rules:
+  - A cart can be checked out only once
+  - Orders are immutable
+  - After checkout, a new ACTIVE cart will be created on next cart retrieval
+
+  Error handling strategy:
+  - 400 Bad Request: cart exists but is empty
+  - 404 Not Found: no ACTIVE cart exists
+  - 409 Conflict: cart cannot be checked out due to state conflict
+    (e.g. already converted, concurrent checkout)
+
+  Notes:
+  - Error handling reflects the target API contract.
+  - Some conflict scenarios may not be fully implemented yet.
+url: "{{base_url}}/api/v1/cart/checkout/"
+method: POST
+headers:
+  Accept: application/json
+  X-CSRFToken: "{{csrftoken}}"
+auth:
+  type: apikey
+  credentials:
+    key: sessionid
+    value: "{{apiKey}}"
+    in: header
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Order ID is returned\", function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \r
+
+      \    pm.expect(data).to.have.property(\"id\");\r
+
+      \    pm.expect(data.id).to.be.a(\"number\");\r
+
+      \r
+
+      \    pm.environment.set(\"order_id\", data.id);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Checkout response has valid order structure\", function () {\r
+
+      \    const order = pm.response.json();\r
+
+      \r
+
+      \    pm.expect(order).to.have.property(\"status\", \"CREATED\");\r
+
+      \    pm.expect(order).to.have.property(\"items\").that.is.an(\"array\");\r
+
+      \    pm.expect(order).to.have.property(\"total\");\r
+
+      });\r\n"
+    language: text/javascript
+examples: ./.resources/Checkout active cart.resources/examples
+order: 5000

@@ -1,0 +1,30 @@
+$kind: collection
+variables:
+  baseUrl: http://localhost:8000
+  note: ""
+scripts:
+  - type: http:beforeRequest
+    code: >-
+      // Global pre-request: ensure dynamic email per run
+
+      const baseUrl = pm.environment.get('baseUrl');
+
+      pm.collectionVariables.set('baseUrl', baseUrl);
+
+
+      // Generate email once per run (if not already generated)
+
+      if (!pm.environment.get('email') ||
+      pm.environment.get('email').includes('{{')) {
+        const ts = Date.now();
+        pm.environment.set('email', `pm_profile_${ts}@example.com`);
+      }
+
+
+      // Reset IDs before run
+
+      if (!pm.environment.get('addressId')) pm.environment.set('addressId', '');
+
+      if (!pm.environment.get('addressId2')) pm.environment.set('addressId2',
+      '');
+    language: text/javascript

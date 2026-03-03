@@ -1,0 +1,98 @@
+$kind: collection
+scripts:
+  - type: http:beforeRequest
+    code: "pm.variables.set(\r
+
+      \  \"resolveProductIdByName\",\r
+
+      \  `\r
+
+      \  function resolveProductIdByName(productName, envVarName,
+      includeUnavailable) {\r
+
+      \    const baseUrl = pm.environment.get(\"base_url\");\r
+
+      \    if (!baseUrl) {\r
+
+      \      throw new Error(\"Missing env var: base_url\");\r
+
+      \    }\r
+
+      \r
+
+      \    const params = [\\`search=\\${encodeURIComponent(productName)}\\`];\r
+
+      \    if (includeUnavailable) {\r
+
+      \      params.push(\"include_unavailable=true\");\r
+
+      \    }\r
+
+      \r
+
+      \    const url =
+      \\`\\${baseUrl}/api/v1/products/?\\${params.join(\"&\")}\\`;\r
+
+      \r
+
+      \    return new Promise((resolve, reject) => {\r
+
+      \      pm.sendRequest(\r
+
+      \        {\r
+
+      \          url: url,\r
+
+      \          method: \"GET\",\r
+
+      \          header: { \"Accept\": \"application/json\" }\r
+
+      \        },\r
+
+      \        function (err, res) {\r
+
+      \          if (err) {\r
+
+      \            return reject(err);\r
+
+      \          }\r
+
+      \r
+
+      \          const json = res.json();\r
+
+      \          const items = Array.isArray(json) ? json : (json.results ||
+      []);\r
+
+      \r
+
+      \          const found = items.find(p => p.name === productName);\r
+
+      \          if (!found) {\r
+
+      \            return reject(new Error(\"Product not found: \" +
+      productName));\r
+
+      \          }\r
+
+      \r
+
+      \          pm.environment.set(envVarName, found.id);\r
+
+      \          console.log(\"Resolved\", envVarName, \"=\", found.id);\r
+
+      \          resolve(found.id);\r
+
+      \        }\r
+
+      \      );\r
+
+      \    });\r
+
+      \  }\r
+
+      \  `\r
+
+      );\r\n"
+    language: text/javascript
+order: 4000

@@ -1,0 +1,45 @@
+$kind: collection
+scripts:
+  - type: http:beforeRequest
+    code: "pm.variables.set(\r
+
+      \  \"fxGet\",\r
+
+      \  `\r
+
+      \  function fxGet(path) {\r
+
+      \    const b64 = pm.environment.get(\"fixtures_b64\");\r
+
+      \    if (b64 === undefined || b64 === null || b64 === \"\" || b64 ===
+      \"undefined\") {\r
+
+      \      throw new Error(\"Missing/invalid env var: fixtures_b64 (got: \" +
+      String(b64) + \")\");\r
+
+      \    }\r
+
+      \r
+
+      \    // Buffer is supported in Postman runtime\r
+
+      \    const raw = Buffer.from(b64, \"base64\").toString(\"utf8\");\r
+
+      \    const fx = JSON.parse(raw);\r
+
+      \r
+
+      \    return path.split(\".\").reduce((acc, key) => acc[key], fx);\r
+
+      \  }\r
+
+      \  `\r
+
+      );\r
+
+      \r
+
+      pm.variables.set(\"auth_email\", \"customer_1@example.com\")\r
+
+      pm.variables.set(\"auth_password\", \"customer_1\")\r\n"
+    language: text/javascript

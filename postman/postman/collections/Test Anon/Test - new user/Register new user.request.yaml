@@ -1,0 +1,41 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/auth/register/"
+method: POST
+headers:
+  X-Cart-Token: "{{cart_token}}"
+body:
+  type: json
+  content: '{"email": "customer_6@example.com", "password": "customer_6"}'
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status is 201\", function () {\r
+
+      \  pm.response.to.have.status(201);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Response contains access token\", function () {\r
+
+      \  const json = pm.response.json();\r
+
+      \  pm.expect(json).to.have.property(\"access\");\r
+
+      \  pm.expect(json.access).to.be.a(\"string\");\r
+
+      \  pm.expect(json.access.length).to.be.greaterThan(10);\r
+
+      \  pm.expect(json).to.have.property(\"refresh\");\r
+
+      \r
+
+      \  pm.environment.set(\"access_token\", json.access);\r
+
+      \  pm.environment.set(\"refresh_token\", json.refresh);\r
+
+      });"
+    language: text/javascript
+order: 5000

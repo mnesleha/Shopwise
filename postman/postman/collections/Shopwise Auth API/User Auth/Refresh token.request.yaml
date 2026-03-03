@@ -1,0 +1,43 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/auth/refresh/"
+method: POST
+body:
+  type: json
+  content: '{ "refresh": "{{refresh_token}}" }'
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Refresh returns new access (and refresh when rotation is
+      enabled)\", function () {\r
+
+      \  pm.response.to.have.status(200);\r
+
+      \  const json = pm.response.json();\r
+
+      \  pm.expect(json).to.have.property(\"access\");\r
+
+      \  pm.expect(json.access).to.be.a(\"string\");\r
+
+      \  pm.expect(json.access.length).to.be.greaterThan(10);\r
+
+      \r
+
+      \  // With ROTATE_REFRESH_TOKENS=True, server should also return a new
+      refresh token.\r
+
+      \  pm.expect(json).to.have.property(\"refresh\");\r
+
+      \  pm.expect(json.refresh).to.be.a(\"string\");\r
+
+      \  pm.expect(json.refresh.length).to.be.greaterThan(10);\r
+
+      \r
+
+      \  // update env tokens\r
+
+      \  pm.environment.set(\"access_token\", json.access);\r
+
+      \  pm.environment.set(\"refresh_token\", json.refresh);\r
+
+      });\r\n"
+    language: text/javascript
+order: 8000

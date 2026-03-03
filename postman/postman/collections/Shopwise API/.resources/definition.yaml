@@ -1,0 +1,41 @@
+$kind: collection
+description: |
+  
+  ## What is Shopwise
+
+  Shopwise is a quality-driven showcase project.
+
+  ## Why it exists
+
+  This API demonstrates:
+  - QA as equal development partner
+  - documentation as a quality tool
+  - testing as part of design
+
+  ## Quality Strategy
+
+  - Test Driven Development
+  - Documentation Driven Development
+  - OpenAPI as single source of truth
+
+  ## Intended Audience
+
+  - Recruiters
+  - Test Managers
+  - Project Managers
+scripts:
+  - type: http:beforeRequest
+    code: "// const csrfToken = pm.cookies.get('csrftoken');\r
+
+      \r
+
+      // if (!csrfToken) {\r
+
+      //     console.warn(\"CSRF token not found in cookies\");\r
+
+      // } else {\r
+
+      //     pm.environment.set('csrftoken', csrfToken);\r
+
+      // }\r\n"
+    language: text/javascript

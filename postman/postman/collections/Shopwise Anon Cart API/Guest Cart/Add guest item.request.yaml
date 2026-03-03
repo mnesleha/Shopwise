@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/cart/items/"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"product_id\": \"{{product_id}}\",\r
+
+    \  \"quantity\": 2\r
+
+    }"
+scripts:
+  - type: beforeRequest
+    code: attachCartToken();
+    language: text/javascript
+  - type: afterResponse
+    code: "pm.test(\"201 created\", () => {\r
+
+      \  pm.response.to.have.status(201);\r
+
+      });\r
+
+      \r
+
+      setCartTokenFromResponse();"
+    language: text/javascript
+order: 1000

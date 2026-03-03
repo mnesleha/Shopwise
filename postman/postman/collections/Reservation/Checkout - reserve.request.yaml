@@ -1,0 +1,29 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/cart/checkout/"
+method: POST
+headers:
+  Authorization: Bearer {{access_token}}
+body:
+  type: json
+  content: "{\r
+
+    \  \"customer_email\": \"customer_2@example.com\",\r
+
+    \  \"shipping_name\": \"John Mills\",\r
+
+    \  \"shipping_address_line1\": \"123 Main St\",\r
+
+    \  \"shipping_address_line2\": \"\",\r
+
+    \  \"shipping_city\": \"Chicago\",\r
+
+    \  \"shipping_postal_code\": \"60601\",\r
+
+    \  \"shipping_country\": \"US\",\r
+
+    \  \"shipping_phone\": \"+14155552671\",\r
+
+    \  \"billing_same_as_shipping\": true\r
+
+    }"
+order: 4000

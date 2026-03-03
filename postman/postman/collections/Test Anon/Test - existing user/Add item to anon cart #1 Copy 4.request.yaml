@@ -1,0 +1,35 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/cart/items/4/"
+method: PUT
+body:
+  type: json
+  content: "{\r\n  \"quantity\": 3\r\n}"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Add item returns 201\", function () {\r
+
+      \    pm.response.to.have.status(201);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Item quantity is correct\", function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \    pm.expect(data.quantity).to.eql(3);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Price snapshot exists\", function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \    pm.expect(data.price_at_add_time).to.exist;\r
+
+      });\r\n"
+    language: text/javascript
+order: 3000

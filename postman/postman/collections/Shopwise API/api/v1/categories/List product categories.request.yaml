@@ -1,0 +1,25 @@
+$kind: http-request
+description: |
+  
+  Returns the category tree used for product classification.
+
+  Behavior:
+  - Only parent (root) categories are returned.
+  - Child categories are nested under their parent.
+  - Category hierarchy is limited to two levels (parent → children).
+
+  Notes:
+  - Categories are read-only.
+  - Leaf categories are not exposed as top-level resources.
+url: "{{base_url}}/api/v1/categories/"
+method: GET
+headers:
+  Accept: application/json
+auth:
+  type: apikey
+  credentials:
+    key: sessionid
+    value: "{{apiKey}}"
+    in: header
+examples: ./.resources/List product categories.resources/examples
+order: 2000

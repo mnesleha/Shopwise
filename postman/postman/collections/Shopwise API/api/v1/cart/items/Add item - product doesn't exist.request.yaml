@@ -1,0 +1,79 @@
+$kind: http-request
+description: >
+  
+  Adds a product to the user's active cart.
+
+
+  Business rules:
+
+  - If no active cart exists, a new one is created automatically.
+
+  - Quantity must be greater than zero.
+
+  - Product price is snapshotted at add time.
+
+
+  Error handling strategy:
+
+  - 400 Bad Request: request is malformed or fails validation (e.g. invalid
+  quantity)
+
+  - 404 Not Found: referenced product does not exist
+
+  - 409 Conflict: product exists but cannot be added to the cart
+    (e.g. out of stock, inactive, business rule violation)
+
+  Notes:
+
+  - Error handling behavior reflects the target API contract.
+
+  - Not all scenarios may be fully implemented yet.
+url: "{{base_url}}/api/v1/cart/items/"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: application/json
+  X-CSRFToken: "{{csrftoken}}"
+body:
+  type: json
+  content: |-
+    {
+      "product_id": 999,
+      "quantity": 2
+    }
+auth:
+  type: apikey
+  credentials:
+    key: sessionid
+    value: "{{apiKey}}"
+    in: header
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"returns 404 when product does not exist\", function () {\r
+
+      \    pm.response.to.have.status(404);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"error code is present\", function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \    pm.expect(data).to.have.property(\"code\");\r
+
+      });\r
+
+      \r
+
+      pm.test(\"error message is present\", function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \    pm.expect(data).to.have.property(\"message\");\r
+
+      });"
+    language: text/javascript
+examples: ./.resources/Add item - product doesn't exist.resources/examples
+order: 4000

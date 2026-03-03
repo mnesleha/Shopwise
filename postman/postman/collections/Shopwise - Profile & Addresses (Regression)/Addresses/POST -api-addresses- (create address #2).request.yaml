@@ -1,0 +1,32 @@
+$kind: http-request
+name: "POST /api/addresses/ (create address #2)"
+url: "{{baseUrl}}/api/addresses/"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "full_name": "Jane Doe",
+      "street_line_1": "Second Street 5",
+      "street_line_2": "",
+      "city": "Brno",
+      "postal_code": "60200",
+      "country": "CZ",
+      "company": "ACME",
+      "vat_id": "CZ12345678"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Create address returns 201', function () {
+        pm.expect(pm.response.code).to.equal(201);
+      });
+      pm.test('Response contains address id2', function () {
+        const json = pm.response.json();
+        pm.expect(json).to.have.property('id');
+        pm.environment.set('addressId2', String(json.id));
+      });
+    language: text/javascript
+order: 3000

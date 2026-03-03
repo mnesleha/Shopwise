@@ -1,0 +1,48 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/orders/{{order_id}}/cancel/"
+method: POST
+headers:
+  Authorization: Bearer {{access_token}}
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Order detail returns 200\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Order status is Cancelled\"), function () {\r
+
+      \    pm.response.to.have.jsonBody('status', 'Cancelled');\r
+
+      }\r
+
+      \r
+
+      pm.test(\"Order contains cancellation fields\"), function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \    pm.expect(data).to.have.property('cancel_reason');\r
+
+      \    pm.expect(data).to.have.property('cancelled_by');\r
+
+      \    pm.expect(data).to.have.property('cancelled_at');\r
+
+      }\r
+
+      \r
+
+      pm.test(\"Order is cancelled by customer\"), function () {\r
+
+      \    const data = pm.response.json();\r
+
+      \    pm.expect(data).cancel_reason.to.eql('CUSTOMER_REQUEST')\r
+
+      \    pm.expect(data).cancelled_by.to.eql('CUSTOMER')\r
+
+      }"
+    language: text/javascript
+order: 6000

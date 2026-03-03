@@ -1,0 +1,84 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/categories/{{parent_category_id}}/"
+method: GET
+headers:
+  Accept: application/json
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Category detail returns 200\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Category detail has required fields\", function () {\r
+
+      \    const category = pm.response.json();\r
+
+      \r
+
+      \    pm.expect(category).to.have.property(\"id\");\r
+
+      \    pm.expect(category).to.have.property(\"name\");\r
+
+      \    pm.expect(category).to.have.property(\"is_parent\");\r
+
+      \    pm.expect(category).to.have.property(\"children\");\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Category detail is a parent category\", function () {\r
+
+      \    const category = pm.response.json();\r
+
+      \r
+
+      \    pm.expect(category.is_parent).to.eql(true);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Parent category detail contains only leaf children\", function
+      () {\r
+
+      \    const category = pm.response.json();\r
+
+      \r
+
+      \    category.children.forEach(child => {\r
+
+      \        pm.expect(child.is_parent).to.eql(false);\r
+
+      \        pm.expect(child.children).to.be.an(\"array\").that.is.empty;\r
+
+      \    });\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Returned category ID matches requested ID\", function () {\r
+
+      \    const category = pm.response.json();\r
+
+      \    const requestedId = pm.environment.get(\"parent_category_id\");\r
+
+      \r
+
+      \    pm.expect(category.id).to.eql(parseInt(requestedId));\r
+
+      });\r
+
+      \r\n"
+    language: text/javascript
+settings:
+  disabledSystemHeaders:
+    - accept
+order: 4000

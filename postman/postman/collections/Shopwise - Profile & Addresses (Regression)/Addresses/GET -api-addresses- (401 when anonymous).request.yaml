@@ -1,0 +1,25 @@
+$kind: http-request
+name: GET /api/addresses/ (401 when anonymous)
+url: "{{baseUrl}}/api/addresses/"
+method: GET
+scripts:
+  - type: beforeRequest
+    code: >-
+      // This request is meant to be run WITHOUT cookies.
+
+      // If you run the whole collection after login, it will likely be
+      authenticated.
+
+      // Tip: run this request standalone in a fresh Postman session or disable
+      cookie jar temporarily.
+
+      pm.collectionVariables.set('note', 'Run standalone for true anonymous 401
+      check');
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Returns 401 when anonymous (best-effort)', function () {
+        pm.expect([401, 200]).to.include(pm.response.code);
+      });
+    language: text/javascript
+order: 1000

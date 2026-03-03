@@ -1,0 +1,23 @@
+$kind: http-request
+description: |
+  
+  Returns a list of orders belonging to the authenticated user.
+
+  Orders represent completed checkout results and are read-only.
+
+  Notes:
+  - Orders are immutable.
+  - Orders are created exclusively via cart checkout.
+  - The list is ordered by creation time (implicit database order).
+url: "{{base_url}}/api/v1/orders/"
+method: GET
+headers:
+  Accept: application/json
+auth:
+  type: apikey
+  credentials:
+    key: sessionid
+    value: "{{apiKey}}"
+    in: header
+examples: ./.resources/List user orders.resources/examples
+order: 2000

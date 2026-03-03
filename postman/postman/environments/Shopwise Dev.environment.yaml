@@ -1,0 +1,69 @@
+name: Shopwise Dev
+values:
+  - key: base_url
+    value: http://127.0.0.1:8000
+    enabled: true
+  - key: product_id
+    value: 115
+    enabled: true
+  - key: order_id
+    value: 38
+    enabled: true
+  - key: discount_id
+    value: "1"
+    enabled: true
+  - key: cart_id
+    value: 29
+    enabled: true
+  - key: sessionid
+    value: mnnm798zmdl1kxxzzh9hpz87pawezhon
+    enabled: true
+  - key: csrftoken
+    value: n3dcMqv7ZyAAfre43adjxRU5RzfcPYLe
+    enabled: true
+  - key: username
+    value: johndoe
+    enabled: true
+  - key: password
+    value: Maxipes.
+    enabled: true
+  - key: auth_username
+    value: ""
+    enabled: true
+  - key: auth_email
+    value: ""
+    enabled: true
+  - key: auth_password
+    value: ""
+    enabled: true
+  - key: access_token
+    value: ""
+    enabled: true
+  - key: refresh_token
+    value: ""
+    enabled: true
+  - key: old_refresh_token
+    value: ""
+    enabled: true
+  - key: fixtures_json
+    value: ""
+    enabled: true
+  - key: fx_cache
+    value: ""
+    enabled: true
+  - key: cart_token
+    value: ""
+    enabled: true
+  - key: mint_token
+    value: ""
+    enabled: true
+  - key: email
+    value: ""
+    enabled: true
+  - key: addressId
+    value: ""
+    enabled: true
+  - key: addressId2
+    value: ""
+    enabled: true
+color: null

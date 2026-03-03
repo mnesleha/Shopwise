@@ -63,3 +63,8 @@ playwright-report/
 blob-report/
 playwright/.cache/
 playwright/.auth/
+
+# Postman
+postman/collections/**/examples/
+**/untitled*.yaml
+**/untitled*.json

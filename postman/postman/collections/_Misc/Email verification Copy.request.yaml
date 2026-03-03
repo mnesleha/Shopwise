@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{base_url}}/auth/request-email-verification/"
+method: POST
+body:
+  type: json
+  content: '{"email":"customer_1@example.com"}'
+order: 5000

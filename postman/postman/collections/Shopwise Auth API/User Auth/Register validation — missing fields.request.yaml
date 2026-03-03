@@ -1,0 +1,31 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/auth/register/"
+method: POST
+body:
+  type: json
+  content: "{}"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status is 400\", function () {\r
+
+      \  pm.response.to.have.status(400);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Validation error shape\", function () {\r
+
+      \  const json = pm.response.json();\r
+
+      \  pm.expect(json.code).to.eql(\"VALIDATION_ERROR\");\r
+
+      \  pm.expect(json).to.have.property(\"message\");\r
+
+      \  pm.expect(json).to.have.property(\"errors\");\r
+
+      \  pm.expect(json.errors).to.be.an(\"object\");\r
+
+      });\r\n"
+    language: text/javascript
+order: 1000

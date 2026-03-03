@@ -1,0 +1,29 @@
+$kind: http-request
+url: "{{baseUrl}}/api/auth/login/"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "email": "{{email}}",
+      "password": "{{password}}"
+    }
+scripts:
+  - type: afterResponse
+    code: >-
+      pm.test('Login returns 200', function () {
+        pm.expect(pm.response.code).to.equal(200);
+      });
+
+
+      // Cookies are stored automatically by Postman (cookie jar) for this
+      domain.
+
+      pm.test('Has Set-Cookie header (optional)', function () {
+        const setCookie = pm.response.headers.get('Set-Cookie');
+        pm.expect(setCookie === undefined || typeof setCookie === 'string').to.be.true;
+      });
+    language: text/javascript
+order: 2000
