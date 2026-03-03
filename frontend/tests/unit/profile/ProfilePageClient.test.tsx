@@ -142,7 +142,11 @@ describe("AddressDialog – create mode", () => {
 
     await waitFor(() => {
       expect(mockCreateAddress).toHaveBeenCalledWith(
-        expect.objectContaining({ first_name: "Jane", last_name: "Doe", city: "Brno" }),
+        expect.objectContaining({
+          first_name: "Jane",
+          last_name: "Doe",
+          city: "Brno",
+        }),
       );
     });
 

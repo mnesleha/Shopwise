@@ -31,7 +31,9 @@ export function AddressesCard({ addresses }: Props) {
   const [editing, setEditing] = React.useState<AddressDto | null>(null);
   const [busy, setBusy] = React.useState<number | null>(null);
   /** Address staged for deletion; drives the confirm AlertDialog. */
-  const [pendingDelete, setPendingDelete] = React.useState<AddressDto | null>(null);
+  const [pendingDelete, setPendingDelete] = React.useState<AddressDto | null>(
+    null,
+  );
 
   const openAdd = () => {
     setEditing(null);
@@ -87,7 +89,9 @@ export function AddressesCard({ addresses }: Props) {
                   data-testid={`address-item-${addr.id}`}
                 >
                   <div className="text-sm leading-snug">
-                    <p className="font-medium">{addr.first_name} {addr.last_name}</p>
+                    <p className="font-medium">
+                      {addr.first_name} {addr.last_name}
+                    </p>
                     {addr.company ? (
                       <p className="text-muted-foreground">{addr.company}</p>
                     ) : null}
@@ -134,7 +138,9 @@ export function AddressesCard({ addresses }: Props) {
       {/* Confirmation dialog for address deletion */}
       <AlertDialog
         open={pendingDelete !== null}
-        onOpenChange={(open) => { if (!open) setPendingDelete(null); }}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null);
+        }}
       >
         <AlertDialogContent size="sm">
           <AlertDialogHeader>
