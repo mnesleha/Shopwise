@@ -1,0 +1,20 @@
+# Use this workspace to collaborate
+workspace:
+  id: 64de2d85-8e4f-4ce4-8e74-97f17b93e177
+
+localResources:
+  collections:
+    - ..\collections\Shopwise API.postman_collection.json
+    - ..\collections\Shopwise Cart API.postman_collection.json
+    - ..\collections\Shopwise Category API.postman_collection.json
+    - ..\collections\Shopwise Discounts API.postman_collection.json
+    - ..\collections\Shopwise E2E Cart2Payment.postman_collection.json
+    - ..\collections\Shopwise Healthcheck.postman_collection.json
+    - ..\collections\Shopwise Order API.postman_collection.json
+    - ..\collections\Shopwise Payment API.postman_collection.json
+    - ..\collections\Shopwise Product API.postman_collection.json
+    - ..\collections\Shopwise.ProfileAddresses.postman_collection.json
+  environments:
+    - ..\environments\Shopwise Local.postman_environment.json
+  specs:
+    - ..\specs\Shopwise API\index.yaml

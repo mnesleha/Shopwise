@@ -24,29 +24,46 @@ export function DefaultAddressesCard({ profile, addresses }: Props) {
     profile.default_billing_address?.toString() ?? "",
   );
 
-  const save = async (patch: {
-    default_shipping_address?: number | null;
-    default_billing_address?: number | null;
-  }) => {
+  // Sync local state when the server-side profile prop changes (e.g. after
+  // router.refresh() triggered by address deletion cascading a SET_NULL).
+  React.useEffect(() => {
+    setShippingId(profile.default_shipping_address?.toString() ?? "");
+  }, [profile.default_shipping_address]);
+
+  React.useEffect(() => {
+    setBillingId(profile.default_billing_address?.toString() ?? "");
+  }, [profile.default_billing_address]);
+
+  const onShippingChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    const prev = shippingId;
+    setShippingId(val); // optimistic
     try {
-      await updateProfile(patch);
+      await updateProfile({
+        default_shipping_address: val ? Number(val) : null,
+      });
       toast.success("Default address updated.");
       router.refresh();
     } catch {
+      setShippingId(prev); // revert optimistic update on failure
       toast.error("Failed to update default address.");
     }
   };
 
-  const onShippingChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    setShippingId(val);
-    await save({ default_shipping_address: val ? Number(val) : null });
-  };
-
   const onBillingChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
-    setBillingId(val);
-    await save({ default_billing_address: val ? Number(val) : null });
+    const prev = billingId;
+    setBillingId(val); // optimistic
+    try {
+      await updateProfile({
+        default_billing_address: val ? Number(val) : null,
+      });
+      toast.success("Default address updated.");
+      router.refresh();
+    } catch {
+      setBillingId(prev); // revert optimistic update on failure
+      toast.error("Failed to update default address.");
+    }
   };
 
   return (

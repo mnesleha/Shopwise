@@ -24,55 +24,31 @@ type Props = {
   onSaved: () => void;
 };
 
-const EMPTY: AddressPayload = {
-  full_name: "",
-  street_line_1: "",
-  street_line_2: "",
-  city: "",
-  postal_code: "",
-  country: "",
-  company: "",
-  vat_id: "",
-};
-
 export function AddressDialog({ open, onOpenChange, initial, onSaved }: Props) {
-  const [fields, setFields] = React.useState<AddressPayload>(EMPTY);
   const [busy, setBusy] = React.useState(false);
 
-  // Populate form when dialog opens / switches mode
-  React.useEffect(() => {
-    if (open) {
-      setFields(
-        initial
-          ? {
-              full_name: initial.full_name,
-              street_line_1: initial.street_line_1,
-              street_line_2: initial.street_line_2,
-              city: initial.city,
-              postal_code: initial.postal_code,
-              country: initial.country,
-              company: initial.company,
-              vat_id: initial.vat_id,
-            }
-          : EMPTY,
-      );
-    }
-  }, [open, initial]);
-
-  const set =
-    (key: keyof AddressPayload) => (e: React.ChangeEvent<HTMLInputElement>) =>
-      setFields((prev) => ({ ...prev, [key]: e.target.value }));
-
-  const onSubmit = async (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setBusy(true);
+    // Collect values via FormData — no controlled state, no hydration risk.
+    const data = new FormData(e.currentTarget);
+    const payload: AddressPayload = {
+      full_name: (data.get("full_name") as string).trim(),
+      street_line_1: (data.get("street_line_1") as string).trim(),
+      street_line_2: (data.get("street_line_2") as string).trim(),
+      city: (data.get("city") as string).trim(),
+      postal_code: (data.get("postal_code") as string).trim(),
+      country: (data.get("country") as string).trim(),
+      company: (data.get("company") as string).trim(),
+      vat_id: (data.get("vat_id") as string).trim(),
+    };
 
+    setBusy(true);
     try {
       if (initial) {
-        await updateAddress(initial.id, fields);
+        await updateAddress(initial.id, payload);
         toast.success("Address updated.");
       } else {
-        await createAddress(fields);
+        await createAddress(payload);
         toast.success("Address added.");
       }
       onSaved();
@@ -93,7 +69,10 @@ export function AddressDialog({ open, onOpenChange, initial, onSaved }: Props) {
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
 
+        {/* key remounts the form DOM when switching create↔edit or reopening,
+            so defaultValues are re-applied cleanly without controlled state. */}
         <form
+          key={open ? (initial?.id ?? "new") : "closed"}
           onSubmit={onSubmit}
           className="space-y-3"
           data-testid="address-form"
@@ -101,50 +80,43 @@ export function AddressDialog({ open, onOpenChange, initial, onSaved }: Props) {
           <Field
             label="Full name"
             id="full_name"
-            value={fields.full_name}
-            onChange={set("full_name")}
+            defaultValue={initial?.full_name ?? ""}
             required
           />
           <Field
             label="Company (optional)"
             id="company"
-            value={fields.company}
-            onChange={set("company")}
+            defaultValue={initial?.company ?? ""}
           />
           <Field
             label="Street"
             id="street_line_1"
-            value={fields.street_line_1}
-            onChange={set("street_line_1")}
+            defaultValue={initial?.street_line_1 ?? ""}
             required
           />
           <Field
             label="Apt / floor (optional)"
             id="street_line_2"
-            value={fields.street_line_2}
-            onChange={set("street_line_2")}
+            defaultValue={initial?.street_line_2 ?? ""}
           />
           <div className="grid grid-cols-2 gap-3">
             <Field
               label="Postal code"
               id="postal_code"
-              value={fields.postal_code}
-              onChange={set("postal_code")}
+              defaultValue={initial?.postal_code ?? ""}
               required
             />
             <Field
               label="City"
               id="city"
-              value={fields.city}
-              onChange={set("city")}
+              defaultValue={initial?.city ?? ""}
               required
             />
           </div>
           <Field
             label="Country (ISO 2-letter)"
             id="country"
-            value={fields.country}
-            onChange={set("country")}
+            defaultValue={initial?.country ?? ""}
             required
             maxLength={2}
             placeholder="CZ"
@@ -152,8 +124,7 @@ export function AddressDialog({ open, onOpenChange, initial, onSaved }: Props) {
           <Field
             label="VAT ID (optional)"
             id="vat_id"
-            value={fields.vat_id}
-            onChange={set("vat_id")}
+            defaultValue={initial?.vat_id ?? ""}
           />
 
           <DialogFooter className="pt-2">

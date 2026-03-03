@@ -70,6 +70,15 @@ class User(AbstractUser):
 
     objects = UserManager()
 
+    def save(self, *args, **kwargs):
+        # Ensure username is always set, regardless of the creation path
+        # (admin form, management command, tests, etc.).
+        if not self.username and self.email:
+            self.username = UserManager._username_from_email(
+                self.email.strip().lower()
+            )
+        super().save(*args, **kwargs)
+
     @property
     def display_name(self) -> str:
         parts = [p for p in (self.first_name, self.last_name) if p]
