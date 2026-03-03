@@ -10,7 +10,8 @@ export type ProfileDto = {
 
 export type AddressDto = {
   id: number;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   street_line_1: string;
   street_line_2: string;
   city: string;

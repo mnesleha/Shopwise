@@ -32,7 +32,8 @@ export function AddressDialog({ open, onOpenChange, initial, onSaved }: Props) {
     // Collect values via FormData — no controlled state, no hydration risk.
     const data = new FormData(e.currentTarget);
     const payload: AddressPayload = {
-      full_name: (data.get("full_name") as string).trim(),
+      first_name: (data.get("first_name") as string).trim(),
+      last_name: (data.get("last_name") as string).trim(),
       street_line_1: (data.get("street_line_1") as string).trim(),
       street_line_2: (data.get("street_line_2") as string).trim(),
       city: (data.get("city") as string).trim(),
@@ -77,12 +78,22 @@ export function AddressDialog({ open, onOpenChange, initial, onSaved }: Props) {
           className="space-y-3"
           data-testid="address-form"
         >
-          <Field
-            label="Full name"
-            id="full_name"
-            defaultValue={initial?.full_name ?? ""}
-            required
-          />
+          <div className="grid grid-cols-2 gap-3">
+            <Field
+              label="First name"
+              id="first_name"
+              defaultValue={initial?.first_name ?? ""}
+              required
+              minLength={1}
+            />
+            <Field
+              label="Last name"
+              id="last_name"
+              defaultValue={initial?.last_name ?? ""}
+              required
+              minLength={1}
+            />
+          </div>
           <Field
             label="Company (optional)"
             id="company"

@@ -59,7 +59,8 @@ function makeProfile(overrides?: Partial<ProfileDto>): ProfileDto {
 function makeAddress(overrides?: Partial<AddressDto>): AddressDto {
   return {
     id: 1,
-    full_name: "John Doe",
+    first_name: "John",
+    last_name: "Doe",
     street_line_1: "Main Street 1",
     street_line_2: "",
     city: "Prague",
@@ -130,7 +131,8 @@ describe("AddressDialog – create mode", () => {
       />,
     );
 
-    await user.type(screen.getByLabelText(/full name/i), "Jane Doe");
+    await user.type(screen.getByLabelText(/first name/i), "Jane");
+    await user.type(screen.getByLabelText(/last name/i), "Doe");
     await user.type(screen.getByLabelText(/street/i), "Oak Avenue 5");
     await user.type(screen.getByLabelText(/postal code/i), "10000");
     await user.type(screen.getByLabelText(/city/i), "Brno");
@@ -140,7 +142,7 @@ describe("AddressDialog – create mode", () => {
 
     await waitFor(() => {
       expect(mockCreateAddress).toHaveBeenCalledWith(
-        expect.objectContaining({ full_name: "Jane Doe", city: "Brno" }),
+        expect.objectContaining({ first_name: "Jane", last_name: "Doe", city: "Brno" }),
       );
     });
 
@@ -166,7 +168,8 @@ describe("AddressDialog – create mode", () => {
       />,
     );
 
-    await user.type(screen.getByLabelText(/full name/i), "Jane Doe");
+    await user.type(screen.getByLabelText(/first name/i), "Jane");
+    await user.type(screen.getByLabelText(/last name/i), "Doe");
     await user.type(screen.getByLabelText(/street/i), "Oak Avenue 5");
     await user.type(screen.getByLabelText(/postal code/i), "10000");
     await user.type(screen.getByLabelText(/city/i), "Brno");
@@ -177,6 +180,47 @@ describe("AddressDialog – create mode", () => {
     await waitFor(() => {
       expect(mockToastError).toHaveBeenCalledWith("Failed to save address.");
     });
+  });
+});
+
+describe("AddressDialog – submit payload", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("sends first_name and last_name (not full_name) in the create payload", async () => {
+    const { AddressDialog } =
+      await import("@/components/profile/AddressDialog");
+    const user = userEvent.setup();
+    mockCreateAddress.mockResolvedValue({ id: 42 });
+
+    renderWithProviders(
+      <AddressDialog
+        open
+        initial={null}
+        onOpenChange={vi.fn()}
+        onSaved={vi.fn()}
+      />,
+    );
+
+    await user.type(screen.getByLabelText(/first name/i), "Alice");
+    await user.type(screen.getByLabelText(/last name/i), "Smith");
+    await user.type(screen.getByLabelText(/street/i), "Elm St 7");
+    await user.type(screen.getByLabelText(/postal code/i), "60200");
+    await user.type(screen.getByLabelText(/city/i), "Brno");
+    await user.type(screen.getByLabelText(/country/i), "CZ");
+
+    await user.click(screen.getByTestId("address-dialog-submit"));
+
+    await waitFor(() => {
+      expect(mockCreateAddress).toHaveBeenCalledTimes(1);
+    });
+
+    const calledWith = mockCreateAddress.mock.calls[0][0];
+    // Must use split fields, never the legacy full_name key
+    expect(calledWith).toHaveProperty("first_name", "Alice");
+    expect(calledWith).toHaveProperty("last_name", "Smith");
+    expect(calledWith).not.toHaveProperty("full_name");
   });
 });
 
@@ -194,13 +238,15 @@ describe("DefaultAddressesCard – set default address", () => {
     const addresses = [
       makeAddress({
         id: 1,
-        full_name: "John",
+        first_name: "John",
+        last_name: "Doe",
         street_line_1: "A1",
         city: "Prague",
       }),
       makeAddress({
         id: 2,
-        full_name: "Jane",
+        first_name: "Jane",
+        last_name: "Doe",
         street_line_1: "B2",
         city: "Brno",
       }),
@@ -233,7 +279,8 @@ describe("DefaultAddressesCard – set default address", () => {
     const addresses = [
       makeAddress({
         id: 3,
-        full_name: "Ann",
+        first_name: "Ann",
+        last_name: "Other",
         street_line_1: "C3",
         city: "Ostrava",
       }),

@@ -84,7 +84,7 @@ export function DefaultAddressesCard({ profile, addresses }: Props) {
             <option value="">— none —</option>
             {addresses.map((a) => (
               <option key={a.id} value={a.id.toString()}>
-                {a.full_name} – {a.street_line_1}, {a.city}
+                {a.first_name} {a.last_name} – {a.street_line_1}, {a.city}
               </option>
             ))}
           </select>
@@ -102,7 +102,7 @@ export function DefaultAddressesCard({ profile, addresses }: Props) {
             <option value="">— none —</option>
             {addresses.map((a) => (
               <option key={a.id} value={a.id.toString()}>
-                {a.full_name} – {a.street_line_1}, {a.city}
+                {a.first_name} {a.last_name} – {a.street_line_1}, {a.city}
               </option>
             ))}
           </select>

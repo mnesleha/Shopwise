@@ -7,6 +7,16 @@ import { Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { deleteAddress } from "@/lib/api/profile";
 import type { AddressDto } from "@/lib/api/profile";
 import { AddressDialog } from "./AddressDialog";
@@ -20,6 +30,8 @@ export function AddressesCard({ addresses }: Props) {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<AddressDto | null>(null);
   const [busy, setBusy] = React.useState<number | null>(null);
+  /** Address staged for deletion; drives the confirm AlertDialog. */
+  const [pendingDelete, setPendingDelete] = React.useState<AddressDto | null>(null);
 
   const openAdd = () => {
     setEditing(null);
@@ -36,9 +48,10 @@ export function AddressesCard({ addresses }: Props) {
     router.refresh();
   };
 
-  const onDelete = async (addr: AddressDto) => {
-    if (!confirm(`Delete address "${addr.full_name} – ${addr.street_line_1}"?`))
-      return;
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    const addr = pendingDelete;
+    setPendingDelete(null);
     setBusy(addr.id);
     try {
       await deleteAddress(addr.id);
@@ -74,7 +87,7 @@ export function AddressesCard({ addresses }: Props) {
                   data-testid={`address-item-${addr.id}`}
                 >
                   <div className="text-sm leading-snug">
-                    <p className="font-medium">{addr.full_name}</p>
+                    <p className="font-medium">{addr.first_name} {addr.last_name}</p>
                     {addr.company ? (
                       <p className="text-muted-foreground">{addr.company}</p>
                     ) : null}
@@ -99,7 +112,7 @@ export function AddressesCard({ addresses }: Props) {
                       size="icon"
                       aria-label="Delete address"
                       disabled={busy === addr.id}
-                      onClick={() => onDelete(addr)}
+                      onClick={() => setPendingDelete(addr)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -117,6 +130,40 @@ export function AddressesCard({ addresses }: Props) {
         initial={editing}
         onSaved={onSaved}
       />
+
+      {/* Confirmation dialog for address deletion */}
+      <AlertDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => { if (!open) setPendingDelete(null); }}
+      >
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete address?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete && (
+                <>
+                  <span className="font-medium">
+                    {pendingDelete.first_name} {pendingDelete.last_name}
+                  </span>
+                  {" — "}
+                  {pendingDelete.street_line_1}, {pendingDelete.city}
+                </>
+              )}
+              <br />
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

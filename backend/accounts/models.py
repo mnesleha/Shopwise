@@ -144,7 +144,8 @@ class Address(models.Model):
         on_delete=models.CASCADE,
         related_name="addresses",
     )
-    full_name = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=150)
+    last_name = models.CharField(max_length=150)
     street_line_1 = models.CharField(max_length=255)
     street_line_2 = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=255)
