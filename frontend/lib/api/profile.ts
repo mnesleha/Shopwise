@@ -2,6 +2,14 @@ import { api } from "@/lib/api";
 
 // ── DTOs ─────────────────────────────────────────────────────────────────────
 
+export type AccountDto = {
+  email: string;
+  first_name: string;
+  last_name: string;
+};
+
+export type AccountPatch = Pick<AccountDto, "first_name" | "last_name">;
+
 export type ProfileDto = {
   id: number;
   default_shipping_address: number | null;
@@ -36,6 +44,18 @@ export async function updateProfile(
   >,
 ): Promise<ProfileDto> {
   const res = await api.patch<ProfileDto>("/profile/", patch);
+  return res.data;
+}
+
+// ── Account ───────────────────────────────────────────────────────────────────
+
+export async function getAccount(): Promise<AccountDto> {
+  const res = await api.get<AccountDto>("/account/");
+  return res.data;
+}
+
+export async function patchAccount(data: AccountPatch): Promise<AccountDto> {
+  const res = await api.patch<AccountDto>("/account/", data);
   return res.data;
 }
 

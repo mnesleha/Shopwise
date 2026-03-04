@@ -10,7 +10,7 @@ import { useCart } from "@/components/cart/CartProvider";
 
 export default function HeaderAuthClient() {
   const router = useRouter();
-  const { isAuthenticated, email, setAnonymous } = useAuth();
+  const { isAuthenticated, email, firstName, lastName, setAnonymous } = useAuth();
   const { refreshCart } = useCart();
 
   const onLogout = async () => {
@@ -35,9 +35,10 @@ export default function HeaderAuthClient() {
           </span>
         </Link>
       ) : null}
-      {isAuthenticated && email ? (
-        <span data-testid="auth-email" className="text-muted-foreground">
-          {email}
+      {isAuthenticated && (email || firstName || lastName) ? (
+        <span data-testid="auth-user-label" className="text-muted-foreground">
+          {/* Prefer full name; fall back to email */}
+          {`${firstName ?? ""} ${lastName ?? ""}`.trim() || email}
         </span>
       ) : null}
 

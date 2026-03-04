@@ -1,12 +1,16 @@
 "use client";
 
-import type { AddressDto, ProfileDto } from "@/lib/api/profile";
+import type { AccountDto, AddressDto, ProfileDto } from "@/lib/api/profile";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AccountTab } from "./AccountTab";
 import { DefaultAddressesCard } from "./DefaultAddressesCard";
 import { AddressesCard } from "./AddressesCard";
 
 type Props = {
-  profile: ProfileDto;
-  addresses: AddressDto[];
+  account: AccountDto;
+  emailVerified: boolean;
+  profile: ProfileDto | null;
+  addresses: AddressDto[] | null;
 };
 
 /**
@@ -14,7 +18,19 @@ type Props = {
  * Receives SSR-fetched data as props; child components drive mutations
  * and call router.refresh() to reload server data after each change.
  */
-export default function ProfilePageClient({ profile, addresses }: Props) {
+export default function ProfilePageClient({
+  account,
+  emailVerified,
+  profile,
+  addresses,
+}: Props) {
+  const safeProfile: ProfileDto = profile ?? {
+    id: 0,
+    default_shipping_address: null,
+    default_billing_address: null,
+  };
+  const safeAddresses: AddressDto[] = addresses ?? [];
+
   return (
     <div
       className="mx-auto w-full max-w-2xl space-y-6"
@@ -22,8 +38,26 @@ export default function ProfilePageClient({ profile, addresses }: Props) {
     >
       <h1 className="text-2xl font-semibold">My Profile</h1>
 
-      <DefaultAddressesCard profile={profile} addresses={addresses} />
-      <AddressesCard addresses={addresses} />
+      <Tabs defaultValue="account">
+        <TabsList className="mb-4">
+          <TabsTrigger value="account">Account</TabsTrigger>
+          <TabsTrigger value="addresses">Addresses</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="account">
+          <AccountTab account={account} emailVerified={emailVerified} />
+        </TabsContent>
+
+        <TabsContent value="addresses">
+          <div className="space-y-6">
+            <DefaultAddressesCard
+              profile={safeProfile}
+              addresses={safeAddresses}
+            />
+            <AddressesCard addresses={safeAddresses} />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

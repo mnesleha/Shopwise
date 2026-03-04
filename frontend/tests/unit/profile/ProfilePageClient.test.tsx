@@ -11,7 +11,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../helpers/render";
 import { createRouterMock } from "../helpers/nextNavigation";
-import type { AddressDto, ProfileDto } from "@/lib/api/profile";
+import type { AccountDto, AddressDto, ProfileDto } from "@/lib/api/profile";
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
@@ -27,12 +27,18 @@ const mockCreateAddress = vi.fn();
 const mockUpdateAddress = vi.fn();
 const mockUpdateProfile = vi.fn();
 const mockDeleteAddress = vi.fn();
+const mockPatchAccount = vi.fn();
 
 vi.mock("@/lib/api/profile", () => ({
   createAddress: (...args: unknown[]) => mockCreateAddress(...args),
   updateAddress: (...args: unknown[]) => mockUpdateAddress(...args),
   updateProfile: (...args: unknown[]) => mockUpdateProfile(...args),
   deleteAddress: (...args: unknown[]) => mockDeleteAddress(...args),
+  patchAccount: (...args: unknown[]) => mockPatchAccount(...args),
+}));
+
+vi.mock("@/components/auth/AuthProvider", () => ({
+  useAuth: () => ({ refresh: vi.fn().mockResolvedValue({}) }),
 }));
 
 const mockToastSuccess = vi.fn();
@@ -46,6 +52,15 @@ vi.mock("sonner", () => ({
 }));
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
+
+function makeAccount(overrides?: Partial<AccountDto>): AccountDto {
+  return {
+    email: "user@example.com",
+    first_name: "Alice",
+    last_name: "Smith",
+    ...overrides,
+  };
+}
 
 function makeProfile(overrides?: Partial<ProfileDto>): ProfileDto {
   return {
@@ -80,6 +95,7 @@ describe("ProfilePageClient", () => {
   });
 
   it("renders the Default Addresses section and addresses list", async () => {
+    const user = userEvent.setup();
     const { default: ProfilePageClient } =
       await import("@/components/profile/ProfilePageClient");
     const addresses = [
@@ -88,23 +104,39 @@ describe("ProfilePageClient", () => {
     ];
 
     renderWithProviders(
-      <ProfilePageClient profile={makeProfile()} addresses={addresses} />,
+      <ProfilePageClient
+        account={makeAccount()}
+        emailVerified={true}
+        profile={makeProfile()}
+        addresses={addresses}
+      />,
     );
 
+    // Switch to the Addresses tab
+    await user.click(screen.getByRole("tab", { name: /addresses/i }));
+
     expect(screen.getByText("Default Addresses")).toBeInTheDocument();
-    expect(screen.getByText("Addresses")).toBeInTheDocument();
     expect(screen.getByTestId("address-list")).toBeInTheDocument();
     expect(screen.getByTestId("address-item-1")).toBeInTheDocument();
     expect(screen.getByTestId("address-item-2")).toBeInTheDocument();
   });
 
   it("renders empty state when there are no addresses", async () => {
+    const user = userEvent.setup();
     const { default: ProfilePageClient } =
       await import("@/components/profile/ProfilePageClient");
 
     renderWithProviders(
-      <ProfilePageClient profile={makeProfile()} addresses={[]} />,
+      <ProfilePageClient
+        account={makeAccount()}
+        emailVerified={true}
+        profile={makeProfile()}
+        addresses={[]}
+      />,
     );
+
+    // Switch to the Addresses tab
+    await user.click(screen.getByRole("tab", { name: /addresses/i }));
 
     expect(screen.getByText(/no addresses saved/i)).toBeInTheDocument();
   });
