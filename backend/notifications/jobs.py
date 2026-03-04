@@ -8,6 +8,8 @@ break request flows or background workers.
 
 from notifications.email_service import EmailService
 from notifications.renderers import (
+    render_email_change_cancel_notification,
+    render_email_change_confirm,
     render_email_verification,
     render_guest_order_link,
 )
@@ -47,6 +49,69 @@ def send_email_verification(*, recipient_email: str, verification_url: str) -> N
         )
         return
 
+
+def send_email_change_confirm(*, recipient_email: str, confirm_url: str) -> None:
+    """
+    Send an email-change confirmation message to the *new* email address.
+
+    Best-effort semantics:
+    - Failures MUST NOT propagate.
+    - Errors are delegated to NotificationErrorHandler.
+    """
+    try:
+        subject, body = render_email_change_confirm(
+            recipient_email=recipient_email,
+            confirm_url=confirm_url,
+        )
+        EmailService.send_plain_text(
+            to_email=recipient_email,
+            subject=subject,
+            body=body,
+        )
+    except Exception:
+        NotificationErrorHandler.handle(
+            NotificationSendError(
+                code="EMAIL_CHANGE_CONFIRM_SEND_FAILED",
+                message="Failed to send email-change confirmation email.",
+                context={
+                    "recipient_email": recipient_email,
+                    "confirm_url": confirm_url,
+                },
+            )
+        )
+
+
+def send_email_change_cancel_notification(
+    *, recipient_email: str, cancel_url: str
+) -> None:
+    """
+    Send a security notification to the *old* email address with a cancel link.
+
+    Best-effort semantics:
+    - Failures MUST NOT propagate.
+    - Errors are delegated to NotificationErrorHandler.
+    """
+    try:
+        subject, body = render_email_change_cancel_notification(
+            recipient_email=recipient_email,
+            cancel_url=cancel_url,
+        )
+        EmailService.send_plain_text(
+            to_email=recipient_email,
+            subject=subject,
+            body=body,
+        )
+    except Exception:
+        NotificationErrorHandler.handle(
+            NotificationSendError(
+                code="EMAIL_CHANGE_CANCEL_NOTIFY_SEND_FAILED",
+                message="Failed to send email-change cancellation notification.",
+                context={
+                    "recipient_email": recipient_email,
+                    "cancel_url": cancel_url,
+                },
+            )
+        )
 
 def send_guest_order_link(
     *, recipient_email: str, order_number: str, guest_order_url: str

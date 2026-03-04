@@ -22,7 +22,7 @@ from api.views.admin_orders import AdminOrderViewSet
 from api.views.guest_orders import GuestOrderRetrieveView
 from api.views import health_check
 from api.views.profile import ProfileView, AddressViewSet
-from api.views.accounts import AccountView
+from api.views.accounts import AccountView, ChangeEmailView, ConfirmEmailChangeView, CancelEmailChangeView
 
 app_name = "api"
 
@@ -48,6 +48,9 @@ urlpatterns = [
     path("health/", health_check, name="health"),
     path("profile/", ProfileView.as_view(), name="profile"),
     path("account/", AccountView.as_view(), name="account"),
+    path("account/change-email/", ChangeEmailView.as_view(), name="account-change-email"),
+    path("account/confirm-email-change/", ConfirmEmailChangeView.as_view(), name="account-confirm-email-change"),
+    path("account/cancel-email-change/", CancelEmailChangeView.as_view(), name="account-cancel-email-change"),
     path("", include(router.urls)),
     path(
         "guest/orders/<int:order_id>/",

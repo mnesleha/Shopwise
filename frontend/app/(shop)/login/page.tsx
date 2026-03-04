@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import LoginForm from "@/components/auth/LoginForm";
@@ -21,6 +21,21 @@ export default function LoginPage() {
   useEffect(() => {
     if (searchParams.get("verified") === "1") {
       toast.success("Email verified! Please log in to continue.");
+    }
+  }, [searchParams]);
+
+  // Show a one-time toast when the user is redirected here after a successful
+  // email change (ADR-035). The guard prevents duplicate toasts on re-renders.
+  const emailChangedToastShown = useRef(false);
+  useEffect(() => {
+    if (
+      searchParams.get("emailChanged") === "1" &&
+      !emailChangedToastShown.current
+    ) {
+      emailChangedToastShown.current = true;
+      toast.success(
+        "Email changed. Please log in again with your new email.",
+      );
     }
   }, [searchParams]);
 

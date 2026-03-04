@@ -59,6 +59,23 @@ export async function patchAccount(data: AccountPatch): Promise<AccountDto> {
   return res.data;
 }
 
+/** Payload for POST /api/v1/account/change-email/ */
+export type ChangeEmailPayload = {
+  new_email: string;
+  new_email_confirm: string;
+  current_password: string;
+};
+
+/**
+ * Initiate the email-change flow.
+ * Returns void on 204 success; throws on validation / auth errors.
+ */
+export async function requestEmailChange(
+  payload: ChangeEmailPayload,
+): Promise<void> {
+  await api.post("/account/change-email/", payload);
+}
+
 // ── Addresses ─────────────────────────────────────────────────────────────────
 
 export async function listAddresses(): Promise<AddressDto[]> {

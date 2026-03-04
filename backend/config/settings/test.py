@@ -35,3 +35,7 @@ EMAIL_HOST = os.getenv("EMAIL_HOST", "127.0.0.1")  # Mailpit runs locally
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "1025"))
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = False
+
+# Store raw email-change tokens in debug DB columns so test helpers can
+# retrieve them without intercepting outbound email (ADR-035).
+STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS = True

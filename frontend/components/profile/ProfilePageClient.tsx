@@ -1,5 +1,8 @@
 "use client";
 
+import * as React from "react";
+import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import type { AccountDto, AddressDto, ProfileDto } from "@/lib/api/profile";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AccountTab } from "./AccountTab";
@@ -30,6 +33,20 @@ export default function ProfilePageClient({
     default_billing_address: null,
   };
   const safeAddresses: AddressDto[] = addresses ?? [];
+
+  // Show a one-time toast when the user is redirected here after cancelling
+  // an email change via the security notification link (ADR-035).
+  const searchParams = useSearchParams();
+  const cancelToastShown = React.useRef(false);
+  React.useEffect(() => {
+    if (
+      searchParams.get("emailChange") === "cancelled" &&
+      !cancelToastShown.current
+    ) {
+      cancelToastShown.current = true;
+      toast.info("Email change cancelled successfully.");
+    }
+  }, [searchParams]);
 
   return (
     <div

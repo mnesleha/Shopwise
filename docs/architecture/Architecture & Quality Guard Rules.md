@@ -22,6 +22,18 @@
   - `Authorization` header (if used as fallback)
   - custom headers used by carts (e.g., X-Cart-Token)
 
+### Authentication Must Not Be Blocked by Business Logic
+
+Login and token issuance must never fail due to cart, inventory,
+discount, or pricing conflicts. ([ADR-033](../decisions/ADR-033-Cart-Merge-Must-Not-Block-Authentication.md))
+
+All cart merge operations during login must be:
+
+- deterministic
+- idempotent
+- best-effort
+- fully reported via `cart_merge` response object.
+
 **Guard check**: Any auth-related PR must include at least one integration test (Postman or FE E2E) proving cookie-based auth works.
 
 ## 3) Cart Domain: Active Cart Pointer & Anonymous Token Rules
@@ -112,6 +124,21 @@ If any of these occur, pause implementation and decide explicitly:
 - introducing non-idempotent side effects in checkout/payment flows
 - flaky E2E that requires sleeps/timeouts to pass
 - OpenAPI drift vs runtime behavior
+
+## 11) ## SSR Hydration Guard: Forms Must Avoid Controlled Input Races ([ADR-034](../decisions/ADR-034-SSR-Hydration-Race-Condition-with-Controlled-Form-Inputs.md))
+
+For simple SSR-rendered forms (Login, Register, Checkout):
+
+- Prefer **uncontrolled inputs** (`defaultValue`, `name=...`) and collect values via `FormData` on submit.
+- Do **not** use controlled inputs (`useState` + `value={...}`) unless real-time validation or dynamic behavior is required.
+
+**Rationale**:
+
+- Controlled inputs can overwrite DOM values during React hydration, causing flaky E2E tests and real user-facing data loss on fast interactions.
+
+**Testing rule**:
+
+- Playwright must not rely on “fast fill immediately after SSR paint” as a stable interaction; forms must be hydration-safe by design.
 
 ## Sprint Kickoff Routine (Recommended)
 

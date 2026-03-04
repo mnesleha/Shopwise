@@ -13,6 +13,7 @@ import { patchAccount } from "@/lib/api/profile";
 import type { AccountDto } from "@/lib/api/profile";
 import ResendVerificationButton from "@/components/auth/ResendVerificationButton";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { ChangeEmailDialog } from "@/components/profile/ChangeEmailDialog";
 
 type Props = {
   account: AccountDto;
@@ -26,6 +27,7 @@ export function AccountTab({ account, emailVerified }: Props) {
   const [firstName, setFirstName] = React.useState(account.first_name);
   const [lastName, setLastName] = React.useState(account.last_name);
   const [saving, setSaving] = React.useState(false);
+  const [changeEmailOpen, setChangeEmailOpen] = React.useState(false);
 
   // Keep local state in sync when server data changes (e.g. after router.refresh)
   React.useEffect(() => {
@@ -129,13 +131,25 @@ export function AccountTab({ account, emailVerified }: Props) {
 
           {!emailVerified && <ResendVerificationButton email={account.email} />}
 
-          {/* Change email — placeholder; not yet implemented */}
-          <div className="pt-2 border-t space-y-1">
-            <p className="text-sm font-medium">Change email</p>
-            <p className="text-xs text-muted-foreground">Coming soon.</p>
+          {/* Change email */}
+          <div className="pt-2 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setChangeEmailOpen(true)}
+              data-testid="open-change-email-btn"
+            >
+              Change email
+            </Button>
           </div>
         </CardContent>
       </Card>
+
+      <ChangeEmailDialog
+        open={changeEmailOpen}
+        onOpenChange={setChangeEmailOpen}
+      />
 
       {/* Change password — placeholder; not yet implemented */}
       <Card>

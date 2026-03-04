@@ -30,3 +30,48 @@ def render_guest_order_link(
         f"View your guest order here:\n{guest_order_url}\n"
     )
     return subject, body
+
+
+def render_email_change_confirm(
+    *, recipient_email: str, confirm_url: str
+) -> tuple[str, str]:
+    """
+    Render subject/body for the email-change confirmation message (plain-text).
+
+    Sent to the *new* email address.
+    Requirements:
+    - Body MUST include the exact confirm_url provided.
+    """
+    subject = "Confirm your email address change"
+    body = (
+        f"Hi {recipient_email},\n\n"
+        "We received a request to change your login email address.\n"
+        "Click the link below to confirm the change:\n\n"
+        f"{confirm_url}\n\n"
+        "This link expires in 60 minutes. If you did not request this change, "
+        "please ignore this email.\n"
+    )
+    return subject, body
+
+
+def render_email_change_cancel_notification(
+    *, recipient_email: str, cancel_url: str
+) -> tuple[str, str]:
+    """
+    Render subject/body for the email-change security notification (plain-text).
+
+    Sent to the *old* email address with a one-click cancel link.
+    Requirements:
+    - Body MUST include the exact cancel_url provided.
+    """
+    subject = "Security notice: email change requested"
+    body = (
+        f"Hi {recipient_email},\n\n"
+        "A request was submitted to change the login email address of your account.\n"
+        "If this was you, no action is needed — the change will take effect after\n"
+        "the new address is confirmed.\n\n"
+        "If you did NOT request this, click the link below to cancel immediately:\n\n"
+        f"{cancel_url}\n\n"
+        "This cancel link expires in 60 minutes.\n"
+    )
+    return subject, body
