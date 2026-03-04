@@ -136,7 +136,7 @@ describe("AddressDialog – create mode", () => {
     await user.type(screen.getByLabelText(/street/i), "Oak Avenue 5");
     await user.type(screen.getByLabelText(/postal code/i), "10000");
     await user.type(screen.getByLabelText(/city/i), "Brno");
-    await user.type(screen.getByLabelText(/country/i), "CZ");
+    // Country defaults to "CZ" in CountryPicker — no user interaction needed.
 
     await user.click(screen.getByTestId("address-dialog-submit"));
 
@@ -177,7 +177,7 @@ describe("AddressDialog – create mode", () => {
     await user.type(screen.getByLabelText(/street/i), "Oak Avenue 5");
     await user.type(screen.getByLabelText(/postal code/i), "10000");
     await user.type(screen.getByLabelText(/city/i), "Brno");
-    await user.type(screen.getByLabelText(/country/i), "CZ");
+    // Country defaults to "CZ" in CountryPicker — no user interaction needed.
 
     await user.click(screen.getByTestId("address-dialog-submit"));
 
@@ -212,7 +212,7 @@ describe("AddressDialog – submit payload", () => {
     await user.type(screen.getByLabelText(/street/i), "Elm St 7");
     await user.type(screen.getByLabelText(/postal code/i), "60200");
     await user.type(screen.getByLabelText(/city/i), "Brno");
-    await user.type(screen.getByLabelText(/country/i), "CZ");
+    // Country defaults to "CZ" in CountryPicker — no user interaction needed.
 
     await user.click(screen.getByTestId("address-dialog-submit"));
 

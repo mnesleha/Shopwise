@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { createAddress, updateAddress } from "@/lib/api/profile";
 import type { AddressDto, AddressPayload } from "@/lib/api/profile";
+import { CountryPicker } from "@/components/ui/country-picker";
 
 type Props = {
   open: boolean;
@@ -124,14 +125,13 @@ export function AddressDialog({ open, onOpenChange, initial, onSaved }: Props) {
               required
             />
           </div>
-          <Field
-            label="Country (ISO 2-letter)"
-            id="country"
-            defaultValue={initial?.country ?? ""}
-            required
-            maxLength={2}
-            placeholder="CZ"
-          />
+          <div className="space-y-1">
+            <Label>Country</Label>
+            <CountryPicker
+              name="country"
+              defaultValue={initial?.country ?? "CZ"}
+            />
+          </div>
           <Field
             label="VAT ID (optional)"
             id="vat_id"

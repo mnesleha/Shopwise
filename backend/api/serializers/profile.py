@@ -1,3 +1,4 @@
+from django_countries.serializer_fields import CountryField
 from rest_framework import serializers
 
 from accounts.models import Address, CustomerProfile
@@ -9,6 +10,11 @@ class AddressSerializer(serializers.ModelSerializer):
     The `profile` ownership is never exposed or accepted from clients;
     it is assigned automatically in the view layer from the request user.
     """
+
+    # Serialize country as a plain ISO 3166-1 alpha-2 code string (no dict).
+    # This preserves the existing API contract while benefiting from
+    # django-countries validation on the model layer.
+    country = CountryField()
 
     class Meta:
         model = Address

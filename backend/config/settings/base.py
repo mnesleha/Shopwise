@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'django_filters',
     'drf_spectacular',
     'drf_spectacular_sidecar',
-    "debug_toolbar"
+    "debug_toolbar",
+    "django_countries",
 ]
 
 AUTH_USER_MODEL = "accounts.User"

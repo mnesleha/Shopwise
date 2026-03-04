@@ -3,6 +3,7 @@ from django.conf import settings
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django_countries.fields import CountryField
 
 
 class UserManager(BaseUserManager):
@@ -150,8 +151,8 @@ class Address(models.Model):
     street_line_2 = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=255)
     postal_code = models.CharField(max_length=32)
-    # ISO 3166-1 alpha-2 country code (e.g. "CZ", "DE", "US")
-    country = models.CharField(max_length=2)
+    # ISO 3166-1 alpha-2 country code; validated via django-countries
+    country = CountryField()
     company = models.CharField(max_length=255, blank=True)
     vat_id = models.CharField(max_length=64, blank=True)
 

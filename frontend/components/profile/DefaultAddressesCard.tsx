@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { updateProfile } from "@/lib/api/profile";
 import type { AddressDto, ProfileDto } from "@/lib/api/profile";
+import { getCountryName } from "@/components/ui/country-picker";
 
 type Props = {
   profile: ProfileDto;
@@ -84,7 +85,8 @@ export function DefaultAddressesCard({ profile, addresses }: Props) {
             <option value="">— none —</option>
             {addresses.map((a) => (
               <option key={a.id} value={a.id.toString()}>
-                {a.first_name} {a.last_name} – {a.street_line_1}, {a.city}
+                {a.first_name} {a.last_name} – {a.street_line_1}, {a.city},{" "}
+                {getCountryName(a.country)}
               </option>
             ))}
           </select>
@@ -102,7 +104,8 @@ export function DefaultAddressesCard({ profile, addresses }: Props) {
             <option value="">— none —</option>
             {addresses.map((a) => (
               <option key={a.id} value={a.id.toString()}>
-                {a.first_name} {a.last_name} – {a.street_line_1}, {a.city}
+                {a.first_name} {a.last_name} – {a.street_line_1}, {a.city},{" "}
+                {getCountryName(a.country)}
               </option>
             ))}
           </select>

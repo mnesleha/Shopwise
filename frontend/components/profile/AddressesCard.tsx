@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { deleteAddress } from "@/lib/api/profile";
 import type { AddressDto } from "@/lib/api/profile";
+import { getCountryName } from "@/components/ui/country-picker";
 import { AddressDialog } from "./AddressDialog";
 
 type Props = {
@@ -100,7 +101,7 @@ export function AddressesCard({ addresses }: Props) {
                     <p>
                       {addr.postal_code} {addr.city}
                     </p>
-                    <p className="uppercase">{addr.country}</p>
+                    <p>{getCountryName(addr.country)}</p>
                   </div>
                   <div className="flex gap-1 shrink-0">
                     <Button
