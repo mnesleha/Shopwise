@@ -10,7 +10,8 @@ import { useCart } from "@/components/cart/CartProvider";
 
 export default function HeaderAuthClient() {
   const router = useRouter();
-  const { isAuthenticated, email, firstName, lastName, setAnonymous } = useAuth();
+  const { isAuthenticated, email, firstName, lastName, setAnonymous } =
+    useAuth();
   const { refreshCart } = useCart();
 
   const onLogout = async () => {

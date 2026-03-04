@@ -66,7 +66,14 @@ export function AuthProvider({
   }, [refresh, setAnonymous]);
 
   const value = useMemo(
-    () => ({ isAuthenticated, email, firstName, lastName, refresh, setAnonymous }),
+    () => ({
+      isAuthenticated,
+      email,
+      firstName,
+      lastName,
+      refresh,
+      setAnonymous,
+    }),
     [isAuthenticated, email, firstName, lastName, refresh, setAnonymous],
   );
 

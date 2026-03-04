@@ -105,10 +105,7 @@ export function AccountTab({ account, emailVerified }: Props) {
         <CardContent className="space-y-4">
           <div className="space-y-1">
             <Label>Login email</Label>
-            <p
-              className="text-sm font-medium"
-              data-testid="account-email"
-            >
+            <p className="text-sm font-medium" data-testid="account-email">
               {account.email}
             </p>
           </div>
@@ -130,9 +127,7 @@ export function AccountTab({ account, emailVerified }: Props) {
             )}
           </div>
 
-          {!emailVerified && (
-            <ResendVerificationButton email={account.email} />
-          )}
+          {!emailVerified && <ResendVerificationButton email={account.email} />}
 
           {/* Change email — placeholder; not yet implemented */}
           <div className="pt-2 border-t space-y-1">

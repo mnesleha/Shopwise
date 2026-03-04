@@ -92,7 +92,10 @@ describe("AccountTab", () => {
       first_name: "Bob",
       last_name: "Jones",
     });
-    mockRefreshAuth.mockResolvedValueOnce({ isAuthenticated: true, email: "user@example.com" });
+    mockRefreshAuth.mockResolvedValueOnce({
+      isAuthenticated: true,
+      email: "user@example.com",
+    });
 
     renderWithProviders(
       <AccountTab account={makeAccount()} emailVerified={true} />,

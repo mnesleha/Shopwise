@@ -28,7 +28,9 @@ export default async function ProfilePage() {
 
   return (
     <ProfilePageClient
-      account={account ?? { email: me?.email ?? "", first_name: "", last_name: "" }}
+      account={
+        account ?? { email: me?.email ?? "", first_name: "", last_name: "" }
+      }
       emailVerified={me?.email_verified ?? false}
       profile={profile}
       addresses={addresses}
