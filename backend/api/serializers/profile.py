@@ -36,17 +36,21 @@ class AddressSerializer(serializers.ModelSerializer):
 class CustomerProfileSerializer(serializers.ModelSerializer):
     """
     Serializer for CustomerProfile.
-    Exposes only the id and the nullable default-address FK IDs.
-    Validates that chosen default addresses belong to the authenticated user's profile.
+
+    Exposes: id, default_shipping_address (FK id), default_billing_address (FK id).
+
+    Ownership validation is done via field-level validators that consult
+    ``context["request"].user``; no DB queries happen in ``__init__``.
     """
 
+    # Accept any Address PK; ownership is enforced in the field validators below.
     default_shipping_address = serializers.PrimaryKeyRelatedField(
-        queryset=Address.objects.none(),  # overridden in __init__
+        queryset=Address.objects.all(),
         allow_null=True,
         required=False,
     )
     default_billing_address = serializers.PrimaryKeyRelatedField(
-        queryset=Address.objects.none(),  # overridden in __init__
+        queryset=Address.objects.all(),
         allow_null=True,
         required=False,
     )
@@ -60,12 +64,44 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id"]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    # ------------------------------------------------------------------
+    # Ownership validators
+    # ------------------------------------------------------------------
+
+    def _assert_address_belongs_to_user(
+        self, address: Address, field_name: str
+    ) -> None:
+        """
+        Raise ValidationError if *address* does not belong to the authenticated
+        user's saved CustomerProfile.
+
+        Uses request.user rather than the serializer instance so that the check
+        is independent of whether the profile object was saved at the time the
+        serializer was constructed.
+        """
         request = self.context.get("request")
-        if request and request.user and request.user.is_authenticated:
-            profile = getattr(request.user, "customer_profile", None)
-            if profile is not None:
-                own_qs = Address.objects.filter(profile=profile)
-                self.fields["default_shipping_address"].queryset = own_qs
-                self.fields["default_billing_address"].queryset = own_qs
+        if address is None or request is None:
+            return
+
+        try:
+            profile = CustomerProfile.objects.get(user=request.user)
+        except CustomerProfile.DoesNotExist:
+            # User has no profile yet → they cannot own any address.
+            raise serializers.ValidationError(
+                {field_name: "This address does not belong to your profile."}
+            )
+
+        if address.profile_id != profile.pk:
+            raise serializers.ValidationError(
+                {field_name: "This address does not belong to your profile."}
+            )
+
+    def validate_default_shipping_address(self, value: Address | None) -> Address | None:
+        if value is not None:
+            self._assert_address_belongs_to_user(value, "default_shipping_address")
+        return value
+
+    def validate_default_billing_address(self, value: Address | None) -> Address | None:
+        if value is not None:
+            self._assert_address_belongs_to_user(value, "default_billing_address")
+        return value
