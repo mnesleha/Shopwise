@@ -37,6 +37,34 @@ export default function ProfilePageClient({
   // Show a one-time toast when the user is redirected here after cancelling
   // an email change via the security notification link (ADR-035).
   const searchParams = useSearchParams();
+
+  const VALID_TABS = ["account", "addresses"] as const;
+  type Tab = (typeof VALID_TABS)[number];
+  const rawTab = searchParams.get("tab");
+  const initialTab: Tab = VALID_TABS.includes(rawTab as Tab)
+    ? (rawTab as Tab)
+    : "account";
+
+  const [activeTab, setActiveTab] = React.useState<Tab>(initialTab);
+
+  const handleTabChange = (value: string) => {
+    const tab = value as Tab;
+    setActiveTab(tab);
+    // Update URL without triggering a Next.js navigation (no server round-trip).
+    const params = new URLSearchParams(window.location.search);
+    if (tab === "account") {
+      params.delete("tab");
+    } else {
+      params.set("tab", tab);
+    }
+    const qs = params.toString();
+    window.history.replaceState(
+      null,
+      "",
+      qs ? `?${qs}` : window.location.pathname,
+    );
+  };
+
   const cancelToastShown = React.useRef(false);
   React.useEffect(() => {
     if (
@@ -55,7 +83,7 @@ export default function ProfilePageClient({
     >
       <h1 className="text-2xl font-semibold">My Profile</h1>
 
-      <Tabs defaultValue="account">
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="mb-4">
           <TabsTrigger value="account">Account</TabsTrigger>
           <TabsTrigger value="addresses">Addresses</TabsTrigger>
