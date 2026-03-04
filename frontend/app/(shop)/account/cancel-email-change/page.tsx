@@ -45,7 +45,11 @@ export default async function CancelEmailChangePage({ searchParams }: Props) {
     );
 
     if (!res.ok) {
-      let body: { message?: string; detail?: string; errors?: Record<string, string[]> } = {};
+      let body: {
+        message?: string;
+        detail?: string;
+        errors?: Record<string, string[]>;
+      } = {};
       try {
         body = await res.json();
       } catch {

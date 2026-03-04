@@ -41,7 +41,11 @@ export default async function ConfirmEmailChangePage({ searchParams }: Props) {
     );
 
     if (!res.ok) {
-      let body: { message?: string; detail?: string; errors?: Record<string, string[]> } = {};
+      let body: {
+        message?: string;
+        detail?: string;
+        errors?: Record<string, string[]>;
+      } = {};
       try {
         body = await res.json();
       } catch {
@@ -49,8 +53,7 @@ export default async function ConfirmEmailChangePage({ searchParams }: Props) {
       }
       errorMessage =
         body.message ||
-        (body.errors &&
-          Object.values(body.errors).flat().join(" ")) ||
+        (body.errors && Object.values(body.errors).flat().join(" ")) ||
         body.detail ||
         `Request failed (${res.status}).`;
     }

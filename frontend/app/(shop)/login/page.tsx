@@ -33,9 +33,7 @@ export default function LoginPage() {
       !emailChangedToastShown.current
     ) {
       emailChangedToastShown.current = true;
-      toast.success(
-        "Email changed. Please log in again with your new email.",
-      );
+      toast.success("Email changed. Please log in again with your new email.");
     }
   }, [searchParams]);
 
