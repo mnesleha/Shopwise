@@ -12,6 +12,8 @@ import { getCart } from "@/lib/api/cart";
 type CartState = {
   count: number;
   refreshCart: () => Promise<void>;
+  /** Zero the badge synchronously without an API call (e.g. after logout/password-change). */
+  resetCount: () => void;
 };
 
 const CartContext = createContext<CartState | null>(null);
@@ -35,7 +37,12 @@ export function CartProvider({
     }
   }, []);
 
-  const value = useMemo(() => ({ count, refreshCart }), [count, refreshCart]);
+  const resetCount = useCallback(() => setCount(0), []);
+
+  const value = useMemo(
+    () => ({ count, refreshCart, resetCount }),
+    [count, refreshCart, resetCount],
+  );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

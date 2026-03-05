@@ -12,6 +12,7 @@ from notifications.renderers import (
     render_email_change_confirm,
     render_email_verification,
     render_guest_order_link,
+    render_password_change_notification,
 )
 from notifications.exceptions import NotificationSendError
 from notifications.error_handler import NotificationErrorHandler
@@ -145,6 +146,34 @@ def send_guest_order_link(
                     "order_number": order_number,
                     "guest_order_url": guest_order_url,
                 },
+            )
+        )
+        return
+
+
+def send_password_change_notification(*, recipient_email: str) -> None:
+    """
+    Send a security notification after a successful password change.
+
+    Best-effort semantics:
+    - Failures MUST NOT propagate.
+    - Errors are delegated to NotificationErrorHandler.
+    """
+    try:
+        subject, body = render_password_change_notification(
+            recipient_email=recipient_email,
+        )
+        EmailService.send_plain_text(
+            to_email=recipient_email,
+            subject=subject,
+            body=body,
+        )
+    except Exception:
+        NotificationErrorHandler.handle(
+            NotificationSendError(
+                code="PASSWORD_CHANGE_NOTIFY_SEND_FAILED",
+                message="Failed to send password-change security notification.",
+                context={"recipient_email": recipient_email},
             )
         )
         return

@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 
 from api.serializers.account import AccountSerializer
 from api.serializers.change_email import ChangeEmailSerializer
+from api.serializers.change_password import ChangePasswordSerializer
 from api.serializers.common import ErrorResponseSerializer
 from api.services.rate_limit import rate_limit_hit
 from accounts.services.email_change import (
@@ -16,6 +17,7 @@ from accounts.services.email_change import (
     request_email_change,
 )
 from accounts.services.session import logout_all_devices
+from notifications.jobs import send_password_change_notification
 
 
 @extend_schema(tags=["Account"])
@@ -303,6 +305,76 @@ class LogoutAllView(APIView):
         logout_all_devices(request.user)
 
         # Clear cookies on the current device as well.
+        access_cookie = getattr(settings, "AUTH_COOKIE_ACCESS", "access_token")
+        refresh_cookie = getattr(settings, "AUTH_COOKIE_REFRESH", "refresh_token")
+        cookie_path = getattr(settings, "AUTH_COOKIE_PATH", "/")
+
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        response.delete_cookie(access_cookie, path=cookie_path)
+        response.delete_cookie(refresh_cookie, path=cookie_path)
+        return response
+
+
+@extend_schema(tags=["Account"])
+class ChangePasswordView(APIView):
+    """
+    Change the authenticated user's password.
+
+    Validates the current password, applies the change, and revokes all
+    active sessions (token_version++) so existing refresh tokens become
+    immediately invalid.  The current device's auth cookies are also cleared.
+
+    A best-effort security notification is sent to the account email address.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Change account password",
+        description=(
+            "Changes the authenticated user's password.  "
+            "Requires the current password for verification.  "
+            "On success all active sessions are revoked (logout-all) and the "
+            "caller must re-authenticate with the new credentials.  "
+            "A security notification is sent to the account email (best-effort)."
+        ),
+        request=ChangePasswordSerializer,
+        responses={
+            204: OpenApiResponse(description="Password changed and all sessions revoked."),
+            400: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description=(
+                    "Validation error: incorrect current password, "
+                    "confirmation mismatch, or weak new password."
+                ),
+            ),
+            401: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Authentication credentials were not provided or are invalid.",
+            ),
+        },
+    )
+    def post(self, request):
+        serializer = ChangePasswordSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        new_password = serializer.validated_data["new_password"]
+
+        # Apply the new password.
+        user.set_password(new_password)
+        user.save(update_fields=["password"])
+
+        # Revoke all sessions — increments token_version so any outstanding
+        # refresh token is rejected on its next use.
+        logout_all_devices(user)
+
+        # Send security notification (best-effort — never blocks the response).
+        send_password_change_notification(recipient_email=user.email)
+
+        # Clear cookies on the current device so the browser is also signed out.
         access_cookie = getattr(settings, "AUTH_COOKIE_ACCESS", "access_token")
         refresh_cookie = getattr(settings, "AUTH_COOKIE_REFRESH", "refresh_token")
         cookie_path = getattr(settings, "AUTH_COOKIE_PATH", "/")

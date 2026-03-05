@@ -76,6 +76,26 @@ export async function requestEmailChange(
   await api.post("/account/change-email/", payload);
 }
 
+// ── Password ───────────────────────────────────────────────────────────────────
+
+/** Payload for POST /api/v1/account/change-password/ */
+export type ChangePasswordPayload = {
+  current_password: string;
+  new_password: string;
+  new_password_confirm: string;
+};
+
+/**
+ * Change the authenticated user's password.
+ * On 204 success the server has revoked all sessions (token_version++).
+ * Throws on validation or auth errors.
+ */
+export async function changePassword(
+  payload: ChangePasswordPayload,
+): Promise<void> {
+  await api.post("/account/change-password/", payload);
+}
+
 // ── Addresses ─────────────────────────────────────────────────────────────────
 
 export async function listAddresses(): Promise<AddressDto[]> {

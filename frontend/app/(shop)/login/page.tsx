@@ -37,6 +37,19 @@ export default function LoginPage() {
     }
   }, [searchParams]);
 
+  // Show a one-time toast when the user is redirected here after a successful
+  // password change. The guard prevents duplicate toasts on re-renders.
+  const passwordChangedToastShown = useRef(false);
+  useEffect(() => {
+    if (
+      searchParams.get("passwordChanged") === "1" &&
+      !passwordChangedToastShown.current
+    ) {
+      passwordChangedToastShown.current = true;
+      toast.success("Password changed. Please log in again.");
+    }
+  }, [searchParams]);
+
   const onSubmit = async (values: { email: string; password: string }) => {
     setIsSubmitting(true);
     setErrorMessage(undefined);
@@ -54,8 +67,11 @@ export default function LoginPage() {
       // Preferred: use structured merge report if available
       if (resp?.cart_merge?.performed) {
         toast.success("Your guest cart was merged into your account.");
-      } else if (hadGuestCart) {
-        // Fallback until backend implements merge report
+      } else if (hadGuestCart && !searchParams.get("passwordChanged") && !searchParams.get("emailChanged")) {
+        // Fallback toast when backend does not yet return a merge report.
+        // Suppressed for post-auth redirects (passwordChanged / emailChanged)
+        // because CartProvider still holds the stale account-cart count at
+        // that point — it is NOT a genuine guest cart.
         toast.success("Your guest cart was merged into your account.");
       }
 

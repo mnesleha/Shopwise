@@ -14,6 +14,7 @@ import type { AccountDto } from "@/lib/api/profile";
 import ResendVerificationButton from "@/components/auth/ResendVerificationButton";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ChangeEmailDialog } from "@/components/profile/ChangeEmailDialog";
+import { ChangePasswordDialog } from "@/components/profile/ChangePasswordDialog";
 
 type Props = {
   account: AccountDto;
@@ -28,6 +29,7 @@ export function AccountTab({ account, emailVerified }: Props) {
   const [lastName, setLastName] = React.useState(account.last_name);
   const [saving, setSaving] = React.useState(false);
   const [changeEmailOpen, setChangeEmailOpen] = React.useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = React.useState(false);
 
   // Keep local state in sync when server data changes (e.g. after router.refresh)
   React.useEffect(() => {
@@ -151,16 +153,28 @@ export function AccountTab({ account, emailVerified }: Props) {
         onOpenChange={setChangeEmailOpen}
       />
 
-      {/* Change password — placeholder; not yet implemented */}
+      {/* Change password */}
       <Card>
         <CardHeader>
           <CardTitle>Password</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-1">
-          <p className="text-sm font-medium">Change password</p>
-          <p className="text-xs text-muted-foreground">Coming soon.</p>
+        <CardContent>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setChangePasswordOpen(true)}
+            data-testid="open-change-password-btn"
+          >
+            Change password
+          </Button>
         </CardContent>
       </Card>
+
+      <ChangePasswordDialog
+        open={changePasswordOpen}
+        onOpenChange={setChangePasswordOpen}
+      />
     </div>
   );
 }

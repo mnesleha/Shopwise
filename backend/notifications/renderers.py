@@ -75,3 +75,21 @@ def render_email_change_cancel_notification(
         "This cancel link expires in 60 minutes.\n"
     )
     return subject, body
+
+
+def render_password_change_notification(*, recipient_email: str) -> tuple[str, str]:
+    """
+    Render subject/body for a security notification sent after a password change.
+
+    Sent to the account email to alert the user of the change.
+    No action URL is needed — the change is already applied.
+    """
+    subject = "Security notice: your password was changed"
+    body = (
+        f"Hi {recipient_email},\n\n"
+        "Your account password was just changed.\n"
+        "If this was you, no action is needed.\n\n"
+        "If you did NOT make this change, please contact support immediately\n"
+        "and consider resetting your password.\n"
+    )
+    return subject, body
