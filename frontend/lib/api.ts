@@ -39,7 +39,9 @@ api.interceptors.response.use(
     // (logout-all / email change). The refresh token is also revoked, so
     // attempting to refresh is pointless and just delays the redirect.
     // Redirect to /login immediately without retrying.
-    const responseBody = error.response?.data as Record<string, unknown> | undefined;
+    const responseBody = error.response?.data as
+      | Record<string, unknown>
+      | undefined;
     if (responseBody?.code === "SESSION_REVOKED") {
       if (typeof window !== "undefined") window.location.assign("/login");
       throw error;
