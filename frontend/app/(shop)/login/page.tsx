@@ -67,7 +67,11 @@ export default function LoginPage() {
       // Preferred: use structured merge report if available
       if (resp?.cart_merge?.performed) {
         toast.success("Your guest cart was merged into your account.");
-      } else if (hadGuestCart && !searchParams.get("passwordChanged") && !searchParams.get("emailChanged")) {
+      } else if (
+        hadGuestCart &&
+        !searchParams.get("passwordChanged") &&
+        !searchParams.get("emailChanged")
+      ) {
         // Fallback toast when backend does not yet return a merge report.
         // Suppressed for post-auth redirects (passwordChanged / emailChanged)
         // because CartProvider still holds the stale account-cart count at

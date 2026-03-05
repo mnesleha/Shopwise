@@ -214,9 +214,7 @@ export function ChangePasswordDialog({ open, onOpenChange }: Props) {
                 className="pr-10"
                 data-testid="input-new-password"
                 aria-describedby={
-                  fieldErrors.new_password
-                    ? "cp-new-password-error"
-                    : undefined
+                  fieldErrors.new_password ? "cp-new-password-error" : undefined
                 }
               />
               <button
