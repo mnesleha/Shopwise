@@ -35,12 +35,23 @@ api.interceptors.response.use(
 
     if (!original || status !== 401 || original._retry) throw error;
 
+    // SESSION_REVOKED means the server explicitly invalidated this session
+    // (logout-all / email change). The refresh token is also revoked, so
+    // attempting to refresh is pointless and just delays the redirect.
+    // Redirect to /login immediately without retrying.
+    const responseBody = error.response?.data as Record<string, unknown> | undefined;
+    if (responseBody?.code === "SESSION_REVOKED") {
+      if (typeof window !== "undefined") window.location.assign("/login");
+      throw error;
+    }
+
     const url = original.url ?? "";
     if (
       url.includes("/auth/me/") ||
       url.includes("/auth/login/") ||
       url.includes("/auth/refresh/") ||
-      url.includes("/auth/logout/")
+      url.includes("/auth/logout/") ||
+      url.includes("/account/logout-all/")
     ) {
       throw error;
     }

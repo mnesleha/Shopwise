@@ -65,6 +65,9 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=150, unique=True, blank=True)
     email_verified = models.BooleanField(default=False, db_index=True)
+    # Incremented on logout-all / email change to invalidate all outstanding
+    # refresh tokens that carry a stale tv (token_version) claim.
+    token_version = models.PositiveIntegerField(default=1)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

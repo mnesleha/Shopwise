@@ -1,23 +1,31 @@
 "use client";
 
 import * as React from "react";
+import { flushSync } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { logout } from "@/lib/api/auth";
 import { ClipboardList, UserCircle } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { useCart } from "@/components/cart/CartProvider";
 
 export default function HeaderAuthClient() {
   const router = useRouter();
   const { isAuthenticated, email, firstName, lastName, setAnonymous } =
     useAuth();
-  const { refreshCart } = useCart();
 
   const onLogout = async () => {
     await logout();
-    setAnonymous();
-    await refreshCart(); // re-fetch anonymous (empty) cart — resets badge to 0
+    // flushSync forces React to synchronously commit the state update to the DOM
+    // before router.push starts its navigation transition. Without this, React 18
+    // batches the setState calls and defers them into the concurrent transition,
+    // which means on slow mobile connections the header visibly stays authenticated
+    // for the entire duration of the navigation (until the new page settles).
+    flushSync(() => setAnonymous());
+    // Do NOT call refreshCart() here: it fires an authenticated request which
+    // gets 401 after logout, triggers the interceptor retry → window.location.assign
+    // which conflicts with router.push on slow mobile connections.
+    // The ShopLayout SSR re-fetches the cart on the next navigation and
+    // reinitialises CartProvider with count=0 automatically.
     router.push("/products");
   };
 

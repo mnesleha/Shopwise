@@ -7,13 +7,27 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.exceptions import ValidationError, APIException
+from rest_framework.exceptions import AuthenticationFailed, ValidationError, APIException
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 
 from drf_spectacular.utils import extend_schema, OpenApiExample
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from config.settings.base import auth_cookie_kwargs
+from accounts.services.session import issue_refresh_token
+
+
+class SessionRevoked(APIException):
+    """
+    Raised when a refresh token's tv (token_version) claim is stale.
+
+    Extends APIException directly (not AuthenticationFailed) so that DRF does
+    not silently convert the 401 to 403 when authentication_classes = [].
+    """
+
+    status_code = 401
+    default_detail = "Session has been revoked. Please log in again."
+    default_code = "SESSION_REVOKED"
 from carts.services.merge import merge_or_adopt_guest_cart
 from carts.services.resolver import extract_cart_token
 from accounts.services.email_verification import (
@@ -120,7 +134,8 @@ class RegisterView(APIView):
 
         # Issue JWT tokens and set auth cookies — same as LoginView so the
         # client is immediately authenticated without a second round-trip.
-        refresh_token = RefreshToken.for_user(user)
+        # tv claim embeds token_version for server-side revocation support.
+        refresh_token = issue_refresh_token(user)
         access_str = str(refresh_token.access_token)
         refresh_str = str(refresh_token)
 
@@ -174,7 +189,8 @@ class LoginView(APIView):
         if user is None:
             raise InvalidCredentials()
 
-        refresh = RefreshToken.for_user(user)
+        # tv claim embeds token_version for server-side revocation support.
+        refresh = issue_refresh_token(user)
 
         cart_token = extract_cart_token(request)
         merge_or_adopt_guest_cart(user=user, raw_token=cart_token)
@@ -243,6 +259,39 @@ class MeView(APIView):
         return Response({"is_authenticated": False, "email_verified": False}, status=200)
 
 
+def _check_token_version(refresh_str: str) -> None:
+    """
+    Decode the refresh token and validate the tv (token_version) claim.
+
+    Raises AuthenticationFailed (HTTP 401) if the claim is stale — meaning
+    the user has called logout-all or changed their email since the token
+    was issued.
+
+    If the token cannot be decoded (invalid / expired / blacklisted) this
+    function returns silently — TokenRefreshSerializer will handle the error
+    with the correct response shape.
+
+    Tokens issued before tv support (no tv claim) are allowed through to
+    preserve backward compatibility during a rolling deploy.
+    """
+    try:
+        token_obj = RefreshToken(refresh_str)
+        tv_claim = token_obj.get("tv")
+        if tv_claim is None:
+            # Legacy token without tv claim — allow for backward compatibility.
+            return
+        user_id = token_obj.get("user_id")
+        user = User.objects.filter(pk=user_id).first()
+        if user is None or user.token_version != tv_claim:
+            raise SessionRevoked()
+    except SessionRevoked:
+        raise
+    except Exception:
+        # Token is structurally invalid, expired, or blacklisted.
+        # Let TokenRefreshSerializer produce the proper error shape.
+        return
+
+
 class RefreshView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -261,10 +310,15 @@ class RefreshView(APIView):
 
         # Fallback to body for backwards compatibility (optional)
         if not refresh_str:
-          refresh_str = request.data.get("refresh")
+            refresh_str = request.data.get("refresh")
 
         if not refresh_str:
             raise ValidationError({"refresh": ["Missing refresh token."]})
+
+        # Validate token_version claim BEFORE standard refresh validation.
+        # This rejects sessions revoked via logout-all even if the token is
+        # otherwise cryptographically valid.
+        _check_token_version(refresh_str)
 
         try:
             refresh_serializer = TokenRefreshSerializer(data={"refresh": refresh_str})
@@ -282,6 +336,10 @@ class RefreshView(APIView):
                 resp.set_cookie(refresh_cookie_name, data["refresh"], **auth_cookie_kwargs())
 
             return resp
+        except SessionRevoked:
+            raise  # already 401 — do not swallow
+        except AuthenticationFailed:
+            raise  # already 401 — do not swallow
         except Exception:
             raise ValidationError({"refresh": ["Invalid or expired refresh token."]})
 

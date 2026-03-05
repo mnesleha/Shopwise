@@ -15,6 +15,7 @@ from accounts.services.email_change import (
     confirm_email_change,
     request_email_change,
 )
+from accounts.services.session import logout_all_devices
 
 
 @extend_schema(tags=["Account"])
@@ -261,3 +262,52 @@ class CancelEmailChangeView(APIView):
         raw_token = request.query_params.get("token", "")
         cancel_email_change(raw_token)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["Account"])
+class LogoutAllView(APIView):
+    """
+    Revoke all active sessions for the authenticated user.
+
+    Increments token_version on the user record so that every previously
+    issued refresh token is rejected on its next use.  The current device's
+    auth cookies are also cleared as a convenience.
+
+    Typical callers:
+    - "Log out of all devices" UI action.
+    - Automated revocation after a security-sensitive change (email change,
+      password change, suspicious activity detection).
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Log out from all devices",
+        description=(
+            "Increments the user's token_version, immediately invalidating every "
+            "outstanding refresh token.  Auth cookies for the current request are "
+            "also deleted.  Access tokens already in flight remain valid until "
+            "their natural expiry (typically 30 minutes).\n\n"
+            "Use this endpoint after a password or email change, or to force "
+            "global session revocation on suspected account compromise."
+        ),
+        responses={
+            204: OpenApiResponse(description="All sessions revoked successfully."),
+            401: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Authentication credentials were not provided or are invalid.",
+            ),
+        },
+    )
+    def post(self, request):
+        logout_all_devices(request.user)
+
+        # Clear cookies on the current device as well.
+        access_cookie = getattr(settings, "AUTH_COOKIE_ACCESS", "access_token")
+        refresh_cookie = getattr(settings, "AUTH_COOKIE_REFRESH", "refresh_token")
+        cookie_path = getattr(settings, "AUTH_COOKIE_PATH", "/")
+
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        response.delete_cookie(access_cookie, path=cookie_path)
+        response.delete_cookie(refresh_cookie, path=cookie_path)
+        return response

@@ -100,6 +100,7 @@ Q_CLUSTER = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://192.168.1.106:3000",  # local network access for mobile testing
 ]
 
 CORS_ALLOW_CREDENTIALS = True

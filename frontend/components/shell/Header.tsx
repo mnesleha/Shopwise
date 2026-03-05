@@ -6,7 +6,9 @@ import { CartBadgeClient } from "@/components/shell/CartBadgeClient";
 
 export default function Header() {
   return (
-    <header className="border-b">
+    // relative + z-50 keeps the header above the CategorySidebar backdrop (z-40)
+    // so nav actions (logout, cart, etc.) remain tappable when the sidebar is open.
+    <header className="relative z-50 border-b">
       <div className="mx-auto w-full max-w-6xl px-4 py-4 flex items-center justify-between gap-6">
         <div className="flex items-center gap-3">
           <HeaderLeftSlotClient />

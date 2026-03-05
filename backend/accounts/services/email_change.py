@@ -21,6 +21,7 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from accounts.models import EMAIL_CHANGE_EXPIRY_MINUTES, EmailChangeRequest
+from accounts.services.session import logout_all_devices
 from auditlog.services import AuditService
 from notifications.enqueue import enqueue_best_effort
 
@@ -256,7 +257,12 @@ def confirm_email_change(raw_token: str) -> EmailChangeRequest:
     ecr.confirmed_at = now
     ecr.save(update_fields=["confirmed_at"])
 
-    # Logout-all: blacklist all outstanding JWT tokens (best-effort).
+    # Logout-all: increment token_version to invalidate all outstanding refresh
+    # tokens via the tv claim check in RefreshView.
+    logout_all_devices(user)
+
+    # Belt-and-suspenders: also blacklist all outstanding JWT tokens in the
+    # simplejwt blacklist table (best-effort).
     _blacklist_all_user_tokens(user)
 
     # Best-effort audit
