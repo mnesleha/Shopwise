@@ -46,7 +46,8 @@ def _create_address(*, profile, **overrides):
 
     data = {
         "profile": profile,
-        "full_name": "John Doe",
+        "first_name": "John",
+        "last_name": "Doe",
         "street_line_1": "Main Street 1",
         "street_line_2": "",
         "city": "Prague",

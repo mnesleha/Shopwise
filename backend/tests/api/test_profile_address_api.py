@@ -23,7 +23,8 @@ class TestProfileAndAddressAPI:
 
     def _create_address_payload(self, **overrides):
         data = {
-            "full_name": "John Doe",
+            "first_name": "John",
+            "last_name": "Doe",
             "street_line_1": "Main Street 1",
             "street_line_2": "",
             "city": "Prague",
@@ -83,7 +84,8 @@ class TestProfileAndAddressAPI:
         sample = resp.data[0]
         for field in [
             "id",
-            "full_name",
+            "first_name",
+            "last_name",
             "street_line_1",
             "street_line_2",
             "city",
