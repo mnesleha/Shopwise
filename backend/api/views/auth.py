@@ -68,6 +68,35 @@ class InvalidCredentials(APIException):
     default_code = "INVALID_CREDENTIALS"
 
 
+# ---------------------------------------------------------------------------
+# Rate-limit constants — main auth endpoints
+# Defaults are intentionally permissive; production values noted in comments.
+# All limits can be overridden via Django settings (config/settings/).
+# ---------------------------------------------------------------------------
+
+# POST /auth/register/ — per-IP (anti-spam registration)
+# Prod recommendation: 5/min per IP
+_REGISTER_RL_PER_IP = int(getattr(settings, "REGISTER_RL_PER_IP", 5))
+_REGISTER_RL_WINDOW_S = int(getattr(settings, "REGISTER_RL_WINDOW_S", 60))
+
+# POST /auth/login/ — per-IP + per-email (credential brute-force)
+# Prod recommendation: 10/min per IP; 5/10min per email
+_LOGIN_RL_PER_IP = int(getattr(settings, "LOGIN_RL_PER_IP", 10))
+_LOGIN_RL_WINDOW_S = int(getattr(settings, "LOGIN_RL_WINDOW_S", 60))
+_LOGIN_RL_PER_EMAIL = int(getattr(settings, "LOGIN_RL_PER_EMAIL", 5))
+_LOGIN_RL_PER_EMAIL_WINDOW_S = int(getattr(settings, "LOGIN_RL_PER_EMAIL_WINDOW_S", 600))
+
+# POST /auth/refresh/ — per-IP (token replay / infra protection)
+# Prod recommendation: 30/min per IP (refresh can be frequent under normal traffic)
+_REFRESH_RL_PER_IP = int(getattr(settings, "REFRESH_RL_PER_IP", 30))
+_REFRESH_RL_WINDOW_S = int(getattr(settings, "REFRESH_RL_WINDOW_S", 60))
+
+# POST /auth/logout/ — per-IP (mild DoS protection)
+# Prod recommendation: 30/min per IP
+_LOGOUT_RL_PER_IP = int(getattr(settings, "LOGOUT_RL_PER_IP", 30))
+_LOGOUT_RL_WINDOW_S = int(getattr(settings, "LOGOUT_RL_WINDOW_S", 60))
+
+
 class RegisterView(APIView):
     authentication_classes = []  # allow unauthenticated
     permission_classes = [AllowAny]
@@ -79,6 +108,23 @@ class RegisterView(APIView):
         responses={201: RegisterResponseSerializer},
     )
     def post(self, request):
+        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        ip = (
+            (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
+            or request.META.get("REMOTE_ADDR")
+            or "unknown"
+        )
+        if not _testing:
+            if rate_limit_hit(
+                key=f"rl:register:ip:{ip}",
+                limit=_REGISTER_RL_PER_IP,
+                window_s=_REGISTER_RL_WINDOW_S,
+            ):
+                return Response(
+                    {"detail": "Too many requests. Please try again later."},
+                    status=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
+
         serializer = RegisterRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -181,6 +227,30 @@ class LoginView(APIView):
         ],
     )
     def post(self, request):
+        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        ip = (
+            (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
+            or request.META.get("REMOTE_ADDR")
+            or "unknown"
+        )
+        if not _testing:
+            raw_email = (request.data.get("email") or "").strip().lower()
+            ip_limited = rate_limit_hit(
+                key=f"rl:login:ip:{ip}",
+                limit=_LOGIN_RL_PER_IP,
+                window_s=_LOGIN_RL_WINDOW_S,
+            )
+            email_limited = bool(raw_email) and rate_limit_hit(
+                key=f"rl:login:email:{raw_email}",
+                limit=_LOGIN_RL_PER_EMAIL,
+                window_s=_LOGIN_RL_PER_EMAIL_WINDOW_S,
+            )
+            if ip_limited or email_limited:
+                return Response(
+                    {"detail": "Too many requests. Please try again later."},
+                    status=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
+
         serializer = LoginRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -235,6 +305,23 @@ class LogoutView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        ip = (
+            (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
+            or request.META.get("REMOTE_ADDR")
+            or "unknown"
+        )
+        if not _testing:
+            if rate_limit_hit(
+                key=f"rl:logout:ip:{ip}",
+                limit=_LOGOUT_RL_PER_IP,
+                window_s=_LOGOUT_RL_WINDOW_S,
+            ):
+                return Response(
+                    {"detail": "Too many requests. Please try again later."},
+                    status=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
+
         resp = Response({"ok": True}, status=200)
 
         access_cookie_name = getattr(settings, "AUTH_COOKIE_ACCESS", "access_token")
@@ -318,6 +405,23 @@ class RefreshView(APIView):
 
         if not refresh_str:
             raise ValidationError({"refresh": ["Missing refresh token."]})
+
+        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        ip = (
+            (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
+            or request.META.get("REMOTE_ADDR")
+            or "unknown"
+        )
+        if not _testing:
+            if rate_limit_hit(
+                key=f"rl:refresh:ip:{ip}",
+                limit=_REFRESH_RL_PER_IP,
+                window_s=_REFRESH_RL_WINDOW_S,
+            ):
+                return Response(
+                    {"detail": "Too many requests. Please try again later."},
+                    status=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
 
         # Validate token_version claim BEFORE standard refresh validation.
         # This rejects sessions revoked via logout-all even if the token is

@@ -41,4 +41,34 @@ EMAIL_USE_SSL = False
 
 # Store raw email-change tokens in debug DB columns so test helpers can
 # retrieve them without intercepting outbound email (ADR-035).
+# Side effect: all view-level rate limiting that checks this flag is also
+# bypassed, so tests are never blocked by throttle limits.
 STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS = True
+
+# Rate-limit constants — high values as a belt-and-suspenders safety net in
+# case the STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS bypass is ever removed or the
+# check is missed in a new view.  These do NOT affect normal test runs because
+# the flag above already disables throttling for all guarded views.
+REGISTER_RL_PER_IP = 10000
+REGISTER_RL_WINDOW_S = 60
+LOGIN_RL_PER_IP = 10000
+LOGIN_RL_WINDOW_S = 60
+LOGIN_RL_PER_EMAIL = 10000
+LOGIN_RL_PER_EMAIL_WINDOW_S = 600
+REFRESH_RL_PER_IP = 10000
+REFRESH_RL_WINDOW_S = 60
+LOGOUT_RL_PER_IP = 10000
+LOGOUT_RL_WINDOW_S = 60
+PW_RESET_REQUEST_RL_PER_IP = 10000
+PW_RESET_REQUEST_RL_WINDOW_S = 3600
+PW_RESET_CONFIRM_RL_PER_IP = 10000
+PW_RESET_CONFIRM_RL_WINDOW_S = 3600
+CONFIRM_EMAIL_CHANGE_RL_PER_IP = 10000
+CONFIRM_EMAIL_CHANGE_RL_WINDOW_S = 60
+CANCEL_EMAIL_CHANGE_RL_PER_IP = 10000
+CANCEL_EMAIL_CHANGE_RL_WINDOW_S = 60
+LOGOUT_ALL_RL_PER_USER = 10000
+LOGOUT_ALL_RL_WINDOW_S = 60
+CHANGE_PASSWORD_RL_PER_USER = 10000
+CHANGE_PASSWORD_RL_PER_IP = 10000
+CHANGE_PASSWORD_RL_WINDOW_S = 600

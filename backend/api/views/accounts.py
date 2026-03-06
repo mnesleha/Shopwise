@@ -92,6 +92,27 @@ _CHANGE_EMAIL_RL_WINDOW_S = int(
     getattr(settings, "CHANGE_EMAIL_RL_WINDOW_S", 3600)
 )
 
+# GET /api/v1/account/confirm-email-change/ — per-IP (anti token guessing / DoS)
+# Prod recommendation: 30/min per IP
+_CONFIRM_EMAIL_CHANGE_RL_PER_IP = int(getattr(settings, "CONFIRM_EMAIL_CHANGE_RL_PER_IP", 30))
+_CONFIRM_EMAIL_CHANGE_RL_WINDOW_S = int(getattr(settings, "CONFIRM_EMAIL_CHANGE_RL_WINDOW_S", 60))
+
+# GET /api/v1/account/cancel-email-change/ — per-IP (anti token guessing / DoS)
+# Prod recommendation: 30/min per IP
+_CANCEL_EMAIL_CHANGE_RL_PER_IP = int(getattr(settings, "CANCEL_EMAIL_CHANGE_RL_PER_IP", 30))
+_CANCEL_EMAIL_CHANGE_RL_WINDOW_S = int(getattr(settings, "CANCEL_EMAIL_CHANGE_RL_WINDOW_S", 60))
+
+# POST /api/v1/account/logout-all/ — per-user (prevent token_version bump DoS)
+# Prod recommendation: 10/min per user
+_LOGOUT_ALL_RL_PER_USER = int(getattr(settings, "LOGOUT_ALL_RL_PER_USER", 10))
+_LOGOUT_ALL_RL_WINDOW_S = int(getattr(settings, "LOGOUT_ALL_RL_WINDOW_S", 60))
+
+# POST /api/v1/account/change-password/ — per-user + per-IP (brute-force current_password)
+# Prod recommendation: 5/10min per user; 10/10min per IP
+_CHANGE_PASSWORD_RL_PER_USER = int(getattr(settings, "CHANGE_PASSWORD_RL_PER_USER", 5))
+_CHANGE_PASSWORD_RL_PER_IP = int(getattr(settings, "CHANGE_PASSWORD_RL_PER_IP", 10))
+_CHANGE_PASSWORD_RL_WINDOW_S = int(getattr(settings, "CHANGE_PASSWORD_RL_WINDOW_S", 600))
+
 
 @extend_schema(tags=["Account"])
 class ChangeEmailView(APIView):
@@ -220,6 +241,23 @@ class ConfirmEmailChangeView(APIView):
         },
     )
     def get(self, request):
+        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        ip = (
+            (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
+            or request.META.get("REMOTE_ADDR")
+            or "unknown"
+        )
+        if not _testing:
+            if rate_limit_hit(
+                key=f"rl:confirm_email_change:ip:{ip}",
+                limit=_CONFIRM_EMAIL_CHANGE_RL_PER_IP,
+                window_s=_CONFIRM_EMAIL_CHANGE_RL_WINDOW_S,
+            ):
+                return Response(
+                    {"detail": "Too many requests. Please try again later."},
+                    status=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
+
         raw_token = request.query_params.get("token", "")
         confirm_email_change(raw_token)
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -261,6 +299,23 @@ class CancelEmailChangeView(APIView):
         },
     )
     def get(self, request):
+        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        ip = (
+            (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
+            or request.META.get("REMOTE_ADDR")
+            or "unknown"
+        )
+        if not _testing:
+            if rate_limit_hit(
+                key=f"rl:cancel_email_change:ip:{ip}",
+                limit=_CANCEL_EMAIL_CHANGE_RL_PER_IP,
+                window_s=_CANCEL_EMAIL_CHANGE_RL_WINDOW_S,
+            ):
+                return Response(
+                    {"detail": "Too many requests. Please try again later."},
+                    status=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
+
         raw_token = request.query_params.get("token", "")
         cancel_email_change(raw_token)
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -302,6 +357,18 @@ class LogoutAllView(APIView):
         },
     )
     def post(self, request):
+        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        if not _testing:
+            if rate_limit_hit(
+                key=f"rl:logout_all:user:{request.user.pk}",
+                limit=_LOGOUT_ALL_RL_PER_USER,
+                window_s=_LOGOUT_ALL_RL_WINDOW_S,
+            ):
+                return Response(
+                    {"detail": "Too many requests. Please try again later."},
+                    status=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
+
         logout_all_devices(request.user)
 
         # Clear cookies on the current device as well.
@@ -355,6 +422,29 @@ class ChangePasswordView(APIView):
         },
     )
     def post(self, request):
+        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        ip = (
+            (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
+            or request.META.get("REMOTE_ADDR")
+            or "unknown"
+        )
+        if not _testing:
+            user_limited = rate_limit_hit(
+                key=f"rl:change_password:user:{request.user.pk}",
+                limit=_CHANGE_PASSWORD_RL_PER_USER,
+                window_s=_CHANGE_PASSWORD_RL_WINDOW_S,
+            )
+            ip_limited = rate_limit_hit(
+                key=f"rl:change_password:ip:{ip}",
+                limit=_CHANGE_PASSWORD_RL_PER_IP,
+                window_s=_CHANGE_PASSWORD_RL_WINDOW_S,
+            )
+            if user_limited or ip_limited:
+                return Response(
+                    {"detail": "Too many requests. Please try again later."},
+                    status=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
+
         serializer = ChangePasswordSerializer(
             data=request.data, context={"request": request}
         )
