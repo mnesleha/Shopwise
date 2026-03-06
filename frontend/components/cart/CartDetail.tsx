@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 interface CartItem {
   productId: string;
@@ -50,6 +51,11 @@ interface Cart {
   total: string;
 }
 
+interface AdjustedEntry {
+  requested: number;
+  applied: number;
+}
+
 interface CartDetailProps {
   cart: Cart;
   onContinueShopping: () => void;
@@ -59,6 +65,8 @@ interface CartDetailProps {
   onClearCart: () => void;
   onCheckout: () => void;
   onApplyDiscountCode?: (code: string) => void;
+  /** Map from productId (string) to stock-adjustment data; shown as a badge on the item row. */
+  adjustedItems?: Map<string, AdjustedEntry>;
 }
 
 function CartItemRow({
@@ -68,6 +76,7 @@ function CartItemRow({
   onRemoveItem,
   onDecreaseQty,
   onIncreaseQty,
+  adjustedEntry,
   "data-testid": dataTestId,
 }: {
   item: CartItem;
@@ -76,6 +85,7 @@ function CartItemRow({
   onRemoveItem: (productId: string) => void;
   onDecreaseQty: (productId: string) => void;
   onIncreaseQty: (productId: string) => void;
+  adjustedEntry?: AdjustedEntry;
   "data-testid"?: string;
 }) {
   const canDecrease = item.quantity > 1;
@@ -83,7 +93,14 @@ function CartItemRow({
     item.stockQuantity === undefined || item.quantity < item.stockQuantity;
 
   return (
-    <Card data-testid={dataTestId} className="overflow-hidden">
+    // Highlight adjusted rows with an amber tint + left accent stripe — mirrors the banner colour.
+    <Card
+      data-testid={dataTestId}
+      className={cn(
+        "overflow-hidden",
+        adjustedEntry && "bg-amber-50/70 dark:bg-amber-950/20",
+      )}
+    >
       <CardContent className="p-4">
         <div className="flex gap-4">
           {/* Image */}
@@ -104,18 +121,29 @@ function CartItemRow({
           {/* Details */}
           <div className="flex flex-1 flex-col gap-1">
             <div className="flex items-start justify-between gap-2">
-              {item.productUrl ? (
-                <a
-                  href={item.productUrl}
-                  className="text-foreground font-medium hover:underline line-clamp-1"
-                >
-                  {item.productName}
-                </a>
-              ) : (
-                <span className="text-foreground font-medium line-clamp-1">
-                  {item.productName}
-                </span>
-              )}
+              <div className="flex flex-wrap items-center gap-2 min-w-0">
+                {item.productUrl ? (
+                  <a
+                    href={item.productUrl}
+                    className="text-foreground font-medium hover:underline line-clamp-1"
+                  >
+                    {item.productName}
+                  </a>
+                ) : (
+                  <span className="text-foreground font-medium line-clamp-1">
+                    {item.productName}
+                  </span>
+                )}
+                {/* Stock-adjustment badge — detail (requested→applied) is in the banner above */}
+                {adjustedEntry && (
+                  <Badge
+                    variant="secondary"
+                    data-testid="cart-item-adjusted-badge"
+                  >
+                    Updated
+                  </Badge>
+                )}
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
@@ -331,6 +359,7 @@ export function CartDetail({
   onClearCart,
   onCheckout,
   onApplyDiscountCode,
+  adjustedItems,
 }: CartDetailProps) {
   const [showClearConfirm, setShowClearConfirm] = React.useState(false);
 
@@ -428,6 +457,7 @@ export function CartDetail({
               onRemoveItem={onRemoveItem}
               onDecreaseQty={onDecreaseQty}
               onIncreaseQty={onIncreaseQty}
+              adjustedEntry={adjustedItems?.get(item.productId)}
             />
           ))}
         </div>

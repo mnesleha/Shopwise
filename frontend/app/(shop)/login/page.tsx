@@ -88,9 +88,26 @@ export default function LoginPage() {
         toast.success(mergeMsg);
       }
       if (mergeReport.warnings.length > 0) {
-        toast.warning(
+        // Persist warnings once so the cart page can highlight affected items.
+        sessionStorage.setItem(
+          "cartMergeWarnings",
+          JSON.stringify(mergeReport.warnings),
+        );
+        // Show sticky warning toast with a direct link to the cart page.
+        // Using a `let` variable so the onClick closure can dismiss by id.
+        let toastId: string | number;
+        toastId = toast.warning(
           "Some item quantities were adjusted due to stock availability.",
-          { duration: Infinity },
+          {
+            duration: Infinity,
+            action: {
+              label: "Review adjustments",
+              onClick: () => {
+                router.push("/cart?stockAdjusted=1");
+                toast.dismiss(toastId);
+              },
+            },
+          },
         );
       }
 

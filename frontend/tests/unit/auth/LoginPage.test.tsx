@@ -52,12 +52,14 @@ vi.mock("@/components/cart/CartProvider", () => ({
 
 const mockToastSuccess = vi.fn();
 const mockToastWarning = vi.fn();
+const mockToastDismiss = vi.fn();
 
 vi.mock("sonner", () => ({
   toast: {
     success: (...args: unknown[]) => mockToastSuccess(...args),
     warning: (...args: unknown[]) => mockToastWarning(...args),
     error: vi.fn(),
+    dismiss: (...args: unknown[]) => mockToastDismiss(...args),
   },
 }));
 
@@ -86,6 +88,7 @@ async function fillAndSubmit() {
 describe("LoginPage — post-login toasts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.clear();
     mockLogin.mockResolvedValue({ access: "tok" });
     mockRefresh.mockResolvedValue(undefined);
     mockRefreshCart.mockResolvedValue(undefined);
@@ -135,15 +138,16 @@ describe("LoginPage — post-login toasts", () => {
   });
 
   it("shows a sticky warning toast when STOCK_ADJUSTED warning is present", async () => {
+    const warnings = [
+      { code: "STOCK_ADJUSTED", product_id: 5, requested: 10, applied: 3 },
+    ];
     mockMergeCart.mockResolvedValue({
       performed: true,
       result: "MERGED",
       items_added: 0,
       items_updated: 1,
       items_removed: 0,
-      warnings: [
-        { code: "STOCK_ADJUSTED", product_id: 5, requested: 10, applied: 3 },
-      ],
+      warnings,
     });
 
     renderWithProviders(<LoginPage />);
@@ -152,10 +156,47 @@ describe("LoginPage — post-login toasts", () => {
     await waitFor(() => {
       expect(mockToastWarning).toHaveBeenCalledWith(
         "Some item quantities were adjusted due to stock availability.",
-        { duration: Infinity },
+        expect.objectContaining({
+          duration: Infinity,
+          action: expect.objectContaining({ label: "Review adjustments" }),
+        }),
       );
     });
     expect(mockToastWarning).toHaveBeenCalledTimes(1);
+  });
+
+  it("persists warnings to sessionStorage when STOCK_ADJUSTED is present", async () => {
+    const warnings = [
+      { code: "STOCK_ADJUSTED", product_id: 5, requested: 10, applied: 3 },
+    ];
+    mockMergeCart.mockResolvedValue({
+      performed: true,
+      result: "MERGED",
+      items_added: 0,
+      items_updated: 1,
+      items_removed: 0,
+      warnings,
+    });
+
+    renderWithProviders(<LoginPage />);
+    await fillAndSubmit();
+
+    await waitFor(() => {
+      expect(sessionStorage.getItem("cartMergeWarnings")).toBe(
+        JSON.stringify(warnings),
+      );
+    });
+  });
+
+  it("does not write to sessionStorage when there are no warnings", async () => {
+    // defaults: NOOP merge, 0 claimed_orders
+    renderWithProviders(<LoginPage />);
+    await fillAndSubmit();
+
+    await waitFor(() => {
+      expect(mockRouter.push).toHaveBeenCalledWith("/products");
+    });
+    expect(sessionStorage.getItem("cartMergeWarnings")).toBeNull();
   });
 
   it("shows a claimed-orders success toast when claimed_orders > 0", async () => {

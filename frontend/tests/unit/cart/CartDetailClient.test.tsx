@@ -29,7 +29,14 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/lib/api/cart", () => ({
   deleteCartItem: vi.fn().mockResolvedValue({}),
-  getCart: vi.fn().mockResolvedValue({ id: "cart-1", items: [], subtotal: "0.00", total: "0.00" }),
+  getCart: vi
+    .fn()
+    .mockResolvedValue({
+      id: "cart-1",
+      items: [],
+      subtotal: "0.00",
+      total: "0.00",
+    }),
   updateCartItemQuantity: vi.fn().mockResolvedValue({}),
 }));
 
@@ -48,14 +55,21 @@ vi.mock("@/lib/mappers/cart", async (importOriginal) => {
 
 // ── useAuth mock — controlled per test ───────────────────────────────────────
 
-const mockUseAuth = vi.fn((): { isAuthenticated: boolean; email: string | undefined } => ({
-  isAuthenticated: false,
-  email: undefined,
-}));
+const mockUseAuth = vi.fn(
+  (): { isAuthenticated: boolean; email: string | undefined } => ({
+    isAuthenticated: false,
+    email: undefined,
+  }),
+);
 
 vi.mock("@/components/auth/AuthProvider", () => ({
   useAuth: () => mockUseAuth(),
   AuthProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+vi.mock("@/components/cart/CartProvider", () => ({
+  useCart: () => ({ refreshCart: vi.fn(), count: 0, resetCount: vi.fn() }),
+  CartProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -73,7 +87,10 @@ describe("CartDetailClient", () => {
 
   describe("checkout routing based on auth state", () => {
     it("navigates to /checkout when authenticated user clicks checkout", async () => {
-      mockUseAuth.mockReturnValue({ isAuthenticated: true, email: "user@example.com" });
+      mockUseAuth.mockReturnValue({
+        isAuthenticated: true,
+        email: "user@example.com",
+      });
       const user = userEvent.setup();
       renderClient();
       await user.click(screen.getByTestId(CART_CHECKOUT_BUTTON));
@@ -94,7 +111,9 @@ describe("CartDetailClient", () => {
       mockUseAuth.mockReturnValue({ isAuthenticated: false, email: undefined });
       const user = userEvent.setup();
       renderClient();
-      await user.click(screen.getByRole("button", { name: /continue shopping/i }));
+      await user.click(
+        screen.getByRole("button", { name: /continue shopping/i }),
+      );
       expect(mockRouter.push).toHaveBeenCalledWith("/products");
     });
   });
