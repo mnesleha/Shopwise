@@ -100,13 +100,12 @@ def test_get_or_create_anonymous_cart_is_idempotent_for_same_token_hash(product)
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.mysql
-def test_login_merge_is_idempotent_token_reuse_does_not_duplicate_items():
+def test_merge_endpoint_is_idempotent_token_reuse_does_not_duplicate_items():
     """
-    MySQL-focused idempotency:
-    If the same guest token is used again after a successful login merge/adopt,
-    it must not merge again and must not duplicate quantities.
+    MySQL-focused idempotency for POST /cart/merge/:
+    Calling the endpoint twice with the same guest token must not duplicate
+    quantities — the second call must be a no-op.
     """
-    # Product with enough stock
     p = Product.objects.create(
         name="E2E_IDEMP", price=10, stock_quantity=100, is_active=True)
 
@@ -114,33 +113,38 @@ def test_login_merge_is_idempotent_token_reuse_does_not_duplicate_items():
     user = User.objects.create_user(
         email="idem@example.com", password="Passw0rd!123")
 
-    # user cart already has 2
+    # User cart already has 2 units.
     user_cart = Cart.objects.create(user=user, status=Cart.Status.ACTIVE)
     CartItem.objects.create(cart=user_cart, product=p,
                             quantity=2, price_at_add_time=p.price)
 
-    # guest cart adds 3
+    # Guest cart adds 3 units.
     guest = APIClient()
     add = guest.post("/api/v1/cart/items/",
                      {"product_id": p.id, "quantity": 3}, format="json")
     assert add.status_code == 201, add.content
     token = extract_cookie_token(add)
 
-    # first login -> merge should happen: 2 + 3 = 5
-    res1 = login(guest, user.email, "Passw0rd!123", cart_token=token)
-    assert res1.status_code == 200, res1.content
+    # Log in (no cart_token — login is now pure auth).
+    login_res = login(guest, user.email, "Passw0rd!123")
+    assert login_res.status_code == 200, login_res.content
+    access = login_res.json()["access"]
 
-    # check user cart quantity is 5
+    authed = APIClient()
+    authed.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
+
+    # First merge: 2 + 3 = 5.
+    r1 = authed.post("/api/v1/cart/merge/",
+                     **{http_header(CART_TOKEN_HEADER): token}, format="json")
+    assert r1.status_code == 204, r1.content
+
     item = CartItem.objects.get(cart=user_cart, product=p)
     assert item.quantity == 5
 
-    # second login attempt reusing the same token must NOT change quantity
-    guest2 = APIClient()
-    res2 = login(guest2, user.email, "Passw0rd!123", cart_token=token)
-    # acceptable behaviours:
-    # - 200 with no merge applied (idempotent no-op)
-    # - 401/404 because token is invalid
-    assert res2.status_code in (200, 401, 404), res2.content
+    # Second merge with the same (now-stale) token must be a no-op.
+    r2 = authed.post("/api/v1/cart/merge/",
+                     **{http_header(CART_TOKEN_HEADER): token}, format="json")
+    assert r2.status_code == 204, r2.content
 
     item.refresh_from_db()
     assert item.quantity == 5
@@ -148,34 +152,44 @@ def test_login_merge_is_idempotent_token_reuse_does_not_duplicate_items():
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.mysql
-def test_converted_cart_is_not_merge_target_on_login(product):
+def test_converted_cart_is_not_merge_target_on_cart_merge(product):
     """
-    MySQL suite: ensure merge/adopt targets ONLY ACTIVE cart.
-    If user has only CONVERTED carts, login should adopt guest cart into new ACTIVE cart
-    (or create new ACTIVE then merge) but must not merge into CONVERTED.
+    MySQL suite: POST /cart/merge/ must target ONLY ACTIVE carts.
+    If the user has only CONVERTED carts, the service must adopt the guest cart
+    into a new ACTIVE cart — never merge into a CONVERTED one.
     """
     User = get_user_model()
     user = User.objects.create_user(
         email="converted@example.com", password="Passw0rd!123")
 
-    # user has only CONVERTED cart
+    # User has only a CONVERTED cart — no ACTIVE cart.
     converted = Cart.objects.create(user=user, status=Cart.Status.CONVERTED)
 
-    # guest has an item
+    # Guest adds an item.
     guest = APIClient()
     add = guest.post("/api/v1/cart/items/",
                      {"product_id": product.id, "quantity": 2}, format="json")
     assert add.status_code == 201, add.content
     token = extract_cookie_token(add)
 
-    res = login(guest, user.email, "Passw0rd!123", cart_token=token)
-    assert res.status_code == 200, res.content
+    # Login (pure auth — no merge triggered).
+    login_res = login(guest, user.email, "Passw0rd!123")
+    assert login_res.status_code == 200, login_res.content
+    access = login_res.json()["access"]
 
-    # there should now be an ACTIVE cart for user
+    authed = APIClient()
+    authed.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
+
+    # Call /cart/merge/ — must not touch the CONVERTED cart.
+    merge_res = authed.post("/api/v1/cart/merge/",
+                            **{http_header(CART_TOKEN_HEADER): token}, format="json")
+    assert merge_res.status_code == 204, merge_res.content
+
+    # A new ACTIVE cart must have been created for the user.
     active = Cart.objects.get(user=user, status=Cart.Status.ACTIVE)
     assert active.id != converted.id
 
-    # and it should contain the guest item
+    # It must contain the guest item.
     item = CartItem.objects.get(cart=active, product=product)
     assert item.quantity == 2
 
@@ -225,14 +239,12 @@ def test_integrity_error_on_token_hash_collision_is_handled_as_safe_retry(produc
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.mysql
-def test_two_logins_with_same_token_only_one_can_merge_if_processed_twice():
+def test_two_merge_calls_with_same_token_only_first_changes_quantities():
     """
-    Another race-oriented deterministic test:
-    token should be invalidated atomically such that once merged, it cannot be merged again.
-    We'll simulate by:
-    - creating user cart and guest cart
-    - calling login twice sequentially with same token
-    - ensure only first changes quantities
+    MySQL race-oriented deterministic test for POST /cart/merge/:
+    The guest cart token must be invalidated atomically after the first successful
+    merge so that a second call with the same token is a no-op and does not
+    duplicate quantities.
     """
     p = Product.objects.create(
         name="E2E_RACE", price=10, stock_quantity=100, is_active=True)
@@ -244,17 +256,29 @@ def test_two_logins_with_same_token_only_one_can_merge_if_processed_twice():
     CartItem.objects.create(cart=user_cart, product=p,
                             quantity=1, price_at_add_time=p.price)
 
+    # Guest adds 2 units.
     guest = APIClient()
     add = guest.post("/api/v1/cart/items/",
                      {"product_id": p.id, "quantity": 2}, format="json")
     assert add.status_code == 201, add.content
     token = extract_cookie_token(add)
 
-    r1 = login(APIClient(), user.email, "Passw0rd!123", cart_token=token)
-    assert r1.status_code == 200, r1.content
-    CartItem.objects.get(cart=user_cart, product=p).refresh_from_db()
+    # Log in (pure auth).
+    login_res = login(APIClient(), user.email, "Passw0rd!123")
+    assert login_res.status_code == 200, login_res.content
+    access = login_res.json()["access"]
+
+    authed = APIClient()
+    authed.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
+
+    # First merge: 1 + 2 = 3.
+    r1 = authed.post("/api/v1/cart/merge/",
+                     **{http_header(CART_TOKEN_HEADER): token}, format="json")
+    assert r1.status_code == 204, r1.content
     assert CartItem.objects.get(cart=user_cart, product=p).quantity == 3
 
-    r2 = login(APIClient(), user.email, "Passw0rd!123", cart_token=token)
-    assert r2.status_code in (200, 401, 404), r2.content
+    # Second merge with the same (now-stale) token must be a no-op.
+    r2 = authed.post("/api/v1/cart/merge/",
+                     **{http_header(CART_TOKEN_HEADER): token}, format="json")
+    assert r2.status_code == 204, r2.content
     assert CartItem.objects.get(cart=user_cart, product=p).quantity == 3

@@ -17,6 +17,8 @@ from api.views.auth import (
     RequestEmailVerificationView,
     PasswordResetRequestView,
     PasswordResetConfirmView,
+    CartMergeView,
+    OrdersClaimView,
 )
 from api.views.dev import DevEmailVerificationTokenView
 from api.views.admin_inventory_reservations import InventoryReservationAdminViewSet
@@ -55,6 +57,9 @@ urlpatterns = [
     path("account/cancel-email-change/", CancelEmailChangeView.as_view(), name="account-cancel-email-change"),
     path("account/logout-all/", LogoutAllView.as_view(), name="account-logout-all"),
     path("account/change-password/", ChangePasswordView.as_view(), name="account-change-password"),
+    # Place before router.urls so this explicit path is not shadowed by
+    # the router's orders/<pk>/ pattern.
+    path("orders/claim/", OrdersClaimView.as_view(), name="orders-claim"),
     path("", include(router.urls)),
     path(
         "guest/orders/<int:order_id>/",
@@ -69,6 +74,7 @@ urlpatterns = [
         name="cart-item-detail",
     ),
     path("cart/checkout/", CartCheckoutView.as_view()),
+    path("cart/merge/", CartMergeView.as_view(), name="cart-merge"),
     path("payments/", PaymentCreateView.as_view(), name="payment-create"),
     path("auth/register/", RegisterView.as_view(), name="auth-register"),
     path("auth/login/", LoginView.as_view(), name="auth-login"),

@@ -30,7 +30,7 @@ class SessionRevoked(APIException):
     status_code = 401
     default_detail = "Session has been revoked. Please log in again."
     default_code = "SESSION_REVOKED"
-from carts.services.merge import merge_or_adopt_guest_cart
+from carts.services.merge import merge_or_adopt_guest_cart, CartMergeStockConflict
 from carts.services.resolver import extract_cart_token
 from accounts.services.email_verification import (
     issue_email_verification_token,
@@ -283,33 +283,14 @@ class LoginView(APIView):
         # tv claim embeds token_version for server-side revocation support.
         refresh = issue_refresh_token(user, lifetime=timedelta(seconds=refresh_ttl))
 
-        cart_token = extract_cart_token(request)
-        merge_or_adopt_guest_cart(user=user, raw_token=cart_token)
-
-        claimed_orders = 0
-        if getattr(user, "email_verified", False):
-            claimed_orders = claim_guest_orders_for_user(user)
-
-        token_data = TokenResponseSerializer(
-            {"access": str(refresh.access_token), "refresh": str(refresh)}
-        )
-
         access_str = str(refresh.access_token)
         refresh_str = str(refresh)
 
-        # Include claim report so frontend can show a toast and E2E tests can assert behavior.
-        # NOTE: TokenResponseSerializer/OpenAPI schema should be updated accordingly in a follow-up refactor.
-        response_payload = dict(token_data.data)
-        response_payload["claimed_orders"] = claimed_orders
-
-        response = Response(response_payload, status=200)
-        
-        response.set_cookie(
-            "cart_token",
-            "",
-            max_age=0,
-            **cart_token_cookie_kwargs()
+        token_data = TokenResponseSerializer(
+            {"access": access_str, "refresh": refresh_str}
         )
+
+        response = Response(token_data.data, status=200)
 
         response.set_cookie(settings.AUTH_COOKIE_ACCESS, access_str, **auth_cookie_kwargs())
         # Set refresh cookie with the computed TTL so the browser honours
@@ -725,3 +706,104 @@ class PasswordResetConfirmView(APIView):
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# ---------------------------------------------------------------------------
+# Post-login settling endpoints
+# These are intentionally separate from LoginView so that login remains a
+# pure authentication step (fast, no domain side-effects).
+# Clients call these once after a successful login / page load.
+# ---------------------------------------------------------------------------
+
+
+class CartMergeView(APIView):
+    """
+    Merge a guest (anonymous) cart into the authenticated user's active cart.
+
+    Idempotent: safe to call multiple times with the same guest token.
+    Clears the cart_token cookie on success so the browser no longer sends
+    the stale guest token.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Cart"],
+        summary="Merge guest cart into authenticated user's cart",
+        description=(
+            "Merges or adopts the anonymous guest cart identified by the "
+            "cart_token cookie into the authenticated user's active cart. "
+            "The cart_token cookie is cleared on success. "
+            "Returns 409 if merging would exceed available stock for any item."
+        ),
+        request=None,
+        responses={
+            204: OpenApiResponse(description="Cart merged (or no guest cart present). Cookie cleared."),
+            401: OpenApiResponse(description="Authentication required."),
+            409: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Stock conflict — merging would exceed available stock.",
+            ),
+        },
+        examples=[
+            OpenApiExample(
+                name="Stock conflict",
+                value={
+                    "code": "CART_MERGE_STOCK_CONFLICT",
+                    "message": "Insufficient stock to merge carts.",
+                },
+                response_only=True,
+                status_codes=["409"],
+            ),
+        ],
+    )
+    def post(self, request):
+        cart_token = extract_cart_token(request)
+        # CartMergeStockConflict (HTTP 409) propagates via the custom exception handler.
+        merge_or_adopt_guest_cart(user=request.user, raw_token=cart_token)
+
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        # Clear the guest cart cookie so the browser stops sending the old token.
+        response.set_cookie(
+            "cart_token",
+            "",
+            max_age=0,
+            **cart_token_cookie_kwargs(),
+        )
+        return response
+
+
+class OrdersClaimView(APIView):
+    """
+    Claim any guest orders whose contact email matches the authenticated user's
+    verified email address.
+
+    Safe to call multiple times — the underlying service is idempotent.
+    Requires a verified email; returns claimed_orders=0 for unverified accounts.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Orders"],
+        summary="Claim guest orders for the authenticated user",
+        description=(
+            "Finds previously placed guest orders whose contact email matches "
+            "the authenticated user's verified email and assigns them to the user. "
+            "If the user's email is not verified, returns claimed_orders=0 without "
+            "performing any database writes. Safe to call multiple times."
+        ),
+        request=None,
+        responses={
+            200: OpenApiResponse(
+                description="Number of orders claimed (may be 0).",
+            ),
+            401: OpenApiResponse(description="Authentication required."),
+        },
+    )
+    def post(self, request):
+        if not getattr(request.user, "email_verified", False):
+            return Response({"claimed_orders": 0}, status=status.HTTP_200_OK)
+
+        claimed = claim_guest_orders_for_user(request.user)
+        return Response({"claimed_orders": claimed}, status=status.HTTP_200_OK)
