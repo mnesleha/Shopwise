@@ -136,7 +136,7 @@ def test_merge_endpoint_is_idempotent_token_reuse_does_not_duplicate_items():
     # First merge: 2 + 3 = 5.
     r1 = authed.post("/api/v1/cart/merge/",
                      **{http_header(CART_TOKEN_HEADER): token}, format="json")
-    assert r1.status_code == 204, r1.content
+    assert r1.status_code == 200, r1.content
 
     item = CartItem.objects.get(cart=user_cart, product=p)
     assert item.quantity == 5
@@ -144,7 +144,7 @@ def test_merge_endpoint_is_idempotent_token_reuse_does_not_duplicate_items():
     # Second merge with the same (now-stale) token must be a no-op.
     r2 = authed.post("/api/v1/cart/merge/",
                      **{http_header(CART_TOKEN_HEADER): token}, format="json")
-    assert r2.status_code == 204, r2.content
+    assert r2.status_code == 200, r2.content
 
     item.refresh_from_db()
     assert item.quantity == 5
@@ -183,7 +183,7 @@ def test_converted_cart_is_not_merge_target_on_cart_merge(product):
     # Call /cart/merge/ — must not touch the CONVERTED cart.
     merge_res = authed.post("/api/v1/cart/merge/",
                             **{http_header(CART_TOKEN_HEADER): token}, format="json")
-    assert merge_res.status_code == 204, merge_res.content
+    assert merge_res.status_code == 200, merge_res.content
 
     # A new ACTIVE cart must have been created for the user.
     active = Cart.objects.get(user=user, status=Cart.Status.ACTIVE)
@@ -274,11 +274,11 @@ def test_two_merge_calls_with_same_token_only_first_changes_quantities():
     # First merge: 1 + 2 = 3.
     r1 = authed.post("/api/v1/cart/merge/",
                      **{http_header(CART_TOKEN_HEADER): token}, format="json")
-    assert r1.status_code == 204, r1.content
+    assert r1.status_code == 200, r1.content
     assert CartItem.objects.get(cart=user_cart, product=p).quantity == 3
 
     # Second merge with the same (now-stale) token must be a no-op.
     r2 = authed.post("/api/v1/cart/merge/",
                      **{http_header(CART_TOKEN_HEADER): token}, format="json")
-    assert r2.status_code == 204, r2.content
+    assert r2.status_code == 200, r2.content
     assert CartItem.objects.get(cart=user_cart, product=p).quantity == 3

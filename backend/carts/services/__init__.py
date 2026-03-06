@@ -1,4 +1,9 @@
-from carts.services.merge import CartMergeStockConflict, merge_or_adopt_guest_cart
+from carts.services.merge import (
+    CartMergeStockConflict,
+    CartMergeReport,
+    CartMergeWarning,
+    merge_or_adopt_guest_cart,
+)
 from carts.services.resolver import (
     extract_cart_token,
     get_active_anonymous_cart_by_token,
@@ -7,6 +12,8 @@ from carts.services.resolver import (
 
 __all__ = [
     "CartMergeStockConflict",
+    "CartMergeReport",
+    "CartMergeWarning",
     "merge_or_adopt_guest_cart",
     "extract_cart_token",
     "get_active_anonymous_cart_by_token",

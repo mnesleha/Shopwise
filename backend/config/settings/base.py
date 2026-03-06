@@ -147,8 +147,7 @@ if SENTRY_ENABLED:
     sentry_sdk.init(
         dsn="https://2becc686d197008cfe9d5b4bd58b42f7@o4510765395476480.ingest.de.sentry.io/4510765407862864",
         integrations=[DjangoIntegration()],
-        traces_sample_rate=1.0,
-        enable_tracing=True,
+        traces_sample_rate=0.1,
         environment="development",
         send_default_pii=True,
     )

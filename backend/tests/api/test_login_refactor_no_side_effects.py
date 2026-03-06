@@ -90,51 +90,66 @@ def test_cart_merge_requires_authentication():
 
 @pytest.mark.django_db
 @patch("api.views.auth.merge_or_adopt_guest_cart")
-def test_cart_merge_no_guest_token_returns_204(mock_merge):
-    """Authenticated user with no cart token → 204 and service called once."""
+def test_cart_merge_no_guest_token_returns_noop_report(mock_merge):
+    """Authenticated user with no cart token → 200 NOOP report; service must NOT be called."""
     _create_user()
     client = APIClient()
     resp = _login(client)
     assert resp.status_code == 200
 
     merge_resp = client.post(CART_MERGE_URL, format="json")
-    assert merge_resp.status_code == 204
-    mock_merge.assert_called_once()
+    assert merge_resp.status_code == 200
+    body = merge_resp.json()
+    assert body["performed"] is False
+    assert body["result"] == "NOOP"
+    assert body["warnings"] == []
+    # Service must not be called when there is no token.
+    mock_merge.assert_not_called()
 
 
 @pytest.mark.django_db
 @patch(
     "api.views.auth.merge_or_adopt_guest_cart",
-    side_effect=lambda **kwargs: None,  # no-op: success
+    return_value={
+        "performed": True, "result": "ADOPTED",
+        "items_added": 1, "items_updated": 0, "items_removed": 0, "warnings": [],
+    },
 )
 def test_cart_merge_clears_cart_token_cookie(mock_merge):
-    """On success the response must expire the cart_token cookie."""
+    """When a token is processed, the response must expire the cart_token cookie."""
     _create_user()
     client = APIClient()
     _login(client)
 
-    merge_resp = client.post(CART_MERGE_URL, format="json")
-    assert merge_resp.status_code == 204
-    # Django sets Max-Age=0 (or 'expires' in the past) to delete a cookie.
+    # Pass a fake token so the view processes it (triggers cookie clearing).
+    merge_resp = client.post(CART_MERGE_URL, HTTP_X_CART_TOKEN="fake-token", format="json")
+    assert merge_resp.status_code == 200
+    # Django sets Max-Age=0 to delete a cookie.
     assert "cart_token" in merge_resp.cookies
 
 
 @pytest.mark.django_db
-@patch("api.views.auth.merge_or_adopt_guest_cart")
-def test_cart_merge_stock_conflict_returns_409(mock_merge):
-    """If merge raises CartMergeStockConflict the endpoint must return 409."""
-    from carts.services.merge import CartMergeStockConflict
-
-    mock_merge.side_effect = CartMergeStockConflict()
-
+@patch(
+    "api.views.auth.merge_or_adopt_guest_cart",
+    return_value={
+        "performed": True, "result": "MERGED",
+        "items_added": 0, "items_updated": 1, "items_removed": 0,
+        "warnings": [{"code": "STOCK_ADJUSTED", "product_id": 99, "requested": 5, "applied": 2}],
+    },
+)
+def test_cart_merge_stock_conflict_returns_200_with_warning(mock_merge):
+    """Stock over-stock is no longer a 409 — it returns 200 with a STOCK_ADJUSTED warning."""
     _create_user()
     client = APIClient()
     _login(client)
 
-    merge_resp = client.post(CART_MERGE_URL, format="json")
-    assert merge_resp.status_code == 409
+    merge_resp = client.post(CART_MERGE_URL, HTTP_X_CART_TOKEN="fake-token", format="json")
+    assert merge_resp.status_code == 200
     body = merge_resp.json()
-    assert body.get("code") == "CART_MERGE_STOCK_CONFLICT"
+    assert body["performed"] is True
+    warnings = body["warnings"]
+    assert len(warnings) == 1
+    assert warnings[0]["code"] == "STOCK_ADJUSTED"
 
 
 # ---------------------------------------------------------------------------
@@ -187,8 +202,8 @@ def test_orders_claim_verified_user_returns_claimed_count(mock_claim):
 def test_cart_merge_integration_sums_quantities():
     """
     POST /cart/merge/ with a real guest cart merges quantities into the user
-    cart and returns 204.  Mirrors the deleted
-    test_login_merges_guest_cart_into_existing_user_cart.
+    cart and returns 200 with a MERGED report.
+    Mirrors the deleted test_login_merges_guest_cart_into_existing_user_cart.
     """
     from carts.models import Cart, CartItem
     from products.models import Product
@@ -223,7 +238,11 @@ def test_cart_merge_integration_sums_quantities():
     merge_resp = authed.post(
         CART_MERGE_URL, HTTP_X_CART_TOKEN=cart_token, format="json"
     )
-    assert merge_resp.status_code == 204
+    assert merge_resp.status_code == 200
+    report = merge_resp.json()
+    assert report["performed"] is True
+    assert report["result"] == "MERGED"
+    assert report["warnings"] == []
 
     # Cart should now have 2 + 3 = 5 items for that product.
     cart_resp = authed.get("/api/v1/cart/")
@@ -238,9 +257,10 @@ def test_cart_merge_integration_sums_quantities():
 
 @pytest.mark.django_db
 @pytest.mark.sqlite
-def test_cart_merge_integration_stock_conflict_returns_409():
+def test_cart_merge_integration_stock_over_cap_returns_warning():
     """
-    POST /cart/merge/ returns 409 when merging would exceed available stock.
+    POST /cart/merge/ caps items to available stock and returns 200 with a
+    STOCK_ADJUSTED warning instead of a 409.
     Mirrors the deleted test_login_merge_conflict_when_exceeds_stock.
     """
     from carts.models import Cart, CartItem
@@ -258,7 +278,7 @@ def test_cart_merge_integration_stock_conflict_returns_409():
         cart=user_cart, product=product, quantity=3, price_at_add_time=product.price
     )
 
-    # Guest adds 2 more — 3 + 2 = 5 > stock(4) → conflict.
+    # Guest adds 2 more — 3 + 2 = 5 > stock(4) → should be capped to 4.
     guest_client = APIClient()
     add = guest_client.post(
         "/api/v1/cart/items/", {"product_id": product.id, "quantity": 2}, format="json"
@@ -275,9 +295,20 @@ def test_cart_merge_integration_stock_conflict_returns_409():
     merge_resp = authed.post(
         CART_MERGE_URL, HTTP_X_CART_TOKEN=cart_token, format="json"
     )
-    assert merge_resp.status_code == 409
-    body = merge_resp.json()
-    assert body.get("code") == "CART_MERGE_STOCK_CONFLICT"
+    assert merge_resp.status_code == 200
+    report = merge_resp.json()
+    assert report["performed"] is True
+    warnings = report["warnings"]
+    assert len(warnings) == 1
+    assert warnings[0]["code"] == "STOCK_ADJUSTED"
+    assert warnings[0]["product_id"] == product.id
+    assert warnings[0]["requested"] == 5
+    assert warnings[0]["applied"] == 4
+
+    # Final cart quantity must be capped at available stock.
+    from carts.models import CartItem as CI
+    final_item = CI.objects.get(cart=user_cart, product=product)
+    assert final_item.quantity == 4
 
 
 @pytest.mark.django_db

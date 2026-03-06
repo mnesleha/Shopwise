@@ -140,7 +140,12 @@ def test_merge_guest_cart_into_existing_user_active_cart_sums_quantities():
 
 
 @pytest.mark.django_db
-def test_merge_raises_conflict_when_exceeds_stock():
+def test_merge_caps_quantity_when_exceeds_stock():
+    """
+    merge_or_adopt_guest_cart no longer raises CartMergeStockConflict.
+    Instead it caps the merged quantity to available stock and emits a
+    STOCK_ADJUSTED warning in the returned report.
+    """
     User = get_user_model()
     user = User.objects.create_user(
         email="conflict_svc@example.com", password="Passw0rd!123")
@@ -161,13 +166,21 @@ def test_merge_raises_conflict_when_exceeds_stock():
     CartItem.objects.create(cart=anon, product=p,
                             quantity=2, price_at_add_time=p.price)
 
-    with pytest.raises(CartMergeStockConflict):
-        merge_or_adopt_guest_cart(user=user, raw_token=raw_token)
+    report = merge_or_adopt_guest_cart(user=user, raw_token=raw_token)
 
-    # Ensure no partial merge happened
-    assert CartItem.objects.get(cart=user_cart, product=p).quantity == 3
+    assert report["performed"] is True
+    assert report["result"] == "MERGED"
+    warnings = report["warnings"]
+    assert len(warnings) == 1
+    assert warnings[0]["code"] == "STOCK_ADJUSTED"
+    assert warnings[0]["requested"] == 5   # 3 + 2
+    assert warnings[0]["applied"] == 4     # capped to stock
+
+    # Merged quantity must equal available stock (capped).
+    assert CartItem.objects.get(cart=user_cart, product=p).quantity == 4
+    # Anonymous cart must have been processed (no longer ACTIVE).
     anon.refresh_from_db()
-    assert anon.status == Cart.Status.ACTIVE
+    assert anon.status != Cart.Status.ACTIVE
 
 
 @pytest.mark.django_db

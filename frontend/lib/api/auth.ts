@@ -10,12 +10,6 @@ export type LoginRequest = {
 export type LoginResponse = {
   access: string;
   refresh?: string;
-  cart_merge?: {
-    performed: boolean;
-    warnings?: Array<any>;
-    discount_decision?: any;
-  };
-  claimed_orders?: number;
 };
 
 export type MeResponse = {

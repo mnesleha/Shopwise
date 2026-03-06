@@ -131,3 +131,29 @@ class CartCheckoutRequestSerializer(serializers.Serializer):
 
 class CartCheckoutResponseSerializer(OrderResponseSerializer):
     """Checkout response shares the same contract as Orders endpoints."""
+
+
+class CartMergeWarningSerializer(serializers.Serializer):
+    """Describes a single adjustment made during cart merge (e.g. stock cap)."""
+
+    code = serializers.CharField()
+    product_id = serializers.IntegerField()
+    requested = serializers.IntegerField()
+    applied = serializers.IntegerField()
+
+
+class CartMergeReportSerializer(serializers.Serializer):
+    """
+    Full report returned by POST /cart/merge/.
+
+    ``performed`` is False when there was no guest token to process (NOOP).
+    ``result`` is one of: "NOOP" | "ADOPTED" | "MERGED".
+    Warning codes: "STOCK_ADJUSTED".
+    """
+
+    performed = serializers.BooleanField()
+    result = serializers.ChoiceField(choices=["NOOP", "ADOPTED", "MERGED"])
+    items_added = serializers.IntegerField()
+    items_updated = serializers.IntegerField()
+    items_removed = serializers.IntegerField()
+    warnings = CartMergeWarningSerializer(many=True)

@@ -33,3 +33,33 @@ export async function deleteCartItem(input: { productId: number }): Promise<void
   // NOTE: path uses productId
   await api.delete(`/cart/items/${input.productId}/`);
 }
+
+// ── Cart merge ────────────────────────────────────────────────────────────────
+
+export type CartMergeWarning = {
+  code: string;
+  product_id: number;
+  requested: number;
+  applied: number;
+};
+
+export type CartMergeReport = {
+  performed: boolean;
+  result: "NOOP" | "ADOPTED" | "MERGED";
+  items_added: number;
+  items_updated: number;
+  items_removed: number;
+  warnings: CartMergeWarning[];
+};
+
+/**
+ * POST /cart/merge/
+ *
+ * Merges the current guest cart (identified by the httpOnly cart_token cookie)
+ * into the authenticated user's cart.  Always returns 200 with a CartMergeReport.
+ * Requires authentication.
+ */
+export async function mergeCart(): Promise<CartMergeReport> {
+  const res = await api.post<CartMergeReport>("/cart/merge/");
+  return res.data;
+}

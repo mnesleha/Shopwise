@@ -51,6 +51,7 @@ from api.serializers.auth import (
     RequestEmailVerificationRequestSerializer,
     RequestEmailVerificationResponseSerializer,
 )
+from api.serializers.cart import CartMergeReportSerializer
 from api.serializers.common import ErrorResponseSerializer
 from api.serializers.password_reset import (
     PasswordResetRequestSerializer,
@@ -732,37 +733,60 @@ class CartMergeView(APIView):
         summary="Merge guest cart into authenticated user's cart",
         description=(
             "Merges or adopts the anonymous guest cart identified by the "
-            "cart_token cookie into the authenticated user's active cart. "
-            "The cart_token cookie is cleared on success. "
-            "Returns 409 if merging would exceed available stock for any item."
+            "cart_token cookie / X-Cart-Token header into the authenticated "
+            "user's active cart. Always returns 200 with a full merge report. "
+            "If there is no guest token, result is NOOP and performed=false. "
+            "Quantities exceeding available stock are capped and reported as "
+            "STOCK_ADJUSTED warnings instead of causing an error. "
+            "The cart_token cookie is cleared when a token was processed."
         ),
         request=None,
         responses={
-            204: OpenApiResponse(description="Cart merged (or no guest cart present). Cookie cleared."),
+            200: CartMergeReportSerializer,
             401: OpenApiResponse(description="Authentication required."),
-            409: OpenApiResponse(
-                response=ErrorResponseSerializer,
-                description="Stock conflict — merging would exceed available stock.",
-            ),
         },
         examples=[
             OpenApiExample(
-                name="Stock conflict",
+                name="NOOP — no guest token",
                 value={
-                    "code": "CART_MERGE_STOCK_CONFLICT",
-                    "message": "Insufficient stock to merge carts.",
+                    "performed": False,
+                    "result": "NOOP",
+                    "items_added": 0,
+                    "items_updated": 0,
+                    "items_removed": 0,
+                    "warnings": [],
                 },
                 response_only=True,
-                status_codes=["409"],
+                status_codes=["200"],
+            ),
+            OpenApiExample(
+                name="MERGED with stock adjustment",
+                value={
+                    "performed": True,
+                    "result": "MERGED",
+                    "items_added": 0,
+                    "items_updated": 1,
+                    "items_removed": 0,
+                    "warnings": [{"code": "STOCK_ADJUSTED", "product_id": 5, "requested": 3, "applied": 1}],
+                },
+                response_only=True,
+                status_codes=["200"],
             ),
         ],
     )
     def post(self, request):
         cart_token = extract_cart_token(request)
-        # CartMergeStockConflict (HTTP 409) propagates via the custom exception handler.
-        merge_or_adopt_guest_cart(user=request.user, raw_token=cart_token)
 
-        response = Response(status=status.HTTP_204_NO_CONTENT)
+        if not cart_token:
+            # No guest token present — return NOOP report immediately.
+            from carts.services.merge import _noop_report
+            report = _noop_report()
+            return Response(CartMergeReportSerializer(report).data, status=status.HTTP_200_OK)
+
+        # merge_or_adopt_guest_cart caps stock and returns a full report (no 409).
+        report = merge_or_adopt_guest_cart(user=request.user, raw_token=cart_token)
+
+        response = Response(CartMergeReportSerializer(report).data, status=status.HTTP_200_OK)
         # Clear the guest cart cookie so the browser stops sending the old token.
         response.set_cookie(
             "cart_token",
