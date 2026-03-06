@@ -33,7 +33,33 @@ api.interceptors.response.use(
       | (InternalAxiosRequestConfig & { _retry?: boolean })
       | undefined;
 
-    if (!original || status !== 401 || original._retry) throw error;
+    if (!original) throw error;
+
+    // 400 "Missing refresh token" — refresh cookie is gone (e.g. logout-all on
+    // another device cleared cookies). Treat as unauthenticated and redirect to
+    // /login, same as a 401, so the user lands on a clean state.
+    if (status === 400) {
+      const body400 = error.response?.data as
+        | Record<string, unknown>
+        | undefined;
+      const refreshErrors = (
+        body400?.errors as Record<string, unknown> | undefined
+      )?.refresh;
+      const isMissingToken = Array.isArray(refreshErrors)
+        ? refreshErrors.some(
+            (m) =>
+              typeof m === "string" &&
+              m.toLowerCase().includes("missing refresh token"),
+          )
+        : false;
+      if (isMissingToken && (original.url ?? "").includes("/auth/refresh/")) {
+        if (typeof window !== "undefined") window.location.assign("/login");
+        throw error;
+      }
+      throw error;
+    }
+
+    if (status !== 401 || original._retry) throw error;
 
     // SESSION_REVOKED means the server explicitly invalidated this session
     // (logout-all / email change). The refresh token is also revoked, so
