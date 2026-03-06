@@ -41,14 +41,15 @@ EMAIL_USE_SSL = False
 
 # Store raw email-change tokens in debug DB columns so test helpers can
 # retrieve them without intercepting outbound email (ADR-035).
-# Side effect: all view-level rate limiting that checks this flag is also
-# bypassed, so tests are never blocked by throttle limits.
 STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS = True
 
+# Explicitly disable rate limiting in tests so throttle counters never block
+# test requests.  Intentionally a separate flag from STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS
+# so each setting has one clear responsibility.
+DISABLE_RATE_LIMITING_FOR_TESTS = True
+
 # Rate-limit constants — high values as a belt-and-suspenders safety net in
-# case the STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS bypass is ever removed or the
-# check is missed in a new view.  These do NOT affect normal test runs because
-# the flag above already disables throttling for all guarded views.
+# case the DISABLE_RATE_LIMITING_FOR_TESTS bypass is ever missed in a new view.
 REGISTER_RL_PER_IP = 10000
 REGISTER_RL_WINDOW_S = 60
 LOGIN_RL_PER_IP = 10000

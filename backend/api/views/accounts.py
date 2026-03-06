@@ -159,14 +159,14 @@ class ChangeEmailView(APIView):
 
         # Per-user + per-IP rate limiting (anti-spam / brute-force protection).
         # Rate limiting is skipped in test environments
-        # (when STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS is True).
-        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        # (when DISABLE_RATE_LIMITING_FOR_TESTS is True).
+        _rl_disabled = getattr(settings, "DISABLE_RATE_LIMITING_FOR_TESTS", False)
         ip = (
             (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
             or request.META.get("REMOTE_ADDR")
             or "unknown"
         )
-        if not _testing:
+        if not _rl_disabled:
             user_limited = rate_limit_hit(
                 key=f"rl:change_email:user:{user.pk}",
                 limit=_CHANGE_EMAIL_RL_PER_USER,
@@ -241,13 +241,13 @@ class ConfirmEmailChangeView(APIView):
         },
     )
     def get(self, request):
-        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        _rl_disabled = getattr(settings, "DISABLE_RATE_LIMITING_FOR_TESTS", False)
         ip = (
             (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
             or request.META.get("REMOTE_ADDR")
             or "unknown"
         )
-        if not _testing:
+        if not _rl_disabled:
             if rate_limit_hit(
                 key=f"rl:confirm_email_change:ip:{ip}",
                 limit=_CONFIRM_EMAIL_CHANGE_RL_PER_IP,
@@ -299,13 +299,13 @@ class CancelEmailChangeView(APIView):
         },
     )
     def get(self, request):
-        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        _rl_disabled = getattr(settings, "DISABLE_RATE_LIMITING_FOR_TESTS", False)
         ip = (
             (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
             or request.META.get("REMOTE_ADDR")
             or "unknown"
         )
-        if not _testing:
+        if not _rl_disabled:
             if rate_limit_hit(
                 key=f"rl:cancel_email_change:ip:{ip}",
                 limit=_CANCEL_EMAIL_CHANGE_RL_PER_IP,
@@ -357,8 +357,8 @@ class LogoutAllView(APIView):
         },
     )
     def post(self, request):
-        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
-        if not _testing:
+        _rl_disabled = getattr(settings, "DISABLE_RATE_LIMITING_FOR_TESTS", False)
+        if not _rl_disabled:
             if rate_limit_hit(
                 key=f"rl:logout_all:user:{request.user.pk}",
                 limit=_LOGOUT_ALL_RL_PER_USER,
@@ -422,13 +422,13 @@ class ChangePasswordView(APIView):
         },
     )
     def post(self, request):
-        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        _rl_disabled = getattr(settings, "DISABLE_RATE_LIMITING_FOR_TESTS", False)
         ip = (
             (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
             or request.META.get("REMOTE_ADDR")
             or "unknown"
         )
-        if not _testing:
+        if not _rl_disabled:
             user_limited = rate_limit_hit(
                 key=f"rl:change_password:user:{request.user.pk}",
                 limit=_CHANGE_PASSWORD_RL_PER_USER,

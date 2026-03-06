@@ -108,13 +108,13 @@ class RegisterView(APIView):
         responses={201: RegisterResponseSerializer},
     )
     def post(self, request):
-        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        _rl_disabled = getattr(settings, "DISABLE_RATE_LIMITING_FOR_TESTS", False)
         ip = (
             (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
             or request.META.get("REMOTE_ADDR")
             or "unknown"
         )
-        if not _testing:
+        if not _rl_disabled:
             if rate_limit_hit(
                 key=f"rl:register:ip:{ip}",
                 limit=_REGISTER_RL_PER_IP,
@@ -227,13 +227,13 @@ class LoginView(APIView):
         ],
     )
     def post(self, request):
-        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        _rl_disabled = getattr(settings, "DISABLE_RATE_LIMITING_FOR_TESTS", False)
         ip = (
             (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
             or request.META.get("REMOTE_ADDR")
             or "unknown"
         )
-        if not _testing:
+        if not _rl_disabled:
             raw_email = (request.data.get("email") or "").strip().lower()
             ip_limited = rate_limit_hit(
                 key=f"rl:login:ip:{ip}",
@@ -305,13 +305,13 @@ class LogoutView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        _rl_disabled = getattr(settings, "DISABLE_RATE_LIMITING_FOR_TESTS", False)
         ip = (
             (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
             or request.META.get("REMOTE_ADDR")
             or "unknown"
         )
-        if not _testing:
+        if not _rl_disabled:
             if rate_limit_hit(
                 key=f"rl:logout:ip:{ip}",
                 limit=_LOGOUT_RL_PER_IP,
@@ -406,13 +406,13 @@ class RefreshView(APIView):
         if not refresh_str:
             raise ValidationError({"refresh": ["Missing refresh token."]})
 
-        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        _rl_disabled = getattr(settings, "DISABLE_RATE_LIMITING_FOR_TESTS", False)
         ip = (
             (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
             or request.META.get("REMOTE_ADDR")
             or "unknown"
         )
-        if not _testing:
+        if not _rl_disabled:
             if rate_limit_hit(
                 key=f"rl:refresh:ip:{ip}",
                 limit=_REFRESH_RL_PER_IP,
@@ -615,13 +615,13 @@ class PasswordResetRequestView(APIView):
         },
     )
     def post(self, request):
-        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        _rl_disabled = getattr(settings, "DISABLE_RATE_LIMITING_FOR_TESTS", False)
         ip = (
             (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
             or request.META.get("REMOTE_ADDR")
             or "unknown"
         )
-        if not _testing:
+        if not _rl_disabled:
             if rate_limit_hit(
                 key=f"rl:pw_reset_request:ip:{ip}",
                 limit=_PW_RESET_REQUEST_RL_PER_IP,
@@ -674,13 +674,13 @@ class PasswordResetConfirmView(APIView):
         },
     )
     def post(self, request):
-        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        _rl_disabled = getattr(settings, "DISABLE_RATE_LIMITING_FOR_TESTS", False)
         ip = (
             (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
             or request.META.get("REMOTE_ADDR")
             or "unknown"
         )
-        if not _testing:
+        if not _rl_disabled:
             if rate_limit_hit(
                 key=f"rl:pw_reset_confirm:ip:{ip}",
                 limit=_PW_RESET_CONFIRM_RL_PER_IP,

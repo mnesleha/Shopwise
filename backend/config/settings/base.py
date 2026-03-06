@@ -274,3 +274,7 @@ consistency between cart preview and checkout.
         },
     ],
 }
+
+# Safety guard: rate limiting must always be active in production.
+# Set to True only in test.py — never in production or local settings.
+DISABLE_RATE_LIMITING_FOR_TESTS = False
