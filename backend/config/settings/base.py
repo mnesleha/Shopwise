@@ -19,6 +19,9 @@ APPEND_SLASH = False  # Pure API backend — trailing slash handled by clients
 ALLOWED_HOSTS = []
 
 PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "http://127.0.0.1:8000")
+# Frontend base URL — used to build links in emails that must point to the
+# Next.js frontend (e.g. password-reset flow) rather than the API server.
+FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")
 
 INSTALLED_APPS = [
     "django.contrib.admin",

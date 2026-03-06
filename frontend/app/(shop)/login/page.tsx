@@ -50,6 +50,19 @@ export default function LoginPage() {
     }
   }, [searchParams]);
 
+  // Show a one-time toast when the user is redirected here after a successful
+  // password reset. The guard prevents duplicate toasts on re-renders.
+  const passwordResetToastShown = useRef(false);
+  useEffect(() => {
+    if (
+      searchParams.get("passwordReset") === "1" &&
+      !passwordResetToastShown.current
+    ) {
+      passwordResetToastShown.current = true;
+      toast.success("Password reset. Please log in with your new password.");
+    }
+  }, [searchParams]);
+
   const onSubmit = async (values: { email: string; password: string }) => {
     setIsSubmitting(true);
     setErrorMessage(undefined);
@@ -118,6 +131,7 @@ export default function LoginPage() {
         isSubmitting={isSubmitting}
         errorMessage={errorMessage}
         onGoToRegister={() => router.push("/register")}
+        onForgotPassword={() => router.push("/auth/forgot-password")}
       />
     </div>
   );

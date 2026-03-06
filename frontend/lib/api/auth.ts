@@ -72,3 +72,17 @@ export async function register(
   const res = await api.post<RegisterResponse>("/auth/register/", values);
   return res.data;
 }
+
+/** Initiate a password-reset flow (anti-enumeration: always 204). */
+export async function requestPasswordReset(email: string): Promise<void> {
+  await api.post("/auth/password-reset/request/", { email });
+}
+
+/** Confirm a password reset with the single-use token from email. */
+export async function confirmPasswordReset(payload: {
+  token: string;
+  new_password: string;
+  new_password_confirm: string;
+}): Promise<void> {
+  await api.post("/auth/password-reset/confirm/", payload);
+}

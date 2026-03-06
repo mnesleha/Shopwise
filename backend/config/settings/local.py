@@ -29,3 +29,8 @@ EMAIL_HOST = os.getenv("EMAIL_HOST", "127.0.0.1")  # Mailpit runs locally
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "1025"))
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = False
+
+# Relaxed rate limits for local development — avoids hitting the throttle
+# during manual testing while keeping the production-identical code path active.
+PW_RESET_REQUEST_RL_PER_IP = 1000
+PW_RESET_CONFIRM_RL_PER_IP = 1000

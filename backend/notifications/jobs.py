@@ -13,6 +13,7 @@ from notifications.renderers import (
     render_email_verification,
     render_guest_order_link,
     render_password_change_notification,
+    render_password_reset_email,
 )
 from notifications.exceptions import NotificationSendError
 from notifications.error_handler import NotificationErrorHandler
@@ -146,6 +147,35 @@ def send_guest_order_link(
                     "order_number": order_number,
                     "guest_order_url": guest_order_url,
                 },
+            )
+        )
+        return
+
+
+def send_password_reset_email(*, recipient_email: str, reset_url: str) -> None:
+    """
+    Send a password-reset email to the user.
+
+    Best-effort semantics:
+    - Failures MUST NOT propagate.
+    - Errors are delegated to NotificationErrorHandler.
+    """
+    try:
+        subject, body = render_password_reset_email(
+            recipient_email=recipient_email,
+            reset_url=reset_url,
+        )
+        EmailService.send_plain_text(
+            to_email=recipient_email,
+            subject=subject,
+            body=body,
+        )
+    except Exception:
+        NotificationErrorHandler.handle(
+            NotificationSendError(
+                code="PASSWORD_RESET_EMAIL_SEND_FAILED",
+                message="Failed to send password-reset email.",
+                context={"recipient_email": recipient_email, "reset_url": reset_url},
             )
         )
         return

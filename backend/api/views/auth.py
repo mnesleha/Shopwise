@@ -10,7 +10,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import AuthenticationFailed, ValidationError, APIException
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 
-from drf_spectacular.utils import extend_schema, OpenApiExample
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from config.settings.base import auth_cookie_kwargs
@@ -50,6 +50,10 @@ from api.serializers.auth import (
     RequestEmailVerificationResponseSerializer,
 )
 from api.serializers.common import ErrorResponseSerializer
+from api.serializers.password_reset import (
+    PasswordResetRequestSerializer,
+    PasswordResetConfirmSerializer,
+)
 from api.services.rate_limit import rate_limit_hit
 from notifications.enqueue import enqueue_best_effort
 from notifications.error_handler import NotificationErrorHandler
@@ -465,3 +469,131 @@ class RequestEmailVerificationView(APIView):
                 return Response({"queued": True}, status=202)
 
         return Response({"queued": True}, status=202)
+
+
+# ---------------------------------------------------------------------------
+# Password-reset flow
+# ---------------------------------------------------------------------------
+
+_PW_RESET_REQUEST_RL_PER_IP = int(getattr(settings, "PW_RESET_REQUEST_RL_PER_IP", 10))
+_PW_RESET_REQUEST_RL_WINDOW_S = int(getattr(settings, "PW_RESET_REQUEST_RL_WINDOW_S", 3600))
+_PW_RESET_CONFIRM_RL_PER_IP = int(getattr(settings, "PW_RESET_CONFIRM_RL_PER_IP", 20))
+_PW_RESET_CONFIRM_RL_WINDOW_S = int(getattr(settings, "PW_RESET_CONFIRM_RL_WINDOW_S", 3600))
+
+
+@extend_schema(tags=["Auth"])
+class PasswordResetRequestView(APIView):
+    """
+    Initiate a password-reset flow.
+
+    Anti-enumeration: always responds 204 regardless of whether the email
+    is registered.  If it exists, a single-use reset link is sent by email.
+    """
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="Request a password reset",
+        description=(
+            "Sends a password-reset link to the provided email address. "
+            "Always returns 204 to prevent email enumeration. "
+            "The link points to the frontend reset page and expires in 60 minutes."
+        ),
+        request=PasswordResetRequestSerializer,
+        responses={
+            204: OpenApiResponse(description="Request accepted (email sent if address is registered)."),
+            400: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Validation error (e.g. invalid email format).",
+            ),
+            429: OpenApiResponse(description="Too many requests. Try again later."),
+        },
+    )
+    def post(self, request):
+        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        ip = (
+            (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
+            or request.META.get("REMOTE_ADDR")
+            or "unknown"
+        )
+        if not _testing:
+            if rate_limit_hit(
+                key=f"rl:pw_reset_request:ip:{ip}",
+                limit=_PW_RESET_REQUEST_RL_PER_IP,
+                window_s=_PW_RESET_REQUEST_RL_WINDOW_S,
+            ):
+                return Response(
+                    {"detail": "Too many requests. Please try again later."},
+                    status=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
+
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        from accounts.services.password_reset import request_password_reset
+        request_password_reset(serializer.validated_data["email"])
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["Auth"])
+class PasswordResetConfirmView(APIView):
+    """
+    Confirm a password reset using a single-use token.
+
+    Validates the token, applies the new password, revokes all active sessions
+    (token_version++), and marks the token as used.
+    """
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="Confirm password reset",
+        description=(
+            "Validates the single-use reset token and sets the new password. "
+            "On success all active sessions are invalidated and the user must "
+            "log in again. The token is marked used and cannot be replayed."
+        ),
+        request=PasswordResetConfirmSerializer,
+        responses={
+            204: OpenApiResponse(description="Password reset successfully."),
+            400: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description=(
+                    "Validation error: invalid/expired/used token, "
+                    "confirmation mismatch, or weak password."
+                ),
+            ),
+            429: OpenApiResponse(description="Too many requests. Try again later."),
+        },
+    )
+    def post(self, request):
+        _testing = getattr(settings, "STORE_CHANGE_EMAIL_TOKENS_FOR_TESTS", False)
+        ip = (
+            (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
+            or request.META.get("REMOTE_ADDR")
+            or "unknown"
+        )
+        if not _testing:
+            if rate_limit_hit(
+                key=f"rl:pw_reset_confirm:ip:{ip}",
+                limit=_PW_RESET_CONFIRM_RL_PER_IP,
+                window_s=_PW_RESET_CONFIRM_RL_WINDOW_S,
+            ):
+                return Response(
+                    {"detail": "Too many requests. Please try again later."},
+                    status=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
+
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        from accounts.services.password_reset import confirm_password_reset
+        confirm_password_reset(
+            token=serializer.validated_data["token"],
+            new_password=serializer.validated_data["new_password"],
+        )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

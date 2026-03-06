@@ -93,3 +93,23 @@ def render_password_change_notification(*, recipient_email: str) -> tuple[str, s
         "and consider resetting your password.\n"
     )
     return subject, body
+
+
+def render_password_reset_email(*, recipient_email: str, reset_url: str) -> tuple[str, str]:
+    """
+    Render subject/body for a password-reset email (plain-text MVP).
+
+    Requirements:
+    - Body MUST include the exact reset_url provided.
+    - Token expires in 60 minutes.
+    """
+    subject = "Reset your password"
+    body = (
+        f"Hi {recipient_email},\n\n"
+        "We received a request to reset the password for your account.\n"
+        "Click the link below to choose a new password:\n\n"
+        f"{reset_url}\n\n"
+        "This link is valid for 60 minutes and can only be used once.\n"
+        "If you did not request a password reset, you can safely ignore this email.\n"
+    )
+    return subject, body

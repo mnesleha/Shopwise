@@ -15,6 +15,8 @@ from api.views.auth import (
     RefreshView,
     VerifyEmailView,
     RequestEmailVerificationView,
+    PasswordResetRequestView,
+    PasswordResetConfirmView,
 )
 from api.views.dev import DevEmailVerificationTokenView
 from api.views.admin_inventory_reservations import InventoryReservationAdminViewSet
@@ -78,6 +80,8 @@ urlpatterns = [
         RequestEmailVerificationView.as_view(),
     ),
     path("auth/me/", MeView.as_view(), name="auth-me"),
+    path("auth/password-reset/request/", PasswordResetRequestView.as_view(), name="auth-password-reset-request"),
+    path("auth/password-reset/confirm/", PasswordResetConfirmView.as_view(), name="auth-password-reset-confirm"),
     path(
         "dev/email-verification-token/",
         DevEmailVerificationTokenView.as_view(),
