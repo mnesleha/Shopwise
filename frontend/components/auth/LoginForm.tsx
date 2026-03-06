@@ -23,6 +23,7 @@ interface LoginFormProps {
   onSubmit: (values: {
     email: string;
     password: string;
+    remember_me: boolean;
   }) => void | Promise<void>;
   isSubmitting?: boolean;
   errorMessage?: string;
@@ -48,6 +49,7 @@ export default function LoginForm({
 }: LoginFormProps) {
   const [showPassword, setShowPassword] = React.useState(false);
   const [errors, setErrors] = React.useState<FieldErrors>({});
+  const [rememberMe, setRememberMe] = React.useState(false);
 
   const emailRef = React.useRef<HTMLInputElement>(null);
   const passwordRef = React.useRef<HTMLInputElement>(null);
@@ -91,7 +93,7 @@ export default function LoginForm({
       return;
     }
 
-    await onSubmit({ email, password });
+    await onSubmit({ email, password, remember_me: rememberMe });
   }
 
   return (
@@ -220,7 +222,11 @@ export default function LoginForm({
 
             {/* ---- Remember me ---- */}
             <div className="flex items-center gap-2">
-              <Checkbox id="login-remember" />
+              <Checkbox
+                id="login-remember"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked === true)}
+              />
               <Label
                 htmlFor="login-remember"
                 className="text-sm font-normal text-muted-foreground cursor-pointer"

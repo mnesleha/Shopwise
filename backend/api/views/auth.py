@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.db import IntegrityError, transaction
@@ -209,6 +211,14 @@ class LoginView(APIView):
     @extend_schema(
         tags=["Auth"],
         summary="Login user (JWT)",
+        description=(
+            "Authenticate with email and password. Returns JWT access and refresh tokens "
+            "as httpOnly cookies. "
+            "Pass `remember_me=true` to extend the refresh token lifetime to "
+            "AUTH_REFRESH_TTL_REMEMBER_SECONDS (default 30 days) instead of the "
+            "standard AUTH_REFRESH_TTL_SECONDS (default 7 days). "
+            "Access token lifetime is always 30 minutes regardless of this flag."
+        ),
         request=LoginRequestSerializer,
         responses={
             200: TokenResponseSerializer,
@@ -263,8 +273,15 @@ class LoginView(APIView):
         if user is None:
             raise InvalidCredentials()
 
+        # Determine refresh token lifetime based on remember_me flag.
+        remember_me: bool = serializer.validated_data.get("remember_me", False)
+        if remember_me:
+            refresh_ttl: int = int(getattr(settings, "AUTH_REFRESH_TTL_REMEMBER_SECONDS", 30 * 24 * 3600))
+        else:
+            refresh_ttl = int(getattr(settings, "AUTH_REFRESH_TTL_SECONDS", 7 * 24 * 3600))
+
         # tv claim embeds token_version for server-side revocation support.
-        refresh = issue_refresh_token(user)
+        refresh = issue_refresh_token(user, lifetime=timedelta(seconds=refresh_ttl))
 
         cart_token = extract_cart_token(request)
         merge_or_adopt_guest_cart(user=user, raw_token=cart_token)
@@ -295,7 +312,14 @@ class LoginView(APIView):
         )
 
         response.set_cookie(settings.AUTH_COOKIE_ACCESS, access_str, **auth_cookie_kwargs())
-        response.set_cookie(settings.AUTH_COOKIE_REFRESH, refresh_str, **auth_cookie_kwargs())
+        # Set refresh cookie with the computed TTL so the browser honours
+        # the remember-me duration via Max-Age.
+        response.set_cookie(
+            settings.AUTH_COOKIE_REFRESH,
+            refresh_str,
+            max_age=refresh_ttl,
+            **auth_cookie_kwargs(),
+        )
 
         return response
 

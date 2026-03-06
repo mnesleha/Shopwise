@@ -73,3 +73,9 @@ LOGOUT_ALL_RL_WINDOW_S = 60
 CHANGE_PASSWORD_RL_PER_USER = 10000
 CHANGE_PASSWORD_RL_PER_IP = 10000
 CHANGE_PASSWORD_RL_WINDOW_S = 600
+
+# Deterministic refresh TTLs for remember-me tests.
+# Values are intentionally short (seconds, not days) to keep test assertions fast,
+# but remember value is strictly larger than standard to validate the feature.
+AUTH_REFRESH_TTL_SECONDS = 3600          # 1 hour (standard, test)
+AUTH_REFRESH_TTL_REMEMBER_SECONDS = 7200  # 2 hours (remember-me, test)

@@ -63,7 +63,11 @@ export default function LoginPage() {
     }
   }, [searchParams]);
 
-  const onSubmit = async (values: { email: string; password: string }) => {
+  const onSubmit = async (values: {
+    email: string;
+    password: string;
+    remember_me: boolean;
+  }) => {
     setIsSubmitting(true);
     setErrorMessage(undefined);
 

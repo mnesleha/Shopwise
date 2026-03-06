@@ -3,6 +3,8 @@ import { api } from "@/lib/api";
 export type LoginRequest = {
   email: string;
   password: string;
+  /** When true, the backend issues a long-lived refresh token ("remember me"). */
+  remember_me?: boolean;
 };
 
 export type LoginResponse = {

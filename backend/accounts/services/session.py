@@ -6,11 +6,15 @@ Public API:
                                   all refresh tokens that carry a stale tv claim.
   - issue_refresh_token(user)  — creates a RefreshToken with the tv claim set to
                                   the current token_version, used at login / register.
+                                  Pass lifetime=timedelta(...) to override the
+                                  default REFRESH_TOKEN_LIFETIME (e.g. remember-me).
 """
 
 from __future__ import annotations
 
 import logging
+from datetime import timedelta
+from typing import Optional
 
 from django.contrib.auth import get_user_model
 from django.db.models import F
@@ -35,7 +39,7 @@ def logout_all_devices(user) -> None:
     user.refresh_from_db(fields=["token_version"])
 
 
-def issue_refresh_token(user):
+def issue_refresh_token(user, *, lifetime: Optional[timedelta] = None):
     """
     Create a RefreshToken for *user* and embed the tv (token_version) claim in
     BOTH the refresh token and the nested access token.
@@ -44,11 +48,17 @@ def issue_refresh_token(user):
     authenticated request (CookieJWTAuthentication rejects any access token
     whose tv claim differs from the current token_version).
 
+    Pass *lifetime* to override the default SIMPLE_JWT REFRESH_TOKEN_LIFETIME,
+    e.g. when the user selects "Remember me" at login.
+
     Returns a RefreshToken instance (call str() to serialise).
     """
     from rest_framework_simplejwt.tokens import RefreshToken  # local import avoids circular deps
 
     token = RefreshToken.for_user(user)
+    # Override expiry when a custom lifetime is requested (e.g. remember-me).
+    if lifetime is not None:
+        token.set_exp(lifetime=lifetime)
     # Embed in refresh token — validated by RefreshView._check_token_version.
     token["tv"] = user.token_version
     # Embed in access token — validated by CookieJWTAuthentication.get_user

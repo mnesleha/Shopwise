@@ -178,9 +178,15 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
 
+# Refresh token TTLs — read at runtime by LoginView so test/local overrides apply.
+# Standard session (no "remember me"): 7 days.
+# Long-lived session ("remember me" checked): 30 days.
+AUTH_REFRESH_TTL_SECONDS: int = 7 * 24 * 3600        # 7 days
+AUTH_REFRESH_TTL_REMEMBER_SECONDS: int = 30 * 24 * 3600  # 30 days
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "REFRESH_TOKEN_LIFETIME": timedelta(seconds=AUTH_REFRESH_TTL_SECONDS),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
