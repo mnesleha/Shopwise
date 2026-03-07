@@ -165,6 +165,8 @@ RESERVATION_TTL_AUTH_SECONDS = int(
 
 STATIC_URL = "static/"
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
@@ -191,12 +193,13 @@ MARTOR_UPLOAD_PATH = "products/descriptions"
 # Disable external image hosting; all uploads go through our own endpoint.
 MARTOR_ENABLE_CONFIGS = {
     "emoji": "true",
-    "imgur": "false",
+    "imgur": "true",
     "mention": "false",
     "guardian": "true",
     "living": "false",
     "spellcheck": "false",
     "hljs": "true",
+    "jquery": "true",
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

@@ -3,6 +3,7 @@ export type ProductListItemDto = {
   name: string;
   price: string;
   stock_quantity: number;
+  short_description: string;
 };
 
 export type ProductDetailDto = {
@@ -10,10 +11,8 @@ export type ProductDetailDto = {
   name: string;
   price: string;
   stock_quantity: number;
-
-  // FUTURE FIELDS (not present yet, optional)
-  short_description?: string;
-  description_md?: string;
+  short_description: string;
+  full_description: string;
   preview_image_url?: string;
   images?: Array<{
     url: string;
@@ -35,7 +34,9 @@ export type ProductGridItem = {
 export type ProductDetailVm = {
   id: string;
   name: string;
-  description?: string;
+  shortDescription: string;
+  fullDescription: string;
+  description?: string; // kept for backward-compat with existing tests
   price: string;
   currency?: string;
   stockQuantity: number;
@@ -50,31 +51,24 @@ export function mapProductToGridItem(dto: ProductListItemDto): ProductGridItem {
     price: dto.price,
     currency: "USD",
     stockQuantity: dto.stock_quantity,
-    shortDescription: "", // TODO: backend short_description
+    shortDescription: dto.short_description,
     imageUrl: "", // TODO: backend preview image URL
   };
 }
 
-export function mapProductToDetailVm(
-  dto: ProductDetailDto
-): ProductDetailVm {
+export function mapProductToDetailVm(dto: ProductDetailDto): ProductDetailVm {
   return {
     id: String(dto.id),
     name: dto.name,
     price: dto.price,
     currency: "USD",
     stockQuantity: dto.stock_quantity,
-
-    // Description:
-    // - today: empty / placeholder
-    // - future: markdown from backend
-    description: dto.description_md ?? "",
-
+    shortDescription: dto.short_description,
+    fullDescription: dto.full_description,
     // Images:
     // - today: preview image if exists
     // - future: full gallery
     images: mapProductImages(dto),
-    
     // Specs:
     // - future extension point (variants, attributes, etc.)
     specs: [],

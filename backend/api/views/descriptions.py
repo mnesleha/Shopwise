@@ -12,8 +12,12 @@ import uuid
 from django.conf import settings
 from django.core.files.storage import default_storage
 from django.http import JsonResponse
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.authentication import SessionAuthentication
+from rest_framework.permissions import IsAdminUser
 from rest_framework.views import APIView
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
+from api.authentication import CookieJWTAuthentication
 
 
 # Permitted MIME types and extensions for description images.
@@ -33,11 +37,25 @@ class MartorImageUploadView(APIView):
     Returns ``{"link": "<storage url>"}`` on success, compatible with the
     Martor editor's expected response format.
 
-    Access: authenticated staff/admin users only.
+    Authentication: Django admin session (SessionAuthentication) or storefront
+    JWT tokens (CookieJWT / Bearer).  The global DRF default only lists JWT
+    backends, so SessionAuthentication must be declared explicitly here to
+    allow uploads from the admin UI.
+
+    Access: authenticated staff/admin users only (is_staff=True).
     No database model is created for the uploaded image.
     """
 
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    # Accept both the admin browser session and the storefront JWT tokens so
+    # that Django admin users and automated tests can both reach this endpoint.
+    authentication_classes = [
+        SessionAuthentication,
+        CookieJWTAuthentication,
+        JWTAuthentication,
+    ]
+    # IsAdminUser requires request.user.is_staff — no separate IsAuthenticated
+    # needed because anonymous users are implicitly denied by this check.
+    permission_classes = [IsAdminUser]
 
     def post(self, request):
         upload = request.FILES.get("markdown-image-upload")
@@ -75,4 +93,4 @@ class MartorImageUploadView(APIView):
         saved_path = default_storage.save(relative_path, upload)
         storage_url = default_storage.url(saved_path)
 
-        return JsonResponse({"link": storage_url})
+        return JsonResponse({"status": 200, "link": storage_url, "name": upload.name})

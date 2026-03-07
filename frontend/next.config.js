@@ -3,6 +3,25 @@ const { withSentryConfig } = require("@sentry/nextjs");
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   skipTrailingSlashRedirect: true,
+
+  // Allow next/image to load images served by the Django backend.
+  // BACKEND_ORIGIN defaults to http://127.0.0.1:8000 for local development;
+  // override via the BACKEND_ORIGIN env variable in production / staging.
+  images: (() => {
+    const origin = process.env.BACKEND_ORIGIN || "http://127.0.0.1:8000";
+    const { protocol, hostname, port } = new URL(origin);
+    return {
+      remotePatterns: [
+        {
+          protocol: protocol.replace(":", ""),
+          hostname,
+          port: port || undefined,
+          pathname: "/media/**",
+        },
+      ],
+    };
+  })(),
+
   async rewrites() {
     const backendOrigin = process.env.BACKEND_ORIGIN || "http://127.0.0.1:8000";
     return [

@@ -4,7 +4,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiExample, OpenApiParameter, OpenApiTypes
 from api.serializers.common import ErrorResponseSerializer
 from products.models import Product
-from api.serializers.product import ProductSerializer
+from api.serializers.product import ProductSerializer, ProductDetailSerializer
 
 
 def _truthy(value: str | None) -> bool:
@@ -77,7 +77,7 @@ The product must be:
 Otherwise, it will not be accessible via the API.
 """,
         responses={
-            200: ProductSerializer,
+            200: ProductDetailSerializer,
             404: ErrorResponseSerializer,
         },
         examples=[
@@ -87,7 +87,9 @@ Otherwise, it will not be accessible via the API.
                     "id": 1,
                     "name": "Wireless Mouse",
                     "price": "29.99",
-                    "stock_quantity": 15
+                    "stock_quantity": 15,
+                    "short_description": "Compact wireless mouse for everyday use.",
+                    "full_description": "## Wireless Mouse\n\nA reliable companion for your workday.",
                 },
                 response_only=True,
             ),
@@ -101,6 +103,12 @@ class ProductViewSet(ReadOnlyModelViewSet):
     filterset_fields = {
         "category": ["exact"],
     }
+
+    def get_serializer_class(self):
+        """Return the detail serializer for single-object retrieval."""
+        if self.action == "retrieve":
+            return ProductDetailSerializer
+        return ProductSerializer
 
     def get_queryset(self):
         qs = Product.objects.all()

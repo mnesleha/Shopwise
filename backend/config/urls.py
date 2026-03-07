@@ -29,6 +29,7 @@ from debug_toolbar.toolbar import debug_toolbar_urls
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("martor/", include("martor.urls")),
     path("api/v1/", include("api.urls")),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path(

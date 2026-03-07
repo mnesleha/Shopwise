@@ -1,46 +1,51 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { ShoppingCart, ArrowLeft } from "lucide-react"
+import * as React from "react";
+import ReactMarkdown from "react-markdown";
+import { ShoppingCart, ArrowLeft } from "lucide-react";
 
-import { cn } from "@/lib/utils"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { resolveMediaUrl } from "@/lib/media";
 
 interface ProductSpec {
-  label: string
-  value: string
+  label: string;
+  value: string;
 }
 
 interface Product {
-  id: string
-  name: string
-  description?: string
-  price: string
-  currency?: string
-  stockQuantity: number
-  images?: string[]
-  specs?: ProductSpec[]
+  id: string;
+  name: string;
+  shortDescription?: string;
+  fullDescription?: string;
+  description?: string; // kept for backward-compat with existing tests
+  price: string;
+  currency?: string;
+  stockQuantity: number;
+  images?: string[];
+  specs?: ProductSpec[];
 }
 
 interface ProductDetailProps {
-  product: Product
-  onAddToCart: (productId: string) => void
-  onBack: () => void
+  product: Product;
+  onAddToCart: (productId: string) => void;
+  onBack: () => void;
 }
 
-function ImageGallery({ images, productName }: { images?: string[]; productName: string }) {
-  const [activeIndex, setActiveIndex] = React.useState(0)
+function ImageGallery({
+  images,
+  productName,
+}: {
+  images?: string[];
+  productName: string;
+}) {
+  const [activeIndex, setActiveIndex] = React.useState(0);
 
-  const hasImages = images && images.length > 0
-  const activeImage = hasImages ? images[activeIndex] : null
+  const hasImages = images && images.length > 0;
+  const activeImage = hasImages ? images[activeIndex] : null;
 
   return (
     <div className="flex flex-col gap-4">
@@ -54,7 +59,9 @@ function ImageGallery({ images, productName }: { images?: string[]; productName:
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-muted to-muted-foreground/20">
-            <span className="text-muted-foreground text-sm">No image available</span>
+            <span className="text-muted-foreground text-sm">
+              No image available
+            </span>
           </div>
         )}
       </div>
@@ -71,7 +78,7 @@ function ImageGallery({ images, productName }: { images?: string[]; productName:
                 "relative h-16 w-16 shrink-0 overflow-hidden rounded-md border-2 transition-all",
                 index === activeIndex
                   ? "border-primary ring-2 ring-primary/20"
-                  : "border-transparent hover:border-muted-foreground/30"
+                  : "border-transparent hover:border-muted-foreground/30",
               )}
               aria-label={`View image ${index + 1}`}
               aria-current={index === activeIndex ? "true" : undefined}
@@ -86,7 +93,7 @@ function ImageGallery({ images, productName }: { images?: string[]; productName:
         </div>
       )}
     </div>
-  )
+  );
 }
 
 function SpecsList({ specs }: { specs: ProductSpec[] }) {
@@ -98,39 +105,37 @@ function SpecsList({ specs }: { specs: ProductSpec[] }) {
       <CardContent className="pt-0">
         <dl className="grid gap-2">
           {specs.map((spec, index) => (
-            <div
-              key={index}
-              className="flex justify-between gap-4 text-sm"
-            >
+            <div key={index} className="flex justify-between gap-4 text-sm">
               <dt className="text-muted-foreground">{spec.label}</dt>
-              <dd className="text-foreground font-medium text-right">{spec.value}</dd>
+              <dd className="text-foreground font-medium text-right">
+                {spec.value}
+              </dd>
             </div>
           ))}
         </dl>
       </CardContent>
     </Card>
-  )
+  );
 }
 
-export function ProductDetail({ product, onAddToCart, onBack }: ProductDetailProps) {
-  const isInStock = product.stockQuantity > 0
-  const currency = product.currency ?? "USD"
-  const currencySymbol = currency === "USD" ? "$" : currency
+export function ProductDetail({
+  product,
+  onAddToCart,
+  onBack,
+}: ProductDetailProps) {
+  const isInStock = product.stockQuantity > 0;
+  const currency = product.currency ?? "USD";
+  const currencySymbol = currency === "USD" ? "$" : currency;
 
   const handleAddToCart = () => {
-    onAddToCart(product.id)
-  }
+    onAddToCart(product.id);
+  };
 
   return (
     <div className="flex flex-col gap-6">
       {/* Back Button */}
       <div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onBack}
-          className="gap-1"
-        >
+        <Button variant="ghost" size="sm" onClick={onBack} className="gap-1">
           <ArrowLeft className="h-4 w-4" />
           Back
         </Button>
@@ -153,7 +158,8 @@ export function ProductDetail({ product, onAddToCart, onBack }: ProductDetailPro
                 variant={isInStock ? "secondary" : "destructive"}
                 className={cn(
                   "shrink-0",
-                  isInStock && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                  isInStock &&
+                    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
                 )}
               >
                 {isInStock ? "In stock" : "Out of stock"}
@@ -161,12 +167,20 @@ export function ProductDetail({ product, onAddToCart, onBack }: ProductDetailPro
             </div>
 
             {/* Price */}
-            <p className="text-foreground text-3xl font-bold">
-              {currencySymbol}{product.price}
+            <p className="text-foreground text-3xl font-bold pb-4">
+              {currencySymbol}
+              {product.price}
             </p>
-          </div>
 
-          <Separator />
+            <Separator />
+
+            {/* Short description — plain text teaser */}
+            {product.shortDescription && (
+              <p className="text-muted-foreground leading-relaxed">
+                {product.shortDescription}
+              </p>
+            )}
+          </div>
 
           {/* Description */}
           {product.description && (
@@ -207,6 +221,43 @@ export function ProductDetail({ product, onAddToCart, onBack }: ProductDetailPro
           </div>
         </div>
       </div>
+
+      {/* Full description — Markdown rendered below the main two-column grid */}
+      {product.fullDescription && (
+        <div
+          data-testid="product-full-description"
+          className="prose prose-neutral dark:prose-invert max-w-none"
+        >
+          <ReactMarkdown
+            components={{
+              // Resolve relative /media/... URLs to the backend origin so images
+              // stored as relative paths in the DB render correctly in the browser.
+              img({
+                src,
+                alt,
+              }: React.ComponentPropsWithoutRef<"img"> & {
+                src?: string | Blob;
+              }) {
+                const resolvedSrc = resolveMediaUrl(
+                  typeof src === "string" ? src : "",
+                );
+                return (
+                  <span className="my-4 flex justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={resolvedSrc}
+                      alt={alt ?? ""}
+                      className="h-auto max-w-full rounded-md object-contain"
+                    />
+                  </span>
+                );
+              },
+            }}
+          >
+            {product.fullDescription}
+          </ReactMarkdown>
+        </div>
+      )}
     </div>
-  )
+  );
 }

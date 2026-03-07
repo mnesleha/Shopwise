@@ -93,6 +93,5 @@ urlpatterns = [
         "dev/email-verification-token/",
         DevEmailVerificationTokenView.as_view(),
     ),
-    path('martor/', include('martor.urls')),
     path('descriptions/upload/', MartorImageUploadView.as_view(), name='description-image-upload'),
 ]

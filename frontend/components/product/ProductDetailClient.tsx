@@ -11,6 +11,8 @@ type Props = {
   product: {
     id: string;
     name: string;
+    shortDescription: string;
+    fullDescription: string;
     description?: string;
     price: string;
     currency?: string;

@@ -16,6 +16,7 @@ export interface ProductFixture {
   name: string;
   shortDescription?: string;
   description?: string;
+  fullDescription?: string;
   price: string;
   currency?: string;
   stockQuantity: number;
@@ -24,7 +25,9 @@ export interface ProductFixture {
   specs?: Array<{ label: string; value: string }>;
 }
 
-export function makeProduct(overrides?: Partial<ProductFixture>): ProductFixture {
+export function makeProduct(
+  overrides?: Partial<ProductFixture>,
+): ProductFixture {
   return {
     id: "1",
     name: "Test Mouse",
@@ -50,7 +53,9 @@ export interface CartItemFixture {
   imageUrl?: string;
 }
 
-export function makeCartItem(overrides?: Partial<CartItemFixture>): CartItemFixture {
+export function makeCartItem(
+  overrides?: Partial<CartItemFixture>,
+): CartItemFixture {
   return {
     productId: "1",
     productName: "Test Mouse",
@@ -93,7 +98,9 @@ export interface OrderItemFixture {
   discount?: { type: "FIXED" | "PERCENT"; value: string } | null;
 }
 
-export function makeOrderItem(overrides?: Partial<OrderItemFixture>): OrderItemFixture {
+export function makeOrderItem(
+  overrides?: Partial<OrderItemFixture>,
+): OrderItemFixture {
   return {
     id: "item-1",
     productId: "1",
