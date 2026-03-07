@@ -34,6 +34,9 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "rest_framework",
     "django_q",
+    "martor",
+    "versatileimagefield",
+    "storages",
     "accounts",
     "categories",
     "products",
@@ -161,6 +164,40 @@ RESERVATION_TTL_AUTH_SECONDS = int(
     os.getenv("RESERVATION_TTL_AUTH_SECONDS", 2 * 60 * 60))
 
 STATIC_URL = "static/"
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# Django 4.2+ unified storage configuration.
+# Swap "default" backend to a cloud storage (e.g. django-storages S3Backend)
+# via environment-specific settings without touching application code.
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Martor — markdown editor used for product descriptions.
+# Images uploaded through the editor are stored under MARTOR_UPLOAD_PATH,
+# isolated from the future product gallery uploads.
+# ---------------------------------------------------------------------------
+MARTOR_UPLOAD_URL = "/api/v1/descriptions/upload/"
+MARTOR_UPLOAD_PATH = "products/descriptions"
+
+# Disable external image hosting; all uploads go through our own endpoint.
+MARTOR_ENABLE_CONFIGS = {
+    "emoji": "true",
+    "imgur": "false",
+    "mention": "false",
+    "guardian": "true",
+    "living": "false",
+    "spellcheck": "false",
+    "hljs": "true",
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

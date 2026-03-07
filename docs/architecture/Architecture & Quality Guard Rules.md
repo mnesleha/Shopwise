@@ -125,7 +125,7 @@ If any of these occur, pause implementation and decide explicitly:
 - flaky E2E that requires sleeps/timeouts to pass
 - OpenAPI drift vs runtime behavior
 
-## 11) ## SSR Hydration Guard: Forms Must Avoid Controlled Input Races ([ADR-034](../decisions/ADR-034-SSR-Hydration-Race-Condition-with-Controlled-Form-Inputs.md))
+## 11) SSR Hydration Guard: Forms Must Avoid Controlled Input Races ([ADR-034](../decisions/ADR-034-SSR-Hydration-Race-Condition-with-Controlled-Form-Inputs.md))
 
 For simple SSR-rendered forms (Login, Register, Checkout):
 
@@ -139,6 +139,24 @@ For simple SSR-rendered forms (Login, Register, Checkout):
 **Testing rule**:
 
 - Playwright must not rely on “fast fill immediately after SSR paint” as a stable interaction; forms must be hydration-safe by design.
+
+## 12) Security Throttling Rule
+
+Abuse-prone endpoints (auth, account security, email/recovery, token-confirm flows)
+must be explicitly throttled at application level using the appropriate key:
+
+- per IP
+- per normalized email
+- per authenticated user
+
+Throttle responses must use the unified API error contract. ([ADR-036](../decisions/ADR-036-API-Throttling-Strategy.md))
+
+## 13) Media Storage Rule
+
+All product-related media must use Django `STORAGES["default"]` as the single storage abstraction.
+Frontend must consume only backend-provided media URLs and must never construct media paths manually.
+
+Structured catalogue media (`ProductImage`) and editorial markdown uploads must remain logically separated. ([ADR-037](../decisions/ADR-037-Product-Media-Storage-Strategy.md))
 
 ## Sprint Kickoff Routine (Recommended)
 

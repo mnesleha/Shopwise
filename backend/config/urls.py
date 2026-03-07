@@ -15,6 +15,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.http import JsonResponse
@@ -40,3 +42,8 @@ urlpatterns = [
         name='redoc',
     ),
 ] + debug_toolbar_urls()
+
+# Serve uploaded media files during local development.
+# In production, media should be served by the web server or a cloud storage backend.
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

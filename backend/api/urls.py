@@ -27,6 +27,7 @@ from api.views.guest_orders import GuestOrderRetrieveView
 from api.views import health_check
 from api.views.profile import ProfileView, AddressViewSet
 from api.views.accounts import AccountView, ChangeEmailView, ConfirmEmailChangeView, CancelEmailChangeView, LogoutAllView, ChangePasswordView
+from api.views.descriptions import MartorImageUploadView
 
 app_name = "api"
 
@@ -92,4 +93,6 @@ urlpatterns = [
         "dev/email-verification-token/",
         DevEmailVerificationTokenView.as_view(),
     ),
+    path('martor/', include('martor.urls')),
+    path('descriptions/upload/', MartorImageUploadView.as_view(), name='description-image-upload'),
 ]

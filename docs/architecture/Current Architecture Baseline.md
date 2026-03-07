@@ -167,6 +167,15 @@ The project uses a custom Django user model (`accounts.User`) with email-based a
 Email is required, normalized and unique at the database level. (ADR-020)
 All domain relations reference `settings.AUTH_USER_MODEL`.
 
+### Account Email Change (Current)
+
+Email changes are handled via a dedicated pending-request flow. (ADR-035)
+
+- Initiation requires the user’s current password and double entry of the new email.
+- `User.email` is updated only after the new email is confirmed via a time-limited, single-use token.
+- The old email receives a security notification with a one-click cancel/block action.
+- After successful confirmation, all active sessions are terminated (logout-all) and the user must log in again.
+
 ---
 
 ## Anonymous Cart (Current)
