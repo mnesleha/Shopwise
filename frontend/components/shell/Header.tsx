@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import HeaderAuthClient from "@/components/shell/HeaderAuthClient";
 import HeaderLeftSlotClient from "@/components/shell/HeaderLeftSlotClient";
+import HeaderSearchInput from "@/components/shell/HeaderSearchInput";
 import { CartBadgeClient } from "@/components/shell/CartBadgeClient";
 
 export default function Header() {
@@ -9,15 +10,20 @@ export default function Header() {
     // relative + z-50 keeps the header above the CategorySidebar backdrop (z-40)
     // so nav actions (logout, cart, etc.) remain tappable when the sidebar is open.
     <header className="relative z-50 border-b">
-      <div className="mx-auto w-full max-w-6xl px-4 py-4 flex items-center justify-between gap-6">
-        <div className="flex items-center gap-3">
+      <div className="mx-auto w-full max-w-6xl px-4 py-4 flex items-center gap-4">
+        <div className="flex items-center gap-3 shrink-0">
           <HeaderLeftSlotClient />
           <Link href="/products" className="font-semibold tracking-tight">
             Shopwise
           </Link>
         </div>
 
-        <nav className="flex items-center gap-4 text-sm">
+        {/* Global product search — centered, grows to fill available space */}
+        <div className="flex-1 flex justify-center">
+          <HeaderSearchInput />
+        </div>
+
+        <nav className="flex items-center gap-4 text-sm shrink-0">
           <HeaderAuthClient />
 
           <Link

@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { X, LayoutGrid, ChevronRight } from "lucide-react";
+import { X, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import CatalogFilterPanel from "@/components/product/CatalogFilterPanel";
 
 interface Category {
   id: number;
@@ -14,8 +15,8 @@ interface Category {
 interface CategorySidebarProps {
   isOpen: boolean;
   categories: Category[];
-  selectedCategoryId?: number | null;
-  onSelectCategory: (id: number | null) => void;
+  priceBoundsMin: string | null;
+  priceBoundsMax: string | null;
   onClose: () => void;
   onOpen: () => void;
 }
@@ -23,8 +24,8 @@ interface CategorySidebarProps {
 export function CategorySidebar({
   isOpen,
   categories,
-  selectedCategoryId,
-  onSelectCategory,
+  priceBoundsMin,
+  priceBoundsMax,
   onClose,
   onOpen,
 }: CategorySidebarProps) {
@@ -52,12 +53,12 @@ export function CategorySidebar({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4">
-          <h2 className="text-base font-semibold tracking-tight">Categories</h2>
+          <h2 className="text-base font-semibold tracking-tight">Filters</h2>
           <Button
             variant="ghost"
             size="icon-sm"
             onClick={onClose}
-            aria-label="Close category sidebar"
+            aria-label="Close filters"
           >
             <X className="size-4" />
           </Button>
@@ -65,57 +66,14 @@ export function CategorySidebar({
 
         <Separator />
 
-        {/* Category list */}
-        <nav className="flex-1 overflow-y-auto px-3 py-3">
-          <ul role="list" className="flex flex-col gap-1">
-            {/* "All products" item */}
-            <li>
-              <button
-                type="button"
-                onClick={() => onSelectCategory(null)}
-                className={cn(
-                  "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  selectedCategoryId == null
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                )}
-                aria-current={selectedCategoryId == null ? "page" : undefined}
-              >
-                <LayoutGrid className="size-4 shrink-0" />
-                All products
-              </button>
-            </li>
-
-            {/* Category items */}
-            {categories.map((cat) => {
-              const isSelected = selectedCategoryId === cat.id;
-              return (
-                <li key={cat.id}>
-                  <button
-                    type="button"
-                    onClick={() => onSelectCategory(cat.id)}
-                    className={cn(
-                      "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                      isSelected
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                    )}
-                    aria-current={isSelected ? "page" : undefined}
-                  >
-                    <span className="truncate">{cat.name}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        {/* Footer hint */}
-        <Separator />
-        <p className="px-5 py-3 text-xs text-muted-foreground">
-          {categories.length}{" "}
-          {categories.length === 1 ? "category" : "categories"}
-        </p>
+        {/* Filter panel */}
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          <CatalogFilterPanel
+            categories={categories}
+            priceBoundsMin={priceBoundsMin}
+            priceBoundsMax={priceBoundsMax}
+          />
+        </div>
       </aside>
 
       {/* Edge handle — visible when closed */}

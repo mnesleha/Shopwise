@@ -4,6 +4,16 @@ export type ProductListItemDto = {
   price: string;
   stock_quantity: number;
   short_description: string;
+  stock_status: "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
+};
+
+/** Catalogue list response — wrapped envelope from /api/v1/products/. */
+export type CatalogueResponseDto = {
+  results: ProductListItemDto[];
+  metadata: {
+    price_min_available: string | null;
+    price_max_available: string | null;
+  };
 };
 
 export type ProductDetailDto = {

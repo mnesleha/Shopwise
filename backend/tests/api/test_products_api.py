@@ -24,7 +24,7 @@ def test_products_list_returns_only_active_products():
     response = client.get("/api/v1/products/")
 
     assert response.status_code == 200
-    data = response.json()
+    data = response.json()["results"]
 
     returned_names = {item["name"] for item in data}
 
@@ -64,7 +64,7 @@ def test_products_list_can_be_filtered_by_category():
     response = client.get(f"/api/v1/products/?category={c1.id}")
     assert response.status_code == 200
 
-    data = response.json()
+    data = response.json()["results"]
     assert len(data) == 1
     assert data[0]["id"] == p1.id
     assert data[0]["category_id"] == c1.id

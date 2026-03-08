@@ -323,3 +323,11 @@ consistency between cart preview and checkout.
 # Safety guard: rate limiting must always be active in production.
 # Set to True only in test.py — never in production or local settings.
 DISABLE_RATE_LIMITING_FOR_TESTS = False
+
+# ---------------------------------------------------------------------------
+# Catalogue / stock settings
+# ---------------------------------------------------------------------------
+
+# Products with stock_quantity <= LOW_STOCK_THRESHOLD are shown as LOW_STOCK.
+# Override in local.py or per-environment as needed.
+LOW_STOCK_THRESHOLD = 5
