@@ -28,15 +28,32 @@ export default function HeaderSearchInput() {
     setValue(searchParams?.get("search") ?? "");
   }, [searchParams]);
 
-  const submit = () => {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const submit = (overrideValue?: string) => {
     const params = new URLSearchParams();
     // Strip all filter/sort params; keep only the new search term.
     FILTER_PARAMS.forEach((k) => params.delete(k));
-    const trimmed = value.trim();
+    const trimmed = (overrideValue ?? value).trim();
     if (trimmed) params.set("search", trimmed);
     const qs = params.toString();
     router.push(qs ? `/products?${qs}` : "/products");
   };
+
+  // The native × clear button on <input type="search"> fires a 'search' DOM
+  // event (not a React synthetic event).  Intercepting it here lets us navigate
+  // immediately when the user clears the field with that button.
+  React.useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    const handleSearch = () => {
+      // el.value is "" at this point — submit will navigate to /products.
+      submit(el.value);
+    };
+    el.addEventListener("search", handleSearch);
+    return () => el.removeEventListener("search", handleSearch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") submit();
@@ -47,7 +64,7 @@ export default function HeaderSearchInput() {
       {/* Clickable search icon — submits on click */}
       <button
         type="button"
-        onClick={submit}
+        onClick={() => submit()}
         aria-label="Search"
         className="absolute left-3 text-muted-foreground hover:text-foreground transition-colors"
         tabIndex={-1}
@@ -56,6 +73,7 @@ export default function HeaderSearchInput() {
       </button>
 
       <input
+        ref={inputRef}
         type="search"
         data-testid="header-search-input"
         value={value}

@@ -271,3 +271,150 @@ def test_service_returns_empty_queryset_when_no_hits():
 
     qs = service.get_queryset(query)
     assert not qs.exists()
+
+
+# ---------------------------------------------------------------------------
+# ngram substring / partial-term matching
+#
+# The FULLTEXT index was rebuilt WITH PARSER ngram (migration 0005), enabling
+# partial-term / substring matching that the default word-based parser does
+# not support.  All tests in this section use resp.json()["results"] because
+# the catalogue endpoint returns the envelope {"results": [...], "metadata": {}}.
+# ---------------------------------------------------------------------------
+
+def _results(resp) -> list:
+    """Unwrap results from the catalogue response envelope."""
+    return resp.json()["results"]
+
+
+@pytest.mark.mysql
+@pytest.mark.django_db
+def test_ngram_substring_match_in_name():
+    """
+    A partial term (3 chars) must match a product whose name contains it as a
+    substring.  With the default word-based parser this would return nothing
+    because "mec" is not a whole word; ngram makes it work.
+    """
+    p = _make_product(
+        name="MechanicalKeyboard Pro",
+        short_description="",
+        full_description="",
+    )
+    _make_product(name="USB Mouse", short_description="", full_description="")
+
+    resp = _anon_client().get(URL, {"search": "mec"})
+
+    assert resp.status_code == 200
+    ids = {item["id"] for item in _results(resp)}
+    assert p.id in ids
+    assert Product.objects.get(name="USB Mouse").id not in ids
+
+
+@pytest.mark.mysql
+@pytest.mark.django_db
+def test_ngram_substring_match_in_short_description():
+    """Partial term must match a substring inside short_description."""
+    p = _make_product(
+        name="Office Chair",
+        short_description="Lumbar support with ergonomic design",
+        full_description="",
+    )
+    _make_product(
+        name="Desk Lamp",
+        short_description="Adjustable brightness",
+        full_description="",
+    )
+
+    resp = _anon_client().get(URL, {"search": "ergo"})
+
+    assert resp.status_code == 200
+    ids = {item["id"] for item in _results(resp)}
+    assert p.id in ids
+    assert Product.objects.get(name="Desk Lamp").id not in ids
+
+
+@pytest.mark.mysql
+@pytest.mark.django_db
+def test_ngram_substring_match_in_full_description():
+    """Partial term must match a substring inside full_description."""
+    p = _make_product(
+        name="Display Panel",
+        short_description="",
+        full_description="Uses micro-OLED technology for superior contrast.",
+    )
+    _make_product(
+        name="Basic Monitor",
+        short_description="",
+        full_description="Standard LCD panel, nothing special.",
+    )
+
+    resp = _anon_client().get(URL, {"search": "micro"})
+
+    assert resp.status_code == 200
+    ids = {item["id"] for item in _results(resp)}
+    assert p.id in ids
+    assert Product.objects.get(name="Basic Monitor").id not in ids
+
+
+@pytest.mark.mysql
+@pytest.mark.django_db
+def test_ngram_search_ordering_relevance_first():
+    """
+    Product with more occurrences of the search ngrams scores higher and must
+    appear before one with fewer matches.
+    """
+    # High relevance: term appears in name + short_description + full_description
+    high = _make_product(
+        name="ProSwitch Network",
+        short_description="ProSwitch managed switch",
+        full_description="ProSwitch delivers enterprise-grade ProSwitch routing.",
+    )
+    # Low relevance: term buried once in full_description
+    low = _make_product(
+        name="Generic Box",
+        short_description="Plain enclosure",
+        full_description="Optionally mount a ProSwitch device inside.",
+    )
+
+    resp = _anon_client().get(URL, {"search": "ProSwitch"})
+
+    assert resp.status_code == 200
+    items = _results(resp)
+    ids = [item["id"] for item in items]
+    assert high.id in ids
+    assert low.id in ids
+    assert ids.index(high.id) < ids.index(low.id), (
+        "Higher-relevance product must appear before lower-relevance one"
+    )
+
+
+@pytest.mark.mysql
+@pytest.mark.django_db
+def test_ngram_search_ordering_availability_secondary():
+    """
+    When two products have the same relevance score, in-stock must precede
+    out-of-stock.
+    """
+    in_stock = _make_product(
+        name="CeramicMug Classic",
+        short_description="Handmade ceramic mug",
+        full_description="",
+        stock_quantity=5,
+    )
+    out_of_stock = _make_product(
+        name="CeramicMug Classic",
+        short_description="Handmade ceramic mug",
+        full_description="",
+        stock_quantity=0,
+    )
+
+    resp = _anon_client().get(URL, {"search": "CeramicMug"})
+
+    assert resp.status_code == 200
+    items = _results(resp)
+    ids = [item["id"] for item in items]
+    assert in_stock.id in ids
+    assert out_of_stock.id in ids
+    assert ids.index(in_stock.id) < ids.index(out_of_stock.id), (
+        "In-stock must precede out-of-stock when relevance is equal"
+    )

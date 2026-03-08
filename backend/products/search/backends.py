@@ -26,15 +26,28 @@ class CatalogSearchBackend(Protocol):
 
 class MySQLCatalogSearchBackend:
     """
-    MySQL FULLTEXT search backend.
+    MySQL FULLTEXT search backend — ngram parser variant.
 
-    Executes MATCH … AGAINST in Boolean Mode over the three text columns that
-    carry product content.  All MySQL-specific SQL is confined to this class —
-    the service and viewset are completely database-agnostic.
+    Executes MATCH … AGAINST in Natural Language Mode over the three text
+    columns that carry product content.  All MySQL-specific SQL is confined
+    to this class — the service and viewset are completely database-agnostic.
 
-    Prerequisites:
-        A composite FULLTEXT index on (name, short_description, full_description)
-        must exist (see migration 0004).
+    Natural Language Mode is preferred over Boolean Mode for ngram searches:
+      - The ngram parser tokenises both the indexed text and the search term
+        into n-gram tokens (size controlled by ngram_token_size server variable,
+        set to 2 for this deployment).  This enables substring/partial-term
+        matching that the default word-based parser does not provide.
+      - NLM avoids misinterpreting user-supplied characters (+, -, ~, *) as
+        boolean operators.
+      - InnoDB FULLTEXT does NOT apply the MyISAM 50 % row-frequency threshold
+        in Natural Language Mode, so this switch is safe for all table sizes.
+
+    Prerequisites (must be in place before applying this backend):
+        1. MySQL server configuration:
+             ngram_token_size      = 2
+             innodb_ft_enable_stopword = OFF
+        2. The composite FULLTEXT index rebuilt with WITH PARSER ngram
+           (see migration 0005_product_fulltext_ngram).
     """
 
     # Columns covered by the composite FULLTEXT index.  Order must match the
@@ -47,11 +60,14 @@ class MySQLCatalogSearchBackend:
 
         term = query.search.strip()
 
+        # NATURAL LANGUAGE MODE — MySQL tokenises the term into ngrams and
+        # returns a floating-point relevance score.  The score is used by the
+        # service layer for result ordering; see CatalogSearchService._apply_ordering.
         sql = f"""
             SELECT id,
-                   MATCH({self._COLUMNS}) AGAINST(%s IN BOOLEAN MODE) AS relevance
+                   MATCH({self._COLUMNS}) AGAINST(%s IN NATURAL LANGUAGE MODE) AS relevance
             FROM products_product
-            WHERE MATCH({self._COLUMNS}) AGAINST(%s IN BOOLEAN MODE)
+            WHERE MATCH({self._COLUMNS}) AGAINST(%s IN NATURAL LANGUAGE MODE)
         """
 
         from django.db import connection

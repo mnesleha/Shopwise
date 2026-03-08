@@ -133,4 +133,24 @@ describe("HeaderSearchInput", () => {
 
     expect(mockRouter.push.mock.calls[0][0]).toMatch(/^\/products/);
   });
+
+  it("navigates to /products when the native clear button fires the search event", () => {
+    // The browser's native × button on <input type="search"> fires a 'search'
+    // DOM event (not a React synthetic event).  jsdom doesn't render the clear
+    // button, so we dispatch the event manually to test the listener.
+    setParams("search=keyboard");
+    renderInput();
+
+    const input = getInput();
+    // Simulate the browser clearing the value and firing 'search'
+    Object.defineProperty(input, "value", {
+      value: "",
+      writable: true,
+      configurable: true,
+    });
+    input.dispatchEvent(new Event("search", { bubbles: true }));
+
+    expect(mockRouter.push).toHaveBeenCalledOnce();
+    expect(mockRouter.push.mock.calls[0][0]).toBe("/products");
+  });
 });
