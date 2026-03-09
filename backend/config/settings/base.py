@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'django_filters',
     'drf_spectacular',
     'drf_spectacular_sidecar',
+    'django_prices',
     "debug_toolbar",
     "django_countries",
 ]

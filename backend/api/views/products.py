@@ -177,6 +177,13 @@ Response shape:
                             "name": "Wireless Mouse",
                             "category_id": 3,
                             "price": "29.99",
+                            "pricing": {
+                                "net": "29.99",
+                                "gross": "36.89",
+                                "tax": "6.90",
+                                "currency": "EUR",
+                                "tax_rate": "23",
+                            },
                             "stock_quantity": 15,
                             "stock_status": "IN_STOCK",
                             "short_description": "Compact wireless mouse.",
@@ -207,6 +214,13 @@ Response shape:
                     "name": "Wireless Mouse",
                     "category_id": 3,
                     "price": "29.99",
+                    "pricing": {
+                        "net": "29.99",
+                        "gross": "36.89",
+                        "tax": "6.90",
+                        "currency": "EUR",
+                        "tax_rate": "23",
+                    },
                     "stock_quantity": 15,
                     "stock_status": "IN_STOCK",
                     "short_description": "Compact wireless mouse for everyday use.",
@@ -246,7 +260,10 @@ class ProductViewSet(ReadOnlyModelViewSet):
 
     def get_queryset(self):
         service = CatalogSearchService(_build_backend())
-        return service.get_queryset(self._build_query(), is_staff=self._is_staff())
+        qs = service.get_queryset(self._build_query(), is_staff=self._is_staff())
+        # Prefetch tax_class to avoid N+1 queries when serializing pricing
+        # for each product in the catalogue list.
+        return qs.select_related("tax_class")
 
     def list(self, request, *args, **kwargs):
         """

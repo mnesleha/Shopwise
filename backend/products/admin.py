@@ -1,12 +1,23 @@
 from django import forms
 from django.contrib import admin
 from martor.widgets import AdminMartorWidget
-from .models import Product, ProductImage
+from .models import Product, ProductImage, TaxClass
 
 
 # ---------------------------------------------------------------------------
-# ProductImage inline
+# TaxClass admin
 # ---------------------------------------------------------------------------
+
+
+@admin.register(TaxClass)
+class TaxClassAdmin(admin.ModelAdmin):
+    list_display = ("name", "code", "rate", "is_active")
+    list_filter = ("is_active",)
+    search_fields = ("name", "code")
+    fields = ("name", "code", "description", "rate", "is_active")
+    ordering = ("name",)
+
+
 
 
 class ProductImageInline(admin.TabularInline):
@@ -29,15 +40,23 @@ class ProductImageInline(admin.TabularInline):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "price", "stock_quantity", "is_active")
-    list_filter = ("is_active",)
+    list_display = ("id", "name", "price", "price_net_amount", "price_gross_amount", "currency", "stock_quantity", "is_active")
+    list_filter = ("is_active", "currency", "tax_class")
     search_fields = ("name",)
+    readonly_fields = ("price_gross_amount",)
     fields = (
         "name",
+        # --- Pricing ---
         "price",
+        "price_net_amount",
+        "price_gross_amount",
+        "currency",
+        "tax_class",
+        # --- Inventory ---
         "stock_quantity",
         "is_active",
         "category",
+        # --- Content ---
         "short_description",
         "full_description",
         "primary_image",
