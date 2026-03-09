@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from prices import Money, TaxedMoney
 
 from utils.sanitize import sanitize_markdown
 from versatileimagefield.fields import PPOIField, VersatileImageField
@@ -97,6 +98,67 @@ class Product(models.Model):
         help_text="Tax classification applied to this product.",
     )
 
+    # ------------------------------------------------------------------
+    # Derived gross amount — stored so that django-prices TaxedMoneyField
+    # can expose a typed TaxedMoney object on the model instance.
+    # WARNING: this is NOT a business authority.  It is re-computed by
+    # Product.save() from the tax resolver every time the product is saved.
+    # Do NOT read this column to make pricing decisions; use
+    # get_product_pricing() instead.
+    # ------------------------------------------------------------------
+    price_gross_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        editable=False,
+        help_text=(
+            "Gross (post-tax) price — derived from price_net_amount via the tax "
+            "resolver on every save.  Read-only; do not set directly."
+        ),
+    )
+
+    # ------------------------------------------------------------------
+    # django-prices typed accessors (plain Python properties)
+    # Using @property instead of MoneyField/TaxedMoneyField descriptors
+    # avoids those descriptors calling cls._meta.add_field() and landing
+    # in opts.fields, which breaks DRF serializer introspection.
+    # These provide the same typed Money / TaxedMoney interface.
+    # ------------------------------------------------------------------
+
+    @property
+    def price_net(self):
+        """Net unit price as a prices.Money, or None when unset."""
+        if self.price_net_amount is None:
+            return None
+        return Money(self.price_net_amount, self.currency)
+
+    @price_net.setter
+    def price_net(self, value):
+        """Assign a Money to write through to price_net_amount and currency."""
+        if value is None:
+            self.price_net_amount = None
+        else:
+            self.price_net_amount = value.amount
+            self.currency = value.currency
+
+    @property
+    def price_gross(self):
+        """Gross unit price as a prices.Money, or None when price_gross_amount is unset."""
+        if self.price_gross_amount is None:
+            return None
+        return Money(self.price_gross_amount, self.currency)
+
+    @property
+    def taxed_price(self):
+        """Combined prices.TaxedMoney, or None when either amount is unset."""
+        if self.price_net_amount is None or self.price_gross_amount is None:
+            return None
+        return TaxedMoney(
+            net=Money(self.price_net_amount, self.currency),
+            gross=Money(self.price_gross_amount, self.currency),
+        )
+
     stock_quantity = models.IntegerField()
     is_active = models.BooleanField(default=True)
     category = models.ForeignKey("categories.Category", null=True, blank=True, on_delete=models.SET_NULL, related_name="products")
@@ -144,6 +206,21 @@ class Product(models.Model):
             raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
+        # Synchronize price_gross_amount from the tax resolver so that the
+        # django-prices TaxedMoneyField / price_gross descriptor stay consistent.
+        # price_net_amount is canonical; price_gross_amount is always derived.
+        if self.price_net_amount is not None:
+            # Lazy import to avoid circular dependency (tax_resolver imports TaxClass).
+            from products.services.tax_resolver import resolve_tax  # noqa: PLC0415
+            taxed = resolve_tax(
+                net_amount=self.price_net_amount,
+                currency=self.currency,
+                tax_class=self.tax_class,
+            )
+            self.price_gross_amount = taxed.gross.amount
+        else:
+            self.price_gross_amount = None
+
         # Strip raw HTML from the Markdown description before persisting.
         # Applies to all entry points: admin, API, management commands.
         self.full_description = sanitize_markdown(self.full_description)
