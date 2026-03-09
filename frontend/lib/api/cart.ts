@@ -1,5 +1,47 @@
 import { api } from "@/lib/api";
 
+// ---------------------------------------------------------------------------
+// Phase 2 pricing types (Slice 4 — cart pricing integration)
+// ---------------------------------------------------------------------------
+
+/** A single pricing tier (undiscounted or discounted) for one cart item unit. */
+export type CartItemPricingTierDto = {
+  net: string;
+  gross: string;
+  tax: string;
+  currency: string;
+  tax_rate: string;
+};
+
+/** Per-unit pricing breakdown for a cart item — same shape as the catalogue API. */
+export type CartItemPricingDto = {
+  undiscounted: CartItemPricingTierDto;
+  discounted: CartItemPricingTierDto;
+  discount: {
+    amount_net: string;
+    amount_gross: string;
+    percentage: string | null;
+    promotion_code: string | null;
+    promotion_type: string | null;
+  };
+};
+
+/** Backend-computed aggregate pricing totals for the whole cart. */
+export type CartTotalsDto = {
+  /** sum(undiscounted_gross × qty) — original total before promotions. */
+  subtotal_undiscounted: string;
+  /** sum(discounted_gross × qty) — total after promotions; equals total_gross. */
+  subtotal_discounted: string;
+  /** subtotal_undiscounted − subtotal_discounted (≥ 0). */
+  total_discount: string;
+  /** sum(discounted_tax × qty). */
+  total_tax: string;
+  /** Total amount payable (= subtotal_discounted). */
+  total_gross: string;
+  currency: string;
+  item_count: number;
+};
+
 export type CartDto = {
   id: number;
   status: string;
@@ -12,7 +54,11 @@ export type CartDto = {
     };
     quantity: number;
     price_at_add_time: string;
+    /** Phase 2: structured unit pricing. null for unmigrated products. */
+    pricing?: CartItemPricingDto | null;
   }>;
+  /** Phase 2: backend-computed cart-level pricing totals. */
+  totals?: CartTotalsDto;
 };
 
 export async function getCart(): Promise<CartDto> {
