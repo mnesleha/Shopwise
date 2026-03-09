@@ -5,9 +5,11 @@
  * - "Proceed to checkout" navigates to /checkout when user is authenticated
  * - "Proceed to checkout" navigates to /guest/checkout when user is not authenticated
  * - "Continue shopping" navigates to /products
+ * - onClearCart calls clearCart() once (not deleteCartItem in a loop)
+ * - refresh (getCart) runs after onClearCart succeeds
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import * as React from "react";
 import userEvent from "@testing-library/user-event";
 import CartDetailClient from "@/components/cart/CartDetailClient";
@@ -27,16 +29,19 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/cart",
 }));
 
+const mockClearCart = vi.fn().mockResolvedValue(undefined);
+const mockDeleteCartItem = vi.fn().mockResolvedValue({});
+const mockGetCart = vi.fn().mockResolvedValue({
+  id: "cart-1",
+  items: [],
+  subtotal: "0.00",
+  total: "0.00",
+});
+
 vi.mock("@/lib/api/cart", () => ({
-  deleteCartItem: vi.fn().mockResolvedValue({}),
-  getCart: vi
-    .fn()
-    .mockResolvedValue({
-      id: "cart-1",
-      items: [],
-      subtotal: "0.00",
-      total: "0.00",
-    }),
+  clearCart: (...args: unknown[]) => mockClearCart(...args),
+  deleteCartItem: (...args: unknown[]) => mockDeleteCartItem(...args),
+  getCart: (...args: unknown[]) => mockGetCart(...args),
   updateCartItemQuantity: vi.fn().mockResolvedValue({}),
 }));
 
@@ -83,6 +88,14 @@ function renderClient(initialCartVm: CartVm = makeCart() as CartVm) {
 describe("CartDetailClient", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Restore default resolved values after clearAllMocks
+    mockClearCart.mockResolvedValue(undefined);
+    mockGetCart.mockResolvedValue({
+      id: "cart-1",
+      items: [],
+      subtotal: "0.00",
+      total: "0.00",
+    });
   });
 
   describe("checkout routing based on auth state", () => {
@@ -115,6 +128,49 @@ describe("CartDetailClient", () => {
         screen.getByRole("button", { name: /continue shopping/i }),
       );
       expect(mockRouter.push).toHaveBeenCalledWith("/products");
+    });
+  });
+
+  describe("onClearCart", () => {
+    it("calls clearCart() once when confirmed", async () => {
+      const user = userEvent.setup();
+      // Render with a cart that has items so the clear button is visible
+      renderClient(makeCart() as CartVm);
+
+      // First click shows the confirmation UI
+      await user.click(screen.getByRole("button", { name: /clear cart/i }));
+      // Second click (Confirm) triggers onClearCart
+      await user.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockClearCart).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it("does not call deleteCartItem when clearing the cart", async () => {
+      const user = userEvent.setup();
+      renderClient(makeCart() as CartVm);
+
+      await user.click(screen.getByRole("button", { name: /clear cart/i }));
+      await user.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockClearCart).toHaveBeenCalledTimes(1);
+      });
+
+      expect(mockDeleteCartItem).not.toHaveBeenCalled();
+    });
+
+    it("calls getCart (refresh) after clearCart resolves", async () => {
+      const user = userEvent.setup();
+      renderClient(makeCart() as CartVm);
+
+      await user.click(screen.getByRole("button", { name: /clear cart/i }));
+      await user.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockGetCart).toHaveBeenCalled();
+      });
     });
   });
 });

@@ -20,18 +20,42 @@ export async function getCart(): Promise<CartDto> {
   return res.data;
 }
 
-export async function addCartItem(input: { productId: number; quantity: number }): Promise<void> {
-  await api.post("/cart/items/", { product_id: input.productId, quantity: input.quantity });
+export async function addCartItem(input: {
+  productId: number;
+  quantity: number;
+}): Promise<void> {
+  await api.post("/cart/items/", {
+    product_id: input.productId,
+    quantity: input.quantity,
+  });
 }
 
-export async function updateCartItemQuantity(input: { productId: number; quantity: number }): Promise<void> {
+export async function updateCartItemQuantity(input: {
+  productId: number;
+  quantity: number;
+}): Promise<void> {
   // NOTE: path uses productId
-  await api.put(`/cart/items/${input.productId}/`, { quantity: input.quantity });
+  await api.put(`/cart/items/${input.productId}/`, {
+    quantity: input.quantity,
+  });
 }
 
-export async function deleteCartItem(input: { productId: number }): Promise<void> {
+export async function deleteCartItem(input: {
+  productId: number;
+}): Promise<void> {
   // NOTE: path uses productId
   await api.delete(`/cart/items/${input.productId}/`);
+}
+
+/**
+ * DELETE /cart/
+ *
+ * Removes all items from the active cart in a single request.
+ * The Cart row itself is preserved; the cart remains an empty active cart.
+ * Idempotent: always resolves, even when the cart is already empty.
+ */
+export async function clearCart(): Promise<void> {
+  await api.delete("/cart/");
 }
 
 // ── Cart merge ────────────────────────────────────────────────────────────────

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import { CartDetail } from "@/components/cart/CartDetail";
 import {
+  clearCart,
   deleteCartItem,
   getCart,
   updateCartItemQuantity,
@@ -121,18 +122,14 @@ export default function CartDetailClient({ initialCartVm }: Props) {
   );
 
   const onClearCart = useCallback(async () => {
-    // Strategy: delete each item (no dedicated endpoint exists yet)
     setBusy(true);
     try {
-      const productIds = cart.items.map((i) => Number(i.productId));
-      for (const pid of productIds) {
-        await deleteCartItem({ productId: pid });
-      }
+      await clearCart();
       await refresh();
     } finally {
       setBusy(false);
     }
-  }, [cart.items, refresh]);
+  }, [refresh]);
 
   return (
     <div className={busy ? "opacity-70 pointer-events-none" : ""}>

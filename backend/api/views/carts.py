@@ -257,6 +257,33 @@ HTTP semantics:
             )
         return response
 
+    @extend_schema(
+        tags=["Cart"],
+        summary="Clear active cart",
+        description="""
+Removes all items from the active cart without deleting the cart itself.
+
+Behavior:
+- Resolves the current active cart for the request context
+  (authenticated user cart or anonymous cart by token).
+- Deletes all CartItem rows belonging to that cart.
+- The Cart row is preserved; the cart remains retrievable as an empty active cart.
+- Idempotent: if no active cart exists or the cart is already empty, still returns 204.
+
+HTTP semantics:
+- 204 No Content: items cleared (or nothing to clear)
+""",
+        parameters=CART_TOKEN_PARAMETERS,
+        responses={
+            204: None,
+        },
+    )
+    def delete(self, request):
+        cart = _get_active_cart_for_request(request)
+        if cart is not None:
+            CartItem.objects.filter(cart=cart).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class CartItemCreateView(APIView):
     permission_classes = [AllowAny]
