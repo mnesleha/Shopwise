@@ -29,7 +29,7 @@ def test_product_list_includes_short_description():
     resp = APIClient().get("/api/v1/products/")
 
     assert resp.status_code == 200
-    item = resp.json()[0]
+    item = resp.json()["results"][0]
     assert "short_description" in item
     assert item["short_description"] == "Quick teaser text"
 
@@ -42,7 +42,7 @@ def test_product_list_omits_full_description():
     resp = APIClient().get("/api/v1/products/")
 
     assert resp.status_code == 200
-    item = resp.json()[0]
+    item = resp.json()["results"][0]
     assert "full_description" not in item
 
 
@@ -54,7 +54,7 @@ def test_product_list_short_description_defaults_to_empty_string():
     resp = APIClient().get("/api/v1/products/")
 
     assert resp.status_code == 200
-    assert resp.json()[0]["short_description"] == ""
+    assert resp.json()["results"][0]["short_description"] == ""
 
 
 # ── Detail endpoint ───────────────────────────────────────────────────────────

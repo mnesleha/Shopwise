@@ -1,7 +1,7 @@
 import pytest
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from conftest import create_valid_order
+from tests.conftest import create_valid_order
 from orders.models import Order
 
 

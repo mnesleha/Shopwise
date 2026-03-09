@@ -68,10 +68,10 @@ def test_mysql_race_put_same_item_last_write_wins_no_duplicates(user, forced_aut
     c2.get("/api/v1/cart/")
 
     def put_qty_2():
-        return c1.put(f"/api/v1/cart/items/{product.id}/", {"quantity": 2}, format="json")
+        return c1.patch(f"/api/v1/cart/items/{product.id}/", {"quantity": 2}, format="json")
 
     def put_qty_5():
-        return c2.put(f"/api/v1/cart/items/{product.id}/", {"quantity": 5}, format="json")
+        return c2.patch(f"/api/v1/cart/items/{product.id}/", {"quantity": 5}, format="json")
 
     r1, r2 = _run_concurrently(put_qty_2, put_qty_5)
 
@@ -105,7 +105,7 @@ def test_mysql_race_put_create_same_item_no_unique_violation(user, forced_auth_c
         me = c.get("/api/v1/auth/me/")
         assert me.status_code == 200, me.content
         c.get("/api/v1/cart/")
-        return c.put(
+        return c.patch(
             f"/api/v1/cart/items/{product.id}/",
             {"quantity": 1},
             format="json",
@@ -116,7 +116,7 @@ def test_mysql_race_put_create_same_item_no_unique_violation(user, forced_auth_c
         me = c.get("/api/v1/auth/me/")
         assert me.status_code == 200, me.content
         c.get("/api/v1/cart/")
-        return c.put(
+        return c.patch(
             f"/api/v1/cart/items/{product.id}/",
             {"quantity": 1},
             format="json",
@@ -159,13 +159,13 @@ def test_mysql_race_delete_vs_put_results_in_consistent_state(user, forced_auth_
     c2.get("/api/v1/cart/")
 
     # create initial item
-    c1.put(f"/api/v1/cart/items/{product.id}/", {"quantity": 2}, format="json")
+    c1.patch(f"/api/v1/cart/items/{product.id}/", {"quantity": 2}, format="json")
 
     def do_delete():
         return c1.delete(f"/api/v1/cart/items/{product.id}/", format="json")
 
     def do_put_3():
-        return c2.put(f"/api/v1/cart/items/{product.id}/", {"quantity": 3}, format="json")
+        return c2.patch(f"/api/v1/cart/items/{product.id}/", {"quantity": 3}, format="json")
 
     r_del, r_put = _run_concurrently(do_delete, do_put_3)
 
@@ -196,13 +196,13 @@ def test_mysql_race_put_zero_vs_put_positive_consistent_state(user, forced_auth_
     c1.get("/api/v1/cart/")
     c2.get("/api/v1/cart/")
 
-    c1.put(f"/api/v1/cart/items/{product.id}/", {"quantity": 2}, format="json")
+    c1.patch(f"/api/v1/cart/items/{product.id}/", {"quantity": 2}, format="json")
 
     def put_zero():
-        return c1.put(f"/api/v1/cart/items/{product.id}/", {"quantity": 0}, format="json")
+        return c1.patch(f"/api/v1/cart/items/{product.id}/", {"quantity": 0}, format="json")
 
     def put_four():
-        return c2.put(f"/api/v1/cart/items/{product.id}/", {"quantity": 4}, format="json")
+        return c2.patch(f"/api/v1/cart/items/{product.id}/", {"quantity": 4}, format="json")
 
     r1, r2 = _run_concurrently(put_zero, put_four)
 
@@ -234,10 +234,10 @@ def test_mysql_race_out_of_stock_puts_do_not_create_item(user, forced_auth_clien
     c2.get("/api/v1/cart/")
 
     def put_qty_2_a():
-        return c1.put(f"/api/v1/cart/items/{product.id}/", {"quantity": 2}, format="json")
+        return c1.patch(f"/api/v1/cart/items/{product.id}/", {"quantity": 2}, format="json")
 
     def put_qty_2_b():
-        return c2.put(f"/api/v1/cart/items/{product.id}/", {"quantity": 2}, format="json")
+        return c2.patch(f"/api/v1/cart/items/{product.id}/", {"quantity": 2}, format="json")
 
     r1, r2 = _run_concurrently(put_qty_2_a, put_qty_2_b)
 
