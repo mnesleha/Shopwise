@@ -331,3 +331,17 @@ DISABLE_RATE_LIMITING_FOR_TESTS = False
 # Products with stock_quantity <= LOW_STOCK_THRESHOLD are shown as LOW_STOCK.
 # Override in local.py or per-environment as needed.
 LOW_STOCK_THRESHOLD = 5
+
+# ---------------------------------------------------------------------------
+# Anonymous cart cleanup settings
+# ---------------------------------------------------------------------------
+
+# Number of days after which an anonymous cart is considered expired.
+# Used by both the management command and the scheduled django-q2 job.
+ANONYMOUS_CART_TTL_DAYS: int = int(os.getenv("ANONYMOUS_CART_TTL_DAYS", 7))
+
+# Cron expression controlling when the cleanup job runs.
+# Default: 03:00 UTC every day.
+ANONYMOUS_CART_CLEANUP_CRON: str = os.getenv(
+    "ANONYMOUS_CART_CLEANUP_CRON", "0 3 * * *"
+)
