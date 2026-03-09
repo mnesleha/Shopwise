@@ -44,7 +44,8 @@ vi.mock("@/lib/api/cart", () => ({
   clearCart: (...args: unknown[]) => mockClearCart(...args),
   deleteCartItem: (...args: unknown[]) => mockDeleteCartItem(...args),
   getCart: (...args: unknown[]) => mockGetCart(...args),
-  updateCartItemQuantity: (...args: unknown[]) => mockUpdateCartItemQuantity(...args),
+  updateCartItemQuantity: (...args: unknown[]) =>
+    mockUpdateCartItemQuantity(...args),
 }));
 
 vi.mock("@/lib/mappers/cart", async (importOriginal) => {
@@ -189,7 +190,9 @@ describe("CartDetailClient", () => {
       renderClient(cartWithItem);
 
       await user.click(
-        screen.getByRole("button", { name: /increase quantity of test mouse/i }),
+        screen.getByRole("button", {
+          name: /increase quantity of test mouse/i,
+        }),
       );
 
       await waitFor(() => {
@@ -208,7 +211,9 @@ describe("CartDetailClient", () => {
       renderClient(cartWithItem);
 
       await user.click(
-        screen.getByRole("button", { name: /decrease quantity of test mouse/i }),
+        screen.getByRole("button", {
+          name: /decrease quantity of test mouse/i,
+        }),
       );
 
       await waitFor(() => {
@@ -224,7 +229,9 @@ describe("CartDetailClient", () => {
       renderClient(makeCart() as CartVm);
 
       await user.click(
-        screen.getByRole("button", { name: /increase quantity of test mouse/i }),
+        screen.getByRole("button", {
+          name: /increase quantity of test mouse/i,
+        }),
       );
 
       await waitFor(() => {
