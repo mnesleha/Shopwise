@@ -34,8 +34,8 @@ export async function updateCartItemQuantity(input: {
   productId: number;
   quantity: number;
 }): Promise<void> {
-  // NOTE: path uses productId
-  await api.put(`/cart/items/${input.productId}/`, {
+  // NOTE: path uses productId; PATCH = partial update (quantity only)
+  await api.patch(`/cart/items/${input.productId}/`, {
     quantity: input.quantity,
   });
 }

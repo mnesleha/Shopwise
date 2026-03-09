@@ -498,8 +498,25 @@ class CartItemDetailView(APIView):
         return response
 
     @extend_schema(
-        tags=["Cart Items"],
-        summary="Set cart item quantity",
+        tags=["Cart"],
+        summary="Update cart item quantity",
+        description="""Partially updates the quantity of a single cart item.
+
+Business rules:
+- `quantity` must be a positive integer.
+- `quantity = 0` is a DELETE alias: the item is removed from the cart.
+- If the item does not yet exist and `quantity > 0`, it is created (upsert semantics).
+- Stock and product availability are validated.
+
+Response is a full cart snapshot (same shape as `GET /cart/`).
+
+HTTP semantics:
+- 200 OK: existing item updated (or deleted via quantity=0)
+- 201 Created: new item inserted
+- 400 Bad Request: missing or invalid `quantity`
+- 404 Not Found: product does not exist
+- 409 Conflict: product unavailable or out of stock
+""",
         request=CartItemUpdateRequestSerializer,
         parameters=CART_TOKEN_PARAMETERS,
         responses={
@@ -510,7 +527,7 @@ class CartItemDetailView(APIView):
             409: ErrorResponseSerializer,
         },
     )
-    def put(self, request, product_id: int):
+    def patch(self, request, product_id: int):
         serializer = CartItemUpdateRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         quantity = serializer.validated_data["quantity"]

@@ -7,6 +7,7 @@
  * - "Continue shopping" navigates to /products
  * - onClearCart calls clearCart() once (not deleteCartItem in a loop)
  * - refresh (getCart) runs after onClearCart succeeds
+ * - onIncreaseQty / onDecreaseQty call updateCartItemQuantity (PATCH-backed)
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
@@ -14,7 +15,7 @@ import * as React from "react";
 import userEvent from "@testing-library/user-event";
 import CartDetailClient from "@/components/cart/CartDetailClient";
 import { renderWithProviders } from "../helpers/render";
-import { makeCart } from "../helpers/fixtures";
+import { makeCart, makeCartItem } from "../helpers/fixtures";
 import type { CartVm } from "@/lib/mappers/cart";
 import { CART_CHECKOUT_BUTTON } from "../helpers/testIds";
 import { createRouterMock } from "../helpers/nextNavigation";
@@ -31,6 +32,7 @@ vi.mock("next/navigation", () => ({
 
 const mockClearCart = vi.fn().mockResolvedValue(undefined);
 const mockDeleteCartItem = vi.fn().mockResolvedValue({});
+const mockUpdateCartItemQuantity = vi.fn().mockResolvedValue({});
 const mockGetCart = vi.fn().mockResolvedValue({
   id: "cart-1",
   items: [],
@@ -42,7 +44,7 @@ vi.mock("@/lib/api/cart", () => ({
   clearCart: (...args: unknown[]) => mockClearCart(...args),
   deleteCartItem: (...args: unknown[]) => mockDeleteCartItem(...args),
   getCart: (...args: unknown[]) => mockGetCart(...args),
-  updateCartItemQuantity: vi.fn().mockResolvedValue({}),
+  updateCartItemQuantity: (...args: unknown[]) => mockUpdateCartItemQuantity(...args),
 }));
 
 vi.mock("@/lib/mappers/cart", async (importOriginal) => {
@@ -90,6 +92,7 @@ describe("CartDetailClient", () => {
     vi.clearAllMocks();
     // Restore default resolved values after clearAllMocks
     mockClearCart.mockResolvedValue(undefined);
+    mockUpdateCartItemQuantity.mockResolvedValue({});
     mockGetCart.mockResolvedValue({
       id: "cart-1",
       items: [],
@@ -167,6 +170,62 @@ describe("CartDetailClient", () => {
 
       await user.click(screen.getByRole("button", { name: /clear cart/i }));
       await user.click(screen.getByRole("button", { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockGetCart).toHaveBeenCalled();
+      });
+    });
+  });
+
+  // ── Quantity increase / decrease (PATCH-backed) ─────────────────────────────
+
+  describe("quantity increase / decrease via updateCartItemQuantity", () => {
+    it("calls updateCartItemQuantity with incremented quantity on increase click", async () => {
+      const user = userEvent.setup();
+      // quantity 2 so decrease is also enabled; stockQuantity 10 allows increase
+      const cartWithItem = makeCart({
+        items: [makeCartItem({ quantity: 2 })],
+      }) as CartVm;
+      renderClient(cartWithItem);
+
+      await user.click(
+        screen.getByRole("button", { name: /increase quantity of test mouse/i }),
+      );
+
+      await waitFor(() => {
+        expect(mockUpdateCartItemQuantity).toHaveBeenCalledWith({
+          productId: 1,
+          quantity: 3,
+        });
+      });
+    });
+
+    it("calls updateCartItemQuantity with decremented quantity on decrease click", async () => {
+      const user = userEvent.setup();
+      const cartWithItem = makeCart({
+        items: [makeCartItem({ quantity: 2 })],
+      }) as CartVm;
+      renderClient(cartWithItem);
+
+      await user.click(
+        screen.getByRole("button", { name: /decrease quantity of test mouse/i }),
+      );
+
+      await waitFor(() => {
+        expect(mockUpdateCartItemQuantity).toHaveBeenCalledWith({
+          productId: 1,
+          quantity: 1,
+        });
+      });
+    });
+
+    it("calls getCart (refresh) after quantity update resolves", async () => {
+      const user = userEvent.setup();
+      renderClient(makeCart() as CartVm);
+
+      await user.click(
+        screen.getByRole("button", { name: /increase quantity of test mouse/i }),
+      );
 
       await waitFor(() => {
         expect(mockGetCart).toHaveBeenCalled();
