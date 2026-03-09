@@ -2,6 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 
 from utils.sanitize import sanitize_markdown
+from versatileimagefield.fields import PPOIField, VersatileImageField
 
 
 class Product(models.Model):
@@ -16,6 +17,17 @@ class Product(models.Model):
 
     # Full product description in Markdown, rendered on the detail page.
     full_description = models.TextField(blank=True, default="")
+
+    # Designated hero image shown in catalogue cards and detail header.
+    # Must belong to this product. Automatically nulled when the referenced
+    # ProductImage is deleted (on_delete=SET_NULL).
+    primary_image = models.ForeignKey(
+        "products.ProductImage",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+    )
 
     def clean(self):
         errors = {}
@@ -32,6 +44,13 @@ class Product(models.Model):
         if self.stock_quantity is not None and self.stock_quantity < 0:
             errors["stock_quantity"] = "Stock quantity cannot be negative"
 
+        # Ownership: primary_image must belong to this product.
+        # Only validated for persisted products (pk exists) because a new
+        # product cannot have a primary_image set on first save.
+        if self.pk and self.primary_image_id is not None:
+            if self.primary_image.product_id != self.pk:
+                errors["primary_image"] = "Primary image must belong to this product."
+
         if errors:
             raise ValidationError(errors)
 
@@ -46,3 +65,47 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+
+def _product_gallery_upload_to(instance: "ProductImage", filename: str) -> str:
+    """Return the upload path for a ProductImage file.
+
+    Originals are stored under ``products/gallery/<product_id>/<filename>``.
+    VersatileImageField sized renditions will mirror this structure
+    automatically under ``__sized__/products/gallery/<product_id>/...``.
+
+    Falls back to ``products/gallery/unsorted/<filename>`` when the instance
+    has no ``product_id`` yet (e.g. during an unsaved pre-save upload), though
+    this should not occur in normal admin / API workflows.
+    """
+    product_id = instance.product_id or "unsorted"
+    return f"products/gallery/{product_id}/{filename}"
+
+
+class ProductImage(models.Model):
+    """A single catalogue image belonging to a Product.
+
+    Gallery ordering is determined by ``sort_order`` (ascending), with ``id``
+    as the tie-breaker.
+    """
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="images",
+    )
+    # ppoi_field wires the PPOI click widget: when rendered in the admin the
+    # image field uses SizedImageCenterpointClickDjangoAdminField, which shows
+    # a clickable preview thumbnail and stores the focal-point value in a
+    # hidden input.  pre_save() then syncs the chosen point back to `ppoi`.
+    image = VersatileImageField(upload_to=_product_gallery_upload_to, ppoi_field="ppoi")
+    ppoi = PPOIField()
+    alt_text = models.CharField(max_length=255, blank=True, default="")
+    sort_order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+
+    def __str__(self):
+        return f"ProductImage(product_id={self.product_id}, sort_order={self.sort_order})"

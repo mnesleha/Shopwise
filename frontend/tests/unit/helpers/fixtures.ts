@@ -9,6 +9,41 @@
  * unit tests must not depend on backend seed state.
  */
 
+import type { ProductImageVm } from "@/lib/mappers/products";
+import type { GallerySlide } from "@/components/product/ProductGallery";
+
+// ── Product images ────────────────────────────────────────────────────────────
+
+export function makeProductImage(
+  overrides?: Partial<ProductImageVm>,
+): ProductImageVm {
+  return {
+    id: 1,
+    variants: {
+      thumb: "https://example.com/products/gallery/1/thumb.jpg",
+      medium: "https://example.com/products/gallery/1/medium.jpg",
+      large: "https://example.com/products/gallery/1/large.jpg",
+      full: "https://example.com/products/gallery/1/full.jpg",
+    },
+    alt: "Test Mouse",
+    sortOrder: 0,
+    ...overrides,
+  };
+}
+
+export function makeGallerySlide(
+  overrides?: Partial<GallerySlide>,
+): GallerySlide {
+  return {
+    id: 1,
+    thumb: "https://example.com/products/gallery/1/thumb.jpg",
+    main: "https://example.com/products/gallery/1/medium.jpg",
+    full: "https://example.com/products/gallery/1/full.jpg",
+    alt: "Test Mouse",
+    ...overrides,
+  };
+}
+
 // ── Product ──────────────────────────────────────────────────────────────────
 
 export interface ProductFixture {
@@ -21,7 +56,9 @@ export interface ProductFixture {
   currency?: string;
   stockQuantity: number;
   imageUrl?: string;
+  primaryImage?: ProductImageVm;
   images?: string[];
+  gallery?: ProductImageVm[];
   specs?: Array<{ label: string; value: string }>;
 }
 

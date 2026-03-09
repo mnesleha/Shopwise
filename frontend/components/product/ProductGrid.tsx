@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { ProductImageVm } from "@/lib/mappers/products";
 
 interface Product {
   id: string;
@@ -31,6 +32,8 @@ interface Product {
   currency?: string;
   stockQuantity: number;
   imageUrl?: string;
+  /** Structured primary image from the API; preferred over imageUrl. */
+  primaryImage?: ProductImageVm;
 }
 
 interface ProductGridProps {
@@ -79,17 +82,21 @@ function ProductCard({
     >
       {/* Image */}
       <div className="relative aspect-square w-full overflow-hidden">
-        {product.imageUrl ? (
-          <img
-            src={product.imageUrl || "/placeholder.svg"}
-            alt={product.name}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-muted to-muted-foreground/20">
-            <span className="text-muted-foreground text-sm">No image</span>
-          </div>
-        )}
+        {(() => {
+          const src = product.primaryImage?.variants.thumb ?? product.imageUrl;
+          return src ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={src}
+              alt={product.primaryImage?.alt || product.name}
+              className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-muted to-muted-foreground/20">
+              <span className="text-muted-foreground text-sm">No image</span>
+            </div>
+          );
+        })()}
       </div>
 
       <CardHeader className="pb-2">

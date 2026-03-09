@@ -20,6 +20,12 @@ DATABASES = {
     }
 }
 
+# Prevent VersatileImageField from physically creating resized images during
+# tests. URLs are still generated correctly; only on-disk processing is skipped.
+VERSATILEIMAGEFIELD_SETTINGS = {
+    "create_images_on_demand": False,
+}
+
 Q_CLUSTER = {
     "name": "shopwise-test",
     "orm": "default",

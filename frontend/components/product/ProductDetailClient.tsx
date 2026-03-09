@@ -6,6 +6,7 @@ import { ProductDetail } from "@/components/product/ProductDetail";
 import { api } from "@/lib/api";
 import { addCartItem } from "@/lib/api/cart";
 import { useCart } from "@/components/cart/CartProvider";
+import type { ProductImageVm } from "@/lib/mappers/products";
 
 type Props = {
   product: {
@@ -18,6 +19,7 @@ type Props = {
     currency?: string;
     stockQuantity: number;
     images?: string[];
+    gallery?: ProductImageVm[];
     specs?: Array<{ label: string; value: string }>;
   };
 };

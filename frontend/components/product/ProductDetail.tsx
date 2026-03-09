@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { resolveMediaUrl } from "@/lib/media";
+import { ProductGallery, galleryToSlides } from "@/components/product/ProductGallery";
+import type { ProductImageVm } from "@/lib/mappers/products";
 
 interface ProductSpec {
   label: string;
@@ -26,6 +28,8 @@ interface Product {
   currency?: string;
   stockQuantity: number;
   images?: string[];
+  /** Structured gallery; when provided renders ProductGallery instead of ImageGallery. */
+  gallery?: ProductImageVm[];
   specs?: ProductSpec[];
 }
 
@@ -144,7 +148,14 @@ export function ProductDetail({
       {/* Main Content: Two-column on desktop, stacked on mobile */}
       <div className="grid gap-8 md:grid-cols-2">
         {/* Left: Image Gallery */}
-        <ImageGallery images={product.images} productName={product.name} />
+        {product.gallery && product.gallery.length > 0 ? (
+          <ProductGallery
+            slides={galleryToSlides(product.gallery)}
+            productName={product.name}
+          />
+        ) : (
+          <ImageGallery images={product.images} productName={product.name} />
+        )}
 
         {/* Right: Product Info */}
         <div className="flex flex-col gap-6">
