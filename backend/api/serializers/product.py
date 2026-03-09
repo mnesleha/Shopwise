@@ -3,6 +3,46 @@ from rest_framework import serializers
 from versatileimagefield.serializers import VersatileImageFieldSerializer
 
 from products.models import Product, ProductImage
+from products.services.pricing import get_product_pricing
+
+# ---------------------------------------------------------------------------
+# Pricing serializer
+# ---------------------------------------------------------------------------
+
+
+class ProductPricingResultSerializer(serializers.Serializer):
+    """Read-only serializer for a ``ProductPricingResult`` service DTO.
+
+    Amounts are rendered as decimal strings (e.g. ``"10.00"``) so they are
+    safe for JSON consumers that cannot represent arbitrary-precision numbers.
+    Currency codes follow ISO 4217 (e.g. ``"EUR"``).
+    Tax rate is a percentage string (e.g. ``"23"`` for 23 %).
+    """
+
+    net = serializers.SerializerMethodField(help_text="Net (pre-tax) unit price.")
+    gross = serializers.SerializerMethodField(help_text="Gross (post-tax) unit price.")
+    tax = serializers.SerializerMethodField(help_text="Tax component (gross minus net).")
+    currency = serializers.SerializerMethodField(help_text="ISO 4217 currency code.")
+    tax_rate = serializers.SerializerMethodField(
+        help_text="Applied tax rate as a percentage, e.g. '23' for 23 %."
+    )
+
+    def get_net(self, obj) -> str:
+        return str(obj.net.amount)
+
+    def get_gross(self, obj) -> str:
+        return str(obj.gross.amount)
+
+    def get_tax(self, obj) -> str:
+        return str(obj.tax.amount)
+
+    def get_currency(self, obj) -> str:
+        return obj.currency
+
+    def get_tax_rate(self, obj) -> str:
+        # Normalize to strip trailing zeros: 23.0000 → "23", 8.5000 → "8.5".
+        return format(obj.tax_rate.normalize(), "f")
+
 
 # ---------------------------------------------------------------------------
 # Stock status constants
@@ -67,6 +107,9 @@ class ProductSerializer(serializers.ModelSerializer):
     primary_image = serializers.SerializerMethodField(
         help_text="Hero image URL variants, or null if none is set."
     )
+    pricing = serializers.SerializerMethodField(
+        help_text="Structured pricing breakdown (net/gross/tax). Null when price_net_amount is not set."
+    )
 
     class Meta:
         model = Product
@@ -75,6 +118,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "name",
             "category_id",
             "price",
+            "pricing",
             "stock_quantity",
             "stock_status",
             "short_description",
@@ -91,6 +135,12 @@ class ProductSerializer(serializers.ModelSerializer):
             obj.primary_image, context=self.context
         ).data
 
+    def get_pricing(self, obj: Product):
+        result = get_product_pricing(obj)
+        if result is None:
+            return None
+        return ProductPricingResultSerializer(result).data
+
 
 class ProductDetailSerializer(serializers.ModelSerializer):
     """Detail serializer — includes both description fields and full gallery."""
@@ -104,6 +154,9 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     gallery_images = serializers.SerializerMethodField(
         help_text="All gallery images ordered by sort_order, id."
     )
+    pricing = serializers.SerializerMethodField(
+        help_text="Structured pricing breakdown (net/gross/tax). Null when price_net_amount is not set."
+    )
 
     class Meta:
         model = Product
@@ -112,6 +165,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "name",
             "category_id",
             "price",
+            "pricing",
             "stock_quantity",
             "stock_status",
             "short_description",
@@ -134,3 +188,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         images = obj.images.all()
         return ProductImageSerializer(images, many=True, context=self.context).data
 
+    def get_pricing(self, obj: Product):
+        result = get_product_pricing(obj)
+        if result is None:
+            return None
+        return ProductPricingResultSerializer(result).data

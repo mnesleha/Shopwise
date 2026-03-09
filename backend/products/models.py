@@ -14,12 +14,13 @@ CURRENCY_CHOICES = [
 
 
 class TaxClass(models.Model):
-    """Represents a tax classification that can be assigned to products.
+    """Tax classification that can be assigned to products.
 
-    TaxClass acts as a stable, named category for grouping products by their
-    tax treatment (e.g. standard rate, reduced rate, zero rate).  Actual
-    rate values are intentionally excluded from this model; they will be
-    added in a later pricing phase.
+    ``TaxClass`` is a stable, named category for grouping products by their
+    tax treatment (e.g. standard rate, reduced rate, zero rate).  A flat
+    ``rate`` percentage is stored directly on the class for Phase 1; multi-
+    country rate tables and external provider support will be introduced in a
+    later pricing phase.
     """
 
     name = models.CharField(max_length=128)
@@ -59,16 +60,20 @@ class Product(models.Model):
     name = models.CharField(max_length=255)
 
     # ------------------------------------------------------------------
-    # Legacy pricing field — kept for backward compatibility during the
-    # transition to the new pricing model.  Do NOT remove until all
-    # dependent code has been migrated to price_net_amount.
+    # Legacy pricing field (TRANSITIONAL)
+    # This field was the sole price representation before Phase 1.  It is
+    # kept for backward compatibility while all consumers migrate to
+    # price_net_amount + currency + tax_class.
+    # DO NOT remove until all call-sites are confirmed migrated.
     # ------------------------------------------------------------------
     price = models.DecimalField(max_digits=10, decimal_places=2)
 
     # ------------------------------------------------------------------
-    # Pricing foundation (Phase 1)
-    # Both fields are nullable so the migration is non-destructive.  They
-    # will become required once the transition from `price` is complete.
+    # Pricing foundation (Phase 1) — canonical source of truth for pricing
+    # Nullable to allow safe non-destructive migration from the legacy field.
+    # Once migration is complete these fields will become required.
+    # Use products.services.pricing.get_product_pricing() to obtain the
+    # full tax breakdown; do NOT compute pricing directly from these fields.
     # ------------------------------------------------------------------
     price_net_amount = models.DecimalField(
         max_digits=10,

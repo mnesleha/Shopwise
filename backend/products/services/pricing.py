@@ -5,6 +5,22 @@ data and the tax resolver.  This is the main entry-point for catalogue-level
 pricing; it is intentionally not concerned with promotions, cart quantities,
 or order snapshots.
 
+Phase 1 scope
+-------------
+Phase 1 establishes the pricing *foundation* only:
+- ``TaxClass`` + flat rate storage
+- ``resolve_tax`` deterministic net → gross calculation
+- ``get_product_pricing`` single-unit product price breakdown
+
+Not in scope for Phase 1:
+- Promotion / discount application
+- Cart-level pricing (line totals, cart totals)
+- Order snapshot migration
+- Multi-country or external-provider tax rates
+
+All of the above will be addressed in subsequent pricing phases.  This
+boundary is intentional; do not expand scope here.
+
 Usage
 -----
     from products.services.pricing import get_product_pricing
