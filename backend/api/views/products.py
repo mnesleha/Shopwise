@@ -178,11 +178,27 @@ Response shape:
                             "category_id": 3,
                             "price": "29.99",
                             "pricing": {
-                                "net": "29.99",
-                                "gross": "36.89",
-                                "tax": "6.90",
-                                "currency": "EUR",
-                                "tax_rate": "23",
+                                "undiscounted": {
+                                    "net": "29.99",
+                                    "gross": "36.89",
+                                    "tax": "6.90",
+                                    "currency": "EUR",
+                                    "tax_rate": "23",
+                                },
+                                "discounted": {
+                                    "net": "26.99",
+                                    "gross": "33.20",
+                                    "tax": "6.21",
+                                    "currency": "EUR",
+                                    "tax_rate": "23",
+                                },
+                                "discount": {
+                                    "amount_net": "3.00",
+                                    "amount_gross": "3.69",
+                                    "percentage": "10.01",
+                                    "promotion_code": "summer-2026",
+                                    "promotion_type": "FIXED",
+                                },
                             },
                             "stock_quantity": 15,
                             "stock_status": "IN_STOCK",
@@ -215,11 +231,27 @@ Response shape:
                     "category_id": 3,
                     "price": "29.99",
                     "pricing": {
-                        "net": "29.99",
-                        "gross": "36.89",
-                        "tax": "6.90",
-                        "currency": "EUR",
-                        "tax_rate": "23",
+                        "undiscounted": {
+                            "net": "29.99",
+                            "gross": "36.89",
+                            "tax": "6.90",
+                            "currency": "EUR",
+                            "tax_rate": "23",
+                        },
+                        "discounted": {
+                            "net": "29.99",
+                            "gross": "36.89",
+                            "tax": "6.90",
+                            "currency": "EUR",
+                            "tax_rate": "23",
+                        },
+                        "discount": {
+                            "amount_net": "0.00",
+                            "amount_gross": "0.00",
+                            "percentage": "0",
+                            "promotion_code": None,
+                            "promotion_type": None,
+                        },
                     },
                     "stock_quantity": 15,
                     "stock_status": "IN_STOCK",
@@ -261,9 +293,14 @@ class ProductViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         service = CatalogSearchService(_build_backend())
         qs = service.get_queryset(self._build_query(), is_staff=self._is_staff())
-        # Prefetch tax_class to avoid N+1 queries when serializing pricing
-        # for each product in the catalogue list.
-        return qs.select_related("tax_class")
+        # select_related to prevent FK N+1 queries during pricing serialisation.
+        # - tax_class: needed by the tax resolver.
+        # - category: needed by the line-level promotion resolver.
+        # - primary_image: accessed by get_primary_image() in the serializer.
+        # NOTE: the promotion resolver issues one additional DB query per product
+        # to find the winning promotion.  A batch resolver will be introduced in
+        # a later slice to reduce this to O(1) queries for the whole list.
+        return qs.select_related("tax_class", "category", "primary_image")
 
     def list(self, request, *args, **kwargs):
         """

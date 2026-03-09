@@ -246,12 +246,15 @@ def test_api_pricing_output_unchanged_after_model_change():
     resp = APIClient().get(f"/api/v1/products/{p.id}/")
     assert resp.status_code == 200
     pricing = resp.json()["pricing"]
-
-    assert pricing["net"] == "100.00"
-    assert pricing["gross"] == "123.00"
-    assert pricing["tax"] == "23.00"
-    assert pricing["currency"] == "EUR"
-    assert pricing["tax_rate"] == "23"
+    # Phase 2: values live under undiscounted/discounted tiers.
+    und = pricing["undiscounted"]
+    assert und["net"] == "100.00"
+    assert und["gross"] == "123.00"
+    assert und["tax"] == "23.00"
+    assert und["currency"] == "EUR"
+    assert und["tax_rate"] == "23"
+    # Without a promotion discounted == undiscounted.
+    assert pricing["discounted"] == und
 
 
 @pytest.mark.django_db

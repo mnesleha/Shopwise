@@ -6,22 +6,21 @@ from products.models import Product, ProductImage
 from products.services.pricing import get_product_pricing
 
 # ---------------------------------------------------------------------------
-# Pricing serializer
+# Pricing serializers — nested Phase 2 structure
 # ---------------------------------------------------------------------------
 
 
-class ProductPricingResultSerializer(serializers.Serializer):
-    """Read-only serializer for a ``ProductPricingResult`` service DTO.
+class _PricingTierSerializer(serializers.Serializer):
+    """Serialises a single ``PricingTierResult`` (undiscounted or discounted).
 
-    Amounts are rendered as decimal strings (e.g. ``"10.00"``) so they are
-    safe for JSON consumers that cannot represent arbitrary-precision numbers.
-    Currency codes follow ISO 4217 (e.g. ``"EUR"``).
-    Tax rate is a percentage string (e.g. ``"23"`` for 23 %).
+    Amounts are decimal strings; currency is ISO 4217; tax_rate is a
+    percentage string with trailing zeros stripped (e.g. ``"23"`` not
+    ``"23.0000"``).
     """
 
-    net = serializers.SerializerMethodField(help_text="Net (pre-tax) unit price.")
-    gross = serializers.SerializerMethodField(help_text="Gross (post-tax) unit price.")
-    tax = serializers.SerializerMethodField(help_text="Tax component (gross minus net).")
+    net = serializers.SerializerMethodField(help_text="Net (pre-tax) price.")
+    gross = serializers.SerializerMethodField(help_text="Gross (post-tax) price.")
+    tax = serializers.SerializerMethodField(help_text="Tax component (gross − net).")
     currency = serializers.SerializerMethodField(help_text="ISO 4217 currency code.")
     tax_rate = serializers.SerializerMethodField(
         help_text="Applied tax rate as a percentage, e.g. '23' for 23 %."
@@ -40,8 +39,92 @@ class ProductPricingResultSerializer(serializers.Serializer):
         return obj.currency
 
     def get_tax_rate(self, obj) -> str:
-        # Normalize to strip trailing zeros: 23.0000 → "23", 8.5000 → "8.5".
         return format(obj.tax_rate.normalize(), "f")
+
+
+class _DiscountResultSerializer(serializers.Serializer):
+    """Serialises a ``DiscountResult``.
+
+    All monetary amounts are decimal strings.  ``percentage``,
+    ``promotion_code``, and ``promotion_type`` may be ``null`` when no
+    promotion was applied or when a percentage cannot be computed.
+    """
+
+    amount_net = serializers.SerializerMethodField(
+        help_text="Discount deducted from the net price."
+    )
+    amount_gross = serializers.SerializerMethodField(
+        help_text="Gross-equivalent of the discount (undiscounted_gross − discounted_gross)."
+    )
+    percentage = serializers.SerializerMethodField(
+        help_text="Effective percentage discount relative to the undiscounted net price, or null."
+    )
+    promotion_code = serializers.SerializerMethodField(
+        help_text="Stable code of the winning promotion, or null."
+    )
+    promotion_type = serializers.SerializerMethodField(
+        help_text="'PERCENT' or 'FIXED', or null when no promotion applies."
+    )
+
+    def get_amount_net(self, obj) -> str:
+        return str(obj.amount_net.amount)
+
+    def get_amount_gross(self, obj) -> str:
+        return str(obj.amount_gross.amount)
+
+    def get_percentage(self, obj):
+        if obj.percentage is None:
+            return None
+        return str(obj.percentage)
+
+    def get_promotion_code(self, obj):
+        return obj.promotion_code
+
+    def get_promotion_type(self, obj):
+        return obj.promotion_type
+
+
+class ProductPricingResultSerializer(serializers.Serializer):
+    """Full promotion-aware pricing breakdown for a product.
+
+    Structure::
+
+        {
+          "undiscounted": { "net": "...", "gross": "...", "tax": "...",
+                            "currency": "...", "tax_rate": "..." },
+          "discounted":   { "net": "...", "gross": "...", "tax": "...",
+                            "currency": "...", "tax_rate": "..." },
+          "discount": {
+            "amount_net": "...",
+            "amount_gross": "...",
+            "percentage": "...",   // null when no promotion
+            "promotion_code": ..., // null when no promotion
+            "promotion_type": ...  // null when no promotion
+          }
+        }
+
+    When no promotion applies, ``undiscounted`` == ``discounted`` and all
+    ``discount.*`` amounts are ``"0.00"`` (percentage is ``"0"``).
+    """
+
+    undiscounted = serializers.SerializerMethodField(
+        help_text="Full pricing without any promotion applied."
+    )
+    discounted = serializers.SerializerMethodField(
+        help_text="Pricing after the winning line promotion (equal to undiscounted when none applies)."
+    )
+    discount = serializers.SerializerMethodField(
+        help_text="Breakdown of the applied discount; amounts are 0.00 when no promotion applies."
+    )
+
+    def get_undiscounted(self, obj):
+        return _PricingTierSerializer(obj.undiscounted).data
+
+    def get_discounted(self, obj):
+        return _PricingTierSerializer(obj.discounted).data
+
+    def get_discount(self, obj):
+        return _DiscountResultSerializer(obj.discount).data
 
 
 # ---------------------------------------------------------------------------
