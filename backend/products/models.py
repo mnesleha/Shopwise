@@ -33,6 +33,17 @@ class TaxClass(models.Model):
         default="",
         help_text="Optional notes visible only in the admin.",
     )
+    # Tax rate expressed as a percentage, e.g. 23 means 23 % VAT.
+    # Null means "no rate configured" — the pricing service treats this as 0 %.
+    # This field stores the canonical rate for the class; multi-country rate
+    # tables will be introduced in a later phase.
+    rate = models.DecimalField(
+        max_digits=6,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        help_text="Tax rate as a percentage (e.g. 23 for 23 %). Leave blank for 0 %.",
+    )
     is_active = models.BooleanField(default=True)
 
     class Meta:

@@ -11,10 +11,10 @@ from .models import Product, ProductImage, TaxClass
 
 @admin.register(TaxClass)
 class TaxClassAdmin(admin.ModelAdmin):
-    list_display = ("name", "code", "is_active")
+    list_display = ("name", "code", "rate", "is_active")
     list_filter = ("is_active",)
     search_fields = ("name", "code")
-    fields = ("name", "code", "description", "is_active")
+    fields = ("name", "code", "description", "rate", "is_active")
     ordering = ("name",)
 
 
