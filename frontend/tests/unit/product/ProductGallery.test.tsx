@@ -66,8 +66,12 @@ describe("ProductGallery — C: desktop layout renders main image and thumbnails
     const desktop = screen.getByTestId("gallery-desktop");
     const thumbStrip = within(desktop).getByTestId("gallery-thumbnails");
 
-    expect(within(thumbStrip).getByRole("button", { name: "View image 1" })).toBeInTheDocument();
-    expect(within(thumbStrip).getByRole("button", { name: "View image 2" })).toBeInTheDocument();
+    expect(
+      within(thumbStrip).getByRole("button", { name: "View image 1" }),
+    ).toBeInTheDocument();
+    expect(
+      within(thumbStrip).getByRole("button", { name: "View image 2" }),
+    ).toBeInTheDocument();
   });
 
   it("marks the first thumbnail as current on initial render", () => {
@@ -75,7 +79,9 @@ describe("ProductGallery — C: desktop layout renders main image and thumbnails
 
     const desktop = screen.getByTestId("gallery-desktop");
     const thumbStrip = within(desktop).getByTestId("gallery-thumbnails");
-    const thumb1 = within(thumbStrip).getByRole("button", { name: "View image 1" });
+    const thumb1 = within(thumbStrip).getByRole("button", {
+      name: "View image 1",
+    });
 
     expect(thumb1).toHaveAttribute("aria-current", "true");
   });
@@ -86,7 +92,9 @@ describe("ProductGallery — C: desktop layout renders main image and thumbnails
     );
 
     const desktop = screen.getByTestId("gallery-desktop");
-    expect(within(desktop).queryByTestId("gallery-thumbnails")).not.toBeInTheDocument();
+    expect(
+      within(desktop).queryByTestId("gallery-thumbnails"),
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -99,7 +107,9 @@ describe("ProductGallery — D: thumbnail interaction changes main image", () =>
 
     const desktop = screen.getByTestId("gallery-desktop");
     const thumbStrip = within(desktop).getByTestId("gallery-thumbnails");
-    const thumb2 = within(thumbStrip).getByRole("button", { name: "View image 2" });
+    const thumb2 = within(thumbStrip).getByRole("button", {
+      name: "View image 2",
+    });
 
     await user.click(thumb2);
 
@@ -117,15 +127,16 @@ describe("ProductGallery — D: thumbnail interaction changes main image", () =>
     const desktop = screen.getByTestId("gallery-desktop");
     const thumbStrip = within(desktop).getByTestId("gallery-thumbnails");
 
-    await user.click(within(thumbStrip).getByRole("button", { name: "View image 2" }));
+    await user.click(
+      within(thumbStrip).getByRole("button", { name: "View image 2" }),
+    );
 
-    expect(within(thumbStrip).getByRole("button", { name: "View image 2" })).toHaveAttribute(
-      "aria-current",
-      "true",
-    );
-    expect(within(thumbStrip).getByRole("button", { name: "View image 1" })).not.toHaveAttribute(
-      "aria-current",
-    );
+    expect(
+      within(thumbStrip).getByRole("button", { name: "View image 2" }),
+    ).toHaveAttribute("aria-current", "true");
+    expect(
+      within(thumbStrip).getByRole("button", { name: "View image 1" }),
+    ).not.toHaveAttribute("aria-current");
   });
 });
 

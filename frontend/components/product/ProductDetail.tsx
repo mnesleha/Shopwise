@@ -10,7 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { resolveMediaUrl } from "@/lib/media";
-import { ProductGallery, galleryToSlides } from "@/components/product/ProductGallery";
+import {
+  ProductGallery,
+  galleryToSlides,
+} from "@/components/product/ProductGallery";
 import type { ProductImageVm } from "@/lib/mappers/products";
 
 interface ProductSpec {

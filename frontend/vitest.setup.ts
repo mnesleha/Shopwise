@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom/vitest';
+import "@testing-library/jest-dom/vitest";
 
 // ---------------------------------------------------------------------------
 // Global module mocks
@@ -10,8 +10,8 @@ import '@testing-library/jest-dom/vitest';
 // Mocks that must be consistent across the entire test run go here:
 // ---------------------------------------------------------------------------
 
-import { vi } from 'vitest';
-import * as React from 'react';
+import { vi } from "vitest";
+import * as React from "react";
 
 /**
  * yet-another-react-lightbox
@@ -21,9 +21,9 @@ import * as React from 'react';
  * dependency on real browser APIs (ResizeObserver, focus traps, CSS) that are
  * not available in happy-dom, and keeps the tests fast and deterministic.
  */
-vi.mock('yet-another-react-lightbox', () => ({
+vi.mock("yet-another-react-lightbox", () => ({
   default: ({ open }: { open: boolean }) =>
     open
-      ? React.createElement('div', { 'data-testid': 'lightbox-overlay' })
+      ? React.createElement("div", { "data-testid": "lightbox-overlay" })
       : null,
 }));

@@ -47,13 +47,22 @@ describe("ProductCard — A: renders primary image thumbnail", () => {
       alt: "Ergonomic Mouse",
     });
 
-    const product = makeProduct({ id: "1", name: "Ergonomic Mouse", primaryImage });
-    render(<ProductGrid {...buildProps({ products: [product], totalItems: 1 })} />);
+    const product = makeProduct({
+      id: "1",
+      name: "Ergonomic Mouse",
+      primaryImage,
+    });
+    render(
+      <ProductGrid {...buildProps({ products: [product], totalItems: 1 })} />,
+    );
 
     const card = screen.getByTestId(productCard("1"));
     const img = within(card).getByRole("img");
 
-    expect(img).toHaveAttribute("src", "https://example.com/products/1/thumb.jpg");
+    expect(img).toHaveAttribute(
+      "src",
+      "https://example.com/products/1/thumb.jpg",
+    );
     expect(img).toHaveAttribute("alt", "Ergonomic Mouse");
   });
 
@@ -62,8 +71,14 @@ describe("ProductCard — A: renders primary image thumbnail", () => {
       alt: "Ergonomic Mouse - front angle view",
     });
 
-    const product = makeProduct({ id: "1", name: "Ergonomic Mouse", primaryImage });
-    render(<ProductGrid {...buildProps({ products: [product], totalItems: 1 })} />);
+    const product = makeProduct({
+      id: "1",
+      name: "Ergonomic Mouse",
+      primaryImage,
+    });
+    render(
+      <ProductGrid {...buildProps({ products: [product], totalItems: 1 })} />,
+    );
 
     const card = screen.getByTestId(productCard("1"));
     const img = within(card).getByRole("img");
@@ -76,8 +91,14 @@ describe("ProductCard — A: renders primary image thumbnail", () => {
 
 describe("ProductCard — B: renders placeholder when no image data", () => {
   it("shows 'No image' text when neither primaryImage nor imageUrl is set", () => {
-    const product = makeProduct({ id: "1", primaryImage: undefined, imageUrl: undefined });
-    render(<ProductGrid {...buildProps({ products: [product], totalItems: 1 })} />);
+    const product = makeProduct({
+      id: "1",
+      primaryImage: undefined,
+      imageUrl: undefined,
+    });
+    render(
+      <ProductGrid {...buildProps({ products: [product], totalItems: 1 })} />,
+    );
 
     const card = screen.getByTestId(productCard("1"));
     expect(within(card).getByText("No image")).toBeInTheDocument();
@@ -90,7 +111,9 @@ describe("ProductCard — B: renders placeholder when no image data", () => {
       primaryImage: undefined,
       imageUrl: "https://example.com/legacy.jpg",
     });
-    render(<ProductGrid {...buildProps({ products: [product], totalItems: 1 })} />);
+    render(
+      <ProductGrid {...buildProps({ products: [product], totalItems: 1 })} />,
+    );
 
     const card = screen.getByTestId(productCard("1"));
     const img = within(card).getByRole("img");

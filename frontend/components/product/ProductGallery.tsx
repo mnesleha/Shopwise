@@ -81,7 +81,10 @@ function MobileCarousel({
   return (
     <div className="flex flex-col gap-3">
       {/* Embla viewport */}
-      <div className="overflow-hidden rounded-lg border bg-muted" ref={emblaRef}>
+      <div
+        className="overflow-hidden rounded-lg border bg-muted"
+        ref={emblaRef}
+      >
         <div className="flex" data-testid="mobile-carousel-track">
           {slides.map((slide, index) => (
             <div
@@ -173,7 +176,9 @@ export function ProductGallery({ slides, productName }: ProductGalleryProps) {
         data-testid="gallery-empty"
         className="flex aspect-square w-full items-center justify-center rounded-lg border bg-muted"
       >
-        <span className="text-muted-foreground text-sm">No image available</span>
+        <span className="text-muted-foreground text-sm">
+          No image available
+        </span>
       </div>
     );
   }
@@ -182,7 +187,10 @@ export function ProductGallery({ slides, productName }: ProductGalleryProps) {
 
   // ── Desktop layout ─────────────────────────────────────────────────────────
   const desktopSection = (
-    <div data-testid="gallery-desktop" className="hidden flex-col gap-4 md:flex">
+    <div
+      data-testid="gallery-desktop"
+      className="hidden flex-col gap-4 md:flex"
+    >
       {/* Main image — click to open lightbox */}
       <button
         type="button"
@@ -200,7 +208,10 @@ export function ProductGallery({ slides, productName }: ProductGalleryProps) {
 
       {/* Thumbnail carousel — only shown when there are ≥2 slides */}
       {slides.length > 1 && (
-        <div className="flex items-center gap-1" data-testid="gallery-thumbnails">
+        <div
+          className="flex items-center gap-1"
+          data-testid="gallery-thumbnails"
+        >
           {/* Prev arrow */}
           <button
             type="button"

@@ -134,7 +134,9 @@ export function mapProductToGridItem(dto: ProductListItemDto): ProductGridItem {
     stockQuantity: dto.stock_quantity,
     shortDescription: dto.short_description,
     imageUrl: dto.primary_image?.image.thumb ?? "",
-    primaryImage: dto.primary_image ? mapProductImage(dto.primary_image) : undefined,
+    primaryImage: dto.primary_image
+      ? mapProductImage(dto.primary_image)
+      : undefined,
   };
 }
 
