@@ -14,6 +14,7 @@ from products.models import Product
 from auditlog.actions import AuditActions
 from auditlog.models import AuditEvent
 from auditlog.services import AuditService
+from notifications.enqueue import enqueue_best_effort
 
 
 def reserve_for_checkout(*, order, items, ttl_minutes=None) -> None:
@@ -309,6 +310,19 @@ def expire_overdue_reservations(*, now=None) -> int:
                 actor_type=AuditEvent.ActorType.SYSTEM,
                 metadata={"cancel_reason": order_locked.cancel_reason},
                 fail_silently=True,
+            )
+
+            # Enqueue customer notification on commit so the email is only
+            # dispatched when the cancellation transaction actually commits.
+            # Capture loop-local values explicitly to avoid late-binding issues.
+            _email = order_locked.customer_email
+            _order_id = order_locked.id
+            transaction.on_commit(
+                lambda email=_email, oid=_order_id: enqueue_best_effort(
+                    "notifications.jobs.send_order_system_cancelled_notification",
+                    recipient_email=email,
+                    order_id=oid,
+                )
             )
 
     return affected

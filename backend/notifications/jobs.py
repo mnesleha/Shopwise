@@ -12,6 +12,7 @@ from notifications.renderers import (
     render_email_change_confirm,
     render_email_verification,
     render_guest_order_link,
+    render_order_system_cancelled_notification,
     render_password_change_notification,
     render_password_reset_email,
 )
@@ -207,3 +208,33 @@ def send_password_change_notification(*, recipient_email: str) -> None:
             )
         )
         return
+
+
+def send_order_system_cancelled_notification(
+    *, recipient_email: str, order_id: int
+) -> None:
+    """Send a cancellation notice when an order is system-cancelled due to
+    an expired inventory reservation / unpaid payment.
+
+    Best-effort semantics:
+    - Failures MUST NOT propagate.
+    - Errors are delegated to NotificationErrorHandler.
+    """
+    try:
+        subject, body = render_order_system_cancelled_notification(
+            recipient_email=recipient_email,
+            order_id=order_id,
+        )
+        EmailService.send_plain_text(
+            to_email=recipient_email,
+            subject=subject,
+            body=body,
+        )
+    except Exception:
+        NotificationErrorHandler.handle(
+            NotificationSendError(
+                code="ORDER_SYSTEM_CANCELLED_NOTIFY_SEND_FAILED",
+                message="Failed to send order system-cancellation notification.",
+                context={"recipient_email": recipient_email, "order_id": order_id},
+            )
+        )

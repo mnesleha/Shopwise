@@ -333,6 +333,17 @@ DISABLE_RATE_LIMITING_FOR_TESTS = False
 LOW_STOCK_THRESHOLD = 5
 
 # ---------------------------------------------------------------------------
+# Overdue inventory reservation expiration settings
+# ---------------------------------------------------------------------------
+
+# Cron expression controlling when the overdue reservation expiration job runs.
+# Default: every 15 minutes — reservations have short TTLs (guest: 15 min,
+# auth: 2 h), so a frequent sweep keeps cancelled orders fresh.
+OVERDUE_RESERVATIONS_CLEANUP_CRON: str = os.getenv(
+    "OVERDUE_RESERVATIONS_CLEANUP_CRON", "*/15 * * * *"
+)
+
+# ---------------------------------------------------------------------------
 # Anonymous cart cleanup settings
 # ---------------------------------------------------------------------------
 
