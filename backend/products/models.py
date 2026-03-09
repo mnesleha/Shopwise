@@ -5,9 +5,82 @@ from utils.sanitize import sanitize_markdown
 from versatileimagefield.fields import PPOIField, VersatileImageField
 
 
+CURRENCY_CHOICES = [
+    ("EUR", "Euro"),
+    ("USD", "US Dollar"),
+    ("GBP", "British Pound"),
+    ("PLN", "Polish Zloty"),
+]
+
+
+class TaxClass(models.Model):
+    """Represents a tax classification that can be assigned to products.
+
+    TaxClass acts as a stable, named category for grouping products by their
+    tax treatment (e.g. standard rate, reduced rate, zero rate).  Actual
+    rate values are intentionally excluded from this model; they will be
+    added in a later pricing phase.
+    """
+
+    name = models.CharField(max_length=128)
+    code = models.CharField(
+        max_length=64,
+        unique=True,
+        help_text="Stable machine-readable identifier, e.g. 'standard', 'reduced', 'zero'.",
+    )
+    description = models.TextField(
+        blank=True,
+        default="",
+        help_text="Optional notes visible only in the admin.",
+    )
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "Tax Class"
+        verbose_name_plural = "Tax Classes"
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Product(models.Model):
     name = models.CharField(max_length=255)
+
+    # ------------------------------------------------------------------
+    # Legacy pricing field — kept for backward compatibility during the
+    # transition to the new pricing model.  Do NOT remove until all
+    # dependent code has been migrated to price_net_amount.
+    # ------------------------------------------------------------------
     price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    # ------------------------------------------------------------------
+    # Pricing foundation (Phase 1)
+    # Both fields are nullable so the migration is non-destructive.  They
+    # will become required once the transition from `price` is complete.
+    # ------------------------------------------------------------------
+    price_net_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Net (pre-tax) price of the product.",
+    )
+    currency = models.CharField(
+        max_length=3,
+        choices=CURRENCY_CHOICES,
+        default="EUR",
+        help_text="ISO 4217 currency code.",
+    )
+    tax_class = models.ForeignKey(
+        TaxClass,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="products",
+        help_text="Tax classification applied to this product.",
+    )
+
     stock_quantity = models.IntegerField()
     is_active = models.BooleanField(default=True)
     category = models.ForeignKey("categories.Category", null=True, blank=True, on_delete=models.SET_NULL, related_name="products")
