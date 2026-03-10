@@ -65,6 +65,9 @@ class _DiscountResultSerializer(serializers.Serializer):
     promotion_type = serializers.SerializerMethodField(
         help_text="'PERCENT' or 'FIXED', or null when no promotion applies."
     )
+    amount_scope = serializers.SerializerMethodField(
+        help_text="'GROSS' or 'NET' for FIXED promotions (how the fixed amount is applied); null otherwise."
+    )
 
     def get_amount_net(self, obj) -> str:
         return str(obj.amount_net.amount)
@@ -82,6 +85,9 @@ class _DiscountResultSerializer(serializers.Serializer):
 
     def get_promotion_type(self, obj):
         return obj.promotion_type
+
+    def get_amount_scope(self, obj):
+        return obj.amount_scope
 
 
 class ProductPricingResultSerializer(serializers.Serializer):

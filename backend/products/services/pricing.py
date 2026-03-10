@@ -111,6 +111,9 @@ class DiscountResult:
     promotion_type: Optional[str]
     """``'PERCENT'`` or ``'FIXED'``, or ``None`` when no promotion applies."""
 
+    amount_scope: Optional[str]
+    """``'GROSS'`` or ``'NET'`` for FIXED promotions; ``None`` otherwise."""
+
 
 @dataclass(frozen=True)
 class ProductPricingResult:
@@ -188,6 +191,7 @@ class ProductPricingResult:
                 percentage=Decimal("0"),
                 promotion_code=None,
                 promotion_type=None,
+                amount_scope=None,
             ),
         )
 
@@ -247,6 +251,7 @@ def get_product_pricing(product: "Product") -> Optional[ProductPricingResult]:
         product=product,
         net_amount=product.price_net_amount,
         currency=currency,
+        tax_rate=tax_rate,
     )
 
     # Step 3: If a promotion applies, compute tax on the discounted NET.
@@ -262,6 +267,7 @@ def get_product_pricing(product: "Product") -> Optional[ProductPricingResult]:
                 percentage=Decimal("0"),
                 promotion_code=None,
                 promotion_type=None,
+                amount_scope=None,
             ),
         )
 
@@ -303,5 +309,6 @@ def get_product_pricing(product: "Product") -> Optional[ProductPricingResult]:
             percentage=percentage,
             promotion_code=promo_result.promotion_code,
             promotion_type=promo_result.promotion_type,
+            amount_scope=promo_result.amount_scope,
         ),
     )

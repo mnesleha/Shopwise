@@ -46,13 +46,14 @@ class PromotionAdmin(admin.ModelAdmin):
         "name",
         "code",
         "type",
+        "amount_scope",
         "value",
         "priority",
         "is_active",
         "active_from",
         "active_to",
     )
-    list_filter = ("type", "is_active")
+    list_filter = ("type", "amount_scope", "is_active")
     search_fields = ("name", "code")
     ordering = ("-priority", "name")
     inlines = [PromotionProductInline, PromotionCategoryInline]
@@ -60,7 +61,12 @@ class PromotionAdmin(admin.ModelAdmin):
         (
             None,
             {
-                "fields": ("name", "code", "type", "value", "priority"),
+                "fields": ("name", "code", "type", "value", "amount_scope", "priority"),
+                "description": (
+                    "For FIXED promotions, <em>Amount scope</em> controls whether the fixed "
+                    "amount is deducted from the gross (customer-visible) price or the net "
+                    "(pre-tax) price. Defaults to Gross (B2C-friendly)."
+                ),
             },
         ),
         (

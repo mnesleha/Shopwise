@@ -91,6 +91,11 @@ class PromotionType(models.TextChoices):
     FIXED = "FIXED", "Fixed"
 
 
+class PromotionAmountScope(models.TextChoices):
+    NET = "NET", "Net (base price before tax)"
+    GROSS = "GROSS", "Gross (final customer-visible price)"
+
+
 class Promotion(models.Model):
     """Business-defined line-level promotion.
 
@@ -121,6 +126,16 @@ class Promotion(models.Model):
         max_digits=10,
         decimal_places=2,
         help_text="Discount magnitude. For PERCENT: 0 < value ≤ 100. For FIXED: value > 0.",
+    )
+    amount_scope = models.CharField(
+        max_length=5,
+        choices=PromotionAmountScope.choices,
+        default=PromotionAmountScope.GROSS,
+        help_text=(
+            "For FIXED promotions only: whether the fixed amount is deducted from the "
+            "NET price (base before tax) or the GROSS price (final price the customer sees). "
+            "Defaults to GROSS (B2C-friendly). Ignored for PERCENT promotions."
+        ),
     )
     priority = models.PositiveIntegerField(
         default=0,

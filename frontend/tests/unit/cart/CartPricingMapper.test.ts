@@ -15,7 +15,11 @@
  */
 import { describe, it, expect } from "vitest";
 import { mapCartToVm } from "@/lib/mappers/cart";
-import type { CartDto, CartTotalsDto, CartItemPricingDto } from "@/lib/api/cart";
+import type {
+  CartDto,
+  CartTotalsDto,
+  CartItemPricingDto,
+} from "@/lib/api/cart";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -83,7 +87,10 @@ function makeDto(overrides: Partial<CartDto> = {}): CartDto {
 describe("mapCartToVm — with backend totals", () => {
   it("uses subtotal_undiscounted as subtotal", () => {
     const dto = makeDto({
-      totals: makeTotals({ subtotal_undiscounted: "200.00", total_gross: "180.00" }),
+      totals: makeTotals({
+        subtotal_undiscounted: "200.00",
+        total_gross: "180.00",
+      }),
     });
     const vm = mapCartToVm(dto);
     expect(vm.subtotal).toBe("200.00");
@@ -198,6 +205,105 @@ describe("mapCartToVm — item unitPrice", () => {
     const vm = mapCartToVm(dto);
     // No totals → falls back to manual calculation; unitPrice from product.price
     expect(vm.items[0].unitPrice).toBe("75.00");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Item discount fields from per-item pricing
+// ---------------------------------------------------------------------------
+
+describe("mapCartToVm — item discount fields", () => {
+  it("sets originalUnitPrice to undiscounted.gross when promo is active", () => {
+    const dto = makeDto({
+      items: [
+        {
+          id: 10,
+          product: { id: 42, name: "Widget", price: "100.00" },
+          quantity: 1,
+          price_at_add_time: "100.00",
+          pricing: makeItemPricing("100.00", "90.00", "10.00", "PROMO10"),
+        },
+      ],
+    });
+    const vm = mapCartToVm(dto);
+    expect(vm.items[0].originalUnitPrice).toBe("100.00");
+  });
+
+  it("sets discountLabel for a PERCENT-type active promotion", () => {
+    const dto = makeDto({
+      items: [
+        {
+          id: 10,
+          product: { id: 42, name: "Widget", price: "100.00" },
+          quantity: 1,
+          price_at_add_time: "100.00",
+          pricing: {
+            undiscounted: {
+              net: "81.30",
+              gross: "100.00",
+              tax: "0.00",
+              currency: "EUR",
+              tax_rate: "23",
+            },
+            discounted: {
+              net: "73.17",
+              gross: "90.00",
+              tax: "0.00",
+              currency: "EUR",
+              tax_rate: "23",
+            },
+            discount: {
+              amount_net: "8.13",
+              amount_gross: "10.00",
+              percentage: "10.00",
+              promotion_code: "PROMO10",
+              promotion_type: "PERCENT",
+            },
+          },
+        },
+      ],
+    });
+    const vm = mapCartToVm(dto);
+    // Cart mapper uses en-dash (\u2013) for the label
+    expect(vm.items[0].discountLabel).toBe("\u201310%");
+  });
+
+  it("returns undefined originalUnitPrice when no promotion is active", () => {
+    const dto = makeDto({
+      items: [
+        {
+          id: 10,
+          product: { id: 42, name: "Widget", price: "100.00" },
+          quantity: 1,
+          price_at_add_time: "100.00",
+          pricing: makeItemPricing("100.00", "100.00", "0.00", null),
+        },
+      ],
+    });
+    const vm = mapCartToVm(dto);
+    expect(vm.items[0].originalUnitPrice).toBeUndefined();
+  });
+
+  it("returns undefined discountLabel when no promotion is active", () => {
+    const dto = makeDto({
+      items: [
+        {
+          id: 10,
+          product: { id: 42, name: "Widget", price: "100.00" },
+          quantity: 1,
+          price_at_add_time: "100.00",
+          pricing: makeItemPricing("100.00", "100.00", "0.00", null),
+        },
+      ],
+    });
+    const vm = mapCartToVm(dto);
+    expect(vm.items[0].discountLabel).toBeUndefined();
+  });
+
+  it("returns undefined originalUnitPrice when item has no pricing", () => {
+    const dto = makeDto();
+    const vm = mapCartToVm(dto);
+    expect(vm.items[0].originalUnitPrice).toBeUndefined();
   });
 });
 

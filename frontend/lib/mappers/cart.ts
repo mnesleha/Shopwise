@@ -12,6 +12,10 @@ export type CartVm = {
     quantity: number;
     stockQuantity?: number;
     imageUrl?: string;
+    /** Original (undiscounted) unit gross price; present when a promotion applies. */
+    originalUnitPrice?: string;
+    /** Short discount label, e.g. "–10%". */
+    discountLabel?: string;
   }>;
   discount?: {
     code?: string;
@@ -36,20 +40,41 @@ function mulDecimalString(a: string, qty: number): string {
 }
 
 export function mapCartToVm(dto: CartDto): CartVm {
-  const items = dto.items.map((it) => ({
-    productId: String(it.product.id), // product id!
-    productName: it.product.name,
-    productUrl: `/products/${it.product.id}`,
-    shortDescription: "",
-    // Use discounted gross from backend per-unit pricing when available.
-    // Falls back to price_at_add_time (legacy snapshot) then product.price.
-    // ?? guards against null/undefined pricing; || guards against empty strings.
-    unitPrice:
-      it.pricing?.discounted?.gross ??
-      (it.price_at_add_time || it.product.price),
-    quantity: it.quantity,
-    imageUrl: "",
-  }));
+  const items = dto.items.map((it) => {
+    const pricing = it.pricing;
+    const hasDiscount = Boolean(
+      pricing?.discount?.promotion_code &&
+      pricing.discounted?.gross !== pricing.undiscounted?.gross,
+    );
+    const unitPrice =
+      pricing?.discounted?.gross ?? (it.price_at_add_time || it.product.price);
+
+    let discountLabel: string | undefined;
+    if (hasDiscount && pricing?.discount) {
+      const pct = pricing.discount.percentage;
+      if (pct && pct !== "0" && pct !== "0.00") {
+        const rounded = Math.round(parseFloat(pct));
+        discountLabel = `\u2013${rounded}%`;
+      } else {
+        const gross = pricing.discount.amount_gross;
+        if (gross && parseFloat(gross) > 0) {
+          discountLabel = `\u2013${gross}`;
+        }
+      }
+    }
+
+    return {
+      productId: String(it.product.id),
+      productName: it.product.name,
+      productUrl: `/products/${it.product.id}`,
+      shortDescription: "",
+      unitPrice,
+      quantity: it.quantity,
+      imageUrl: "",
+      originalUnitPrice: hasDiscount ? pricing!.undiscounted!.gross : undefined,
+      discountLabel,
+    };
+  });
 
   // Phase 2: use backend-computed totals when present.
   if (dto.totals) {
@@ -61,10 +86,7 @@ export function mapCartToVm(dto: CartDto): CartVm {
       currency: t.currency || "USD",
       items,
       // Discount line: shown only when there is an actual reduction.
-      discount:
-        totalDiscountNum > 0
-          ? { amount: t.total_discount }
-          : undefined,
+      discount: totalDiscountNum > 0 ? { amount: t.total_discount } : undefined,
       // Subtotal = original amount before promotion reductions.
       subtotal: t.subtotal_undiscounted,
       // Tax component (informational — already included in total).

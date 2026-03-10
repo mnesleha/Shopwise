@@ -18,7 +18,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from categories.models import Category
-from discounts.models import Promotion, PromotionCategory, PromotionProduct, PromotionType
+from discounts.models import Promotion, PromotionAmountScope, PromotionCategory, PromotionProduct, PromotionType
 from products.models import Product, TaxClass
 
 LIST_URL = "/api/v1/products/"
@@ -63,6 +63,7 @@ def _promotion(
     promo_type: str = PromotionType.PERCENT,
     value: Decimal,
     priority: int = 5,
+    amount_scope: str = PromotionAmountScope.GROSS,
 ) -> Promotion:
     return Promotion.objects.create(
         name=f"Promo {code}",
@@ -71,6 +72,7 @@ def _promotion(
         value=value,
         priority=priority,
         is_active=True,
+        amount_scope=amount_scope,
     )
 
 
@@ -215,15 +217,24 @@ def test_tax_computed_from_discounted_net_not_undiscounted():
 
 @pytest.mark.django_db
 def test_fixed_discount_reflected_in_gross_and_tax():
-    """A FIXED discount must produce correct gross+tax in the discounted tier.
+    """A FIXED+GROSS discount deducts from the gross price; net is back-computed.
 
-    FIXED 5 EUR off 20 EUR net → discounted net = 15 EUR.
-    With 10 % tax: gross = 15 * 1.10 = 16.50, tax = 1.50.
-    discount.amount_gross = 22.00 - 16.50 = 5.50
+    Setup: net=20 EUR, tax=10% → gross=22 EUR.
+    FIXED 5 EUR off GROSS:
+      discounted_gross = 22 − 5 = 17.00
+      discounted_net   = 17 / 1.10 = 15.45  (ROUND_HALF_UP)
+      discounted_tax   = 17.00 − 15.45 = 1.55
+      discount.amount_net   = 20.00 − 15.45 = 4.55
+      discount.amount_gross = 22.00 − 17.00 = 5.00
     """
     tc = _tax_class(code="fixed_tax", rate=Decimal("10"))
     p = _product(name="FixedDiscount", price_net_amount=Decimal("20.00"), tax_class=tc)
-    promo = _promotion(code="fixed-5", promo_type=PromotionType.FIXED, value=Decimal("5.00"))
+    promo = _promotion(
+        code="fixed-5",
+        promo_type=PromotionType.FIXED,
+        value=Decimal("5.00"),
+        amount_scope=PromotionAmountScope.GROSS,
+    )
     PromotionProduct.objects.create(promotion=promo, product=p)
 
     resp = _client().get(_detail_url(p.id))
@@ -233,6 +244,42 @@ def test_fixed_discount_reflected_in_gross_and_tax():
     assert pricing["undiscounted"]["net"] == "20.00"
     assert pricing["undiscounted"]["gross"] == "22.00"
 
+    assert pricing["discounted"]["net"] == "15.45"
+    assert pricing["discounted"]["gross"] == "17.00"
+    assert pricing["discounted"]["tax"] == "1.55"
+
+    assert pricing["discount"]["amount_net"] == "4.55"
+    assert pricing["discount"]["amount_gross"] == "5.00"
+    assert pricing["discount"]["promotion_type"] == "FIXED"
+    assert pricing["discount"]["amount_scope"] == "GROSS"
+
+
+@pytest.mark.django_db
+def test_fixed_net_discount_reflected_in_gross_and_tax():
+    """A FIXED+NET discount deducts from the net price directly (explicit amount_scope=NET).
+
+    Setup: net=20 EUR, tax=10%.
+    FIXED 5 EUR off NET:
+      discounted_net   = 20 − 5 = 15.00
+      discounted_gross = 15 * 1.10 = 16.50
+      discounted_tax   = 16.50 − 15.00 = 1.50
+      discount.amount_net   = 5.00
+      discount.amount_gross = 22.00 − 16.50 = 5.50
+    """
+    tc = _tax_class(code="fixed_net_tax", rate=Decimal("10"))
+    p = _product(name="FixedNetDiscount", price_net_amount=Decimal("20.00"), tax_class=tc)
+    promo = _promotion(
+        code="fixed-net-5",
+        promo_type=PromotionType.FIXED,
+        value=Decimal("5.00"),
+        amount_scope=PromotionAmountScope.NET,
+    )
+    PromotionProduct.objects.create(promotion=promo, product=p)
+
+    resp = _client().get(_detail_url(p.id))
+    assert resp.status_code == 200
+    pricing = resp.json()["pricing"]
+
     assert pricing["discounted"]["net"] == "15.00"
     assert pricing["discounted"]["gross"] == "16.50"
     assert pricing["discounted"]["tax"] == "1.50"
@@ -240,6 +287,7 @@ def test_fixed_discount_reflected_in_gross_and_tax():
     assert pricing["discount"]["amount_net"] == "5.00"
     assert pricing["discount"]["amount_gross"] == "5.50"
     assert pricing["discount"]["promotion_type"] == "FIXED"
+    assert pricing["discount"]["amount_scope"] == "NET"
 
 
 # ---------------------------------------------------------------------------
@@ -315,9 +363,8 @@ def test_pricing_structure_complete_without_promotion():
     assert set(pricing.keys()) >= {"undiscounted", "discounted", "discount"}
     for tier in ("undiscounted", "discounted"):
         assert {"net", "gross", "tax", "currency", "tax_rate"} <= set(pricing[tier].keys())
-    assert {"amount_net", "amount_gross", "percentage", "promotion_code", "promotion_type"} <= set(
-        pricing["discount"].keys()
-    )
+    discount_keys = {"amount_net", "amount_gross", "percentage", "promotion_code", "promotion_type", "amount_scope"}
+    assert discount_keys <= set(pricing["discount"].keys())
 
 
 @pytest.mark.django_db
@@ -333,6 +380,62 @@ def test_pricing_structure_complete_with_promotion():
     assert set(pricing.keys()) >= {"undiscounted", "discounted", "discount"}
     for tier in ("undiscounted", "discounted"):
         assert {"net", "gross", "tax", "currency", "tax_rate"} <= set(pricing[tier].keys())
-    assert {"amount_net", "amount_gross", "percentage", "promotion_code", "promotion_type"} <= set(
-        pricing["discount"].keys()
+    discount_keys = {"amount_net", "amount_gross", "percentage", "promotion_code", "promotion_type", "amount_scope"}
+    assert discount_keys <= set(pricing["discount"].keys())
+
+
+# ---------------------------------------------------------------------------
+# amount_scope field
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_amount_scope_is_null_when_no_promotion():
+    """discount.amount_scope must be null when no promotion applies."""
+    p = _product(name="NoPromoScope", price_net_amount=Decimal("30.00"))
+
+    resp = _client().get(_detail_url(p.id))
+    assert resp.json()["pricing"]["discount"]["amount_scope"] is None
+
+
+@pytest.mark.django_db
+def test_amount_scope_is_null_for_percent_promotion():
+    """discount.amount_scope must be null for PERCENT promotions."""
+    p = _product(name="PctScope", price_net_amount=Decimal("40.00"))
+    promo = _promotion(code="pct-scope", value=Decimal("10"))
+    PromotionProduct.objects.create(promotion=promo, product=p)
+
+    resp = _client().get(_detail_url(p.id))
+    assert resp.json()["pricing"]["discount"]["amount_scope"] is None
+
+
+@pytest.mark.django_db
+def test_amount_scope_gross_for_fixed_gross_promotion():
+    """discount.amount_scope must be 'GROSS' for FIXED+GROSS (the default)."""
+    p = _product(name="GrossScope", price_net_amount=Decimal("50.00"))
+    promo = _promotion(
+        code="gross-scope",
+        promo_type=PromotionType.FIXED,
+        value=Decimal("10.00"),
+        amount_scope=PromotionAmountScope.GROSS,
     )
+    PromotionProduct.objects.create(promotion=promo, product=p)
+
+    resp = _client().get(_detail_url(p.id))
+    assert resp.json()["pricing"]["discount"]["amount_scope"] == "GROSS"
+
+
+@pytest.mark.django_db
+def test_amount_scope_net_for_fixed_net_promotion():
+    """discount.amount_scope must be 'NET' for explicit FIXED+NET."""
+    p = _product(name="NetScope", price_net_amount=Decimal("50.00"))
+    promo = _promotion(
+        code="net-scope",
+        promo_type=PromotionType.FIXED,
+        value=Decimal("10.00"),
+        amount_scope=PromotionAmountScope.NET,
+    )
+    PromotionProduct.objects.create(promotion=promo, product=p)
+
+    resp = _client().get(_detail_url(p.id))
+    assert resp.json()["pricing"]["discount"]["amount_scope"] == "NET"

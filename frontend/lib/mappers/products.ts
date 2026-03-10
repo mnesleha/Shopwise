@@ -1,4 +1,31 @@
 // ---------------------------------------------------------------------------
+// Pricing DTOs — Phase 2 structured pricing from the backend
+// ---------------------------------------------------------------------------
+
+export type PricingTierDto = {
+  net: string;
+  gross: string;
+  tax: string;
+  currency: string;
+  tax_rate: string;
+};
+
+export type DiscountResultDto = {
+  amount_net: string;
+  amount_gross: string;
+  percentage: string | null;
+  promotion_code: string | null;
+  promotion_type: string | null;
+  amount_scope: string | null;
+};
+
+export type ProductPricingDto = {
+  undiscounted: PricingTierDto;
+  discounted: PricingTierDto;
+  discount: DiscountResultDto;
+};
+
+// ---------------------------------------------------------------------------
 // Image variant types — mirrors the VersatileImageField serializer output.
 // FE must never construct media URLs manually; always use these from the API.
 // ---------------------------------------------------------------------------
@@ -32,6 +59,8 @@ export type ProductListItemDto = {
   stock_status: "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
   /** Hero image for catalogue cards; null when no primary image is set. */
   primary_image: ProductImageDto | null;
+  /** Structured pricing (Phase 2). Null when price_net_amount is not set. */
+  pricing: ProductPricingDto | null;
 };
 
 /** Catalogue list response — wrapped envelope from /api/v1/products/. */
@@ -54,6 +83,8 @@ export type ProductDetailDto = {
   primary_image: ProductImageDto | null;
   /** Full gallery ordered by sort_order, id. */
   gallery_images: ProductImageDto[];
+  /** Structured pricing (Phase 2). Null when price_net_amount is not set. */
+  pricing: ProductPricingDto | null;
 };
 
 // ---------------------------------------------------------------------------
@@ -86,6 +117,15 @@ export type ProductGridItem = {
   imageUrl?: string;
   /** Structured primary image for use with next/image. */
   primaryImage?: ProductImageVm;
+  /** Discounted gross price. Present when a promotion is active. */
+  discountedPrice?: string;
+  /** Original (undiscounted) gross price. Present when a promotion is active. */
+  originalPrice?: string;
+  /**
+   * Short badge text, e.g. "–10%" or "–EUR 5.00".
+   * Present when a promotion is active.
+   */
+  discountLabel?: string;
 };
 
 export type ProductDetailVm = {
@@ -101,6 +141,12 @@ export type ProductDetailVm = {
   /** Structured gallery for the new ProductGallery component. */
   gallery: ProductImageVm[];
   specs?: Array<{ label: string; value: string }>;
+  /** Discounted gross price. Present when a promotion is active. */
+  discountedPrice?: string;
+  /** Original (undiscounted) gross price. Present when a promotion is active. */
+  originalPrice?: string;
+  /** Short badge text, e.g. "–10%" or "–EUR 5.00". */
+  discountLabel?: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -121,32 +167,72 @@ function mapProductImage(dto: ProductImageDto): ProductImageVm {
   };
 }
 
+/**
+ * Build the short discount label shown in the badge, e.g. "–10%" or "–EUR 5.00".
+ * Returns undefined when no active discount data is present.
+ */
+function buildDiscountLabel(
+  pricing: ProductPricingDto | null | undefined,
+  currency: string,
+): string | undefined {
+  if (!pricing || !pricing.discount.promotion_code) return undefined;
+  const pct = pricing.discount.percentage;
+  if (pct && pct !== "0" && pct !== "0.00") {
+    // Round to nearest integer for display clarity.
+    const rounded = Math.round(parseFloat(pct));
+    return `–${rounded}%`;
+  }
+  const grossAmount = pricing.discount.amount_gross;
+  if (grossAmount && parseFloat(grossAmount) > 0) {
+    const symbol = currency === "USD" ? "$" : currency;
+    return `–${symbol}\u00a0${grossAmount}`;
+  }
+  return undefined;
+}
+
 // ---------------------------------------------------------------------------
 // Mapper functions
 // ---------------------------------------------------------------------------
 
 export function mapProductToGridItem(dto: ProductListItemDto): ProductGridItem {
+  const currency = "USD";
+  const hasDiscount = Boolean(
+    dto.pricing?.discount.promotion_code &&
+    dto.pricing.discounted.gross !== dto.pricing.undiscounted.gross,
+  );
   return {
     id: String(dto.id),
     name: dto.name,
-    price: dto.price,
-    currency: "USD",
+    price: hasDiscount
+      ? dto.pricing!.discounted.gross
+      : (dto.pricing?.undiscounted.gross ?? dto.price),
+    currency,
     stockQuantity: dto.stock_quantity,
     shortDescription: dto.short_description,
     imageUrl: dto.primary_image?.image.thumb ?? "",
     primaryImage: dto.primary_image
       ? mapProductImage(dto.primary_image)
       : undefined,
+    discountedPrice: hasDiscount ? dto.pricing!.discounted.gross : undefined,
+    originalPrice: hasDiscount ? dto.pricing!.undiscounted.gross : undefined,
+    discountLabel: buildDiscountLabel(dto.pricing, currency),
   };
 }
 
 export function mapProductToDetailVm(dto: ProductDetailDto): ProductDetailVm {
   const gallery = dto.gallery_images.map(mapProductImage);
+  const currency = "USD";
+  const hasDiscount = Boolean(
+    dto.pricing?.discount.promotion_code &&
+    dto.pricing.discounted.gross !== dto.pricing.undiscounted.gross,
+  );
   return {
     id: String(dto.id),
     name: dto.name,
-    price: dto.price,
-    currency: "USD",
+    price: hasDiscount
+      ? dto.pricing!.discounted.gross
+      : (dto.pricing?.undiscounted.gross ?? dto.price),
+    currency,
     stockQuantity: dto.stock_quantity,
     shortDescription: dto.short_description,
     fullDescription: dto.full_description,
@@ -155,6 +241,9 @@ export function mapProductToDetailVm(dto: ProductDetailDto): ProductDetailVm {
     images: gallery.map((img) => img.variants.full),
     // Specs: future extension point.
     specs: [],
+    discountedPrice: hasDiscount ? dto.pricing!.discounted.gross : undefined,
+    originalPrice: hasDiscount ? dto.pricing!.undiscounted.gross : undefined,
+    discountLabel: buildDiscountLabel(dto.pricing, currency),
   };
 }
 

@@ -23,7 +23,7 @@ from django.utils.timezone import now
 from prices import Money
 
 from categories.models import Category
-from discounts.models import Promotion, PromotionCategory, PromotionProduct, PromotionType
+from discounts.models import Promotion, PromotionAmountScope, PromotionCategory, PromotionProduct, PromotionType
 from discounts.services.line_promotion import LinePromotionResult, resolve_line_promotion
 from products.models import Product
 
@@ -59,6 +59,7 @@ def make_promotion(
     is_active: bool = True,
     active_from=None,
     active_to=None,
+    amount_scope: str = PromotionAmountScope.GROSS,
 ) -> Promotion:
     return Promotion.objects.create(
         name=f"Promo {code}",
@@ -69,6 +70,7 @@ def make_promotion(
         is_active=is_active,
         active_from=active_from,
         active_to=active_to,
+        amount_scope=amount_scope,
     )
 
 
@@ -100,6 +102,7 @@ def test_no_promotion_returns_zero_discount():
     assert result.promotion is None
     assert result.promotion_code is None
     assert result.promotion_type is None
+    assert result.amount_scope is None
     assert result.discount_net == Money(Decimal("0.00"), "EUR")
     assert result.discounted_net == result.original_net
     assert result.original_net == Money(Decimal("49.99"), "EUR")
@@ -359,18 +362,82 @@ def test_100_percent_discount_results_in_zero_net():
 
 @pytest.mark.django_db
 def test_fixed_discount_calculation():
+    """FIXED+GROSS with no tax is identical to FIXED+NET (tax_rate=0 → multiplier=1)."""
     product = make_product()
-    promo = make_promotion(code="fixed", promo_type=PromotionType.FIXED, value=Decimal("5.00"))
+    promo = make_promotion(
+        code="fixed",
+        promo_type=PromotionType.FIXED,
+        value=Decimal("5.00"),
+        amount_scope=PromotionAmountScope.GROSS,
+    )
     target_product(promo, product)
 
     result = resolve_line_promotion(
         product=product,
         net_amount=Decimal("20.00"),
         currency="EUR",
+        tax_rate=Decimal("0"),
     )
 
     assert result.discount_net == Money(Decimal("5.00"), "EUR")
     assert result.discounted_net == Money(Decimal("15.00"), "EUR")
+    assert result.amount_scope == PromotionAmountScope.GROSS
+
+
+@pytest.mark.django_db
+def test_fixed_gross_discount_with_tax():
+    """FIXED+GROSS with a nonzero tax rate back-computes the net discount correctly.
+
+    net=100 EUR, tax_rate=25%:
+      undiscounted_gross = 100 * 1.25 = 125.00
+      gross_discount     = min(25, 125) = 25.00
+      discounted_gross   = 125 - 25 = 100.00
+      discounted_net     = 100 / 1.25 = 80.00
+      discount_net       = 100 - 80 = 20.00
+    """
+    product = make_product()
+    promo = make_promotion(
+        code="fixed-gross-tax",
+        promo_type=PromotionType.FIXED,
+        value=Decimal("25.00"),
+        amount_scope=PromotionAmountScope.GROSS,
+    )
+    target_product(promo, product)
+
+    result = resolve_line_promotion(
+        product=product,
+        net_amount=Decimal("100.00"),
+        currency="EUR",
+        tax_rate=Decimal("25"),
+    )
+
+    assert result.discount_net == Money(Decimal("20.00"), "EUR")
+    assert result.discounted_net == Money(Decimal("80.00"), "EUR")
+    assert result.amount_scope == PromotionAmountScope.GROSS
+
+
+@pytest.mark.django_db
+def test_fixed_net_discount_explicit():
+    """FIXED+NET subtracts the fixed amount from the net price directly."""
+    product = make_product()
+    promo = make_promotion(
+        code="fixed-net",
+        promo_type=PromotionType.FIXED,
+        value=Decimal("5.00"),
+        amount_scope=PromotionAmountScope.NET,
+    )
+    target_product(promo, product)
+
+    result = resolve_line_promotion(
+        product=product,
+        net_amount=Decimal("20.00"),
+        currency="EUR",
+        tax_rate=Decimal("23"),  # tax_rate ignored for NET scope
+    )
+
+    assert result.discount_net == Money(Decimal("5.00"), "EUR")
+    assert result.discounted_net == Money(Decimal("15.00"), "EUR")
+    assert result.amount_scope == PromotionAmountScope.NET
 
 
 @pytest.mark.django_db
@@ -418,6 +485,7 @@ def test_result_carries_promotion_code_and_type():
         code="meta-check",
         promo_type=PromotionType.FIXED,
         value=Decimal("3.00"),
+        amount_scope=PromotionAmountScope.GROSS,
     )
     target_product(promo, product)
 
@@ -429,6 +497,7 @@ def test_result_carries_promotion_code_and_type():
 
     assert result.promotion_code == "meta-check"
     assert result.promotion_type == PromotionType.FIXED
+    assert result.amount_scope == PromotionAmountScope.GROSS
 
 
 @pytest.mark.django_db

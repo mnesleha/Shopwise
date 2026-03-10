@@ -60,6 +60,12 @@ export interface ProductFixture {
   images?: string[];
   gallery?: ProductImageVm[];
   specs?: Array<{ label: string; value: string }>;
+  /** Discounted gross price; present when a promotion applies. */
+  discountedPrice?: string;
+  /** Original gross price; present when a promotion applies. */
+  originalPrice?: string;
+  /** Short discount label, e.g. "–10%". */
+  discountLabel?: string;
 }
 
 export function makeProduct(
@@ -88,6 +94,8 @@ export interface CartItemFixture {
   quantity: number;
   stockQuantity?: number;
   imageUrl?: string;
+  originalUnitPrice?: string;
+  discountLabel?: string;
 }
 
 export function makeCartItem(

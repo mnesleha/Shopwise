@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { PriceDisplay, formatCurrency } from "@/components/ui/PriceDisplay";
 
 interface CartItem {
   productId: string;
@@ -33,6 +34,10 @@ interface CartItem {
   quantity: number;
   stockQuantity?: number;
   imageUrl?: string;
+  /** Original (undiscounted) unit gross price; shown struck-through when set. */
+  originalUnitPrice?: string;
+  /** Short discount label, e.g. "–10%". */
+  discountLabel?: string;
 }
 
 interface CartDiscount {
@@ -72,7 +77,6 @@ interface CartDetailProps {
 function CartItemRow({
   item,
   currency,
-  currencySymbol,
   onRemoveItem,
   onDecreaseQty,
   onIncreaseQty,
@@ -81,7 +85,6 @@ function CartItemRow({
 }: {
   item: CartItem;
   currency: string;
-  currencySymbol: string;
   onRemoveItem: (productId: string) => void;
   onDecreaseQty: (productId: string) => void;
   onIncreaseQty: (productId: string) => void;
@@ -163,10 +166,13 @@ function CartItemRow({
 
             <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-2">
               {/* Price */}
-              <p className="text-foreground font-semibold">
-                {currencySymbol}
-                {item.unitPrice}
-              </p>
+              <PriceDisplay
+                currency={currency}
+                price={item.unitPrice}
+                originalPrice={item.originalUnitPrice}
+                discountLabel={item.discountLabel}
+                size="sm"
+              />
 
               {/* Quantity Controls */}
               <div className="flex items-center gap-1">
@@ -207,12 +213,12 @@ function CartItemRow({
 
 function OrderSummary({
   cart,
-  currencySymbol,
+  currency,
   onCheckout,
   onApplyDiscountCode,
 }: {
   cart: Cart;
-  currencySymbol: string;
+  currency: string;
   onCheckout: () => void;
   onApplyDiscountCode?: (code: string) => void;
 }) {
@@ -235,8 +241,7 @@ function OrderSummary({
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Subtotal</span>
           <span className="text-foreground">
-            {currencySymbol}
-            {cart.subtotal}
+            {formatCurrency(currency, cart.subtotal)}
           </span>
         </div>
 
@@ -250,8 +255,7 @@ function OrderSummary({
               )}
             </span>
             <span className="text-emerald-600 dark:text-emerald-400">
-              -{currencySymbol}
-              {cart.discount.amount}
+              –{formatCurrency(currency, cart.discount.amount)}
             </span>
           </div>
         )}
@@ -261,7 +265,7 @@ function OrderSummary({
           <span className="text-muted-foreground">Tax</span>
           <span className="text-foreground">
             {cart.tax
-              ? `${currencySymbol}${cart.tax}`
+              ? formatCurrency(currency, cart.tax)
               : "Calculated at checkout"}
           </span>
         </div>
@@ -272,8 +276,7 @@ function OrderSummary({
         <div className="flex justify-between">
           <span className="text-foreground font-semibold">Total</span>
           <span className="text-foreground text-lg font-bold">
-            {currencySymbol}
-            {cart.total}
+            {formatCurrency(currency, cart.total)}
           </span>
         </div>
 
@@ -364,7 +367,6 @@ export function CartDetail({
   const [showClearConfirm, setShowClearConfirm] = React.useState(false);
 
   const currency = cart.currency ?? "USD";
-  const currencySymbol = currency === "USD" ? "$" : currency;
   const isEmpty = cart.items.length === 0;
 
   const handleClearCart = () => {
@@ -453,7 +455,6 @@ export function CartDetail({
               key={item.productId}
               item={item}
               currency={currency}
-              currencySymbol={currencySymbol}
               onRemoveItem={onRemoveItem}
               onDecreaseQty={onDecreaseQty}
               onIncreaseQty={onIncreaseQty}
@@ -467,7 +468,7 @@ export function CartDetail({
           <div className="sticky top-4">
             <OrderSummary
               cart={cart}
-              currencySymbol={currencySymbol}
+              currency={currency}
               onCheckout={onCheckout}
               onApplyDiscountCode={onApplyDiscountCode}
             />

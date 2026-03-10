@@ -46,7 +46,7 @@ from django.db.models import Q
 from django.utils.timezone import now
 from prices import Money
 
-from discounts.models import Promotion, PromotionType
+from discounts.models import Promotion, PromotionAmountScope, PromotionType
 
 if TYPE_CHECKING:
     from products.models import Product
@@ -55,6 +55,7 @@ if TYPE_CHECKING:
 _QUANTIZE = Decimal("0.01")
 _HUNDRED = Decimal("100")
 _ZERO = Decimal("0.00")
+_ONE = Decimal("1")
 
 
 # ---------------------------------------------------------------------------
@@ -97,6 +98,8 @@ class LinePromotionResult:
     currency: str
     promotion_code: Optional[str]
     promotion_type: Optional[str]
+    amount_scope: Optional[str]
+    """'GROSS' or 'NET' for FIXED promotions; ``None`` when no promotion applies."""
 
 
 # ---------------------------------------------------------------------------
@@ -118,23 +121,51 @@ def _compute_discount(
     *,
     promotion: Promotion,
     net_amount: Decimal,
+    tax_rate: Decimal = _ZERO,
 ) -> Decimal:
     """Return the absolute discount amount for *promotion* applied to *net_amount*.
 
     The result is quantised to 2 decimal places using ROUND_HALF_UP and is
     always clamped to [0, net_amount] so that the discounted net never becomes
     negative.
+
+    For FIXED promotions:
+      - ``amount_scope == GROSS`` (default): the fixed value is deducted from
+        the gross (customer-visible) price.  The net discount is back-computed
+        as ``gross_discount / (1 + tax_rate / 100)``.
+      - ``amount_scope == NET``: the fixed value is deducted directly from
+        the net (pre-tax) price.
     """
+    net_q = net_amount.quantize(_QUANTIZE, rounding=ROUND_HALF_UP)
+
     if promotion.type == PromotionType.PERCENT:
         raw = (net_amount * promotion.value / _HUNDRED).quantize(
             _QUANTIZE, rounding=ROUND_HALF_UP
         )
+    elif promotion.amount_scope == PromotionAmountScope.GROSS:
+        # FIXED + GROSS: deduct from the gross price, then back-compute NET discount.
+        multiplier = _ONE + tax_rate / _HUNDRED
+        undiscounted_gross = (net_amount * multiplier).quantize(
+            _QUANTIZE, rounding=ROUND_HALF_UP
+        )
+        gross_discount = min(
+            promotion.value.quantize(_QUANTIZE, rounding=ROUND_HALF_UP),
+            undiscounted_gross,
+        )
+        discounted_gross = undiscounted_gross - gross_discount
+        if multiplier > _ZERO:
+            discounted_net = (discounted_gross / multiplier).quantize(
+                _QUANTIZE, rounding=ROUND_HALF_UP
+            )
+        else:
+            discounted_net = net_q
+        raw = net_q - discounted_net
     else:
-        # FIXED — cap at net so discounted_net >= 0
+        # FIXED + NET: deduct from the net price directly.
         raw = promotion.value.quantize(_QUANTIZE, rounding=ROUND_HALF_UP)
 
     # Clamp to valid range.
-    discount = max(_ZERO, min(raw, net_amount.quantize(_QUANTIZE, rounding=ROUND_HALF_UP)))
+    discount = max(_ZERO, min(raw, net_q))
     return discount
 
 
@@ -150,6 +181,7 @@ def _no_discount_result(*, net_amount: Decimal, currency: str) -> LinePromotionR
         currency=currency,
         promotion_code=None,
         promotion_type=None,
+        amount_scope=None,
     )
 
 
@@ -163,6 +195,7 @@ def resolve_line_promotion(
     product: "Product",
     net_amount: Decimal,
     currency: str,
+    tax_rate: Decimal = _ZERO,
 ) -> LinePromotionResult:
     """Resolve the single winning promotion for a product line.
 
@@ -177,6 +210,10 @@ def resolve_line_promotion(
         The product's net (pre-tax) price for this line.
     currency:
         ISO 4217 currency code.  Used to build the monetary output values.
+    tax_rate:
+        The product's applicable tax rate as a percentage (e.g. ``Decimal("23")``
+        for 23 %).  Required for correct FIXED + GROSS discount back-computation;
+        defaults to zero (no tax) when omitted.
 
     Returns
     -------
@@ -212,7 +249,11 @@ def resolve_line_promotion(
     if winner is None:
         return _no_discount_result(net_amount=net_amount, currency=currency)
 
-    discount_amount = _compute_discount(promotion=winner, net_amount=net_amount)
+    discount_amount = _compute_discount(
+        promotion=winner,
+        net_amount=net_amount,
+        tax_rate=tax_rate,
+    )
     net_q = net_amount.quantize(_QUANTIZE, rounding=ROUND_HALF_UP)
     discounted_amount = net_q - discount_amount
 
@@ -224,4 +265,5 @@ def resolve_line_promotion(
         currency=currency,
         promotion_code=winner.code,
         promotion_type=winner.type,
+        amount_scope=winner.amount_scope if winner.type == "FIXED" else None,
     )
