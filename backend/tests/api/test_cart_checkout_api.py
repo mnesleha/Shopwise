@@ -19,7 +19,7 @@ def assert_checkout_contract(order: dict) -> None:
     assert isinstance(order, dict)
 
     # top-level shape
-    assert set(order.keys()) == {"id", "status", "items", "total"}
+    assert set(order.keys()) == {"id", "status", "items", "total", "price_change"}
 
     assert isinstance(order["id"], int)
     assert order["id"] > 0
@@ -57,6 +57,15 @@ def assert_checkout_contract(order: dict) -> None:
     # total format
     assert isinstance(order["total"], str)
     assert re.match(r"^\d+\.\d{2}$", order["total"])
+
+    # price_change shape
+    pc = order["price_change"]
+    assert isinstance(pc, dict)
+    assert set(pc.keys()) == {"has_changes", "severity", "affected_items", "items"}
+    assert isinstance(pc["has_changes"], bool)
+    assert pc["severity"] in {"NONE", "INFO", "WARNING"}
+    assert isinstance(pc["affected_items"], int)
+    assert isinstance(pc["items"], list)
 
 
 @pytest.mark.django_db

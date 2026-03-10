@@ -187,14 +187,15 @@ export function ProductDetail({
             </div>
 
             {/* Price */}
-            <PriceDisplay
-              currency={currency}
-              price={product.discountedPrice ?? product.price}
-              originalPrice={product.originalPrice}
-              discountLabel={product.discountLabel}
-              size="lg"
-              className="pb-4"
-            />
+            <div className="w-fit pb-4">
+              <PriceDisplay
+                currency={currency}
+                price={product.discountedPrice ?? product.price}
+                originalPrice={product.originalPrice}
+                discountLabel={product.discountLabel}
+                size="lg"
+              />
+            </div>
 
             <Separator />
 

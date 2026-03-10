@@ -1,4 +1,5 @@
 import secrets
+from decimal import Decimal, ROUND_HALF_UP
 
 from django.conf import settings
 from django.db import transaction, IntegrityError
@@ -28,7 +29,8 @@ from api.serializers.cart import (
     CartCheckoutResponseSerializer,
 )
 from api.serializers.common import ErrorResponseSerializer
-from api.services.pricing import calculate_price
+from carts.services.pricing import get_cart_pricing
+from carts.services.price_change import detect_price_changes, serialize_price_change_summary
 from api.services.cookies import cart_token_cookie_kwargs
 from carts.services.tokens import generate_cart_token
 from api.exceptions import ProductUnavailableException
@@ -722,6 +724,10 @@ Notes:
         serializer.is_valid(raise_exception=True)
         checkout_data = serializer.validated_data
 
+        # Initialised here so the return statement always has a valid reference
+        # even if the atomic block raises before assignment.
+        price_change_data: dict | None = None
+
         try:
             with transaction.atomic():
                 try:
@@ -806,35 +812,64 @@ Notes:
                             )
                         )
 
+                # Phase 3: the current pricing pipeline is the authoritative
+                # source for checkout pricing.  price_at_add_time is retained
+                # on CartItem as the customer-visible gross baseline for
+                # price-change detection (Phase 3 Slice 2).
+                cart_pricing = get_cart_pricing(cart)
+
+                # Detect price changes before order items are created so that
+                # the comparison uses the pre-checkout cart snapshot values.
+                price_change_data = serialize_price_change_summary(
+                    detect_price_changes(cart_pricing)
+                )
+
                 reservation_items = [
-                    {"product_id": item.product_id, "quantity": item.quantity}
-                    for item in cart.items.all()
+                    {"product_id": line.item.product_id, "quantity": line.item.quantity}
+                    for line in cart_pricing.items
                 ]
 
-                for item in cart.items.all():
-                    pricing = calculate_price(
-                        unit_price=item.price_at_add_time,
-                        quantity=item.quantity,
-                        discounts=item.product.discounts.all(),
-                    )
+                for line in cart_pricing.items:
+                    item = line.item
+                    unit_pricing = line.unit_pricing
+
+                    if unit_pricing is not None:
+                        # Migrated product: use the tax-aware, promotion-aware
+                        # pricing pipeline.  The discounted gross is the amount
+                        # the customer pays per unit.
+                        unit_gross = unit_pricing.discounted.gross.amount
+                        line_total = (
+                            unit_gross * Decimal(str(line.quantity))
+                        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                        discount_type = unit_pricing.discount.promotion_type or None
+                        if discount_type == "PERCENT":
+                            discount_value = unit_pricing.discount.percentage
+                        elif discount_type == "FIXED":
+                            discount_value = unit_pricing.discount.amount_gross.amount
+                        else:
+                            discount_type = None
+                            discount_value = None
+                    else:
+                        # Unmigrated product (price_net_amount not set): fall
+                        # back to price_at_add_time as the gross unit price
+                        # without any discount.  This path will be eliminated
+                        # once all products are migrated to price_net_amount.
+                        unit_gross = item.price_at_add_time
+                        line_total = (
+                            item.price_at_add_time * Decimal(str(line.quantity))
+                        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                        discount_type = None
+                        discount_value = None
 
                     OrderItem.objects.create(
                         order=order,
                         product=item.product,
                         quantity=item.quantity,
-                        price_at_order_time=pricing.final_price,
-                        unit_price_at_order_time=item.price_at_add_time,
-                        line_total_at_order_time=pricing.final_price,
-                        applied_discount_type_at_order_time=(
-                            pricing.applied_discount.discount_type
-                            if pricing.applied_discount
-                            else None
-                        ),
-                        applied_discount_value_at_order_time=(
-                            pricing.applied_discount.value
-                            if pricing.applied_discount
-                            else None
-                        ),
+                        price_at_order_time=line_total,
+                        unit_price_at_order_time=unit_gross,
+                        line_total_at_order_time=line_total,
+                        applied_discount_type_at_order_time=discount_type,
+                        applied_discount_value_at_order_time=discount_value,
                     )
 
                 reserve_for_checkout(order=order, items=reservation_items)
@@ -852,7 +887,6 @@ Notes:
             # atomic block guarantees rollback
             raise CheckoutFailedException()
 
-        return Response(
-            CartCheckoutResponseSerializer(order).data,
-            status=status.HTTP_201_CREATED,
-        )
+        response_data = dict(CartCheckoutResponseSerializer(order).data)
+        response_data["price_change"] = price_change_data
+        return Response(response_data, status=status.HTTP_201_CREATED)
