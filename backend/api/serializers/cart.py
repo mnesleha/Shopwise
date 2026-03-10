@@ -5,6 +5,74 @@ from products.models import Product
 from api.serializers.order import OrderResponseSerializer
 
 
+# ---------------------------------------------------------------------------
+# Cart pricing serializers
+# ---------------------------------------------------------------------------
+
+
+class CartTotalsSerializer(serializers.Serializer):
+    """Serialises a ``CartTotalsResult`` — backend-computed cart-level totals.
+
+    All monetary amounts are decimal strings.  Tax is calculated from the
+    post-discount net, consistent with catalogue pricing semantics.
+
+    Shape::
+
+        {
+          "subtotal_undiscounted": "...",
+          "subtotal_discounted":   "...",
+          "total_discount":        "...",
+          "total_tax":             "...",
+          "total_gross":           "...",
+          "currency":              "EUR",
+          "item_count":            3
+        }
+    """
+
+    subtotal_undiscounted = serializers.SerializerMethodField(
+        help_text="Sum of undiscounted_gross × quantity for all items."
+    )
+    subtotal_discounted = serializers.SerializerMethodField(
+        help_text="Sum of discounted_gross × quantity (equals total_gross)."
+    )
+    total_discount = serializers.SerializerMethodField(
+        help_text="subtotal_undiscounted − subtotal_discounted (≥ 0)."
+    )
+    total_tax = serializers.SerializerMethodField(
+        help_text="Sum of discounted_tax × quantity."
+    )
+    total_gross = serializers.SerializerMethodField(
+        help_text="Total amount payable (= subtotal_discounted)."
+    )
+    currency = serializers.SerializerMethodField(
+        help_text="ISO 4217 currency code."
+    )
+    item_count = serializers.SerializerMethodField(
+        help_text="Total units in the cart (sum of quantities)."
+    )
+
+    def get_subtotal_undiscounted(self, obj) -> str:
+        return str(obj.subtotal_undiscounted.amount)
+
+    def get_subtotal_discounted(self, obj) -> str:
+        return str(obj.subtotal_discounted.amount)
+
+    def get_total_discount(self, obj) -> str:
+        return str(obj.total_discount.amount)
+
+    def get_total_tax(self, obj) -> str:
+        return str(obj.total_tax.amount)
+
+    def get_total_gross(self, obj) -> str:
+        return str(obj.total_gross.amount)
+
+    def get_currency(self, obj) -> str:
+        return obj.currency
+
+    def get_item_count(self, obj) -> int:
+        return obj.item_count
+
+
 class CartItemProductSerializer(serializers.ModelSerializer):
     """
     Minimal product representation embedded in cart responses.
@@ -37,7 +105,12 @@ class CartItemSerializer(serializers.ModelSerializer):
 
 
 class CartSerializer(serializers.ModelSerializer):
-    items = CartItemSerializer(many=True, read_only=True)
+    # NOTE: items is overridden as a SerializerMethodField so that the cart
+    # pricing pipeline is executed exactly once (inside _get_cart_pricing) and
+    # the resulting per-item pricing data is injected into each item dict
+    # without an extra DB round-trip.
+    items = serializers.SerializerMethodField()
+    totals = serializers.SerializerMethodField()
 
     class Meta:
         model = Cart
@@ -45,7 +118,43 @@ class CartSerializer(serializers.ModelSerializer):
             "id",
             "status",
             "items",
+            "totals",
         ]
+
+    # ------------------------------------------------------------------
+    # Pricing cache helpers
+    # ------------------------------------------------------------------
+
+    def _get_cart_pricing(self, instance):
+        """Compute cart pricing once per serializer invocation and cache it."""
+        if not hasattr(self, "_cart_pricing_cache"):
+            from carts.services.pricing import get_cart_pricing  # noqa: PLC0415
+            self._cart_pricing_cache = get_cart_pricing(instance)
+        return self._cart_pricing_cache
+
+    # ------------------------------------------------------------------
+    # SerializerMethodField implementations
+    # ------------------------------------------------------------------
+
+    def get_items(self, instance):
+        """Return cart items enriched with per-item pricing breakdown."""
+        from api.serializers.product import ProductPricingResultSerializer  # noqa: PLC0415
+
+        cart_pricing = self._get_cart_pricing(instance)
+        result = []
+        for line in cart_pricing.items:
+            item_data = dict(CartItemSerializer(line.item).data)
+            item_data["pricing"] = (
+                ProductPricingResultSerializer(line.unit_pricing).data
+                if line.unit_pricing is not None
+                else None
+            )
+            result.append(item_data)
+        return result
+
+    def get_totals(self, instance):
+        """Return backend-computed cart-level pricing totals."""
+        return CartTotalsSerializer(self._get_cart_pricing(instance)).data
 
 
 class CartItemCreateRequestSerializer(serializers.Serializer):

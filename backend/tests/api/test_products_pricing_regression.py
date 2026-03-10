@@ -166,7 +166,7 @@ def test_fractional_tax_rate_serialized_without_trailing_zeros():
     p = _product(name="Fractional", price_net_amount=Decimal("100.00"), tax_class=tc)
     resp = APIClient().get(_detail_url(p.id))
     assert resp.status_code == 200
-    assert resp.json()["pricing"]["tax_rate"] == "8.5"
+    assert resp.json()["pricing"]["undiscounted"]["tax_rate"] == "8.5"
 
 
 @pytest.mark.django_db
@@ -176,7 +176,7 @@ def test_zero_rate_serialized_without_decimal_places():
     p = _product(name="ZeroRate", price_net_amount=Decimal("20.00"), tax_class=tc)
     resp = APIClient().get(_detail_url(p.id))
     assert resp.status_code == 200
-    assert resp.json()["pricing"]["tax_rate"] == "0"
+    assert resp.json()["pricing"]["undiscounted"]["tax_rate"] == "0"
 
 
 # ---------------------------------------------------------------------------
@@ -268,14 +268,25 @@ def test_pricing_service_returning_none_produces_null_not_500():
 
 @pytest.mark.django_db
 def test_pricing_payload_contains_all_required_keys():
-    """The pricing dict must always contain exactly the canonical set of keys."""
+    """The pricing dict must always contain exactly the canonical Phase 2 set of keys."""
     tc = _tc(code="schema_guard", rate=Decimal("23"))
     p = _product(name="Schema", price_net_amount=Decimal("10.00"), tax_class=tc)
     resp = APIClient().get(_detail_url(p.id))
     assert resp.status_code == 200
     pricing = resp.json()["pricing"]
 
-    required_keys = {"net", "gross", "tax", "currency", "tax_rate"}
-    assert required_keys.issubset(pricing.keys()), (
-        f"pricing is missing keys: {required_keys - set(pricing.keys())}"
+    required_top = {"undiscounted", "discounted", "discount"}
+    assert required_top.issubset(pricing.keys()), (
+        f"pricing is missing top-level keys: {required_top - set(pricing.keys())}"
+    )
+
+    tier_keys = {"net", "gross", "tax", "currency", "tax_rate"}
+    for tier_name in ("undiscounted", "discounted"):
+        assert tier_keys.issubset(pricing[tier_name].keys()), (
+            f"pricing.{tier_name} is missing keys: {tier_keys - set(pricing[tier_name].keys())}"
+        )
+
+    discount_keys = {"amount_net", "amount_gross", "percentage", "promotion_code", "promotion_type"}
+    assert discount_keys.issubset(pricing["discount"].keys()), (
+        f"pricing.discount is missing keys: {discount_keys - set(pricing['discount'].keys())}"
     )

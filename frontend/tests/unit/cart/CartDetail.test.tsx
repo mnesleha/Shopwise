@@ -35,11 +35,7 @@ function renderCartDetail(
   };
 
   renderWithProviders(
-    <CartDetail
-      cart={makeCart()}
-      {...callbacks}
-      {...overrides}
-    />,
+    <CartDetail cart={makeCart()} {...callbacks} {...overrides} />,
   );
 
   return callbacks;
@@ -72,9 +68,13 @@ describe("CartDetail", () => {
     });
 
     it("renders the item count in the heading", () => {
-      const cart = makeCart({ items: [makeCartItem(), makeCartItem({ productId: "2" })] });
+      const cart = makeCart({
+        items: [makeCartItem(), makeCartItem({ productId: "2" })],
+      });
       renderCartDetail({ cart });
-      expect(screen.getByRole("heading", { name: /your cart \(2 items\)/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: /your cart \(2 items\)/i }),
+      ).toBeInTheDocument();
     });
 
     it("shows subtotal and total in the order summary", () => {
@@ -109,35 +109,54 @@ describe("CartDetail", () => {
     it("calls onContinueShopping when the continue shopping button is clicked", async () => {
       const user = userEvent.setup();
       const { onContinueShopping } = renderCartDetail();
-      await user.click(screen.getByRole("button", { name: /continue shopping/i }));
+      await user.click(
+        screen.getByRole("button", { name: /continue shopping/i }),
+      );
       expect(onContinueShopping).toHaveBeenCalledTimes(1);
     });
 
     it("calls onRemoveItem with the productId when the remove button is clicked", async () => {
       const user = userEvent.setup();
-      const cart = makeCart({ items: [makeCartItem({ productId: "42", productName: "Widget" })] });
+      const cart = makeCart({
+        items: [makeCartItem({ productId: "42", productName: "Widget" })],
+      });
       const { onRemoveItem } = renderCartDetail({ cart });
-      await user.click(screen.getByRole("button", { name: /remove widget from cart/i }));
+      await user.click(
+        screen.getByRole("button", { name: /remove widget from cart/i }),
+      );
       expect(onRemoveItem).toHaveBeenCalledWith("42");
     });
 
     it("calls onDecreaseQty with the productId when minus button is clicked", async () => {
       const user = userEvent.setup();
       const cart = makeCart({
-        items: [makeCartItem({ productId: "7", productName: "Gadget", quantity: 3 })],
+        items: [
+          makeCartItem({ productId: "7", productName: "Gadget", quantity: 3 }),
+        ],
       });
       const { onDecreaseQty } = renderCartDetail({ cart });
-      await user.click(screen.getByRole("button", { name: /decrease quantity of gadget/i }));
+      await user.click(
+        screen.getByRole("button", { name: /decrease quantity of gadget/i }),
+      );
       expect(onDecreaseQty).toHaveBeenCalledWith("7");
     });
 
     it("calls onIncreaseQty with the productId when plus button is clicked", async () => {
       const user = userEvent.setup();
       const cart = makeCart({
-        items: [makeCartItem({ productId: "7", productName: "Gadget", quantity: 2, stockQuantity: 5 })],
+        items: [
+          makeCartItem({
+            productId: "7",
+            productName: "Gadget",
+            quantity: 2,
+            stockQuantity: 5,
+          }),
+        ],
       });
       const { onIncreaseQty } = renderCartDetail({ cart });
-      await user.click(screen.getByRole("button", { name: /increase quantity of gadget/i }));
+      await user.click(
+        screen.getByRole("button", { name: /increase quantity of gadget/i }),
+      );
       expect(onIncreaseQty).toHaveBeenCalledWith("7");
     });
   });
@@ -155,7 +174,13 @@ describe("CartDetail", () => {
 
     it("disables the increase button when stock limit is reached", () => {
       const cart = makeCart({
-        items: [makeCartItem({ productName: "Gadget", quantity: 5, stockQuantity: 5 })],
+        items: [
+          makeCartItem({
+            productName: "Gadget",
+            quantity: 5,
+            stockQuantity: 5,
+          }),
+        ],
       });
       renderCartDetail({ cart });
       expect(
@@ -170,8 +195,12 @@ describe("CartDetail", () => {
       renderCartDetail();
       await user.click(screen.getByRole("button", { name: /clear cart/i }));
       expect(screen.getByText(/clear all\?/i)).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /confirm/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /confirm/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /cancel/i }),
+      ).toBeInTheDocument();
     });
 
     it("calls onClearCart when the confirm button is clicked", async () => {
@@ -188,6 +217,69 @@ describe("CartDetail", () => {
       await user.click(screen.getByRole("button", { name: /clear cart/i }));
       await user.click(screen.getByRole("button", { name: /cancel/i }));
       expect(screen.queryByText(/clear all\?/i)).toBeNull();
+    });
+  });
+
+  describe("discount display", () => {
+    it("shows the original unit price struck-through when a discount applies", () => {
+      const cart = makeCart({
+        items: [
+          makeCartItem({
+            productId: "10",
+            unitPrice: "44.99",
+            originalUnitPrice: "49.99",
+            discountLabel: "–10%",
+          }),
+        ],
+      });
+      renderCartDetail({ cart });
+
+      const orig = screen.getByTestId("original-price");
+      expect(orig).toBeInTheDocument();
+      expect(orig).toHaveTextContent("49.99");
+      expect(orig.className).toContain("line-through");
+    });
+
+    it("shows the discounted unit price prominently", () => {
+      const cart = makeCart({
+        items: [
+          makeCartItem({
+            productId: "10",
+            unitPrice: "44.99",
+            originalUnitPrice: "49.99",
+            discountLabel: "–10%",
+          }),
+        ],
+      });
+      renderCartDetail({ cart });
+
+      expect(screen.getByTestId("discounted-price")).toHaveTextContent("44.99");
+    });
+
+    it("shows the discount badge", () => {
+      const cart = makeCart({
+        items: [
+          makeCartItem({
+            productId: "10",
+            unitPrice: "44.99",
+            originalUnitPrice: "49.99",
+            discountLabel: "–10%",
+          }),
+        ],
+      });
+      renderCartDetail({ cart });
+
+      expect(screen.getByTestId("discount-badge")).toHaveTextContent("–10%");
+    });
+
+    it("shows no original-price or badge when no discount applies", () => {
+      const cart = makeCart({
+        items: [makeCartItem({ unitPrice: "29.99" })],
+      });
+      renderCartDetail({ cart });
+
+      expect(screen.queryByTestId("original-price")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("discount-badge")).not.toBeInTheDocument();
     });
   });
 });

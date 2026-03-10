@@ -17,7 +17,7 @@ import { productCard, addToCart } from "../helpers/testIds";
 // ── Default props ─────────────────────────────────────────────────────────────
 
 function buildProps(
-  overrides?: Partial<React.ComponentProps<typeof ProductGrid>>
+  overrides?: Partial<React.ComponentProps<typeof ProductGrid>>,
 ): React.ComponentProps<typeof ProductGrid> {
   return {
     products: [makeProduct({ id: "1", name: "Test Mouse", price: "29.99" })],
@@ -46,8 +46,14 @@ describe("ProductGrid — rendering", () => {
   });
 
   it("renders product name and price inside the card", () => {
-    const product = makeProduct({ id: "42", name: "Fancy Mouse", price: "99.00" });
-    render(<ProductGrid {...buildProps({ products: [product], totalItems: 1 })} />);
+    const product = makeProduct({
+      id: "42",
+      name: "Fancy Mouse",
+      price: "99.00",
+    });
+    render(
+      <ProductGrid {...buildProps({ products: [product], totalItems: 1 })} />,
+    );
 
     const card = screen.getByTestId(productCard("42"));
     expect(within(card).getByText("Fancy Mouse")).toBeInTheDocument();
@@ -107,7 +113,9 @@ describe("ProductGrid — add-to-cart button", () => {
     const user = userEvent.setup();
     const onAddToCart = vi.fn();
     const product = makeProduct({ id: "7", stockQuantity: 3 });
-    render(<ProductGrid {...buildProps({ products: [product], onAddToCart })} />);
+    render(
+      <ProductGrid {...buildProps({ products: [product], onAddToCart })} />,
+    );
 
     await user.click(screen.getByTestId(addToCart("7")));
 
@@ -123,7 +131,7 @@ describe("ProductGrid — add-to-cart button", () => {
     render(
       <ProductGrid
         {...buildProps({ products: [product], onAddToCart, onOpenProduct })}
-      />
+      />,
     );
 
     await user.click(screen.getByTestId(addToCart("1")));
@@ -140,7 +148,9 @@ describe("ProductGrid — openProduct callbacks", () => {
     const user = userEvent.setup();
     const onOpenProduct = vi.fn();
     const product = makeProduct({ id: "3", name: "Click Me" });
-    render(<ProductGrid {...buildProps({ products: [product], onOpenProduct })} />);
+    render(
+      <ProductGrid {...buildProps({ products: [product], onOpenProduct })} />,
+    );
 
     // Click the product name text (inside the card, but not the button)
     await user.click(screen.getByText("Click Me"));
@@ -153,7 +163,9 @@ describe("ProductGrid — openProduct callbacks", () => {
     const user = userEvent.setup();
     const onOpenProduct = vi.fn();
     const product = makeProduct({ id: "5" });
-    render(<ProductGrid {...buildProps({ products: [product], onOpenProduct })} />);
+    render(
+      <ProductGrid {...buildProps({ products: [product], onOpenProduct })} />,
+    );
 
     await user.click(screen.getByRole("button", { name: /view details/i }));
 
@@ -166,7 +178,9 @@ describe("ProductGrid — openProduct callbacks", () => {
 
 describe("ProductGrid — pagination", () => {
   it("shows 'Page 1 of 1' when there is one page", () => {
-    render(<ProductGrid {...buildProps({ page: 1, pageSize: 10, totalItems: 5 })} />);
+    render(
+      <ProductGrid {...buildProps({ page: 1, pageSize: 10, totalItems: 5 })} />,
+    );
 
     expect(screen.getByText(/page 1 of 1/i)).toBeInTheDocument();
   });
@@ -175,27 +189,31 @@ describe("ProductGrid — pagination", () => {
     render(<ProductGrid {...buildProps({ page: 1 })} />);
 
     expect(
-      screen.getByRole("button", { name: /go to previous page/i })
+      screen.getByRole("button", { name: /go to previous page/i }),
     ).toBeDisabled();
   });
 
   it("Next button is disabled when on the last page", () => {
     render(
-      <ProductGrid {...buildProps({ page: 2, pageSize: 10, totalItems: 15 })} />
+      <ProductGrid
+        {...buildProps({ page: 2, pageSize: 10, totalItems: 15 })}
+      />,
     );
 
     expect(
-      screen.getByRole("button", { name: /go to next page/i })
+      screen.getByRole("button", { name: /go to next page/i }),
     ).toBeDisabled();
   });
 
   it("Next button is enabled when more pages exist", () => {
     render(
-      <ProductGrid {...buildProps({ page: 1, pageSize: 10, totalItems: 25 })} />
+      <ProductGrid
+        {...buildProps({ page: 1, pageSize: 10, totalItems: 25 })}
+      />,
     );
 
     expect(
-      screen.getByRole("button", { name: /go to next page/i })
+      screen.getByRole("button", { name: /go to next page/i }),
     ).not.toBeDisabled();
   });
 
@@ -205,7 +223,7 @@ describe("ProductGrid — pagination", () => {
     render(
       <ProductGrid
         {...buildProps({ page: 1, pageSize: 10, totalItems: 25, onPageChange })}
-      />
+      />,
     );
 
     await user.click(screen.getByRole("button", { name: /go to next page/i }));
@@ -220,10 +238,12 @@ describe("ProductGrid — pagination", () => {
     render(
       <ProductGrid
         {...buildProps({ page: 3, pageSize: 10, totalItems: 50, onPageChange })}
-      />
+      />,
     );
 
-    await user.click(screen.getByRole("button", { name: /go to previous page/i }));
+    await user.click(
+      screen.getByRole("button", { name: /go to previous page/i }),
+    );
 
     expect(onPageChange).toHaveBeenCalledOnce();
     expect(onPageChange).toHaveBeenCalledWith(2);
@@ -239,9 +259,83 @@ describe("ProductGrid — pagination", () => {
     render(
       <ProductGrid
         {...buildProps({ totalItems: 1, products: [makeProduct({ id: "1" })] })}
-      />
+      />,
     );
 
     expect(screen.getByText(/1 item total/i)).toBeInTheDocument();
+  });
+});
+
+// ── Discount display ──────────────────────────────────────────────────────────
+
+describe("ProductGrid — discount display", () => {
+  it("shows the original price struck-through when a discount is active", () => {
+    const product = makeProduct({
+      id: "5",
+      price: "44.99",
+      discountedPrice: "44.99",
+      originalPrice: "49.99",
+      discountLabel: "–10%",
+    });
+    render(
+      <ProductGrid {...buildProps({ products: [product], totalItems: 1 })} />,
+    );
+
+    const card = screen.getByTestId(productCard("5"));
+    const orig = within(card).getByTestId("original-price");
+    expect(orig).toBeInTheDocument();
+    expect(orig).toHaveTextContent("49.99");
+    expect(orig.className).toContain("line-through");
+  });
+
+  it("shows the discounted price prominently", () => {
+    const product = makeProduct({
+      id: "5",
+      price: "44.99",
+      discountedPrice: "44.99",
+      originalPrice: "49.99",
+      discountLabel: "–10%",
+    });
+    render(
+      <ProductGrid {...buildProps({ products: [product], totalItems: 1 })} />,
+    );
+
+    const card = screen.getByTestId(productCard("5"));
+    expect(within(card).getByTestId("discounted-price")).toHaveTextContent(
+      "44.99",
+    );
+  });
+
+  it("shows the discount badge with the label", () => {
+    const product = makeProduct({
+      id: "5",
+      price: "44.99",
+      discountedPrice: "44.99",
+      originalPrice: "49.99",
+      discountLabel: "–10%",
+    });
+    render(
+      <ProductGrid {...buildProps({ products: [product], totalItems: 1 })} />,
+    );
+
+    const card = screen.getByTestId(productCard("5"));
+    expect(within(card).getByTestId("discount-badge")).toHaveTextContent(
+      "–10%",
+    );
+  });
+
+  it("shows no original-price or badge when no discount is active", () => {
+    const product = makeProduct({ id: "6", price: "29.99" });
+    render(
+      <ProductGrid {...buildProps({ products: [product], totalItems: 1 })} />,
+    );
+
+    const card = screen.getByTestId(productCard("6"));
+    expect(
+      within(card).queryByTestId("original-price"),
+    ).not.toBeInTheDocument();
+    expect(
+      within(card).queryByTestId("discount-badge"),
+    ).not.toBeInTheDocument();
   });
 });

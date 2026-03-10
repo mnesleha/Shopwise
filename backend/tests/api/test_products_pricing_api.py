@@ -1,14 +1,15 @@
-"""API tests for structured product pricing exposure (Phase 1 Slice 3).
+"""API tests for structured product pricing exposure (Phase 2 catalogue integration).
 
 Covers:
 - ``pricing`` field present in list response
 - ``pricing`` field present in detail response
-- Correct net / gross / tax / currency / tax_rate values with a tax class
+- Correct undiscounted net / gross / tax / currency / tax_rate values
 - ``pricing`` is null for products without ``price_net_amount`` (migration state)
 - Zero-rate tax class produces gross == net
 - Different tax classes produce different gross values
 - Legacy ``price`` field still present in both list and detail (backward compat)
 - Behaviour is consistent between list and detail endpoints
+- pricing shape contains undiscounted / discounted / discount sub-keys
 """
 from decimal import Decimal
 
@@ -106,36 +107,38 @@ def test_pricing_is_null_when_no_price_net_amount_detail():
 
 @pytest.mark.django_db
 def test_pricing_values_with_23pct_tax_class_in_list():
-    """23 % TaxClass → gross=123.00, tax=23.00 for net=100.00 in list."""
+    """23 % TaxClass → undiscounted gross=123.00, tax=23.00 for net=100.00 in list."""
     tc = _tax_class(name="Standard", code="std_list", rate=Decimal("23"))
     _product(name="Mouse", price_net_amount=Decimal("100.00"), tax_class=tc)
 
     resp = _client().get(LIST_URL)
     assert resp.status_code == 200
     pricing = resp.json()["results"][0]["pricing"]
+    und = pricing["undiscounted"]
 
-    assert pricing["net"] == "100.00"
-    assert pricing["gross"] == "123.00"
-    assert pricing["tax"] == "23.00"
-    assert pricing["currency"] == "EUR"
-    assert pricing["tax_rate"] == "23"
+    assert und["net"] == "100.00"
+    assert und["gross"] == "123.00"
+    assert und["tax"] == "23.00"
+    assert und["currency"] == "EUR"
+    assert und["tax_rate"] == "23"
 
 
 @pytest.mark.django_db
 def test_pricing_values_with_23pct_tax_class_in_detail():
-    """23 % TaxClass → gross=123.00, tax=23.00 for net=100.00 in detail."""
+    """23 % TaxClass → undiscounted gross=123.00, tax=23.00 for net=100.00 in detail."""
     tc = _tax_class(name="Standard", code="std_detail", rate=Decimal("23"))
     p = _product(name="Mouse", price_net_amount=Decimal("100.00"), tax_class=tc)
 
     resp = _client().get(_detail_url(p.id))
     assert resp.status_code == 200
     pricing = resp.json()["pricing"]
+    und = pricing["undiscounted"]
 
-    assert pricing["net"] == "100.00"
-    assert pricing["gross"] == "123.00"
-    assert pricing["tax"] == "23.00"
-    assert pricing["currency"] == "EUR"
-    assert pricing["tax_rate"] == "23"
+    assert und["net"] == "100.00"
+    assert und["gross"] == "123.00"
+    assert und["tax"] == "23.00"
+    assert und["currency"] == "EUR"
+    assert und["tax_rate"] == "23"
 
 
 # ---------------------------------------------------------------------------
@@ -149,11 +152,11 @@ def test_pricing_no_tax_class_gross_equals_net():
     p = _product(name="Untaxed", price_net_amount=Decimal("29.99"), tax_class=None)
     resp = _client().get(_detail_url(p.id))
     assert resp.status_code == 200
-    pricing = resp.json()["pricing"]
+    und = resp.json()["pricing"]["undiscounted"]
 
-    assert pricing["net"] == pricing["gross"]
-    assert pricing["tax"] == "0.00"
-    assert pricing["tax_rate"] == "0"
+    assert und["net"] == und["gross"]
+    assert und["tax"] == "0.00"
+    assert und["tax_rate"] == "0"
 
 
 @pytest.mark.django_db
@@ -163,10 +166,10 @@ def test_pricing_zero_rate_class_gross_equals_net():
     p = _product(name="Zero-rated product", price_net_amount=Decimal("15.00"), tax_class=tc)
     resp = _client().get(_detail_url(p.id))
     assert resp.status_code == 200
-    pricing = resp.json()["pricing"]
+    und = resp.json()["pricing"]["undiscounted"]
 
-    assert pricing["gross"] == pricing["net"]
-    assert pricing["tax_rate"] == "0"
+    assert und["gross"] == und["net"]
+    assert und["tax_rate"] == "0"
 
 
 # ---------------------------------------------------------------------------
@@ -176,7 +179,7 @@ def test_pricing_zero_rate_class_gross_equals_net():
 
 @pytest.mark.django_db
 def test_different_tax_classes_produce_different_gross_in_list():
-    """Standard vs reduced rate on equal net amount → different gross in list."""
+    """Standard vs reduced rate on equal net amount → different undiscounted gross in list."""
     tc_std = _tax_class(name="Standard 23", code="std23_list", rate=Decimal("23"))
     tc_red = _tax_class(name="Reduced 8", code="red8_list", rate=Decimal("8"))
 
@@ -187,7 +190,7 @@ def test_different_tax_classes_produce_different_gross_in_list():
     assert resp.status_code == 200
     results = resp.json()["results"]
 
-    pricings = {item["name"]: item["pricing"] for item in results}
+    pricings = {item["name"]: item["pricing"]["undiscounted"] for item in results}
     assert pricings["Standard product"]["gross"] == "123.00"
     assert pricings["Reduced product"]["gross"] == "108.00"
 
@@ -199,12 +202,12 @@ def test_different_tax_classes_produce_different_gross_in_list():
 
 @pytest.mark.django_db
 def test_pricing_currency_matches_product_currency():
-    """`pricing.currency` must match the product's currency field."""
+    """pricing.undiscounted.currency must match the product's currency field."""
     tc = _tax_class(name="Standard", code="std_usd", rate=Decimal("20"))
     p = _product(name="USD Product", price_net_amount=Decimal("50.00"), currency="USD", tax_class=tc)
     resp = _client().get(_detail_url(p.id))
     assert resp.status_code == 200
-    assert resp.json()["pricing"]["currency"] == "USD"
+    assert resp.json()["pricing"]["undiscounted"]["currency"] == "USD"
 
 
 # ---------------------------------------------------------------------------

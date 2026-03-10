@@ -17,7 +17,7 @@ import { makeProduct } from "../helpers/fixtures";
 // ── Default props ─────────────────────────────────────────────────────────────
 
 function buildProps(
-  overrides?: Partial<React.ComponentProps<typeof ProductDetail>>
+  overrides?: Partial<React.ComponentProps<typeof ProductDetail>>,
 ): React.ComponentProps<typeof ProductDetail> {
   return {
     product: makeProduct(),
@@ -31,25 +31,43 @@ function buildProps(
 
 describe("ProductDetail — product information", () => {
   it("renders the product name in a heading", () => {
-    render(<ProductDetail {...buildProps({ product: makeProduct({ name: "Fancy Keyboard" }) })} />);
+    render(
+      <ProductDetail
+        {...buildProps({ product: makeProduct({ name: "Fancy Keyboard" }) })}
+      />,
+    );
 
-    expect(screen.getByRole("heading", { name: "Fancy Keyboard" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Fancy Keyboard" }),
+    ).toBeInTheDocument();
   });
 
   it("renders the product price", () => {
-    render(<ProductDetail {...buildProps({ product: makeProduct({ price: "49.99" }) })} />);
+    render(
+      <ProductDetail
+        {...buildProps({ product: makeProduct({ price: "49.99" }) })}
+      />,
+    );
 
     expect(screen.getByText(/49\.99/)).toBeInTheDocument();
   });
 
   it("shows 'In stock' badge when stockQuantity > 0", () => {
-    render(<ProductDetail {...buildProps({ product: makeProduct({ stockQuantity: 5 }) })} />);
+    render(
+      <ProductDetail
+        {...buildProps({ product: makeProduct({ stockQuantity: 5 }) })}
+      />,
+    );
 
     expect(screen.getByText("In stock")).toBeInTheDocument();
   });
 
   it("shows 'Out of stock' badge when stockQuantity === 0", () => {
-    render(<ProductDetail {...buildProps({ product: makeProduct({ stockQuantity: 0 }) })} />);
+    render(
+      <ProductDetail
+        {...buildProps({ product: makeProduct({ stockQuantity: 0 }) })}
+      />,
+    );
 
     expect(screen.getByText("Out of stock")).toBeInTheDocument();
   });
@@ -60,17 +78,19 @@ describe("ProductDetail — product information", () => {
         {...buildProps({
           product: makeProduct({ description: "A great mechanical keyboard." }),
         })}
-      />
+      />,
     );
 
-    expect(screen.getByText("A great mechanical keyboard.")).toBeInTheDocument();
+    expect(
+      screen.getByText("A great mechanical keyboard."),
+    ).toBeInTheDocument();
   });
 
   it("does not render description section when description is absent", () => {
     render(
       <ProductDetail
         {...buildProps({ product: makeProduct({ description: undefined }) })}
-      />
+      />,
     );
 
     expect(screen.queryByText(/description/i)).not.toBeInTheDocument();
@@ -87,7 +107,7 @@ describe("ProductDetail — product information", () => {
             ],
           }),
         })}
-      />
+      />,
     );
 
     expect(screen.getByText("Weight")).toBeInTheDocument();
@@ -100,7 +120,7 @@ describe("ProductDetail — product information", () => {
     render(
       <ProductDetail
         {...buildProps({ product: makeProduct({ specs: [] }) })}
-      />
+      />,
     );
 
     expect(screen.queryByText(/specifications/i)).not.toBeInTheDocument();
@@ -111,19 +131,25 @@ describe("ProductDetail — product information", () => {
 
 describe("ProductDetail — add-to-cart button", () => {
   it("add-to-cart button is enabled when in stock", () => {
-    render(<ProductDetail {...buildProps({ product: makeProduct({ stockQuantity: 3 }) })} />);
+    render(
+      <ProductDetail
+        {...buildProps({ product: makeProduct({ stockQuantity: 3 }) })}
+      />,
+    );
 
     expect(
-      screen.getByRole("button", { name: /add to cart/i })
+      screen.getByRole("button", { name: /add to cart/i }),
     ).not.toBeDisabled();
   });
 
   it("add-to-cart button is disabled when out of stock", () => {
-    render(<ProductDetail {...buildProps({ product: makeProduct({ stockQuantity: 0 }) })} />);
+    render(
+      <ProductDetail
+        {...buildProps({ product: makeProduct({ stockQuantity: 0 }) })}
+      />,
+    );
 
-    expect(
-      screen.getByRole("button", { name: /add to cart/i })
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: /add to cart/i })).toBeDisabled();
   });
 
   it("calls onAddToCart with the product id when clicked", async () => {
@@ -147,7 +173,7 @@ describe("ProductDetail — add-to-cart button", () => {
           product: makeProduct({ stockQuantity: 0 }),
           onAddToCart,
         })}
-      />
+      />,
     );
 
     // Clicking a disabled button should not fire the handler
@@ -259,5 +285,55 @@ describe("ProductDetail — image gallery", () => {
     render(<ProductDetail {...buildProps({ product })} />);
 
     expect(screen.getByText(/no image available/i)).toBeInTheDocument();
+  });
+});
+
+// ── Discount display ──────────────────────────────────────────────────────────
+
+describe("ProductDetail — discount display", () => {
+  it("shows the original price struck-through when a discount is active", () => {
+    const product = makeProduct({
+      price: "89.99",
+      discountedPrice: "89.99",
+      originalPrice: "99.99",
+      discountLabel: "–10%",
+    });
+    render(<ProductDetail {...buildProps({ product })} />);
+
+    const orig = screen.getByTestId("original-price");
+    expect(orig).toBeInTheDocument();
+    expect(orig).toHaveTextContent("99.99");
+    expect(orig.className).toContain("line-through");
+  });
+
+  it("shows the discounted price prominently", () => {
+    const product = makeProduct({
+      price: "89.99",
+      discountedPrice: "89.99",
+      originalPrice: "99.99",
+      discountLabel: "–10%",
+    });
+    render(<ProductDetail {...buildProps({ product })} />);
+
+    expect(screen.getByTestId("discounted-price")).toHaveTextContent("89.99");
+  });
+
+  it("shows the discount badge with the label", () => {
+    const product = makeProduct({
+      price: "89.99",
+      discountedPrice: "89.99",
+      originalPrice: "99.99",
+      discountLabel: "–EUR\u00a05.00",
+    });
+    render(<ProductDetail {...buildProps({ product })} />);
+
+    expect(screen.getByTestId("discount-badge")).toHaveTextContent("EUR");
+  });
+
+  it("shows no original-price or badge when no discount is active", () => {
+    render(<ProductDetail {...buildProps({ product: makeProduct() })} />);
+
+    expect(screen.queryByTestId("original-price")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("discount-badge")).not.toBeInTheDocument();
   });
 });

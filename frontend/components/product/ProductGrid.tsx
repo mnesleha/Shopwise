@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PriceDisplay } from "@/components/ui/PriceDisplay";
 import type { ProductImageVm } from "@/lib/mappers/products";
 
 interface Product {
@@ -34,6 +35,12 @@ interface Product {
   imageUrl?: string;
   /** Structured primary image from the API; preferred over imageUrl. */
   primaryImage?: ProductImageVm;
+  /** Discounted gross price; present when a promotion applies. */
+  discountedPrice?: string;
+  /** Original (undiscounted) gross price; present when a promotion applies. */
+  originalPrice?: string;
+  /** Short badge label, e.g. "–10%" or "–EUR 5.00". */
+  discountLabel?: string;
 }
 
 interface ProductGridProps {
@@ -123,9 +130,13 @@ function ProductCard({
       </CardHeader>
 
       <CardContent className="pb-2">
-        <p className="text-foreground text-xl font-bold">
-          {currency === "USD" ? "$" : currency} {product.price}
-        </p>
+        <PriceDisplay
+          currency={currency}
+          price={product.discountedPrice ?? product.price}
+          originalPrice={product.originalPrice}
+          discountLabel={product.discountLabel}
+          size="md"
+        />
       </CardContent>
 
       <CardFooter className="flex gap-2 pt-2">

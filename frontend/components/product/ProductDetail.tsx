@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { resolveMediaUrl } from "@/lib/media";
+import { PriceDisplay } from "@/components/ui/PriceDisplay";
 import {
   ProductGallery,
   galleryToSlides,
@@ -34,6 +35,12 @@ interface Product {
   /** Structured gallery; when provided renders ProductGallery instead of ImageGallery. */
   gallery?: ProductImageVm[];
   specs?: ProductSpec[];
+  /** Discounted gross price; present when a promotion applies. */
+  discountedPrice?: string;
+  /** Original (undiscounted) gross price; present when a promotion applies. */
+  originalPrice?: string;
+  /** Short badge label, e.g. "–10%" or "–EUR 5.00". */
+  discountLabel?: string;
 }
 
 interface ProductDetailProps {
@@ -132,7 +139,6 @@ export function ProductDetail({
 }: ProductDetailProps) {
   const isInStock = product.stockQuantity > 0;
   const currency = product.currency ?? "USD";
-  const currencySymbol = currency === "USD" ? "$" : currency;
 
   const handleAddToCart = () => {
     onAddToCart(product.id);
@@ -181,10 +187,14 @@ export function ProductDetail({
             </div>
 
             {/* Price */}
-            <p className="text-foreground text-3xl font-bold pb-4">
-              {currencySymbol}
-              {product.price}
-            </p>
+            <PriceDisplay
+              currency={currency}
+              price={product.discountedPrice ?? product.price}
+              originalPrice={product.originalPrice}
+              discountLabel={product.discountLabel}
+              size="lg"
+              className="pb-4"
+            />
 
             <Separator />
 
