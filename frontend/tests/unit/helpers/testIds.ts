@@ -20,8 +20,14 @@ export const cartItem = (productId: string | number) =>
 
 // ── Checkout ──────────────────────────────────────────────────────────────────
 export const CHECKOUT_CONTINUE = "checkout-continue";
+export const CHECKOUT_BACK = "checkout-back";
 export const CHECKOUT_SUBMIT = "checkout-submit";
 export const GUEST_CHECKOUT_SUCCESS = "guest-checkout-success";
+
+// Price-change banner (shown after WARNING-severity checkout response)
+export const CHECKOUT_PRICE_CHANGE_BANNER = "checkout-price-change-banner";
+export const CHECKOUT_PRICE_CHANGE_CONTINUE = "checkout-price-change-continue";
+export const CHECKOUT_PRICE_CHANGE_BACK = "checkout-price-change-back";
 
 // ── Product ──────────────────────────────────────────────────────────────────
 export const addToCart = (productId: string | number) =>

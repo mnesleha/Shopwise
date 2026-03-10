@@ -31,6 +31,7 @@ from api.serializers.cart import (
 from api.serializers.common import ErrorResponseSerializer
 from carts.services.pricing import get_cart_pricing
 from carts.services.price_change import detect_price_changes, serialize_price_change_summary
+from carts.services.snapshot import get_snapshot_gross_price
 from api.services.cookies import cart_token_cookie_kwargs
 from carts.services.tokens import generate_cart_token
 from api.exceptions import ProductUnavailableException
@@ -414,7 +415,7 @@ Notes:
                         cart=cart,
                         product=product,
                         quantity=quantity,
-                        price_at_add_time=product.price,
+                        price_at_add_time=get_snapshot_gross_price(product),
                     )
                 created = True
 
@@ -436,7 +437,7 @@ Notes:
                             cart=cart,
                             product=product,
                             quantity=quantity,
-                            price_at_add_time=product.price,
+                            price_at_add_time=get_snapshot_gross_price(product),
                         )
                     created = True
                 else:
@@ -458,7 +459,7 @@ Notes:
                             cart=cart,
                             product=product,
                             quantity=quantity,
-                            price_at_add_time=product.price,
+                            price_at_add_time=get_snapshot_gross_price(product),
                         )
                     created = True
                 else:
@@ -569,7 +570,7 @@ HTTP semantics:
                             cart=cart,
                             product=product,
                             quantity=quantity,
-                            price_at_add_time=product.price,
+                            price_at_add_time=get_snapshot_gross_price(product),
                         )
                     created = True
                     break
@@ -890,3 +891,65 @@ Notes:
         response_data = dict(CartCheckoutResponseSerializer(order).data)
         response_data["price_change"] = price_change_data
         return Response(response_data, status=status.HTTP_201_CREATED)
+
+
+class CartCheckoutPreflightView(APIView):
+    """Lightweight checkout preflight — price-change check without creating an order.
+
+    Resolves the current cart pricing and compares each item's
+    ``price_at_add_time`` (gross baseline snapshotted at add-to-cart time)
+    against the current effective gross from the pricing pipeline.
+
+    Returns the same ``price_change`` payload shape used by the checkout
+    endpoint, enabling the frontend to surface messaging at checkout entry
+    (Step 1) before the customer commits.
+
+    Endpoint behaviour
+    ------------------
+    - Read-only.  No DB writes.
+    - 200: active cart found — always returns the payload (severity may be NONE).
+    - 404: no ACTIVE cart exists for the request context.
+
+    HTTP method: GET
+    URL:         /api/v1/cart/checkout/preflight/
+    """
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=["Cart Checkout"],
+        summary="Checkout preflight — price-change check",
+        description="""
+Compares the current effective pricing for every cart item against the
+gross unit price snapshotted at add-to-cart time and returns a structured
+price-change summary.
+
+Use this endpoint when rendering checkout Step 1 to surface price-change
+messaging *before* the customer fills in their details.
+
+- `severity = NONE` — no action required.
+- `severity = INFO` — prices changed slightly; show a non-intrusive toast.
+- `severity = WARNING` — prices changed significantly; show an inline banner.
+
+No order is created. The endpoint is safe to call multiple times.
+""",
+        parameters=CART_TOKEN_PARAMETERS,
+        responses={
+            200: {
+                "type": "object",
+                "properties": {
+                    "price_change": {"type": "object"},
+                },
+            },
+            404: ErrorResponseSerializer,
+        },
+    )
+    def get(self, request):
+        cart = _get_active_cart_for_request(request)
+        if cart is None:
+            raise NoActiveCartException()
+
+        cart_pricing = get_cart_pricing(cart)
+        summary = detect_price_changes(cart_pricing)
+        payload = serialize_price_change_summary(summary)
+        return Response({"price_change": payload}, status=status.HTTP_200_OK)
