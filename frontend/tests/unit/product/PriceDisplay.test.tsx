@@ -115,10 +115,10 @@ describe("PriceDisplay — with discount", () => {
     expect(discounted).toHaveTextContent("44.99");
   });
 
-  it("gives the discounted price an emerald colour class", () => {
+  it("gives the discounted price a white text class (inside red sticker)", () => {
     renderWithDiscount();
     const discounted = screen.getByTestId("discounted-price");
-    expect(discounted.className).toContain("emerald");
+    expect(discounted.className).toContain("text-white");
   });
 
   it("renders the discount badge with the label", () => {

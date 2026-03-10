@@ -4,8 +4,9 @@
  * Components
  * ----------
  * - `formatCurrency(currency, amount)` — "EUR 12.50", "$ 12.50"
- * - `DiscountBadge`   — coloured "–10 %" / "–EUR 5.00" badge
- * - `PriceDisplay`    — full block: [original struck-through] + discounted price + badge
+ * - `DiscountBadge`   — badge shown inside the discount box
+ * - `PriceDisplay`    — price block; when a discount is active renders a
+ *                       vertical sticker: badge → discounted price → original
  */
 
 import * as React from "react";
@@ -37,14 +38,15 @@ interface DiscountBadgeProps {
 }
 
 /**
- * A compact green badge showing the discount magnitude.
+ * Badge rendered inside the PriceDisplay sticker box.
+ * Uses an amber/yellow palette to contrast against the red background.
  */
 export function DiscountBadge({ label, className }: DiscountBadgeProps) {
   return (
     <Badge
       data-testid="discount-badge"
       className={
-        "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-semibold " +
+        "bg-amber-400 text-red-900 hover:bg-amber-400 font-bold text-xs px-2 py-0.5 " +
         (className ?? "")
       }
     >
@@ -66,12 +68,11 @@ export interface PriceDisplayProps {
   price: string;
   /**
    * The original gross price before discount.  When provided and different
-   * from `price`, shown struck-through above the discounted price.
+   * from `price`, shown struck-through below the discounted price.
    */
   originalPrice?: string;
   /**
-   * Short discount label shown as a badge, e.g. "–10%" or "–EUR 5.00".
-   * When provided a `DiscountBadge` is rendered next to the prices.
+   * Short discount label shown in the badge at the top, e.g. "–10%".
    */
   discountLabel?: string;
   /**
@@ -94,10 +95,18 @@ const _sizeMap: Record<
 };
 
 /**
- * Renders the discount-aware price block.
+ * Renders the price block.
  *
- * When no `originalPrice` / `discountLabel` are provided it renders just the
- * price (same as before — backwards compatible).
+ * **No discount** — just the price, no extra chrome.
+ *
+ * **With discount** — vertical sticker box:
+ * ```
+ * ┌──────────────────────────┐
+ * │  [BADGE: –10%]           │
+ * │  EUR 44.99  (large)      │
+ * │  ~~EUR 49.99~~  (small)  │
+ * └──────────────────────────┘
+ * ```
  */
 export function PriceDisplay({
   currency,
@@ -112,26 +121,45 @@ export function PriceDisplay({
   );
   const styles = _sizeMap[size];
 
+  // ── No-discount: plain inline price ──────────────────────────────────────
+  if (!hasDiscount) {
+    return (
+      <div
+        data-testid="price-display"
+        className={"inline-flex items-center " + (className ?? "")}
+      >
+        <span
+          data-testid="discounted-price"
+          className={`${styles.price} text-foreground`}
+        >
+          {formatCurrency(currency, price)}
+        </span>
+      </div>
+    );
+  }
+
+  // ── Discount sticker: badge → discounted price → original struck-through ─
   return (
     <div
       data-testid="price-display"
-      className={"flex flex-wrap items-center gap-1.5 " + (className ?? "")}
+      className={
+        "inline-flex flex-col items-start gap-1 rounded-md bg-red-500 px-3 py-2 " +
+        (className ?? "")
+      }
     >
-      {hasDiscount && (
-        <span
-          data-testid="original-price"
-          className={`${styles.original} text-muted-foreground line-through`}
-        >
-          {formatCurrency(currency, originalPrice!)}
-        </span>
-      )}
+      <DiscountBadge label={discountLabel!} />
       <span
         data-testid="discounted-price"
-        className={`${styles.price} ${hasDiscount ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"}`}
+        className={`${styles.price} text-white leading-tight`}
       >
         {formatCurrency(currency, price)}
       </span>
-      {hasDiscount && discountLabel && <DiscountBadge label={discountLabel} />}
+      <span
+        data-testid="original-price"
+        className={`${styles.original} text-red-200 line-through leading-tight`}
+      >
+        {formatCurrency(currency, originalPrice!)}
+      </span>
     </div>
   );
 }
