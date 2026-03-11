@@ -57,7 +57,9 @@ export function CheckoutPriceChangeBanner({
 
   const Icon = isPositive ? TrendingDown : TrendingUp;
 
-  // Total savings amount — only shown when all items went down.
+  // totalSavings is only computed when overallDirection === "DOWN" (isPositive guard),
+  // so absolute_change values are safely treated as positive magnitudes — they represent
+  // amounts saved, not signed differences.
   const totalSavings =
     isPositive && payload.items.length > 0
       ? payload.items

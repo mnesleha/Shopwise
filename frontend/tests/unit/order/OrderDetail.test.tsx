@@ -40,11 +40,7 @@ function renderOrderDetail(
     onPrint: vi.fn(),
   };
   renderWithProviders(
-    <OrderDetail
-      order={makeOrderViewModel()}
-      {...callbacks}
-      {...props}
-    />,
+    <OrderDetail order={makeOrderViewModel()} {...callbacks} {...props} />,
   );
   return callbacks;
 }
@@ -136,7 +132,9 @@ describe("OrderDetail", () => {
     });
 
     it("does NOT render shipping method section when not provided", () => {
-      renderOrderDetail({ order: makeOrderViewModel({ shippingMethod: undefined }) });
+      renderOrderDetail({
+        order: makeOrderViewModel({ shippingMethod: undefined }),
+      });
       expect(screen.queryByText(/shipping:/i)).toBeNull();
     });
 
@@ -202,7 +200,9 @@ describe("OrderDetail", () => {
     it("renders 'Total incl. VAT' column header", () => {
       renderOrderDetail();
       const table = screen.getByTestId(ORDER_ITEMS_TABLE);
-      expect(within(table).getAllByText("Total incl. VAT").length).toBeGreaterThanOrEqual(1);
+      expect(
+        within(table).getAllByText("Total incl. VAT").length,
+      ).toBeGreaterThanOrEqual(1);
     });
 
     it("does NOT render a 'Discount' column header", () => {
@@ -253,6 +253,56 @@ describe("OrderDetail", () => {
       });
       renderOrderDetail({ order });
       expect(screen.getByText("10.00%")).toBeInTheDocument();
+    });
+
+    it("renders \u2014 for null taxRate — no fake '0.00%'", () => {
+      const order = makeOrderViewModel({
+        items: [makeOrderItem({ taxRate: null })],
+      });
+      renderOrderDetail({ order });
+      expect(screen.queryByText("0.00%")).not.toBeInTheDocument();
+      const table = screen.getByTestId(ORDER_ITEMS_TABLE);
+      expect(table.textContent).toContain("\u2014");
+    });
+
+    it("renders \u2014 for null taxAmount — no fake zero money value", () => {
+      const order = makeOrderViewModel({
+        items: [makeOrderItem({ taxAmount: null, taxRate: "10.00" })],
+      });
+      renderOrderDetail({ order });
+      const table = screen.getByTestId(ORDER_ITEMS_TABLE);
+      // tax rate renders normally; tax amount renders as em-dash
+      expect(table.textContent).toContain("10.00%");
+      expect(table.textContent).toContain("\u2014");
+    });
+  });
+
+  // ── Currency rendering ────────────────────────────────────────────────────
+
+  describe("currency rendering", () => {
+    it("uses EUR symbol (\u20ac) by default when currency is undefined", () => {
+      const order = makeOrderViewModel({ currency: undefined, total: "59.98" });
+      renderOrderDetail({ order });
+      const summary = screen.getByTestId(ORDER_SUMMARY);
+      expect(within(summary).getByText("\u20ac59.98")).toBeInTheDocument();
+    });
+
+    it("uses USD symbol ($) when currency is 'USD'", () => {
+      const order = makeOrderViewModel({
+        currency: "USD",
+        total: "59.98",
+        items: [makeOrderItem({ unitPriceNet: "27.02" })],
+      });
+      renderOrderDetail({ order });
+      expect(screen.queryByText("\u20ac27.02")).not.toBeInTheDocument();
+      expect(screen.getByText("$27.02")).toBeInTheDocument();
+    });
+
+    it("uses GBP symbol (\u00a3) when currency is 'GBP'", () => {
+      const order = makeOrderViewModel({ currency: "GBP", total: "50.00" });
+      renderOrderDetail({ order });
+      const summary = screen.getByTestId(ORDER_SUMMARY);
+      expect(within(summary).getByText("\u00a350.00")).toBeInTheDocument();
     });
   });
 
@@ -339,12 +389,8 @@ describe("OrderDetail", () => {
         ],
       });
       renderOrderDetail({ order });
-      expect(
-        screen.getByTestId(vatBreakdownRow("10.00")),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByTestId(vatBreakdownRow("21.00")),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId(vatBreakdownRow("10.00"))).toBeInTheDocument();
+      expect(screen.getByTestId(vatBreakdownRow("21.00"))).toBeInTheDocument();
     });
 
     it("renders the tax rate with % suffix in the row", () => {
@@ -444,9 +490,7 @@ describe("OrderDetail", () => {
         totalTax: null,
       });
       renderOrderDetail({ order });
-      expect(
-        screen.getByText("VAT included in price"),
-      ).toBeInTheDocument();
+      expect(screen.getByText("VAT included in price")).toBeInTheDocument();
     });
 
     it("does NOT show 'VAT included in price' note when subtotalNet is provided", () => {
@@ -455,9 +499,7 @@ describe("OrderDetail", () => {
         totalTax: "5.45",
       });
       renderOrderDetail({ order });
-      expect(
-        screen.queryByText("VAT included in price"),
-      ).toBeNull();
+      expect(screen.queryByText("VAT included in price")).toBeNull();
     });
 
     it("does NOT render a standalone Discount row in the summary", () => {

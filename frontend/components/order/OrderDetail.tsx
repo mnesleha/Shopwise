@@ -255,11 +255,47 @@ function AddressBlock({
 }
 
 // ---------------------------------------------------------------------------
+// Currency formatting
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve an ISO 4217 currency code to a display symbol.
+ * Unknown codes render as "CODE\u00a0" (ISO code + NBSP) so output stays legible.
+ */
+function currencySymbol(code: string): string {
+  const symbols: Record<string, string> = {
+    EUR: "\u20ac",
+    USD: "$",
+    GBP: "\u00a3",
+    CZK: "K\u010d\u00a0",
+  };
+  return symbols[code] ?? `${code}\u00a0`;
+}
+
+/**
+ * Format an amount string with its currency symbol prefix.
+ * Returns "\u2014" when amount is null/undefined (missing historical snapshot data).
+ */
+function formatMoney(
+  amount: string | null | undefined,
+  currencyCode: string,
+): string {
+  if (amount == null) return "\u2014";
+  return `${currencySymbol(currencyCode)}${amount}`;
+}
+
+// ---------------------------------------------------------------------------
 // Invoice items table
 // Columns: Qty | Product | Unit excl. VAT | VAT rate | VAT | Total incl. VAT
 // ---------------------------------------------------------------------------
 
-function ItemsTable({ items }: { items: OrderItem[] }) {
+function ItemsTable({
+  items,
+  currency,
+}: {
+  items: OrderItem[];
+  currency: string;
+}) {
   return (
     <Card data-testid="order-items-table">
       <CardHeader className="pb-3">
@@ -295,10 +331,7 @@ function ItemsTable({ items }: { items: OrderItem[] }) {
             <tbody>
               {items.map((item) => {
                 const displayUnitNet = item.unitPriceNet ?? item.unitPrice;
-                const displayTaxRate = item.taxRate ?? "0.00";
-                const displayTaxAmt = item.taxAmount ?? "0.00";
                 const displayLineGross = item.lineTotalGross ?? item.lineTotal;
-                const currency = "€"; // TODO: pass currency from order VM
                 return (
                   <tr
                     key={item.id}
@@ -332,19 +365,16 @@ function ItemsTable({ items }: { items: OrderItem[] }) {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right text-muted-foreground">
-                      {currency}
-                      {displayUnitNet}
+                      {formatMoney(displayUnitNet, currency)}
                     </td>
                     <td className="px-4 py-3 text-right text-muted-foreground">
-                      {displayTaxRate}%
+                      {item.taxRate != null ? `${item.taxRate}%` : "\u2014"}
                     </td>
                     <td className="px-4 py-3 text-right text-muted-foreground">
-                      {currency}
-                      {displayTaxAmt}
+                      {formatMoney(item.taxAmount, currency)}
                     </td>
                     <td className="px-4 py-3 text-right text-foreground font-medium">
-                      {currency}
-                      {displayLineGross}
+                      {formatMoney(displayLineGross, currency)}
                     </td>
                   </tr>
                 );
@@ -362,8 +392,13 @@ function ItemsTable({ items }: { items: OrderItem[] }) {
 // Rows: tax rate | tax base | VAT amount | total incl. VAT
 // ---------------------------------------------------------------------------
 
-function VatBreakdownTable({ rows }: { rows: VatBreakdownLine[] }) {
-  const currency = "€"; // TODO: pass currency from order VM
+function VatBreakdownTable({
+  rows,
+  currency,
+}: {
+  rows: VatBreakdownLine[];
+  currency: string;
+}) {
   const totals = rows.reduce(
     (acc, row) => ({
       taxBase: (parseFloat(acc.taxBase) + parseFloat(row.taxBase)).toFixed(2),
@@ -412,16 +447,13 @@ function VatBreakdownTable({ rows }: { rows: VatBreakdownLine[] }) {
                 >
                   <td className="px-4 py-3 text-foreground">{row.taxRate}%</td>
                   <td className="px-4 py-3 text-right text-muted-foreground">
-                    {currency}
-                    {row.taxBase}
+                    {formatMoney(row.taxBase, currency)}
                   </td>
                   <td className="px-4 py-3 text-right text-muted-foreground">
-                    {currency}
-                    {row.vatAmount}
+                    {formatMoney(row.vatAmount, currency)}
                   </td>
                   <td className="px-4 py-3 text-right text-foreground font-medium">
-                    {currency}
-                    {row.totalInclVat}
+                    {formatMoney(row.totalInclVat, currency)}
                   </td>
                 </tr>
               ))}
@@ -432,16 +464,13 @@ function VatBreakdownTable({ rows }: { rows: VatBreakdownLine[] }) {
                   Total
                 </td>
                 <td className="px-4 py-3 text-right font-semibold text-foreground">
-                  {currency}
-                  {totals.taxBase}
+                  {formatMoney(totals.taxBase, currency)}
                 </td>
                 <td className="px-4 py-3 text-right font-semibold text-foreground">
-                  {currency}
-                  {totals.vatAmount}
+                  {formatMoney(totals.vatAmount, currency)}
                 </td>
                 <td className="px-4 py-3 text-right font-bold text-foreground">
-                  {currency}
-                  {totals.totalInclVat}
+                  {formatMoney(totals.totalInclVat, currency)}
                 </td>
               </tr>
             </tfoot>
@@ -459,7 +488,7 @@ function VatBreakdownTable({ rows }: { rows: VatBreakdownLine[] }) {
 // ---------------------------------------------------------------------------
 
 function OrderSummary({ order }: { order: OrderViewModel }) {
-  const currency = "€"; // TODO: pass from order VM
+  const currency = order.currency ?? "EUR";
   const subtotalNet = order.subtotalNet ?? null;
   const totalTax = order.totalTax ?? null;
   const total = order.subtotalGross ?? order.total;
@@ -476,8 +505,7 @@ function OrderSummary({ order }: { order: OrderViewModel }) {
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Subtotal excl. VAT</span>
             <span className="text-foreground">
-              {currency}
-              {subtotalNet}
+              {formatMoney(subtotalNet, currency)}
             </span>
           </div>
         )}
@@ -486,8 +514,7 @@ function OrderSummary({ order }: { order: OrderViewModel }) {
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">VAT</span>
             <span className="text-foreground">
-              {currency}
-              {totalTax}
+              {formatMoney(totalTax, currency)}
             </span>
           </div>
         )}
@@ -503,8 +530,7 @@ function OrderSummary({ order }: { order: OrderViewModel }) {
         <div className="flex justify-between">
           <span className="text-foreground font-semibold">Total incl. VAT</span>
           <span className="text-lg font-bold text-foreground">
-            {currency}
-            {total}
+            {formatMoney(total, currency)}
           </span>
         </div>
       </CardContent>
@@ -642,12 +668,15 @@ export function OrderDetail({
         <Separator className="my-6" />
 
         {/* Items table */}
-        <ItemsTable items={order.items} />
+        <ItemsTable items={order.items} currency={order.currency ?? "EUR"} />
 
         {/* VAT breakdown (only when backend provides it) */}
         {hasVatBreakdown && (
           <div className="mt-6">
-            <VatBreakdownTable rows={order.vatBreakdown!} />
+            <VatBreakdownTable
+              rows={order.vatBreakdown!}
+              currency={order.currency ?? "EUR"}
+            />
           </div>
         )}
 

@@ -171,6 +171,34 @@ describe("CheckoutPriceChangeBanner", () => {
     });
   });
 
+  describe("direction-aware percent change indicator", () => {
+    it("shows '+' prefix for UP direction items", () => {
+      renderBanner(
+        makePayload({ items: [makeItem("UP", { percent_change: "10.00" })] }),
+      );
+      // Rendered as "(+10.00%)"
+      expect(screen.getByText(/\+10\.00%/)).toBeInTheDocument();
+    });
+
+    it("shows '\u2212' (U+2212) prefix for DOWN direction items", () => {
+      renderBanner(
+        makePayload({ items: [makeItem("DOWN", { percent_change: "10.00" })] }),
+      );
+      // Rendered as "(\u221210.00%)"
+      expect(screen.getByText(/\u221210\.00%/)).toBeInTheDocument();
+    });
+
+    it("savings callout amount equals absolute_change (treated as unsigned magnitude)", () => {
+      renderBanner(
+        makePayload({
+          items: [makeItem("DOWN", { absolute_change: "7.50" })],
+        }),
+      );
+      const callout = screen.getByText(/your total decreased by/i);
+      expect(callout.textContent).toMatch(/7\.50/);
+    });
+  });
+
   describe("action buttons", () => {
     it("renders 'View Order' and 'Back to Cart' buttons when onContinue is provided", () => {
       renderBanner(makePayload());

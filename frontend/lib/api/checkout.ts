@@ -14,7 +14,10 @@ export type PriceChangeItem = {
   product_name: string;
   old_unit_gross: string;
   new_unit_gross: string;
-  /** Absolute difference as a decimal string, e.g. "2.50". */
+  /**
+   * Unsigned magnitude of the price change; always a positive decimal string, e.g. "2.50".
+   * Use `direction` to determine whether this represents an increase or decrease.
+   */
   absolute_change: string;
   /** Percentage change as a decimal string, e.g. "12.50". */
   percent_change: string;
