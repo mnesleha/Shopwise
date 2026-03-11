@@ -297,8 +297,7 @@ function ItemsTable({ items }: { items: OrderItem[] }) {
                 const displayUnitNet = item.unitPriceNet ?? item.unitPrice;
                 const displayTaxRate = item.taxRate ?? "0.00";
                 const displayTaxAmt = item.taxAmount ?? "0.00";
-                const displayLineGross =
-                  item.lineTotalGross ?? item.lineTotal;
+                const displayLineGross = item.lineTotalGross ?? item.lineTotal;
                 const currency = "€"; // TODO: pass currency from order VM
                 return (
                   <tr
@@ -333,16 +332,19 @@ function ItemsTable({ items }: { items: OrderItem[] }) {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right text-muted-foreground">
-                      {currency}{displayUnitNet}
+                      {currency}
+                      {displayUnitNet}
                     </td>
                     <td className="px-4 py-3 text-right text-muted-foreground">
                       {displayTaxRate}%
                     </td>
                     <td className="px-4 py-3 text-right text-muted-foreground">
-                      {currency}{displayTaxAmt}
+                      {currency}
+                      {displayTaxAmt}
                     </td>
                     <td className="px-4 py-3 text-right text-foreground font-medium">
-                      {currency}{displayLineGross}
+                      {currency}
+                      {displayLineGross}
                     </td>
                   </tr>
                 );
@@ -365,12 +367,12 @@ function VatBreakdownTable({ rows }: { rows: VatBreakdownLine[] }) {
   const totals = rows.reduce(
     (acc, row) => ({
       taxBase: (parseFloat(acc.taxBase) + parseFloat(row.taxBase)).toFixed(2),
-      vatAmount:
-        (parseFloat(acc.vatAmount) + parseFloat(row.vatAmount)).toFixed(2),
-      totalInclVat:
-        (
-          parseFloat(acc.totalInclVat) + parseFloat(row.totalInclVat)
-        ).toFixed(2),
+      vatAmount: (
+        parseFloat(acc.vatAmount) + parseFloat(row.vatAmount)
+      ).toFixed(2),
+      totalInclVat: (
+        parseFloat(acc.totalInclVat) + parseFloat(row.totalInclVat)
+      ).toFixed(2),
     }),
     { taxBase: "0.00", vatAmount: "0.00", totalInclVat: "0.00" },
   );
@@ -410,13 +412,16 @@ function VatBreakdownTable({ rows }: { rows: VatBreakdownLine[] }) {
                 >
                   <td className="px-4 py-3 text-foreground">{row.taxRate}%</td>
                   <td className="px-4 py-3 text-right text-muted-foreground">
-                    {currency}{row.taxBase}
+                    {currency}
+                    {row.taxBase}
                   </td>
                   <td className="px-4 py-3 text-right text-muted-foreground">
-                    {currency}{row.vatAmount}
+                    {currency}
+                    {row.vatAmount}
                   </td>
                   <td className="px-4 py-3 text-right text-foreground font-medium">
-                    {currency}{row.totalInclVat}
+                    {currency}
+                    {row.totalInclVat}
                   </td>
                 </tr>
               ))}
@@ -427,13 +432,16 @@ function VatBreakdownTable({ rows }: { rows: VatBreakdownLine[] }) {
                   Total
                 </td>
                 <td className="px-4 py-3 text-right font-semibold text-foreground">
-                  {currency}{totals.taxBase}
+                  {currency}
+                  {totals.taxBase}
                 </td>
                 <td className="px-4 py-3 text-right font-semibold text-foreground">
-                  {currency}{totals.vatAmount}
+                  {currency}
+                  {totals.vatAmount}
                 </td>
                 <td className="px-4 py-3 text-right font-bold text-foreground">
-                  {currency}{totals.totalInclVat}
+                  {currency}
+                  {totals.totalInclVat}
                 </td>
               </tr>
             </tfoot>
@@ -468,7 +476,8 @@ function OrderSummary({ order }: { order: OrderViewModel }) {
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Subtotal excl. VAT</span>
             <span className="text-foreground">
-              {currency}{subtotalNet}
+              {currency}
+              {subtotalNet}
             </span>
           </div>
         )}
@@ -477,7 +486,8 @@ function OrderSummary({ order }: { order: OrderViewModel }) {
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">VAT</span>
             <span className="text-foreground">
-              {currency}{totalTax}
+              {currency}
+              {totalTax}
             </span>
           </div>
         )}
@@ -493,7 +503,8 @@ function OrderSummary({ order }: { order: OrderViewModel }) {
         <div className="flex justify-between">
           <span className="text-foreground font-semibold">Total incl. VAT</span>
           <span className="text-lg font-bold text-foreground">
-            {currency}{total}
+            {currency}
+            {total}
           </span>
         </div>
       </CardContent>
@@ -687,4 +698,3 @@ export type {
   MoneyLine,
   VatBreakdownLine,
 };
-

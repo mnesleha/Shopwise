@@ -96,9 +96,7 @@ describe("mapOrderToVm — discountNote", () => {
 
   it("builds neutral PERCENT note", () => {
     const dto = makeOrderDto({
-      items: [
-        makeItemDto({ discount: { type: "PERCENT", value: "10" } }),
-      ],
+      items: [makeItemDto({ discount: { type: "PERCENT", value: "10" } })],
     });
     const vm = mapOrderToVm(dto);
     expect(vm.items[0].discountNote).toBe("Includes line discount 10%");
@@ -106,9 +104,7 @@ describe("mapOrderToVm — discountNote", () => {
 
   it("builds neutral FIXED amount note", () => {
     const dto = makeOrderDto({
-      items: [
-        makeItemDto({ discount: { type: "FIXED", value: "5.00" } }),
-      ],
+      items: [makeItemDto({ discount: { type: "FIXED", value: "5.00" } })],
     });
     const vm = mapOrderToVm(dto);
     expect(vm.items[0].discountNote).toBe("Includes line discount 5.00");
