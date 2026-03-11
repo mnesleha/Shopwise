@@ -357,3 +357,22 @@ ANONYMOUS_CART_TTL_DAYS: int = int(os.getenv("ANONYMOUS_CART_TTL_DAYS", 7))
 ANONYMOUS_CART_CLEANUP_CRON: str = os.getenv(
     "ANONYMOUS_CART_CLEANUP_CRON", "0 3 * * *"
 )
+
+# ---------------------------------------------------------------------------
+# Checkout price-change detection settings
+# ---------------------------------------------------------------------------
+# These thresholds drive per-line severity classification when the current
+# effective price at checkout differs from price_at_add_time.
+#
+# INFO    — noticeable but minor change; surfaced to the customer for awareness.
+# WARNING — significant change; the customer should be clearly informed.
+#
+# Values are percentages (e.g. 1 means 1 %).
+# WARNING threshold must be >= INFO threshold; the service enforces this.
+
+CHECKOUT_PRICE_CHANGE_INFO_THRESHOLD_PERCENT: int = int(
+    os.getenv("CHECKOUT_PRICE_CHANGE_INFO_THRESHOLD_PERCENT", 10) # 1
+)
+CHECKOUT_PRICE_CHANGE_WARNING_THRESHOLD_PERCENT: int = int(
+    os.getenv("CHECKOUT_PRICE_CHANGE_WARNING_THRESHOLD_PERCENT", 50) # 5
+)

@@ -50,7 +50,7 @@ def test_checkout_success_response_uses_unified_contract(auth_client, product):
     data = response.json()
 
     # Top-level contract
-    assert set(data.keys()) == {"id", "status", "items", "total"}
+    assert set(data.keys()) == {"id", "status", "items", "total", "price_change"}
     assert isinstance(data["id"], int)
     assert isinstance(data["status"], str)
     assert isinstance(data["items"], list)
@@ -87,6 +87,15 @@ def test_checkout_success_response_uses_unified_contract(auth_client, product):
         assert isinstance(item["discount"]["value"], str)
         assert MONEY_2DP.match(
             item["discount"]["value"]), item["discount"]["value"]
+
+    # price_change shape
+    pc = data["price_change"]
+    assert isinstance(pc, dict)
+    assert set(pc.keys()) == {"has_changes", "severity", "affected_items", "items"}
+    assert isinstance(pc["has_changes"], bool)
+    assert pc["severity"] in {"NONE", "INFO", "WARNING"}
+    assert isinstance(pc["affected_items"], int)
+    assert isinstance(pc["items"], list)
 
 
 @pytest.mark.django_db

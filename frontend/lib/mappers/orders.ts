@@ -1,5 +1,9 @@
-import type { OrderDto } from "@/lib/api/orders";
-import type { OrderViewModel, OrderItem } from "@/components/order/OrderDetail";
+import type { OrderDto, OrderItemDto } from "@/lib/api/orders";
+import type {
+  OrderViewModel,
+  OrderItem,
+  VatBreakdownLine,
+} from "@/components/order/OrderDetail";
 
 const DEFAULT_SUPPLIER = {
   name: "Shopwise Demo Supplier Ltd.",
@@ -35,15 +39,60 @@ function formatOrderNumber(orderId: number): string {
   return `OBJ${year}${String(orderId).padStart(6, "0")}`;
 }
 
-function mapItem(dto: OrderDto["items"][number]): OrderItem {
+/**
+ * Derive a customer-facing discount note for invoice display.
+ *
+ * Both PERCENT and FIXED promotions are normalised to an effective percentage
+ * rounded to the nearest whole number (e.g. "Discount applied: 30%").  This
+ * avoids showing a raw fixed-amount that has no meaning without the original
+ * price — which the invoice view does not display.
+ *
+ * For FIXED discounts the effective rate is back-calculated from the snapshot:
+ *   effective% = fixed_amount / (discounted_gross + fixed_amount) × 100
+ */
+function buildDiscountNote(dto: OrderItemDto): string | null {
+  if (!dto.discount) return null;
+
+  let effectivePct: number;
+
+  if (dto.discount.type === "PERCENT") {
+    effectivePct = Math.round(parseFloat(dto.discount.value));
+  } else {
+    // FIXED: the snapshot unit_price_gross is the post-discount price.
+    // Reconstruct the original: original = discounted + fixed_amount.
+    const discountedGross = parseFloat(dto.unit_price_gross ?? dto.unit_price);
+    const fixedAmount = parseFloat(dto.discount.value);
+    const originalGross = discountedGross + fixedAmount;
+    if (!isFinite(originalGross) || originalGross <= 0) return null;
+    effectivePct = Math.round((fixedAmount / originalGross) * 100);
+  }
+
+  return `Discount applied: ${effectivePct}%`;
+}
+
+function mapItem(dto: OrderItemDto): OrderItem {
   return {
     id: String(dto.id),
     productId: String(dto.product),
-    productName: `Product #${dto.product}`, // TODO: enrich from product cache / include product name in API
+    // Use the snapshot name captured at order time; fall back to a stable
+    // placeholder only for pre-snapshot records where the field is null.
+    productName: dto.product_name ?? `Product #${dto.product}`,
     productUrl: `/products/${dto.product}`,
     quantity: dto.quantity,
+    // Legacy gross unit price kept for backward compat
     unitPrice: dto.unit_price,
+    // Phase 3 invoice fields
+    unitPriceNet: dto.unit_price_net ?? null,
+    unitPriceGross: dto.unit_price_gross ?? dto.unit_price,
+    taxAmount: dto.tax_amount ?? null,
+    taxRate: dto.tax_rate ?? null,
+    // Legacy gross line total kept for backward compat
     lineTotal: dto.line_total,
+    lineTotalNet: dto.line_total_net ?? null,
+    lineTotalGross: dto.line_total_gross ?? dto.line_total,
+    // Neutral discount note for invoice display (no badge / strike-through)
+    discountNote: buildDiscountNote(dto),
+    // Keep raw discount for legacy callers
     discount: dto.discount,
   };
 }
@@ -51,11 +100,22 @@ function mapItem(dto: OrderDto["items"][number]): OrderItem {
 export function mapOrderToVm(dto: OrderDto): OrderViewModel {
   const orderNumber = formatOrderNumber(dto.id);
 
+  const vatBreakdown: VatBreakdownLine[] | null = dto.vat_breakdown
+    ? dto.vat_breakdown.map((row) => ({
+        taxRate: row.tax_rate,
+        taxBase: row.tax_base,
+        vatAmount: row.vat_amount,
+        totalInclVat: row.total_incl_vat,
+      }))
+    : null;
+
   return {
     id: String(dto.id),
     orderNumber,
     status: dto.status,
-    createdAt: new Date().toLocaleDateString(), // TODO: backend created_at
+    createdAt: dto.created_at
+      ? new Date(dto.created_at).toLocaleDateString()
+      : new Date().toLocaleDateString(),
 
     supplier: DEFAULT_SUPPLIER,
     customer: DEFAULT_CUSTOMER,
@@ -66,12 +126,15 @@ export function mapOrderToVm(dto: OrderDto): OrderViewModel {
 
     items: dto.items.map(mapItem),
 
-    total: dto.total,
-    // Optional future fields:
-    subtotal: dto.total,
-    totalsBreakdown: [
-      { label: "Subtotal", amount: dto.total },
-      // discount/shipping/tax later once backend provides it
-    ],
+    // Phase 3 totals snapshot
+    subtotalNet: dto.subtotal_net ?? null,
+    subtotalGross: dto.subtotal_gross ?? null,
+    totalTax: dto.total_tax ?? null,
+    totalDiscount: dto.total_discount ?? null,
+    currency: dto.currency ?? "EUR",
+    vatBreakdown,
+
+    // Legacy total kept for backward compat
+    total: dto.subtotal_gross ?? dto.total,
   };
 }

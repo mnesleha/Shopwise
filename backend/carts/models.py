@@ -100,6 +100,10 @@ class CartItem(models.Model):
     )
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
+    # Snapshotted gross price at the time the item was added to the cart.
+    # Retained as the customer-visible baseline for price-change detection
+    # (Phase 3+).  This field is NOT the checkout pricing authority — checkout
+    # uses the current pricing pipeline (get_cart_pricing / get_product_pricing).
     price_at_add_time = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

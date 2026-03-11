@@ -5,6 +5,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from products.models import CURRENCY_CHOICES
 
 
 class Order(models.Model):
@@ -111,6 +112,49 @@ class Order(models.Model):
         db_index=True,
     )
     guest_access_token_created_at = models.DateTimeField(null=True, blank=True)
+
+    # ------------------------------------------------------------------
+    # Phase 3 totals snapshot fields
+    # These are preparation for the new pricing snapshot pipeline.
+    # They are nullable to allow safe migration of existing records.
+    # The order creation flow will be updated to populate them in a
+    # subsequent slice once the full persistence mapping is finalised.
+    # ------------------------------------------------------------------
+    subtotal_net = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Sum of all item net prices at order time.",
+    )
+    subtotal_gross = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Sum of all item gross prices at order time (incl. tax, after promotions).",
+    )
+    total_tax = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Total tax amount across all items at order time.",
+    )
+    total_discount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Total discount amount across all items at order time.",
+    )
+    currency = models.CharField(
+        max_length=3,
+        choices=CURRENCY_CHOICES,
+        null=True,
+        blank=True,
+        help_text="ISO 4217 currency code for all monetary snapshot fields on this order.",
+    )
 
     status = models.CharField(
         max_length=20,

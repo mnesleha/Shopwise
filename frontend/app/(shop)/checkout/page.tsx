@@ -1,13 +1,19 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   CheckoutForm,
   type CheckoutValues,
 } from "@/components/checkout/CheckoutForm";
-import { checkoutCart } from "@/lib/api/checkout";
+import {
+  checkoutCart,
+  getCheckoutPreflight,
+  type PriceChangePayload,
+} from "@/lib/api/checkout";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { getPriceChangeMessage } from "@/lib/utils/priceChange";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -17,15 +23,42 @@ export default function CheckoutPage() {
     isAuthenticatedRef.current = isAuthenticated;
   }, [isAuthenticated]);
 
+  /** Non-null when preflight reports a WARNING-level price change. */
+  const [warningPayload, setWarningPayload] =
+    useState<PriceChangePayload | null>(null);
+
+  // ── Run preflight check when the page first mounts ────────────────────────
+  useEffect(() => {
+    // `cancelled` ensures that when React Strict Mode runs cleanup + re-mount,
+    // only the second mount's promise result is acted on (prevents double toast).
+    let cancelled = false;
+    getCheckoutPreflight()
+      .then((preflight) => {
+        if (cancelled) return;
+        if (preflight.severity === "WARNING") {
+          setWarningPayload(preflight);
+        } else if (preflight.severity === "INFO") {
+          const msg = getPriceChangeMessage(preflight);
+          if (msg) toast.info(msg);
+        }
+      })
+      .catch(() => {
+        // No active cart or network error — silently ignore so the form renders.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /** Resolve the post-checkout navigation target for a given order id. */
+  const orderTarget = (id: number) =>
+    isAuthenticatedRef.current ? `/orders/${id}` : "/guest/checkout/success";
+
   const onBackToCart = () => router.push("/cart");
 
   const onSubmit = async (values: CheckoutValues) => {
     const order = await checkoutCart(values);
-    router.push(
-      isAuthenticatedRef.current
-        ? `/orders/${order.id}`
-        : "/guest/checkout/success",
-    );
+    router.push(orderTarget(order.id));
   };
 
   return (
@@ -37,7 +70,11 @@ export default function CheckoutPage() {
         </p>
       </div>
 
-      <CheckoutForm onBackToCart={onBackToCart} onSubmit={onSubmit} />
+      <CheckoutForm
+        onBackToCart={onBackToCart}
+        onSubmit={onSubmit}
+        priceChangePayload={warningPayload}
+      />
     </div>
   );
 }

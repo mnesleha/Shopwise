@@ -25,6 +25,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { CheckoutPriceChangeBanner } from "@/components/checkout/CheckoutPriceChangeBanner";
+import type { PriceChangePayload } from "@/lib/api/checkout";
 
 // Types
 export interface CheckoutValues {
@@ -57,6 +59,11 @@ interface CheckoutFormProps {
   onSubmit: (values: CheckoutValues) => void;
   onBackToCart: () => void;
   onContinueShopping?: () => void;
+  /**
+   * When provided and severity is WARNING, renders the price-change banner
+   * inside Step 1 (before shipping method cards).  Not shown in Step 2.
+   */
+  priceChangePayload?: PriceChangePayload | null;
 }
 
 type FieldErrors = Partial<Record<keyof CheckoutValues, string>>;
@@ -160,14 +167,24 @@ function ShippingPaymentStep({
   onChange,
   onBack,
   onContinue,
+  priceChangePayload,
 }: {
   values: CheckoutValues;
   onChange: (field: keyof CheckoutValues, value: string | boolean) => void;
   onBack: () => void;
   onContinue: () => void;
+  priceChangePayload?: PriceChangePayload | null;
 }) {
   return (
     <div className="flex flex-col gap-6">
+      {/* Price-change warning banner — only shown when prices changed since add-to-cart */}
+      {priceChangePayload?.severity === "WARNING" && (
+        <CheckoutPriceChangeBanner
+          payload={priceChangePayload}
+          onBackToCart={onBack}
+        />
+      )}
+
       {/* Shipping Method */}
       <Card>
         <CardHeader>
@@ -661,6 +678,7 @@ function DetailsStep({
         <Button
           variant="outline"
           onClick={onBack}
+          data-testid="checkout-back"
           className="gap-2 bg-transparent"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -683,8 +701,12 @@ export function CheckoutForm({
   initialValues,
   onSubmit,
   onBackToCart,
+  priceChangePayload,
 }: CheckoutFormProps) {
   const [step, setStep] = React.useState<1 | 2>(1);
+  // Once the user advances past step 1 the warning banner is considered
+  // acknowledged and must not reappear even if they navigate back.
+  const [bannerAcknowledged, setBannerAcknowledged] = React.useState(false);
   const [values, setValues] = React.useState<CheckoutValues>({
     ...defaultValues,
     ...initialValues,
@@ -795,7 +817,11 @@ export function CheckoutForm({
           values={values}
           onChange={handleChange}
           onBack={onBackToCart}
-          onContinue={() => setStep(2)}
+          onContinue={() => {
+            setBannerAcknowledged(true);
+            setStep(2);
+          }}
+          priceChangePayload={bannerAcknowledged ? null : priceChangePayload}
         />
       ) : (
         <DetailsStep

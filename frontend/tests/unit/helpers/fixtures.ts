@@ -138,8 +138,24 @@ export interface OrderItemFixture {
   productId: string;
   productName: string;
   quantity: number;
+  /** Legacy gross unit price */
   unitPrice: string;
+  /** Net unit price excl. VAT — Phase 3 */
+  unitPriceNet?: string | null;
+  /** Gross unit price incl. VAT — Phase 3 */
+  unitPriceGross?: string | null;
+  /** Per-unit VAT amount — Phase 3 */
+  taxAmount?: string | null;
+  /** Effective tax rate percentage — Phase 3 */
+  taxRate?: string | null;
+  /** Legacy gross line total */
   lineTotal: string;
+  /** Net line total — Phase 3 */
+  lineTotalNet?: string | null;
+  /** Gross line total — Phase 3 */
+  lineTotalGross?: string | null;
+  /** Neutral inline discount note — Phase 3 */
+  discountNote?: string | null;
   discount?: { type: "FIXED" | "PERCENT"; value: string } | null;
 }
 
@@ -183,6 +199,18 @@ export interface OrderViewModelFixture {
   items: OrderItemFixture[];
   subtotal?: string;
   total: string;
+  /** Phase 3 order-level totals */
+  subtotalNet?: string | null;
+  subtotalGross?: string | null;
+  totalTax?: string | null;
+  totalDiscount?: string | null;
+  currency?: string;
+  vatBreakdown?: Array<{
+    taxRate: string;
+    taxBase: string;
+    vatAmount: string;
+    totalInclVat: string;
+  }> | null;
 }
 
 export function makeOrderViewModel(
