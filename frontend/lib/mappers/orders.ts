@@ -1,5 +1,9 @@
 import type { OrderDto, OrderItemDto } from "@/lib/api/orders";
-import type { OrderViewModel, OrderItem, VatBreakdownLine } from "@/components/order/OrderDetail";
+import type {
+  OrderViewModel,
+  OrderItem,
+  VatBreakdownLine,
+} from "@/components/order/OrderDetail";
 
 const DEFAULT_SUPPLIER = {
   name: "Shopwise Demo Supplier Ltd.",
@@ -134,4 +138,3 @@ export function mapOrderToVm(dto: OrderDto): OrderViewModel {
     total: dto.subtotal_gross ?? dto.total,
   };
 }
-
