@@ -4,8 +4,9 @@
  * Contract guarded:
  * - product_name snapshot is used as productName when provided
  * - Falls back to "Product #N" when product_name is null (pre-snapshot record)
- * - discountNote is constructed as neutral text for PERCENT discounts
- * - discountNote is constructed as neutral text for FIXED discounts
+ * - discountNote is "Discount applied: N%" for PERCENT discounts (rounded)
+ * - discountNote derives effective percentage for FIXED discounts (from snapshot price)
+ * - discountNote rounds fractional percentages to nearest whole number
  * - discountNote is null when no discount
  * - Phase 3 invoice fields are mapped to the view model
  * - vat_breakdown is mapped to VatBreakdownLine[]
@@ -94,20 +95,66 @@ describe("mapOrderToVm — discountNote", () => {
     expect(vm.items[0].discountNote).toBeNull();
   });
 
-  it("builds neutral PERCENT note", () => {
+  it("PERCENT: formats as 'Discount applied: N%' with rounded whole number", () => {
     const dto = makeOrderDto({
       items: [makeItemDto({ discount: { type: "PERCENT", value: "10" } })],
     });
     const vm = mapOrderToVm(dto);
-    expect(vm.items[0].discountNote).toBe("Includes line discount 10%");
+    expect(vm.items[0].discountNote).toBe("Discount applied: 10%");
   });
 
-  it("builds neutral FIXED amount note", () => {
+  it("PERCENT: rounds fractional discount values", () => {
     const dto = makeOrderDto({
-      items: [makeItemDto({ discount: { type: "FIXED", value: "5.00" } })],
+      items: [makeItemDto({ discount: { type: "PERCENT", value: "10.75" } })],
     });
     const vm = mapOrderToVm(dto);
-    expect(vm.items[0].discountNote).toBe("Includes line discount 5.00");
+    expect(vm.items[0].discountNote).toBe("Discount applied: 11%");
+  });
+
+  it("FIXED: derives effective percentage from snapshot unit_price_gross", () => {
+    // unit_price_gross = 20.00, fixed discount = 5.00 → original = 25.00
+    // effective% = 5/25 = 20%
+    const dto = makeOrderDto({
+      items: [
+        makeItemDto({
+          unit_price_gross: "20.00",
+          discount: { type: "FIXED", value: "5.00" },
+        }),
+      ],
+    });
+    const vm = mapOrderToVm(dto);
+    expect(vm.items[0].discountNote).toBe("Discount applied: 20%");
+  });
+
+  it("FIXED: falls back to unit_price when unit_price_gross is null", () => {
+    // unit_price = 24.00, fixed discount = 6.00 → original = 30.00
+    // effective% = 6/30 = 20%
+    const dto = makeOrderDto({
+      items: [
+        makeItemDto({
+          unit_price: "24.00",
+          unit_price_gross: null,
+          discount: { type: "FIXED", value: "6.00" },
+        }),
+      ],
+    });
+    const vm = mapOrderToVm(dto);
+    expect(vm.items[0].discountNote).toBe("Discount applied: 20%");
+  });
+
+  it("FIXED: rounds derived effective percentage", () => {
+    // unit_price_gross = 29.99, fixed discount = 5.00 → original = 34.99
+    // effective% = 5/34.99 ≈ 14.3% → 14%
+    const dto = makeOrderDto({
+      items: [
+        makeItemDto({
+          unit_price_gross: "29.99",
+          discount: { type: "FIXED", value: "5.00" },
+        }),
+      ],
+    });
+    const vm = mapOrderToVm(dto);
+    expect(vm.items[0].discountNote).toBe("Discount applied: 14%");
   });
 });
 

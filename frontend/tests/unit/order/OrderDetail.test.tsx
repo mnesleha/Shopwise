@@ -311,11 +311,11 @@ describe("OrderDetail", () => {
   describe("discount note", () => {
     it("renders the discount note element when discountNote is provided", () => {
       const order = makeOrderViewModel({
-        items: [makeOrderItem({ discountNote: "Includes line discount 10%" })],
+        items: [makeOrderItem({ discountNote: "Discount applied: 10%" })],
       });
       renderOrderDetail({ order });
       const note = screen.getByTestId(ITEM_DISCOUNT_NOTE);
-      expect(note).toHaveTextContent("Includes line discount 10%");
+      expect(note).toHaveTextContent("Discount applied: 10%");
     });
 
     it("does NOT render the discount note element when discountNote is absent", () => {
@@ -330,7 +330,7 @@ describe("OrderDetail", () => {
       const order = makeOrderViewModel({
         items: [
           makeOrderItem({
-            discountNote: "Includes line discount 10%",
+            discountNote: "Discount applied: 10%",
             discount: { type: "PERCENT", value: "10" },
           }),
         ],
@@ -338,6 +338,38 @@ describe("OrderDetail", () => {
       renderOrderDetail({ order });
       // No badge element with discount text should be present
       expect(screen.queryByText(/–10%/)).toBeNull();
+    });
+
+    it("percent-discounted item shows rounded percentage note", () => {
+      // PERCENT 30% → "Discount applied: 30%"
+      const order = makeOrderViewModel({
+        items: [makeOrderItem({ discountNote: "Discount applied: 30%" })],
+      });
+      renderOrderDetail({ order });
+      const note = screen.getByTestId(ITEM_DISCOUNT_NOTE);
+      expect(note).toHaveTextContent("Discount applied: 30%");
+      // No raw fixed-amount text, no promotion code
+      expect(note.textContent).not.toMatch(/\d+\.\d{2}(?!%)/);
+    });
+
+    it("fixed-discounted item shows rounded effective percentage note", () => {
+      // FIXED discount derived to 20% → "Discount applied: 20%"
+      const order = makeOrderViewModel({
+        items: [makeOrderItem({ discountNote: "Discount applied: 20%" })],
+      });
+      renderOrderDetail({ order });
+      const note = screen.getByTestId(ITEM_DISCOUNT_NOTE);
+      expect(note).toHaveTextContent("Discount applied: 20%");
+      // No raw fixed-amount text
+      expect(note.textContent).not.toMatch(/\d+\.\d{2}(?!%)/);
+    });
+
+    it("non-discounted item shows no note", () => {
+      const order = makeOrderViewModel({
+        items: [makeOrderItem({ discountNote: null, discount: null })],
+      });
+      renderOrderDetail({ order });
+      expect(screen.queryByTestId(ITEM_DISCOUNT_NOTE)).toBeNull();
     });
   });
 

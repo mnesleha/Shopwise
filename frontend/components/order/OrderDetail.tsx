@@ -80,7 +80,7 @@ type OrderItem = {
   lineTotalNet?: string | null;
   /** Gross line total (preferred for invoice display) */
   lineTotalGross?: string | null;
-  /** Neutral inline note for line-level discount, e.g. "Includes line discount 10%" */
+  /** Effective discount note for invoice display, e.g. "Discount applied: 30%" */
   discountNote?: string | null;
   /** Raw discount — kept for legacy callers */
   discount?: {

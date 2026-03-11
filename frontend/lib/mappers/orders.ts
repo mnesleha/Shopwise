@@ -35,12 +35,35 @@ function formatOrderNumber(orderId: number): string {
   return `OBJ${year}${String(orderId).padStart(6, "0")}`;
 }
 
+/**
+ * Derive a customer-facing discount note for invoice display.
+ *
+ * Both PERCENT and FIXED promotions are normalised to an effective percentage
+ * rounded to the nearest whole number (e.g. "Discount applied: 30%").  This
+ * avoids showing a raw fixed-amount that has no meaning without the original
+ * price — which the invoice view does not display.
+ *
+ * For FIXED discounts the effective rate is back-calculated from the snapshot:
+ *   effective% = fixed_amount / (discounted_gross + fixed_amount) × 100
+ */
 function buildDiscountNote(dto: OrderItemDto): string | null {
   if (!dto.discount) return null;
+
+  let effectivePct: number;
+
   if (dto.discount.type === "PERCENT") {
-    return `Includes line discount ${dto.discount.value}%`;
+    effectivePct = Math.round(parseFloat(dto.discount.value));
+  } else {
+    // FIXED: the snapshot unit_price_gross is the post-discount price.
+    // Reconstruct the original: original = discounted + fixed_amount.
+    const discountedGross = parseFloat(dto.unit_price_gross ?? dto.unit_price);
+    const fixedAmount = parseFloat(dto.discount.value);
+    const originalGross = discountedGross + fixedAmount;
+    if (!isFinite(originalGross) || originalGross <= 0) return null;
+    effectivePct = Math.round((fixedAmount / originalGross) * 100);
   }
-  return `Includes line discount ${dto.discount.value}`;
+
+  return `Discount applied: ${effectivePct}%`;
 }
 
 function mapItem(dto: OrderItemDto): OrderItem {
