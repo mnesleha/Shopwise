@@ -38,3 +38,9 @@ export const productCard = (productId: string | number) =>
 // ── Order ────────────────────────────────────────────────────────────────────
 export const ORDER_TITLE = "order-title";
 export const ORDER_STATUS = "order-status";
+export const ORDER_ITEMS_TABLE = "order-items-table";
+export const VAT_BREAKDOWN = "vat-breakdown";
+export const ORDER_SUMMARY = "order-summary";
+export const ITEM_DISCOUNT_NOTE = "item-discount-note";
+/** Returns the testid for a specific VAT rate row, e.g. vatBreakdownRow("10.00") */
+export const vatBreakdownRow = (rate: string) => `vat-row-${rate}`;

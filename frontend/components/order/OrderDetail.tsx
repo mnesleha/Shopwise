@@ -8,7 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
+// ---------------------------------------------------------------------------
 // Types
+// ---------------------------------------------------------------------------
+
 type SupplierInfo = {
   name: string;
   addressLine1: string;
@@ -44,14 +47,42 @@ type MoneyLine = {
   amount: string; // formatted decimal string
 };
 
+type VatBreakdownLine = {
+  /** Tax rate percentage, e.g. "10.00" */
+  taxRate: string;
+  /** Sum of net line totals for this rate */
+  taxBase: string;
+  /** Sum of VAT amounts for this rate */
+  vatAmount: string;
+  /** Sum of gross line totals for this rate */
+  totalInclVat: string;
+};
+
 type OrderItem = {
   id: string;
   productId: string;
   productName: string;
   productUrl?: string;
   quantity: number;
+  /** Gross unit price — backward-compat legacy field */
   unitPrice: string;
+  /** Net unit price excl. VAT — null for pre-snapshot / unmigrated products */
+  unitPriceNet?: string | null;
+  /** Gross unit price incl. VAT */
+  unitPriceGross?: string | null;
+  /** Per-unit VAT amount */
+  taxAmount?: string | null;
+  /** Effective tax rate percentage, e.g. "10.00" */
+  taxRate?: string | null;
+  /** Gross line total — backward-compat legacy field */
   lineTotal: string;
+  /** Net line total */
+  lineTotalNet?: string | null;
+  /** Gross line total (preferred for invoice display) */
+  lineTotalGross?: string | null;
+  /** Neutral inline note for line-level discount, e.g. "Includes line discount 10%" */
+  discountNote?: string | null;
+  /** Raw discount — kept for legacy callers */
   discount?: {
     type: "FIXED" | "PERCENT";
     value: string;
@@ -69,18 +100,23 @@ type OrderViewModel = {
   // Shipping & payment placeholders (may be mocked today)
   shippingMethod?: string; // e.g. "PPL"
   paymentMethod?: string; // e.g. "Bank transfer (simulated)"
-  barcodeValue?: string; // optional text rendered as a pseudo-barcode block
+  barcodeValue?: string;
 
   items: OrderItem[];
 
-  // Totals block
-  subtotal?: string;
-  discountTotal?: string;
-  shippingFee?: string;
-  taxTotal?: string; // optional, show "Tax included" note if not provided
-  total: string;
+  // Phase 3 order-level totals snapshot
+  subtotalNet?: string | null;
+  subtotalGross?: string | null;
+  totalTax?: string | null;
+  totalDiscount?: string | null;
+  currency?: string;
+  vatBreakdown?: VatBreakdownLine[] | null;
 
-  // Optional: breakdown rows shown in summary card
+  /** Gross total — backward-compat field */
+  total: string;
+  /** @deprecated Use subtotalNet / subtotalGross / totalTax instead */
+  subtotal?: string;
+  /** @deprecated Use vatBreakdown instead */
   totalsBreakdown?: MoneyLine[];
 };
 
@@ -92,7 +128,10 @@ interface OrderDetailProps {
   onDownloadPdf?: () => void;
 }
 
-// Status badge styling
+// ---------------------------------------------------------------------------
+// Status badge
+// ---------------------------------------------------------------------------
+
 function getStatusBadgeVariant(
   status: string,
 ): "default" | "secondary" | "destructive" | "outline" {
@@ -114,12 +153,14 @@ function getStatusLabel(status: string): string {
   return labels[status.toUpperCase()] || status;
 }
 
+// ---------------------------------------------------------------------------
 // Pseudo-barcode visual (styled monospace block)
+// ---------------------------------------------------------------------------
+
 function PseudoBarcode({ value }: { value: string }) {
   return (
     <div className="flex flex-col items-center gap-1">
       <div className="flex gap-px">
-        {/* Generate visual bars based on character codes */}
         {value.split("").map((char, i) => {
           const code = char.charCodeAt(0);
           const width = (code % 3) + 1;
@@ -138,7 +179,10 @@ function PseudoBarcode({ value }: { value: string }) {
   );
 }
 
+// ---------------------------------------------------------------------------
 // Address display component
+// ---------------------------------------------------------------------------
+
 function AddressBlock({
   title,
   info,
@@ -210,16 +254,14 @@ function AddressBlock({
   );
 }
 
-// Order items table
-function ItemsTable({ items }: { items: OrderItem[] }) {
-  const formatDiscount = (discount: OrderItem["discount"]) => {
-    if (!discount) return "—";
-    if (discount.type === "FIXED") return `- $${discount.value}`;
-    return `- ${discount.value}%`;
-  };
+// ---------------------------------------------------------------------------
+// Invoice items table
+// Columns: Qty | Product | Unit excl. VAT | VAT rate | VAT | Total incl. VAT
+// ---------------------------------------------------------------------------
 
+function ItemsTable({ items }: { items: OrderItem[] }) {
   return (
-    <Card>
+    <Card data-testid="order-items-table">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
           Order Items
@@ -237,48 +279,74 @@ function ItemsTable({ items }: { items: OrderItem[] }) {
                   Product
                 </th>
                 <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                  Unit Price
+                  Unit excl. VAT
                 </th>
                 <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                  Discount
+                  VAT rate
                 </th>
                 <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                  Line Total
+                  VAT
+                </th>
+                <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                  Total incl. VAT
                 </th>
               </tr>
             </thead>
             <tbody>
-              {items.map((item) => (
-                <tr
-                  key={item.id}
-                  className="border-b border-border last:border-0"
-                >
-                  <td className="px-4 py-3 text-foreground">{item.quantity}</td>
-                  <td className="px-4 py-3">
-                    {item.productUrl ? (
-                      <a
-                        href={item.productUrl}
-                        className="text-primary hover:underline font-medium"
-                      >
-                        {item.productName}
-                      </a>
-                    ) : (
-                      <span className="text-foreground font-medium">
-                        {item.productName}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right text-muted-foreground">
-                    ${item.unitPrice}
-                  </td>
-                  <td className="px-4 py-3 text-right text-muted-foreground">
-                    {formatDiscount(item.discount)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-foreground font-medium">
-                    ${item.lineTotal}
-                  </td>
-                </tr>
-              ))}
+              {items.map((item) => {
+                const displayUnitNet = item.unitPriceNet ?? item.unitPrice;
+                const displayTaxRate = item.taxRate ?? "0.00";
+                const displayTaxAmt = item.taxAmount ?? "0.00";
+                const displayLineGross =
+                  item.lineTotalGross ?? item.lineTotal;
+                const currency = "€"; // TODO: pass currency from order VM
+                return (
+                  <tr
+                    key={item.id}
+                    className="border-b border-border last:border-0"
+                  >
+                    <td className="px-4 py-3 text-foreground">
+                      {item.quantity}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div>
+                        {item.productUrl ? (
+                          <a
+                            href={item.productUrl}
+                            className="text-foreground font-medium hover:underline"
+                          >
+                            {item.productName}
+                          </a>
+                        ) : (
+                          <span className="text-foreground font-medium">
+                            {item.productName}
+                          </span>
+                        )}
+                        {item.discountNote && (
+                          <p
+                            className="text-xs text-muted-foreground mt-0.5"
+                            data-testid="item-discount-note"
+                          >
+                            {item.discountNote}
+                          </p>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right text-muted-foreground">
+                      {currency}{displayUnitNet}
+                    </td>
+                    <td className="px-4 py-3 text-right text-muted-foreground">
+                      {displayTaxRate}%
+                    </td>
+                    <td className="px-4 py-3 text-right text-muted-foreground">
+                      {currency}{displayTaxAmt}
+                    </td>
+                    <td className="px-4 py-3 text-right text-foreground font-medium">
+                      {currency}{displayLineGross}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -287,55 +355,155 @@ function ItemsTable({ items }: { items: OrderItem[] }) {
   );
 }
 
-// Totals summary
-function TotalsSummary({ order }: { order: OrderViewModel }) {
-  // Use totalsBreakdown if provided, otherwise derive from available fields
-  const breakdownRows: MoneyLine[] = order.totalsBreakdown ?? [
-    ...(order.subtotal ? [{ label: "Subtotal", amount: order.subtotal }] : []),
-    ...(order.shippingFee
-      ? [{ label: "Shipping", amount: order.shippingFee }]
-      : []),
-    ...(order.discountTotal
-      ? [{ label: "Discount", amount: `-${order.discountTotal}` }]
-      : []),
-    ...(order.taxTotal ? [{ label: "Tax", amount: order.taxTotal }] : []),
-  ];
+// ---------------------------------------------------------------------------
+// VAT breakdown section
+// Rows: tax rate | tax base | VAT amount | total incl. VAT
+// ---------------------------------------------------------------------------
+
+function VatBreakdownTable({ rows }: { rows: VatBreakdownLine[] }) {
+  const currency = "€"; // TODO: pass currency from order VM
+  const totals = rows.reduce(
+    (acc, row) => ({
+      taxBase: (parseFloat(acc.taxBase) + parseFloat(row.taxBase)).toFixed(2),
+      vatAmount:
+        (parseFloat(acc.vatAmount) + parseFloat(row.vatAmount)).toFixed(2),
+      totalInclVat:
+        (
+          parseFloat(acc.totalInclVat) + parseFloat(row.totalInclVat)
+        ).toFixed(2),
+    }),
+    { taxBase: "0.00", vatAmount: "0.00", totalInclVat: "0.00" },
+  );
 
   return (
-    <Card>
+    <Card data-testid="vat-breakdown">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          VAT Breakdown
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/50">
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                  VAT rate
+                </th>
+                <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                  Tax base
+                </th>
+                <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                  VAT amount
+                </th>
+                <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                  Total incl. VAT
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr
+                  key={row.taxRate}
+                  className="border-b border-border last:border-0"
+                  data-testid={`vat-row-${row.taxRate}`}
+                >
+                  <td className="px-4 py-3 text-foreground">{row.taxRate}%</td>
+                  <td className="px-4 py-3 text-right text-muted-foreground">
+                    {currency}{row.taxBase}
+                  </td>
+                  <td className="px-4 py-3 text-right text-muted-foreground">
+                    {currency}{row.vatAmount}
+                  </td>
+                  <td className="px-4 py-3 text-right text-foreground font-medium">
+                    {currency}{row.totalInclVat}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="border-t border-border bg-muted/50">
+                <td className="px-4 py-3 font-semibold text-foreground">
+                  Total
+                </td>
+                <td className="px-4 py-3 text-right font-semibold text-foreground">
+                  {currency}{totals.taxBase}
+                </td>
+                <td className="px-4 py-3 text-right font-semibold text-foreground">
+                  {currency}{totals.vatAmount}
+                </td>
+                <td className="px-4 py-3 text-right font-bold text-foreground">
+                  {currency}{totals.totalInclVat}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Order summary
+// Shows: Subtotal excl. VAT | VAT | Total incl. VAT
+// No line-level discount row: discounts are already reflected in item prices.
+// ---------------------------------------------------------------------------
+
+function OrderSummary({ order }: { order: OrderViewModel }) {
+  const currency = "€"; // TODO: pass from order VM
+  const subtotalNet = order.subtotalNet ?? null;
+  const totalTax = order.totalTax ?? null;
+  const total = order.subtotalGross ?? order.total;
+
+  return (
+    <Card data-testid="order-summary">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
           Order Summary
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
-        {breakdownRows.map((row, index) => (
-          <div key={index} className="flex justify-between text-sm">
-            <span className="text-muted-foreground">{row.label}</span>
+        {subtotalNet !== null && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Subtotal excl. VAT</span>
             <span className="text-foreground">
-              {row.amount.startsWith("-") ? row.amount : `$${row.amount}`}
+              {currency}{subtotalNet}
             </span>
           </div>
-        ))}
+        )}
 
-        {!order.taxTotal && (
+        {totalTax !== null && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">VAT</span>
+            <span className="text-foreground">
+              {currency}{totalTax}
+            </span>
+          </div>
+        )}
+
+        {subtotalNet === null && totalTax === null && (
           <p className="text-xs text-muted-foreground italic">
-            Tax included in price
+            VAT included in price
           </p>
         )}
 
         <Separator className="my-2" />
 
         <div className="flex justify-between">
-          <span className="text-foreground font-semibold">Total</span>
+          <span className="text-foreground font-semibold">Total incl. VAT</span>
           <span className="text-lg font-bold text-foreground">
-            ${order.total}
+            {currency}{total}
           </span>
         </div>
       </CardContent>
     </Card>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Main OrderDetail component
+// ---------------------------------------------------------------------------
 
 export function OrderDetail({
   order,
@@ -345,6 +513,10 @@ export function OrderDetail({
   onDownloadPdf,
 }: OrderDetailProps) {
   const barcodeValue = order.barcodeValue || order.orderNumber;
+  const hasVatBreakdown =
+    order.vatBreakdown !== null &&
+    order.vatBreakdown !== undefined &&
+    order.vatBreakdown.length > 0;
 
   return (
     <div className="mx-auto max-w-4xl print:max-w-none">
@@ -461,10 +633,17 @@ export function OrderDetail({
         {/* Items table */}
         <ItemsTable items={order.items} />
 
-        {/* Totals summary */}
+        {/* VAT breakdown (only when backend provides it) */}
+        {hasVatBreakdown && (
+          <div className="mt-6">
+            <VatBreakdownTable rows={order.vatBreakdown!} />
+          </div>
+        )}
+
+        {/* Order summary */}
         <div className="mt-6 flex justify-end">
           <div className="w-full max-w-sm">
-            <TotalsSummary order={order} />
+            <OrderSummary order={order} />
           </div>
         </div>
 
@@ -506,4 +685,6 @@ export type {
   CustomerInfo,
   OrderItem,
   MoneyLine,
+  VatBreakdownLine,
 };
+

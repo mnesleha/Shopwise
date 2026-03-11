@@ -850,6 +850,24 @@ Notes:
                         else:
                             discount_type = None
                             discount_value = None
+                        # Phase 3 snapshot fields — populated from pricing pipeline.
+                        snap_unit_price_net = unit_pricing.discounted.net.amount
+                        snap_unit_price_gross = unit_gross
+                        snap_tax_amount = unit_pricing.discounted.tax.amount
+                        snap_tax_rate = unit_pricing.discounted.tax_rate
+                        snap_promo_code = unit_pricing.discount.promotion_code
+                        snap_promo_type = unit_pricing.discount.promotion_type
+                        snap_promo_discount_gross = (
+                            unit_pricing.discount.amount_gross.amount
+                            if unit_pricing.discount.promotion_type
+                            else None
+                        )
+                        # Product + line total snapshots
+                        snap_product_name = item.product.name
+                        snap_line_total_net = (
+                            snap_unit_price_net * Decimal(str(line.quantity))
+                        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                        snap_line_total_gross = line_total
                     else:
                         # Unmigrated product (price_net_amount not set): fall
                         # back to price_at_add_time as the gross unit price
@@ -861,6 +879,18 @@ Notes:
                         ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                         discount_type = None
                         discount_value = None
+                        # Phase 3 snapshot fields — unavailable for unmigrated products.
+                        snap_unit_price_net = None
+                        snap_unit_price_gross = None
+                        snap_tax_amount = None
+                        snap_tax_rate = None
+                        snap_promo_code = None
+                        snap_promo_type = None
+                        snap_promo_discount_gross = None
+                        # Product + line total snapshots (partial for unmigrated)
+                        snap_product_name = item.product.name
+                        snap_line_total_net = None
+                        snap_line_total_gross = line_total
 
                     OrderItem.objects.create(
                         order=order,
@@ -871,7 +901,39 @@ Notes:
                         line_total_at_order_time=line_total,
                         applied_discount_type_at_order_time=discount_type,
                         applied_discount_value_at_order_time=discount_value,
+                        # Phase 3 snapshot fields
+                        unit_price_net_at_order_time=snap_unit_price_net,
+                        unit_price_gross_at_order_time=snap_unit_price_gross,
+                        tax_amount_at_order_time=snap_tax_amount,
+                        tax_rate_at_order_time=snap_tax_rate,
+                        promotion_code_at_order_time=snap_promo_code,
+                        promotion_type_at_order_time=snap_promo_type,
+                        promotion_discount_gross_at_order_time=snap_promo_discount_gross,
+                        # Phase 3 Slice 5: product name + line total snapshots
+                        product_name_at_order_time=snap_product_name,
+                        line_total_net_at_order_time=snap_line_total_net,
+                        line_total_gross_at_order_time=snap_line_total_gross,
                     )
+
+                # Phase 3: persist order-level totals snapshot.
+                _subtotal_gross = cart_pricing.subtotal_discounted.amount
+                _total_tax = cart_pricing.total_tax.amount
+                order.subtotal_gross = _subtotal_gross
+                order.subtotal_net = (
+                    _subtotal_gross - _total_tax
+                ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                order.total_tax = _total_tax
+                order.total_discount = cart_pricing.total_discount.amount
+                order.currency = cart_pricing.currency
+                order.save(
+                    update_fields=[
+                        "subtotal_net",
+                        "subtotal_gross",
+                        "total_tax",
+                        "total_discount",
+                        "currency",
+                    ]
+                )
 
                 reserve_for_checkout(order=order, items=reservation_items)
 
