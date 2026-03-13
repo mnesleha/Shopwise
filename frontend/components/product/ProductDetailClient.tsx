@@ -37,9 +37,10 @@ export default function ProductDetailClient({ product }: Props) {
     async (productId: string) => {
       await addCartItem({ productId: Number(productId), quantity: 1 });
       await refreshCart();
-      router.push("/cart");
+      // No redirect — the user stays on the product page.
+      // The cart badge updates as feedback.
     },
-    [router, refreshCart],
+    [refreshCart],
   );
 
   return (

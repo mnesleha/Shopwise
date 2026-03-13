@@ -19,8 +19,8 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CartDetail } from "@/components/cart/CartDetail";
 import { renderWithProviders } from "../helpers/render";
-import { makeCart, makeCartItem } from "../helpers/fixtures";
-import { CART_CHECKOUT_BUTTON, cartItem } from "../helpers/testIds";
+import { makeCart, makeCartItem, type CartThresholdRewardFixture } from "../helpers/fixtures";
+import { CART_CHECKOUT_BUTTON, CART_THRESHOLD_REWARD, cartItem } from "../helpers/testIds";
 
 function renderCartDetail(
   overrides?: Partial<React.ComponentProps<typeof CartDetail>>,
@@ -280,6 +280,129 @@ describe("CartDetail", () => {
 
       expect(screen.queryByTestId("original-price")).not.toBeInTheDocument();
       expect(screen.queryByTestId("discount-badge")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("order-level discount display (Phase 4 / Slice 3)", () => {
+    it("renders the order discount row when orderDiscount is present", () => {
+      const cart = makeCart({
+        orderDiscount: {
+          promotionName: "Spring Discount",
+          amount: "10.00",
+          totalGrossAfter: "90.00",
+          totalTaxAfter: "16.83",
+        },
+      });
+      renderCartDetail({ cart });
+      expect(screen.getByTestId("order-discount-row")).toBeInTheDocument();
+    });
+
+    it("renders the order discount amount in the order discount row", () => {
+      const cart = makeCart({
+        orderDiscount: {
+          promotionName: "Spring Discount",
+          amount: "10.00",
+          totalGrossAfter: "90.00",
+          totalTaxAfter: "16.83",
+        },
+      });
+      renderCartDetail({ cart });
+      expect(screen.getByTestId("order-discount-amount")).toHaveTextContent(
+        "10.00",
+      );
+    });
+
+    it("renders 'Order discount' label in the discount row", () => {
+      const cart = makeCart({
+        orderDiscount: {
+          promotionName: "Summer Sale",
+          amount: "5.00",
+          totalGrossAfter: "75.00",
+          totalTaxAfter: "14.02",
+        },
+      });
+      renderCartDetail({ cart });
+      expect(screen.getByText(/order discount/i)).toBeInTheDocument();
+    });
+
+    it("does not render the order discount row when orderDiscount is absent", () => {
+      const cart = makeCart({ orderDiscount: undefined });
+      renderCartDetail({ cart });
+      expect(screen.queryByTestId("order-discount-row")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("threshold reward banner (Phase 4 / Slice 4)", () => {
+    function makeThresholdReward(
+      overrides?: Partial<CartThresholdRewardFixture>,
+    ): CartThresholdRewardFixture {
+      return {
+        isUnlocked: false,
+        promotionName: "Free Shipping",
+        remaining: "40.00",
+        threshold: "100.00",
+        ...overrides,
+      };
+    }
+
+    it("renders the banner with data-state=pending when isUnlocked is false", () => {
+      const cart = makeCart({ thresholdReward: makeThresholdReward() });
+      renderCartDetail({ cart });
+      const banner = screen.getByTestId(CART_THRESHOLD_REWARD);
+      expect(banner).toBeInTheDocument();
+      expect(banner).toHaveAttribute("data-state", "pending");
+    });
+
+    it("shows the remaining amount in the pending state", () => {
+      const cart = makeCart({
+        currency: "EUR",
+        thresholdReward: makeThresholdReward({ remaining: "25.50" }),
+      });
+      renderCartDetail({ cart });
+      expect(screen.getByTestId(CART_THRESHOLD_REWARD)).toHaveTextContent(
+        "25.50",
+      );
+    });
+
+    it("shows the promotion name in the pending state", () => {
+      const cart = makeCart({
+        thresholdReward: makeThresholdReward({ promotionName: "Gold Tier" }),
+      });
+      renderCartDetail({ cart });
+      expect(screen.getByTestId(CART_THRESHOLD_REWARD)).toHaveTextContent(
+        "Gold Tier",
+      );
+    });
+
+    it("renders the banner with data-state=unlocked when isUnlocked is true", () => {
+      const cart = makeCart({
+        thresholdReward: makeThresholdReward({ isUnlocked: true, remaining: "0.00" }),
+      });
+      renderCartDetail({ cart });
+      const banner = screen.getByTestId(CART_THRESHOLD_REWARD);
+      expect(banner).toHaveAttribute("data-state", "unlocked");
+    });
+
+    it("shows '[name] has been applied.' text in the unlocked state", () => {
+      const cart = makeCart({
+        thresholdReward: makeThresholdReward({
+          isUnlocked: true,
+          remaining: "0.00",
+          promotionName: "Free Shipping",
+        }),
+      });
+      renderCartDetail({ cart });
+      expect(screen.getByTestId(CART_THRESHOLD_REWARD)).toHaveTextContent(
+        "Free Shipping has been applied.",
+      );
+    });
+
+    it("does not render the banner when thresholdReward is absent", () => {
+      const cart = makeCart({ thresholdReward: undefined });
+      renderCartDetail({ cart });
+      expect(
+        screen.queryByTestId(CART_THRESHOLD_REWARD),
+      ).not.toBeInTheDocument();
     });
   });
 });

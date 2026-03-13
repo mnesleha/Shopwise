@@ -12,9 +12,12 @@
  * - Print button is NOT rendered when onPrint is not provided
  * - Optional fields (createdAt, shippingMethod, paymentMethod) render when provided
  * - Invoice items table: Qty | Product | Unit excl. VAT | VAT rate | VAT | Total incl. VAT
- * - Neutral discount note below product name (no marketing badge)
+ * - Neutral line discount note below product name ("Line discount: N%")
  * - VAT breakdown section renders when vatBreakdown data provided
- * - Order summary: Subtotal excl. VAT / VAT / Total incl. VAT
+ * - Order summary: Tax base / VAT / Total incl. VAT
+ * - Order summary: explicit order-discount row when orderDiscountGross > 0
+ * - VAT breakdown: explanatory note when order-level discount exists (note moved from summary)
+ * - Summary does NOT render any "additional discount" note (removed in Phase 4 polish)
  */
 import { describe, it, expect, vi } from "vitest";
 import { screen, within } from "@testing-library/react";
@@ -29,6 +32,8 @@ import {
   VAT_BREAKDOWN,
   ORDER_SUMMARY,
   ITEM_DISCOUNT_NOTE,
+  ORDER_DISCOUNT_ROW,
+  VAT_BREAKDOWN_ORDER_DISCOUNT_NOTE,
   vatBreakdownRow,
 } from "../helpers/testIds";
 
@@ -311,11 +316,11 @@ describe("OrderDetail", () => {
   describe("discount note", () => {
     it("renders the discount note element when discountNote is provided", () => {
       const order = makeOrderViewModel({
-        items: [makeOrderItem({ discountNote: "Discount applied: 10%" })],
+        items: [makeOrderItem({ discountNote: "Line discount: 10%" })],
       });
       renderOrderDetail({ order });
       const note = screen.getByTestId(ITEM_DISCOUNT_NOTE);
-      expect(note).toHaveTextContent("Discount applied: 10%");
+      expect(note).toHaveTextContent("Line discount: 10%");
     });
 
     it("does NOT render the discount note element when discountNote is absent", () => {
@@ -330,7 +335,7 @@ describe("OrderDetail", () => {
       const order = makeOrderViewModel({
         items: [
           makeOrderItem({
-            discountNote: "Discount applied: 10%",
+            discountNote: "Line discount: 10%",
             discount: { type: "PERCENT", value: "10" },
           }),
         ],
@@ -340,26 +345,25 @@ describe("OrderDetail", () => {
       expect(screen.queryByText(/–10%/)).toBeNull();
     });
 
-    it("percent-discounted item shows rounded percentage note", () => {
-      // PERCENT 30% → "Discount applied: 30%"
+    it("percent-discounted item shows 'Line discount: N%' note", () => {
       const order = makeOrderViewModel({
-        items: [makeOrderItem({ discountNote: "Discount applied: 30%" })],
+        items: [makeOrderItem({ discountNote: "Line discount: 30%" })],
       });
       renderOrderDetail({ order });
       const note = screen.getByTestId(ITEM_DISCOUNT_NOTE);
-      expect(note).toHaveTextContent("Discount applied: 30%");
+      expect(note).toHaveTextContent("Line discount: 30%");
       // No raw fixed-amount text, no promotion code
       expect(note.textContent).not.toMatch(/\d+\.\d{2}(?!%)/);
     });
 
-    it("fixed-discounted item shows rounded effective percentage note", () => {
-      // FIXED discount derived to 20% → "Discount applied: 20%"
+    it("fixed-discounted item shows 'Line discount: N%' note", () => {
+      // FIXED discount derived to 20% → "Line discount: 20%"
       const order = makeOrderViewModel({
-        items: [makeOrderItem({ discountNote: "Discount applied: 20%" })],
+        items: [makeOrderItem({ discountNote: "Line discount: 20%" })],
       });
       renderOrderDetail({ order });
       const note = screen.getByTestId(ITEM_DISCOUNT_NOTE);
-      expect(note).toHaveTextContent("Discount applied: 20%");
+      expect(note).toHaveTextContent("Line discount: 20%");
       // No raw fixed-amount text
       expect(note.textContent).not.toMatch(/\d+\.\d{2}(?!%)/);
     });
@@ -492,7 +496,7 @@ describe("OrderDetail", () => {
       expect(within(summary).getByText("Total incl. VAT")).toBeInTheDocument();
     });
 
-    it("renders subtotal excl. VAT row when subtotalNet is provided", () => {
+    it("renders tax base row when subtotalNet is provided", () => {
       const order = makeOrderViewModel({
         subtotalNet: "54.53",
         totalTax: "5.45",
@@ -500,7 +504,7 @@ describe("OrderDetail", () => {
       });
       renderOrderDetail({ order });
       const summary = screen.getByTestId(ORDER_SUMMARY);
-      expect(summary).toHaveTextContent("Subtotal excl. VAT");
+      expect(summary).toHaveTextContent("Tax base");
       expect(summary).toHaveTextContent("€54.53");
     });
 
@@ -534,25 +538,64 @@ describe("OrderDetail", () => {
       expect(screen.queryByText("VAT included in price")).toBeNull();
     });
 
-    it("does NOT render a standalone Discount row in the summary", () => {
+    it("renders order discount row when orderDiscountGross is > 0", () => {
       const order = makeOrderViewModel({
-        subtotalNet: "54.53",
-        totalTax: "5.45",
-        totalDiscount: "5.00",
+        subtotalNet: "49.53",
+        totalTax: "4.95",
+        subtotalGross: "59.98",
+        orderDiscountGross: "5.00",
+        total: "54.98",
+      });
+      renderOrderDetail({ order });
+      const row = screen.getByTestId(ORDER_DISCOUNT_ROW);
+      expect(row).toBeInTheDocument();
+      // Must show the discount amount (negative sense)
+      expect(row).toHaveTextContent("€5.00");
+    });
+
+    it("renders 'Subtotal incl. VAT (after line discounts)' row when order discount present", () => {
+      const order = makeOrderViewModel({
+        subtotalGross: "59.98",
+        orderDiscountGross: "5.00",
+        total: "54.98",
       });
       renderOrderDetail({ order });
       const summary = screen.getByTestId(ORDER_SUMMARY);
-      // No "Discount" label in the summary card
-      expect(summary.textContent).not.toMatch(/\bDiscount\b/);
+      expect(summary).toHaveTextContent("Subtotal incl. VAT (after line discounts)");
+      expect(within(summary).getByText("€59.98")).toBeInTheDocument();
     });
 
-    it("renders the total using subtotalGross when provided", () => {
+    it("does NOT render order discount row when orderDiscountGross is null", () => {
+      const order = makeOrderViewModel({ orderDiscountGross: null });
+      renderOrderDetail({ order });
+      expect(screen.queryByTestId(ORDER_DISCOUNT_ROW)).toBeNull();
+    });
+
+    it("does NOT render order discount row when orderDiscountGross is '0.00'", () => {
+      const order = makeOrderViewModel({ orderDiscountGross: "0.00" });
+      renderOrderDetail({ order });
+      expect(screen.queryByTestId(ORDER_DISCOUNT_ROW)).toBeNull();
+    });
+
+    it("does NOT render 'Subtotal incl. VAT (after line discounts)' when no order discount", () => {
+      const order = makeOrderViewModel({ orderDiscountGross: null });
+      renderOrderDetail({ order });
+      const summary = screen.getByTestId(ORDER_SUMMARY);
+      expect(summary.textContent).not.toContain("after line discounts");
+    });
+
+    it("total incl. VAT uses order.total (after all discounts)", () => {
       const order = makeOrderViewModel({
         subtotalGross: "99.99",
-        total: "88.88", // subtotalGross takes precedence
+        orderDiscountGross: "11.11",
+        total: "88.88",
       });
       renderOrderDetail({ order });
-      expect(screen.getByText("€99.99")).toBeInTheDocument();
+      const summary = screen.getByTestId(ORDER_SUMMARY);
+      // Total incl. VAT = order.total (final after order discount)
+      expect(within(summary).getByText("€88.88")).toBeInTheDocument();
+      // subtotalGross is shown as the pre-discount subtotal row
+      expect(within(summary).getByText("€99.99")).toBeInTheDocument();
     });
 
     it("falls back to total when subtotalGross is absent", () => {
@@ -564,6 +607,98 @@ describe("OrderDetail", () => {
       // Scope to summary to avoid matching the items table line total
       const summary = screen.getByTestId(ORDER_SUMMARY);
       expect(within(summary).getByText("€59.98")).toBeInTheDocument();
+    });
+  });
+
+  // ── VAT breakdown — order-level discount explanatory note ────────────────
+
+  describe("VAT breakdown — order-level discount note", () => {
+    const vatBreakdownWithDiscount = [
+      {
+        taxRate: "10.00",
+        taxBase: "90.00",
+        vatAmount: "9.00",
+        totalInclVat: "99.00",
+      },
+    ];
+
+    it("renders the note inside the VAT breakdown card when orderDiscountGross > 0", () => {
+      const order = makeOrderViewModel({
+        orderDiscountGross: "5.00",
+        vatBreakdown: vatBreakdownWithDiscount,
+      });
+      renderOrderDetail({ order });
+      const breakdown = screen.getByTestId(VAT_BREAKDOWN);
+      expect(
+        within(breakdown).getByTestId(VAT_BREAKDOWN_ORDER_DISCOUNT_NOTE),
+      ).toBeInTheDocument();
+    });
+
+    it("note explains proportional allocation across VAT rates", () => {
+      const order = makeOrderViewModel({
+        orderDiscountGross: "5.00",
+        vatBreakdown: vatBreakdownWithDiscount,
+      });
+      renderOrderDetail({ order });
+      const note = screen.getByTestId(VAT_BREAKDOWN_ORDER_DISCOUNT_NOTE);
+      expect(note.textContent).toMatch(/proportionally allocated/i);
+      expect(note.textContent).toMatch(/VAT rates/i);
+    });
+
+    it("note text is accounting-neutral — no marketing language", () => {
+      const order = makeOrderViewModel({
+        orderDiscountGross: "3.00",
+        vatBreakdown: vatBreakdownWithDiscount,
+      });
+      renderOrderDetail({ order });
+      const note = screen.getByTestId(VAT_BREAKDOWN_ORDER_DISCOUNT_NOTE);
+      expect(note.textContent).not.toMatch(/sale|promo|coupon|congrats|qualified/i);
+      expect(note.textContent).not.toContain("!");
+    });
+
+    it("does NOT render the note when orderDiscountGross is null", () => {
+      const order = makeOrderViewModel({
+        orderDiscountGross: null,
+        vatBreakdown: vatBreakdownWithDiscount,
+      });
+      renderOrderDetail({ order });
+      expect(
+        screen.queryByTestId(VAT_BREAKDOWN_ORDER_DISCOUNT_NOTE),
+      ).toBeNull();
+    });
+
+    it("does NOT render the note when orderDiscountGross is '0.00'", () => {
+      const order = makeOrderViewModel({
+        orderDiscountGross: "0.00",
+        vatBreakdown: vatBreakdownWithDiscount,
+      });
+      renderOrderDetail({ order });
+      expect(
+        screen.queryByTestId(VAT_BREAKDOWN_ORDER_DISCOUNT_NOTE),
+      ).toBeNull();
+    });
+
+    it("does NOT render the note when orderDiscountGross is absent (default)", () => {
+      const order = makeOrderViewModel({
+        vatBreakdown: vatBreakdownWithDiscount,
+      });
+      renderOrderDetail({ order });
+      expect(
+        screen.queryByTestId(VAT_BREAKDOWN_ORDER_DISCOUNT_NOTE),
+      ).toBeNull();
+    });
+
+    it("does NOT render the order-summary-level 'additional discount' note", () => {
+      // The old order-discount-note inside order summary must no longer exist.
+      const order = makeOrderViewModel({
+        orderDiscountGross: "5.00",
+        vatBreakdown: vatBreakdownWithDiscount,
+      });
+      renderOrderDetail({ order });
+      const summary = screen.getByTestId(ORDER_SUMMARY);
+      expect(
+        within(summary).queryByTestId("order-discount-note"),
+      ).toBeNull();
     });
   });
 });

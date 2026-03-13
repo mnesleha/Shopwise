@@ -32,7 +32,7 @@ Usage
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal, ROUND_HALF_UP
 from typing import TYPE_CHECKING, List, Optional
 
@@ -41,6 +41,9 @@ from prices import Money
 if TYPE_CHECKING:
     from carts.models import Cart, CartItem
     from products.services.pricing import ProductPricingResult
+    from discounts.services.auto_apply_resolver import (
+        ThresholdRewardProgress as _ThresholdRewardProgress,
+    )
 
 
 _QUANTIZE = Decimal("0.01")
@@ -49,6 +52,32 @@ _QUANTIZE = Decimal("0.01")
 # ---------------------------------------------------------------------------
 # Result types
 # ---------------------------------------------------------------------------
+
+
+@dataclass
+class OrderDiscountSummary:
+    """Summary of the auto-applied order-level discount in a cart pricing result.
+
+    Attributes
+    ----------
+    gross_reduction:
+        Total gross discount amount applied to the cart (≥ 0).
+    promotion_code:
+        The ``code`` of the applied ``OrderPromotion``.
+    promotion_name:
+        The human-readable ``name`` of the applied ``OrderPromotion``.
+    total_gross_after:
+        Cart total gross *after* the order-level discount has been deducted.
+    total_tax_after:
+        Cart total VAT *after* the order-level discount has been deducted
+        (VAT is re-derived proportionally by the allocation engine).
+    """
+
+    gross_reduction: Money
+    promotion_code: str
+    promotion_name: str
+    total_gross_after: Money
+    total_tax_after: Money
 
 
 @dataclass
@@ -119,6 +148,17 @@ class CartTotalsResult:
 
     item_count: int
     """Total units in the cart (sum of quantities), excluding unmigrated lines."""
+
+    order_discount: Optional[OrderDiscountSummary] = field(default=None)
+    """Order-level discount resolved from an AUTO_APPLY promotion, or ``None``."""
+
+    threshold_reward: Optional["_ThresholdRewardProgress"] = field(default=None)
+    """
+    Progress towards a threshold-based AUTO_APPLY reward, or ``None`` when no
+    such promotion exists.  Populated by
+    :func:`get_cart_pricing_with_order_discount` via
+    :func:`~discounts.services.auto_apply_resolver.resolve_threshold_reward_progress`.
+    """
 
 
 # ---------------------------------------------------------------------------
@@ -200,3 +240,101 @@ def get_cart_pricing(cart: "Cart") -> CartTotalsResult:
         currency=currency,
         item_count=item_count,
     )
+
+
+def get_cart_pricing_with_order_discount(cart: "Cart") -> CartTotalsResult:
+    """Return cart pricing enriched with an auto-applied order-level discount.
+
+    Wraps :func:`get_cart_pricing` and then attempts to resolve an
+    ``AUTO_APPLY`` ``OrderPromotion``.  When a promotion wins, the
+    ``order_discount`` field on the returned ``CartTotalsResult`` is populated
+    with the VAT-correct breakdown; otherwise the result is returned unchanged.
+
+    The cart GET endpoint and the checkout flow should both call this function
+    so that the order-level discount is consistently reflected everywhere.
+
+    Parameters
+    ----------
+    cart:
+        An active ``Cart`` instance.
+    """
+    # Lazy imports to avoid circular dependencies at module load time.
+    from discounts.services.auto_apply_resolver import (  # noqa: PLC0415
+        resolve_auto_apply_order_promotion,
+        resolve_threshold_reward_progress,
+    )
+    from discounts.services.order_discount_allocation import (  # noqa: PLC0415
+        allocate_order_discount,
+        OrderDiscountInput,
+        OrderLineInput,
+    )
+    from dataclasses import replace  # noqa: PLC0415
+
+    pricing = get_cart_pricing(cart)
+
+    promotion = resolve_auto_apply_order_promotion(
+        cart_gross=pricing.total_gross.amount,
+        currency=pricing.currency,
+    )
+
+    # Resolve threshold reward progress for all carts — this is always computed
+    # using the pre-order-discount total_gross as the authoritative basis.
+    threshold_reward = resolve_threshold_reward_progress(
+        cart_gross=pricing.total_gross.amount,
+        currency=pricing.currency,
+    )
+
+    if promotion is None:
+        return replace(pricing, threshold_reward=threshold_reward)
+
+    # Build per-line inputs for the VAT allocation engine.
+    lines = []
+    for line in pricing.items:
+        if line.unit_pricing is None:
+            # Unmigrated product — skip; allocation engine requires proper pricing.
+            continue
+        qty = Decimal(str(line.quantity))
+        lines.append(
+            OrderLineInput(
+                line_net=(line.unit_pricing.discounted.net.amount * qty).quantize(
+                    _QUANTIZE, ROUND_HALF_UP
+                ),
+                line_gross=(line.unit_pricing.discounted.gross.amount * qty).quantize(
+                    _QUANTIZE, ROUND_HALF_UP
+                ),
+                tax_rate=line.unit_pricing.discounted.tax_rate,
+                currency=pricing.currency,
+            )
+        )
+
+    if not lines:
+        # All products are unmigrated — cannot apply order discount.
+        return replace(pricing, threshold_reward=threshold_reward)
+
+    discount_input = OrderDiscountInput(
+        type=promotion.type,
+        value=promotion.value,
+        currency=pricing.currency,
+    )
+
+    allocation = allocate_order_discount(lines=lines, discount=discount_input)
+
+    order_discount = OrderDiscountSummary(
+        gross_reduction=Money(
+            allocation.total_gross_reduction.quantize(_QUANTIZE, ROUND_HALF_UP),
+            pricing.currency,
+        ),
+        promotion_code=promotion.code,
+        promotion_name=promotion.name,
+        total_gross_after=Money(
+            allocation.total_adjusted_gross.quantize(_QUANTIZE, ROUND_HALF_UP),
+            pricing.currency,
+        ),
+        total_tax_after=Money(
+            allocation.total_adjusted_tax.quantize(_QUANTIZE, ROUND_HALF_UP),
+            pricing.currency,
+        ),
+    )
+
+    return replace(pricing, order_discount=order_discount, threshold_reward=threshold_reward)
+

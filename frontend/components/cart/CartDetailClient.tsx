@@ -15,6 +15,7 @@ import type { CartVm } from "@/lib/mappers/cart";
 import { mapCartToVm } from "@/lib/mappers/cart";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useCart } from "@/components/cart/CartProvider";
+import { useOrderDiscountToast } from "@/components/cart/useOrderDiscountToast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type Props = {
@@ -27,6 +28,11 @@ export default function CartDetailClient({ initialCartVm }: Props) {
   const { refreshCart } = useCart();
   const [cart, setCart] = useState<CartVm>(initialCartVm);
   const [busy, setBusy] = useState(false);
+
+  // Show a positive toast when an order-level discount is newly applied.
+  // Seed initialApplied from the server-rendered cart so that a discount
+  // already active on page load does not trigger a spurious toast.
+  useOrderDiscountToast(initialCartVm.orderDiscount !== undefined);
 
   // ── Stock-adjustment warnings (one-time, from sessionStorage) ────────────
   const [mergeWarnings, setMergeWarnings] = useState<CartMergeWarning[]>([]);

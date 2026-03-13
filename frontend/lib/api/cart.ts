@@ -40,6 +40,29 @@ export type CartTotalsDto = {
   total_gross: string;
   currency: string;
   item_count: number;
+  // Phase 4 / Slice 3: order-level AUTO_APPLY promotion
+  /** True when an order-level promotion is automatically applied. */
+  order_discount_applied: boolean;
+  /** Gross reduction from the order-level promotion, or null when none. */
+  order_discount_amount: string | null;
+  /** Code of the applied order promotion, or null. */
+  order_discount_promotion_code: string | null;
+  /** Name of the applied order promotion, or null. */
+  order_discount_promotion_name: string | null;
+  /** Total gross payable after order-level discount, or null when none. */
+  total_gross_after_order_discount: string | null;
+  /** Total VAT after order-level discount reallocation, or null when none. */
+  total_tax_after_order_discount: string | null;
+  // Phase 4 / Slice 4: threshold reward progress
+  /** Progress towards a threshold-based order reward, or null when none exists. */
+  threshold_reward?: {
+    is_unlocked: boolean;
+    promotion_name: string;
+    threshold: string;
+    current_basis: string;
+    remaining: string;
+    currency: string;
+  } | null;
 };
 
 export type CartDto = {

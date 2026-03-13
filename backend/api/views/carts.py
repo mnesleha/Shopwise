@@ -29,7 +29,7 @@ from api.serializers.cart import (
     CartCheckoutResponseSerializer,
 )
 from api.serializers.common import ErrorResponseSerializer
-from carts.services.pricing import get_cart_pricing
+from carts.services.pricing import get_cart_pricing, get_cart_pricing_with_order_discount
 from carts.services.price_change import detect_price_changes, serialize_price_change_summary
 from carts.services.snapshot import get_snapshot_gross_price
 from api.services.cookies import cart_token_cookie_kwargs
@@ -817,7 +817,10 @@ Notes:
                 # source for checkout pricing.  price_at_add_time is retained
                 # on CartItem as the customer-visible gross baseline for
                 # price-change detection (Phase 3 Slice 2).
-                cart_pricing = get_cart_pricing(cart)
+                # Phase 4 / Slice 3: also resolves AUTO_APPLY order-level
+                # promotions and populates cart_pricing.order_discount when one
+                # is eligible.
+                cart_pricing = get_cart_pricing_with_order_discount(cart)
 
                 # Detect price changes before order items are created so that
                 # the comparison uses the pre-checkout cart snapshot values.
@@ -915,15 +918,33 @@ Notes:
                         line_total_gross_at_order_time=snap_line_total_gross,
                     )
 
-                # Phase 3: persist order-level totals snapshot.
-                _subtotal_gross = cart_pricing.subtotal_discounted.amount
-                _total_tax = cart_pricing.total_tax.amount
+                # Phase 3 / 4: persist order-level totals snapshot.
+                # Phase 4 / Slice 3: when an order-level discount is applied,
+                # subtotal_gross and total_tax are adjusted to the post-discount
+                # values returned by the VAT allocation engine.
+                od = cart_pricing.order_discount
+                if od is not None:
+                    _subtotal_gross = od.total_gross_after.amount
+                    _total_tax = od.total_tax_after.amount
+                    _order_discount_gross = od.gross_reduction.amount
+                    _order_promotion_code = od.promotion_code
+                else:
+                    _subtotal_gross = cart_pricing.subtotal_discounted.amount
+                    _total_tax = cart_pricing.total_tax.amount
+                    _order_discount_gross = None
+                    _order_promotion_code = None
+
                 order.subtotal_gross = _subtotal_gross
                 order.subtotal_net = (
                     _subtotal_gross - _total_tax
                 ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                 order.total_tax = _total_tax
-                order.total_discount = cart_pricing.total_discount.amount
+                order.total_discount = (
+                    cart_pricing.total_discount.amount
+                    + (_order_discount_gross or Decimal("0"))
+                ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                order.order_discount_gross = _order_discount_gross
+                order.order_promotion_code = _order_promotion_code
                 order.currency = cart_pricing.currency
                 order.save(
                     update_fields=[
@@ -931,6 +952,8 @@ Notes:
                         "subtotal_gross",
                         "total_tax",
                         "total_discount",
+                        "order_discount_gross",
+                        "order_promotion_code",
                         "currency",
                     ]
                 )

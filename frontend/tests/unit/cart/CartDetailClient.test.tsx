@@ -76,7 +76,13 @@ vi.mock("@/components/auth/AuthProvider", () => ({
 }));
 
 vi.mock("@/components/cart/CartProvider", () => ({
-  useCart: () => ({ refreshCart: vi.fn(), count: 0, resetCount: vi.fn() }),
+  useCart: () => ({
+    refreshCart: vi.fn(),
+    count: 0,
+    resetCount: vi.fn(),
+    orderDiscountApplied: false,
+    orderDiscountAmount: null,
+  }),
   CartProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 

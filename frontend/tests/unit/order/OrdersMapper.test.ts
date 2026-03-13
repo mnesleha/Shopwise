@@ -4,7 +4,7 @@
  * Contract guarded:
  * - product_name snapshot is used as productName when provided
  * - Falls back to "Product #N" when product_name is null (pre-snapshot record)
- * - discountNote is "Discount applied: N%" for PERCENT discounts (rounded)
+ * - discountNote is "Line discount: N%" for PERCENT discounts (rounded)
  * - discountNote derives effective percentage for FIXED discounts (from snapshot price)
  * - discountNote rounds fractional percentages to nearest whole number
  * - discountNote is null when no discount
@@ -12,8 +12,15 @@
  * - vat_breakdown is mapped to VatBreakdownLine[]
  * - vat_breakdown: null becomes null in the VM
  * - createdAt is mapped from created_at ISO string
- * - total uses subtotal_gross when present; falls back to dto.total
+ * - total maps to dto.total (the actual final total after all discounts)
+ * - subtotalGross maps to dto.subtotal_gross (gross subtotal before order discount)
  * - order-level totals (subtotalNet, subtotalGross, totalTax, totalDiscount) are mapped
+ * - Phase 4: subtotalGross prefers pre_order_discount_subtotal_gross when present
+ * - Phase 4: total prefers post_order_discount_total_gross when present
+ * - Phase 4: subtotalNet prefers post_order_discount_subtotal_net when present
+ * - Phase 4: totalTax prefers post_order_discount_total_tax when present
+ * - Phase 4: orderDiscountGross is mapped from order_discount_gross
+ * - Phase 4: orderDiscountGross is null when order_discount_gross is absent
  */
 
 import { describe, it, expect } from "vitest";
@@ -95,12 +102,12 @@ describe("mapOrderToVm — discountNote", () => {
     expect(vm.items[0].discountNote).toBeNull();
   });
 
-  it("PERCENT: formats as 'Discount applied: N%' with rounded whole number", () => {
+  it("PERCENT: formats as 'Line discount: N%' with rounded whole number", () => {
     const dto = makeOrderDto({
       items: [makeItemDto({ discount: { type: "PERCENT", value: "10" } })],
     });
     const vm = mapOrderToVm(dto);
-    expect(vm.items[0].discountNote).toBe("Discount applied: 10%");
+    expect(vm.items[0].discountNote).toBe("Line discount: 10%");
   });
 
   it("PERCENT: rounds fractional discount values", () => {
@@ -108,7 +115,7 @@ describe("mapOrderToVm — discountNote", () => {
       items: [makeItemDto({ discount: { type: "PERCENT", value: "10.75" } })],
     });
     const vm = mapOrderToVm(dto);
-    expect(vm.items[0].discountNote).toBe("Discount applied: 11%");
+    expect(vm.items[0].discountNote).toBe("Line discount: 11%");
   });
 
   it("FIXED: derives effective percentage from snapshot unit_price_gross", () => {
@@ -123,7 +130,7 @@ describe("mapOrderToVm — discountNote", () => {
       ],
     });
     const vm = mapOrderToVm(dto);
-    expect(vm.items[0].discountNote).toBe("Discount applied: 20%");
+    expect(vm.items[0].discountNote).toBe("Line discount: 20%");
   });
 
   it("FIXED: falls back to unit_price when unit_price_gross is null", () => {
@@ -139,7 +146,7 @@ describe("mapOrderToVm — discountNote", () => {
       ],
     });
     const vm = mapOrderToVm(dto);
-    expect(vm.items[0].discountNote).toBe("Discount applied: 20%");
+    expect(vm.items[0].discountNote).toBe("Line discount: 20%");
   });
 
   it("FIXED: rounds derived effective percentage", () => {
@@ -154,7 +161,7 @@ describe("mapOrderToVm — discountNote", () => {
       ],
     });
     const vm = mapOrderToVm(dto);
-    expect(vm.items[0].discountNote).toBe("Discount applied: 14%");
+    expect(vm.items[0].discountNote).toBe("Line discount: 14%");
   });
 });
 
@@ -234,15 +241,80 @@ describe("mapOrderToVm — order-level totals", () => {
     expect(mapOrderToVm(dto).totalDiscount).toBe("3.00");
   });
 
-  it("sets total to subtotal_gross when present", () => {
+  it("maps total from dto.total (the actual final total after all discounts)", () => {
+    // subtotal_gross is the pre-order-discount subtotal; dto.total is the real total
     const dto = makeOrderDto({ subtotal_gross: "59.98", total: "55.00" });
-    // subtotal_gross takes precedence over total
+    expect(mapOrderToVm(dto).total).toBe("55.00");
+  });
+
+  it("maps subtotalGross separately from total", () => {
+    const dto = makeOrderDto({ subtotal_gross: "59.98", total: "55.00" });
+    expect(mapOrderToVm(dto).subtotalGross).toBe("59.98");
+  });
+
+  it("sets subtotalGross to null when subtotal_gross is null", () => {
+    const dto = makeOrderDto({ subtotal_gross: null, total: "55.00" });
+    expect(mapOrderToVm(dto).subtotalGross).toBeNull();
+    expect(mapOrderToVm(dto).total).toBe("55.00");
+  });
+
+  // ── Phase 4: explicit pre/post order-discount fields ───────────────────
+
+  it("subtotalGross prefers pre_order_discount_subtotal_gross when present", () => {
+    const dto = makeOrderDto({
+      pre_order_discount_subtotal_gross: "110.00",
+      subtotal_gross: "99.00",
+    });
+    expect(mapOrderToVm(dto).subtotalGross).toBe("110.00");
+  });
+
+  it("subtotalGross falls back to subtotal_gross when pre_order_discount_subtotal_gross absent", () => {
+    const dto = makeOrderDto({ subtotal_gross: "59.98" });
+    expect(mapOrderToVm(dto).subtotalGross).toBe("59.98");
+  });
+
+  it("total prefers post_order_discount_total_gross when present", () => {
+    const dto = makeOrderDto({
+      post_order_discount_total_gross: "99.00",
+      total: "110.00",
+    });
+    expect(mapOrderToVm(dto).total).toBe("99.00");
+  });
+
+  it("total falls back to dto.total when post_order_discount_total_gross absent", () => {
+    const dto = makeOrderDto({ total: "59.98" });
     expect(mapOrderToVm(dto).total).toBe("59.98");
   });
 
-  it("falls back total to dto.total when subtotal_gross is null", () => {
-    const dto = makeOrderDto({ subtotal_gross: null, total: "55.00" });
-    expect(mapOrderToVm(dto).total).toBe("55.00");
+  it("subtotalNet prefers post_order_discount_subtotal_net when present", () => {
+    const dto = makeOrderDto({
+      post_order_discount_subtotal_net: "90.00",
+      subtotal_net: "100.00",
+    });
+    expect(mapOrderToVm(dto).subtotalNet).toBe("90.00");
+  });
+
+  it("totalTax prefers post_order_discount_total_tax when present", () => {
+    const dto = makeOrderDto({
+      post_order_discount_total_tax: "9.00",
+      total_tax: "10.00",
+    });
+    expect(mapOrderToVm(dto).totalTax).toBe("9.00");
+  });
+
+  it("maps orderDiscountGross from order_discount_gross", () => {
+    const dto = makeOrderDto({ order_discount_gross: "11.00" });
+    expect(mapOrderToVm(dto).orderDiscountGross).toBe("11.00");
+  });
+
+  it("sets orderDiscountGross to null when order_discount_gross is absent", () => {
+    const dto = makeOrderDto();
+    expect(mapOrderToVm(dto).orderDiscountGross).toBeNull();
+  });
+
+  it("sets orderDiscountGross to null when order_discount_gross is explicitly null", () => {
+    const dto = makeOrderDto({ order_discount_gross: null });
+    expect(mapOrderToVm(dto).orderDiscountGross).toBeNull();
   });
 });
 

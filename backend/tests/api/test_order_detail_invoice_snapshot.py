@@ -17,9 +17,12 @@ import pytest
 from rest_framework.test import APIClient
 
 from discounts.models import (
+    AcquisitionMode,
+    OrderPromotion,
     Promotion,
     PromotionProduct,
     PromotionType,
+    StackingPolicy,
 )
 from orderitems.models import OrderItem
 from orders.models import Order
@@ -372,3 +375,232 @@ def test_vat_breakdown_sorted_ascending_by_rate(auth_client):
     rates = [row["tax_rate"] for row in data["vat_breakdown"]]
     from decimal import Decimal as D
     assert rates == sorted(rates, key=lambda r: D(r))
+
+
+# ---------------------------------------------------------------------------
+# Phase 4 — explicit pre/post order-discount payload fields
+# ---------------------------------------------------------------------------
+
+
+def _order_promotion(*, code: str, value: Decimal, minimum_order_value: Decimal | None = None) -> OrderPromotion:
+    """Create an AUTO_APPLY PERCENT order-level promotion."""
+    return OrderPromotion.objects.create(
+        name=f"Promo {code}",
+        code=code,
+        type=PromotionType.PERCENT,
+        value=value,
+        acquisition_mode=AcquisitionMode.AUTO_APPLY,
+        stacking_policy=StackingPolicy.EXCLUSIVE,
+        priority=10,
+        is_active=True,
+        minimum_order_value=minimum_order_value,
+    )
+
+
+def _do_checkout_with_order_promo(
+    client,
+    product: Product,
+    quantity: int = 1,
+    *,
+    promo_value: Decimal = Decimal("10"),
+    min_order_value: Decimal | None = None,
+) -> Order:
+    """Add product to cart, create an auto-apply order promotion, and checkout."""
+    client.get("/api/v1/cart/")
+    client.post(
+        "/api/v1/cart/items/",
+        {"product_id": product.id, "quantity": quantity},
+        format="json",
+    )
+    _order_promotion(
+        code=f"PROMO-{product.id}-{promo_value}",
+        value=promo_value,
+        minimum_order_value=min_order_value,
+    )
+    response = client.post("/api/v1/cart/checkout/", checkout_payload(), format="json")
+    assert response.status_code == 201, response.json()
+    return Order.objects.get(pk=response.json()["id"])
+
+
+# ---- order_discount_gross is present ----
+
+
+@pytest.mark.django_db
+def test_order_discount_gross_present_in_response(auth_client):
+    """order_discount_gross is returned in the order detail response when OD was applied."""
+    tc = _tax_class(rate=Decimal("10.0000"), code="vat10od1")
+    product = _product(name="OD Product 1", price_net=Decimal("100.00"), tax_class=tc)
+
+    # gross = 110.00; 10 % OD → order_discount_gross = 11.00
+    order = _do_checkout_with_order_promo(auth_client, product, promo_value=Decimal("10"))
+
+    data = _get_order_detail(auth_client, order)
+    assert data["order_discount_gross"] == "11.00"
+
+
+@pytest.mark.django_db
+def test_order_discount_gross_null_when_no_order_promotion(auth_client):
+    """order_discount_gross is null when no order-level discount was applied."""
+    tc = _tax_class(rate=Decimal("10.0000"), code="vat10od2")
+    product = _product(name="OD Product 2", price_net=Decimal("100.00"), tax_class=tc)
+    order = _do_checkout(auth_client, product)
+
+    data = _get_order_detail(auth_client, order)
+    assert data["order_discount_gross"] is None
+
+
+# ---- pre_order_discount_subtotal_gross ----
+
+
+@pytest.mark.django_db
+def test_pre_order_discount_subtotal_gross_correct(auth_client):
+    """pre_order_discount_subtotal_gross equals the sum of item gross line totals before OD."""
+    tc = _tax_class(rate=Decimal("10.0000"), code="vat10pod1")
+    product = _product(name="POD Product 1", price_net=Decimal("100.00"), tax_class=tc)
+
+    # gross = 110.00; 10 % OD → net = subtotal_gross + OD = 99.00 + 11.00 = 110.00
+    order = _do_checkout_with_order_promo(auth_client, product, promo_value=Decimal("10"))
+
+    data = _get_order_detail(auth_client, order)
+    assert data["pre_order_discount_subtotal_gross"] == "110.00"
+
+
+@pytest.mark.django_db
+def test_pre_order_discount_subtotal_gross_equals_total_when_no_od(auth_client):
+    """When no OD exists, pre_order_discount_subtotal_gross equals the final gross total."""
+    tc = _tax_class(rate=Decimal("10.0000"), code="vat10pod2")
+    product = _product(name="POD Product 2", price_net=Decimal("100.00"), tax_class=tc)
+    order = _do_checkout(auth_client, product)
+
+    data = _get_order_detail(auth_client, order)
+    # No OD: pre-discount subtotal == final total == subtotal_gross
+    assert data["pre_order_discount_subtotal_gross"] == data["total"]
+    assert data["pre_order_discount_subtotal_gross"] == "110.00"
+
+
+# ---- post_order_discount_* fields ----
+
+
+@pytest.mark.django_db
+def test_post_order_discount_fields_correct(auth_client):
+    """post_order_discount_total_gross / _subtotal_net / _total_tax are arithmetically correct."""
+    tc = _tax_class(rate=Decimal("10.0000"), code="vat10post1")
+    product = _product(name="POST Product 1", price_net=Decimal("100.00"), tax_class=tc)
+
+    # gross = 110.00; 10 % OD = 11.00
+    # adjusted_gross = 99.00, adjusted_net = 90.00, adjusted_tax = 9.00
+    order = _do_checkout_with_order_promo(auth_client, product, promo_value=Decimal("10"))
+
+    data = _get_order_detail(auth_client, order)
+
+    assert data["post_order_discount_total_gross"] == "99.00"
+    assert data["post_order_discount_subtotal_net"] == "90.00"
+    assert data["post_order_discount_total_tax"] == "9.00"
+
+    # arithmetic invariant: net + tax == gross
+    net = Decimal(data["post_order_discount_subtotal_net"])
+    tax = Decimal(data["post_order_discount_total_tax"])
+    gross = Decimal(data["post_order_discount_total_gross"])
+    assert net + tax == gross
+
+
+@pytest.mark.django_db
+def test_post_order_discount_total_gross_matches_total(auth_client):
+    """post_order_discount_total_gross must equal the top-level total field."""
+    tc = _tax_class(rate=Decimal("10.0000"), code="vat10post2")
+    product = _product(name="POST Product 2", price_net=Decimal("100.00"), tax_class=tc)
+    order = _do_checkout_with_order_promo(auth_client, product, promo_value=Decimal("10"))
+
+    data = _get_order_detail(auth_client, order)
+    assert data["post_order_discount_total_gross"] == data["total"]
+
+
+# ---- VAT breakdown: post-OD allocation truth ----
+
+
+@pytest.mark.django_db
+def test_vat_breakdown_reflects_post_order_discount_allocation(auth_client):
+    """VAT breakdown total_incl_vat equals post-OD total_gross when OD is applied."""
+    tc = _tax_class(rate=Decimal("10.0000"), code="vat10vbd1")
+    product = _product(name="VBD Product 1", price_net=Decimal("100.00"), tax_class=tc)
+
+    # 10 % OD; gross=110, adjusted=99
+    order = _do_checkout_with_order_promo(auth_client, product, promo_value=Decimal("10"))
+
+    data = _get_order_detail(auth_client, order)
+    vb = data["vat_breakdown"]
+    assert len(vb) == 1
+    row = vb[0]
+
+    assert row["tax_rate"] == "10.00"
+    assert row["tax_base"] == "90.00"
+    assert row["vat_amount"] == "9.00"
+    assert row["total_incl_vat"] == "99.00"
+
+    # breakdown total must equal final order total
+    assert row["total_incl_vat"] == data["total"]
+
+
+@pytest.mark.django_db
+def test_vat_breakdown_sum_equals_post_od_total_for_multi_rate(auth_client):
+    """Sum of VAT breakdown total_incl_vat equals post-OD total when multiple VAT rates exist."""
+    tc_10 = _tax_class(rate=Decimal("10.0000"), code="vat10vbd2")
+    tc_21 = _tax_class(rate=Decimal("21.0000"), code="vat21vbd2")
+
+    client = auth_client
+    client.get("/api/v1/cart/")
+    p1 = _product(name="10pct VBD Product", price_net=Decimal("100.00"), tax_class=tc_10)
+    p2 = _product(name="21pct VBD Product", price_net=Decimal("50.00"), tax_class=tc_21)
+
+    client.post("/api/v1/cart/items/", {"product_id": p1.id, "quantity": 1}, format="json")
+    client.post("/api/v1/cart/items/", {"product_id": p2.id, "quantity": 1}, format="json")
+
+    # gross_p1 = 110.00, gross_p2 = 60.50 → total_gross = 170.50
+    # 10 % OD = 17.05; post-OD = 153.45
+    _order_promotion(code="OD-MULTI-VBD", value=Decimal("10"))
+
+    response = client.post("/api/v1/cart/checkout/", checkout_payload(), format="json")
+    assert response.status_code == 201
+    order = Order.objects.get(pk=response.json()["id"])
+
+    data = _get_order_detail(auth_client, order)
+    breakdown_sum = sum(Decimal(row["total_incl_vat"]) for row in data["vat_breakdown"])
+    assert breakdown_sum == Decimal(data["total"])
+
+
+# ---- Payload consistency ----
+
+
+@pytest.mark.django_db
+def test_payload_is_internally_consistent_with_order_discount(auth_client):
+    """All order-level fields are self-consistent when OD is applied.
+
+    Invariants checked:
+    - pre_order_discount_subtotal_gross - order_discount_gross == post_order_discount_total_gross
+    - post_order_discount_subtotal_net + post_order_discount_total_tax == post_order_discount_total_gross
+    - total == post_order_discount_total_gross
+    - VAT breakdown sum == total
+    """
+    tc = _tax_class(rate=Decimal("10.0000"), code="vat10cons")
+    product = _product(name="Consistency Product", price_net=Decimal("100.00"), tax_class=tc)
+
+    order = _do_checkout_with_order_promo(auth_client, product, promo_value=Decimal("10"))
+    data = _get_order_detail(auth_client, order)
+
+    pre_gross = Decimal(data["pre_order_discount_subtotal_gross"])
+    od_gross = Decimal(data["order_discount_gross"])
+    post_gross = Decimal(data["post_order_discount_total_gross"])
+    post_net = Decimal(data["post_order_discount_subtotal_net"])
+    post_tax = Decimal(data["post_order_discount_total_tax"])
+    total = Decimal(data["total"])
+
+    assert pre_gross - od_gross == post_gross, (
+        f"pre({pre_gross}) - OD({od_gross}) should equal post({post_gross})"
+    )
+    assert post_net + post_tax == post_gross, (
+        f"net({post_net}) + tax({post_tax}) should equal gross({post_gross})"
+    )
+    assert total == post_gross, f"total({total}) should equal post_gross({post_gross})"
+
+    vb_total = sum(Decimal(row["total_incl_vat"]) for row in data["vat_breakdown"])
+    assert vb_total == total, f"VAT breakdown sum({vb_total}) should equal total({total})"

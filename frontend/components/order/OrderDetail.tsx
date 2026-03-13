@@ -106,9 +106,13 @@ type OrderViewModel = {
 
   // Phase 3 order-level totals snapshot
   subtotalNet?: string | null;
+  /** Gross subtotal BEFORE the order-level discount (pre-OD). When no OD exists, equals total. */
   subtotalGross?: string | null;
   totalTax?: string | null;
+  /** Combined total of all discounts (line + order-level). Kept for backward compat. */
   totalDiscount?: string | null;
+  /** Order-level discount only (gross amount deducted on top of line discounts). */
+  orderDiscountGross?: string | null;
   currency?: string;
   vatBreakdown?: VatBreakdownLine[] | null;
 
@@ -395,9 +399,12 @@ function ItemsTable({
 function VatBreakdownTable({
   rows,
   currency,
+  showOrderDiscountNote = false,
 }: {
   rows: VatBreakdownLine[];
   currency: string;
+  /** When true, renders a short explanatory note that the OD is allocated proportionally across VAT rates */
+  showOrderDiscountNote?: boolean;
 }) {
   const totals = rows.reduce(
     (acc, row) => ({
@@ -477,21 +484,46 @@ function VatBreakdownTable({
           </table>
         </div>
       </CardContent>
+      {showOrderDiscountNote && (
+        <p
+          className="px-4 pb-4 text-xs text-muted-foreground"
+          data-testid="vat-breakdown-order-discount-note"
+        >
+          The order-level discount is proportionally allocated across VAT rates
+          in this tax breakdown.
+        </p>
+      )}
     </Card>
   );
 }
 
 // ---------------------------------------------------------------------------
 // Order summary
-// Shows: Subtotal excl. VAT | VAT | Total incl. VAT
-// No line-level discount row: discounts are already reflected in item prices.
+// Structure (when order-level discount is present):
+//   Subtotal incl. VAT (after line discounts)   [subtotalGross]
+//   Order discount (threshold bonus)             [−totalDiscount]
+//   ─────
+//   Tax base                                     [subtotalNet]
+//   VAT                                          [totalTax]
+//   ─────
+//   Total incl. VAT                              [total — actual final total]
+//
+// When no order-level discount the subtotal/discount rows are omitted.
 // ---------------------------------------------------------------------------
 
 function OrderSummary({ order }: { order: OrderViewModel }) {
   const currency = order.currency ?? "EUR";
+  const subtotalGross = order.subtotalGross ?? null;
   const subtotalNet = order.subtotalNet ?? null;
   const totalTax = order.totalTax ?? null;
-  const total = order.subtotalGross ?? order.total;
+  // Use the explicit order-level-only gross discount field.  Fall back to
+  // totalDiscount only for records that pre-date Phase 4 and carry a combined
+  // line+order discount value — those are already rare.
+  const orderDiscountGross = order.orderDiscountGross ?? null;
+  const total = order.total;
+
+  const hasOrderDiscount =
+    orderDiscountGross !== null && parseFloat(orderDiscountGross) > 0;
 
   return (
     <Card data-testid="order-summary">
@@ -501,9 +533,40 @@ function OrderSummary({ order }: { order: OrderViewModel }) {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
+        {/* Gross subtotal before order-level discount — only shown when an
+            order discount is present so the deduction makes accounting sense */}
+        {hasOrderDiscount && subtotalGross !== null && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">
+              Subtotal incl. VAT (after line discounts)
+            </span>
+            <span className="text-foreground">
+              {formatMoney(subtotalGross, currency)}
+            </span>
+          </div>
+        )}
+
+        {/* Order-level discount deduction */}
+        {hasOrderDiscount && (
+          <div
+            className="flex justify-between text-sm"
+            data-testid="order-discount-row"
+          >
+            <span className="text-muted-foreground">
+              Order discount (threshold bonus)
+            </span>
+            <span className="text-foreground">
+              -{formatMoney(orderDiscountGross, currency)}
+            </span>
+          </div>
+        )}
+
+        {hasOrderDiscount && <Separator className="my-1" />}
+
+        {/* Tax base (net subtotal after all discounts) */}
         {subtotalNet !== null && (
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Subtotal excl. VAT</span>
+            <span className="text-muted-foreground">Tax base</span>
             <span className="text-foreground">
               {formatMoney(subtotalNet, currency)}
             </span>
@@ -533,6 +596,7 @@ function OrderSummary({ order }: { order: OrderViewModel }) {
             {formatMoney(total, currency)}
           </span>
         </div>
+
       </CardContent>
     </Card>
   );
@@ -676,6 +740,10 @@ export function OrderDetail({
             <VatBreakdownTable
               rows={order.vatBreakdown!}
               currency={order.currency ?? "EUR"}
+              showOrderDiscountNote={
+                !!order.orderDiscountGross &&
+                parseFloat(order.orderDiscountGross) > 0
+              }
             />
           </div>
         )}

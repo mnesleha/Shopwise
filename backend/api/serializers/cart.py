@@ -72,6 +72,82 @@ class CartTotalsSerializer(serializers.Serializer):
     def get_item_count(self, obj) -> int:
         return obj.item_count
 
+    # ------------------------------------------------------------------
+    # Phase 4 / Slice 3: order-level discount fields
+    # ------------------------------------------------------------------
+
+    order_discount_applied = serializers.SerializerMethodField(
+        help_text="True when an AUTO_APPLY order-level promotion is applied."
+    )
+    order_discount_amount = serializers.SerializerMethodField(
+        help_text="Gross discount amount from the order-level promotion, or null."
+    )
+    order_discount_promotion_code = serializers.SerializerMethodField(
+        help_text="Code of the applied order promotion, or null."
+    )
+    order_discount_promotion_name = serializers.SerializerMethodField(
+        help_text="Name of the applied order promotion, or null."
+    )
+    total_gross_after_order_discount = serializers.SerializerMethodField(
+        help_text="Total gross payable after order-level discount, or null when no discount."
+    )
+    total_tax_after_order_discount = serializers.SerializerMethodField(
+        help_text="Total VAT after order-level discount reallocation, or null when no discount."
+    )
+
+    # ------------------------------------------------------------------
+    # Phase 4 / Slice 4: threshold reward progress
+    # ------------------------------------------------------------------
+
+    threshold_reward = serializers.SerializerMethodField(
+        help_text=(
+            "Progress towards a threshold-based order reward, or null when "
+            "no such promotion exists.  Shape: {is_unlocked, promotion_name, "
+            "threshold, current_basis, remaining, currency}."
+        )
+    )
+
+    def get_order_discount_applied(self, obj) -> bool:
+        return obj.order_discount is not None
+
+    def get_order_discount_amount(self, obj):
+        if obj.order_discount is None:
+            return None
+        return str(obj.order_discount.gross_reduction.amount)
+
+    def get_order_discount_promotion_code(self, obj):
+        if obj.order_discount is None:
+            return None
+        return obj.order_discount.promotion_code
+
+    def get_order_discount_promotion_name(self, obj):
+        if obj.order_discount is None:
+            return None
+        return obj.order_discount.promotion_name
+
+    def get_total_gross_after_order_discount(self, obj):
+        if obj.order_discount is None:
+            return None
+        return str(obj.order_discount.total_gross_after.amount)
+
+    def get_total_tax_after_order_discount(self, obj):
+        if obj.order_discount is None:
+            return None
+        return str(obj.order_discount.total_tax_after.amount)
+
+    def get_threshold_reward(self, obj) -> dict | None:
+        tr = obj.threshold_reward
+        if tr is None:
+            return None
+        return {
+            "is_unlocked": tr.is_unlocked,
+            "promotion_name": tr.promotion_name,
+            "threshold": str(tr.threshold),
+            "current_basis": str(tr.current_basis),
+            "remaining": str(tr.remaining),
+            "currency": tr.currency,
+        }
+
 
 class CartItemProductSerializer(serializers.ModelSerializer):
     """
@@ -128,8 +204,8 @@ class CartSerializer(serializers.ModelSerializer):
     def _get_cart_pricing(self, instance):
         """Compute cart pricing once per serializer invocation and cache it."""
         if not hasattr(self, "_cart_pricing_cache"):
-            from carts.services.pricing import get_cart_pricing  # noqa: PLC0415
-            self._cart_pricing_cache = get_cart_pricing(instance)
+            from carts.services.pricing import get_cart_pricing_with_order_discount  # noqa: PLC0415
+            self._cart_pricing_cache = get_cart_pricing_with_order_discount(instance)
         return self._cart_pricing_cache
 
     # ------------------------------------------------------------------

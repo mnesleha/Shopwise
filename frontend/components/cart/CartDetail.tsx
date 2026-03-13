@@ -46,11 +46,35 @@ interface CartDiscount {
   amount?: string;
 }
 
+interface CartOrderDiscount {
+  /** Human-readable promotion name. */
+  promotionName: string;
+  /** Gross discount amount as a decimal string. */
+  amount: string;
+  /** Cart total gross after this discount. */
+  totalGrossAfter: string;
+  /** Cart total VAT after this discount. */
+  totalTaxAfter: string;
+}
+
+/** Phase 4 / Slice 4: progress towards a threshold-based order reward. */
+interface CartThresholdReward {
+  isUnlocked: boolean;
+  promotionName: string;
+  remaining: string;
+  /** Required gross total to reach the reward. */
+  threshold: string;
+}
+
 interface Cart {
   id: string;
   currency?: string;
   items: CartItem[];
   discount?: CartDiscount;
+  /** Phase 4 / Slice 3: auto-applied order-level promotion discount. */
+  orderDiscount?: CartOrderDiscount;
+  /** Phase 4 / Slice 4: threshold reward progress. */
+  thresholdReward?: CartThresholdReward;
   subtotal: string;
   tax?: string;
   total: string;
@@ -211,6 +235,40 @@ function CartItemRow({
   );
 }
 
+// ---------------------------------------------------------------------------
+// Phase 4 / Slice 4 — threshold reward progress banner
+// ---------------------------------------------------------------------------
+
+function ThresholdRewardBanner({
+  thresholdReward,
+  currency,
+}: {
+  thresholdReward: CartThresholdReward;
+  currency: string;
+}) {
+  if (thresholdReward.isUnlocked) {
+    return (
+      <div
+        className="rounded-md bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300"
+        data-testid="threshold-reward-banner"
+        data-state="unlocked"
+      >
+        {thresholdReward.promotionName} has been applied.
+      </div>
+    );
+  }
+  return (
+    <div
+      className="rounded-md bg-muted/50 px-3 py-2 text-sm text-muted-foreground"
+      data-testid="threshold-reward-banner"
+      data-state="pending"
+    >
+      Add {formatCurrency(currency, thresholdReward.remaining)} more to unlock{" "}
+      {thresholdReward.promotionName}.
+    </div>
+  );
+}
+
 function OrderSummary({
   cart,
   currency,
@@ -245,7 +303,7 @@ function OrderSummary({
           </span>
         </div>
 
-        {/* Discount */}
+        {/* Discount (line-level promotions) */}
         {cart.discount && cart.discount.amount && (
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">
@@ -256,6 +314,24 @@ function OrderSummary({
             </span>
             <span className="text-emerald-600 dark:text-emerald-400">
               –{formatCurrency(currency, cart.discount.amount)}
+            </span>
+          </div>
+        )}
+
+        {/* Phase 4 / Slice 3: order-level discount */}
+        {cart.orderDiscount && (
+          <div
+            className="flex justify-between text-sm"
+            data-testid="order-discount-row"
+          >
+            <span className="text-muted-foreground">
+              Order discount
+            </span>
+            <span
+              className="text-emerald-600 dark:text-emerald-400"
+              data-testid="order-discount-amount"
+            >
+              –{formatCurrency(currency, cart.orderDiscount.amount)}
             </span>
           </div>
         )}
@@ -271,6 +347,14 @@ function OrderSummary({
         </div>
 
         <Separator className="my-1" />
+
+        {/* Phase 4 / Slice 4: threshold reward progress banner */}
+        {cart.thresholdReward && (
+          <ThresholdRewardBanner
+            thresholdReward={cart.thresholdReward}
+            currency={currency}
+          />
+        )}
 
         {/* Total */}
         <div className="flex justify-between">

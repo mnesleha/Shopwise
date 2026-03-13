@@ -52,6 +52,19 @@ export type BaseOrderDto = {
   currency: string | null;
   /** VAT breakdown grouped by tax rate — owned by backend, ready for invoice rendering */
   vat_breakdown: VatBreakdownDto[] | null;
+  // Phase 4 — explicit pre/post order-discount fields.
+  // These supersede the ambiguously-named snapshot fields above for any UI
+  // that must distinguish order-level discount deductions.
+  /** Gross order-level discount applied at checkout. Null when no OD was applied. */
+  order_discount_gross?: string | null;
+  /** Gross subtotal incl. VAT after line discounts, BEFORE the order-level discount. */
+  pre_order_discount_subtotal_gross?: string | null;
+  /** Post-OD net subtotal (tax base). Aliases subtotal_net, null for legacy orders. */
+  post_order_discount_subtotal_net?: string | null;
+  /** Post-OD total VAT. Aliases total_tax, null for legacy orders. */
+  post_order_discount_total_tax?: string | null;
+  /** Final gross total after all discounts. Aliases subtotal_gross (when populated). */
+  post_order_discount_total_gross?: string | null;
 };
 
 export type OrderDto = BaseOrderDto;
