@@ -324,9 +324,7 @@ function OrderSummary({
             className="flex justify-between text-sm"
             data-testid="order-discount-row"
           >
-            <span className="text-muted-foreground">
-              Order discount
-            </span>
+            <span className="text-muted-foreground">Order discount</span>
             <span
               className="text-emerald-600 dark:text-emerald-400"
               data-testid="order-discount-amount"

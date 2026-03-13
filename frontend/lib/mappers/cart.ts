@@ -146,14 +146,16 @@ export function mapCartToVm(dto: CartDto): CartVm {
     }
 
     // The displayed total is the post-order-discount figure when one is applied.
-    const total = orderDiscount
-      ? orderDiscount.totalGrossAfter
-      : t.total_gross;
+    const total = orderDiscount ? orderDiscount.totalGrossAfter : t.total_gross;
 
     // Tax displayed is also the post-order-discount figure when one is applied.
     const tax = orderDiscount
-      ? (Number(orderDiscount.totalTaxAfter) > 0 ? orderDiscount.totalTaxAfter : undefined)
-      : (Number(t.total_tax) > 0 ? t.total_tax : undefined);
+      ? Number(orderDiscount.totalTaxAfter) > 0
+        ? orderDiscount.totalTaxAfter
+        : undefined
+      : Number(t.total_tax) > 0
+        ? t.total_tax
+        : undefined;
 
     return {
       id: String(dto.id),

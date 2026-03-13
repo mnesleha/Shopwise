@@ -37,7 +37,9 @@ export function CartProvider({
 }) {
   const [count, setCount] = useState(initialCount);
   const [orderDiscountApplied, setOrderDiscountApplied] = useState(false);
-  const [orderDiscountAmount, setOrderDiscountAmount] = useState<string | null>(null);
+  const [orderDiscountAmount, setOrderDiscountAmount] = useState<string | null>(
+    null,
+  );
 
   const refreshCart = useCallback(async () => {
     try {
@@ -56,7 +58,13 @@ export function CartProvider({
   const resetCount = useCallback(() => setCount(0), []);
 
   const value = useMemo(
-    () => ({ count, refreshCart, resetCount, orderDiscountApplied, orderDiscountAmount }),
+    () => ({
+      count,
+      refreshCart,
+      resetCount,
+      orderDiscountApplied,
+      orderDiscountAmount,
+    }),
     [count, refreshCart, resetCount, orderDiscountApplied, orderDiscountAmount],
   );
 

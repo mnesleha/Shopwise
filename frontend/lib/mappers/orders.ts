@@ -127,11 +127,13 @@ export function mapOrderToVm(dto: OrderDto): OrderViewModel {
     items: dto.items.map(mapItem),
 
     // Phase 3 totals snapshot (legacy field names, kept for backward compat).
-    subtotalNet: dto.post_order_discount_subtotal_net ?? dto.subtotal_net ?? null,
+    subtotalNet:
+      dto.post_order_discount_subtotal_net ?? dto.subtotal_net ?? null,
     // subtotalGross = gross subtotal BEFORE order-level discount (pre-OD subtotal).
     // When the Phase 4 explicit field is present use it; otherwise fall back to
     // subtotal_gross (which, without an OD, equals the final total).
-    subtotalGross: dto.pre_order_discount_subtotal_gross ?? dto.subtotal_gross ?? null,
+    subtotalGross:
+      dto.pre_order_discount_subtotal_gross ?? dto.subtotal_gross ?? null,
     totalTax: dto.post_order_discount_total_tax ?? dto.total_tax ?? null,
     totalDiscount: dto.total_discount ?? null,
     // Phase 4: order-level discount only (does not include per-item line discounts).

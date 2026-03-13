@@ -126,7 +126,9 @@ describe("useOrderDiscountToast", () => {
       });
       rerender();
 
-      const options = mockToastSuccess.mock.calls[0]?.[1] as { duration?: number };
+      const options = mockToastSuccess.mock.calls[0]?.[1] as {
+        duration?: number;
+      };
       expect(options?.duration).toBe(Infinity);
     });
   });

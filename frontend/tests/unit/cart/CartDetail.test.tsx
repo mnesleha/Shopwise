@@ -19,8 +19,16 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CartDetail } from "@/components/cart/CartDetail";
 import { renderWithProviders } from "../helpers/render";
-import { makeCart, makeCartItem, type CartThresholdRewardFixture } from "../helpers/fixtures";
-import { CART_CHECKOUT_BUTTON, CART_THRESHOLD_REWARD, cartItem } from "../helpers/testIds";
+import {
+  makeCart,
+  makeCartItem,
+  type CartThresholdRewardFixture,
+} from "../helpers/fixtures";
+import {
+  CART_CHECKOUT_BUTTON,
+  CART_THRESHOLD_REWARD,
+  cartItem,
+} from "../helpers/testIds";
 
 function renderCartDetail(
   overrides?: Partial<React.ComponentProps<typeof CartDetail>>,
@@ -328,7 +336,9 @@ describe("CartDetail", () => {
     it("does not render the order discount row when orderDiscount is absent", () => {
       const cart = makeCart({ orderDiscount: undefined });
       renderCartDetail({ cart });
-      expect(screen.queryByTestId("order-discount-row")).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("order-discount-row"),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -376,7 +386,10 @@ describe("CartDetail", () => {
 
     it("renders the banner with data-state=unlocked when isUnlocked is true", () => {
       const cart = makeCart({
-        thresholdReward: makeThresholdReward({ isUnlocked: true, remaining: "0.00" }),
+        thresholdReward: makeThresholdReward({
+          isUnlocked: true,
+          remaining: "0.00",
+        }),
       });
       renderCartDetail({ cart });
       const banner = screen.getByTestId(CART_THRESHOLD_REWARD);

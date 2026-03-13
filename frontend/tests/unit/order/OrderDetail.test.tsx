@@ -561,7 +561,9 @@ describe("OrderDetail", () => {
       });
       renderOrderDetail({ order });
       const summary = screen.getByTestId(ORDER_SUMMARY);
-      expect(summary).toHaveTextContent("Subtotal incl. VAT (after line discounts)");
+      expect(summary).toHaveTextContent(
+        "Subtotal incl. VAT (after line discounts)",
+      );
       expect(within(summary).getByText("€59.98")).toBeInTheDocument();
     });
 
@@ -652,7 +654,9 @@ describe("OrderDetail", () => {
       });
       renderOrderDetail({ order });
       const note = screen.getByTestId(VAT_BREAKDOWN_ORDER_DISCOUNT_NOTE);
-      expect(note.textContent).not.toMatch(/sale|promo|coupon|congrats|qualified/i);
+      expect(note.textContent).not.toMatch(
+        /sale|promo|coupon|congrats|qualified/i,
+      );
       expect(note.textContent).not.toContain("!");
     });
 
@@ -696,9 +700,7 @@ describe("OrderDetail", () => {
       });
       renderOrderDetail({ order });
       const summary = screen.getByTestId(ORDER_SUMMARY);
-      expect(
-        within(summary).queryByTestId("order-discount-note"),
-      ).toBeNull();
+      expect(within(summary).queryByTestId("order-discount-note")).toBeNull();
     });
   });
 });

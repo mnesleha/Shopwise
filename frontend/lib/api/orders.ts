@@ -1,9 +1,9 @@
 import { api } from "@/lib/api";
 
 export type VatBreakdownDto = {
-  tax_rate: string;       // e.g. "10.00" (percentage)
-  tax_base: string;       // sum of net line totals for this rate
-  vat_amount: string;     // sum of (gross - net) for this rate
+  tax_rate: string; // e.g. "10.00" (percentage)
+  tax_base: string; // sum of net line totals for this rate
+  vat_amount: string; // sum of (gross - net) for this rate
   total_incl_vat: string; // sum of gross line totals for this rate
 };
 
@@ -86,4 +86,3 @@ export async function claimOrders(): Promise<{ claimed_orders: number }> {
   const res = await api.post<{ claimed_orders: number }>("/orders/claim/");
   return res.data;
 }
-

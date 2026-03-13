@@ -42,7 +42,9 @@ vi.mock("@/components/cart/CartProvider", () => ({
 }));
 
 const mockToastSuccess = vi.fn();
-vi.mock("sonner", () => ({ toast: { success: (...args: unknown[]) => mockToastSuccess(...args) } }));
+vi.mock("sonner", () => ({
+  toast: { success: (...args: unknown[]) => mockToastSuccess(...args) },
+}));
 
 // Import after mocks are set up
 import ProductGridClient from "@/components/product/ProductGridClient";
@@ -50,7 +52,7 @@ import ProductGridClient from "@/components/product/ProductGridClient";
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function buildProps(
-  overrides?: Partial<React.ComponentProps<typeof ProductGridClient>>
+  overrides?: Partial<React.ComponentProps<typeof ProductGridClient>>,
 ): React.ComponentProps<typeof ProductGridClient> {
   return {
     products: [makeProduct({ id: "1", stockQuantity: 5 })],
@@ -80,7 +82,7 @@ describe("ProductGridClient — routing contracts", () => {
           products: [makeProduct({ id: "42", name: "Clicky Mouse" })],
           totalItems: 1,
         })}
-      />
+      />,
     );
 
     // Click the product name (fires onOpenProduct via card click)
@@ -98,7 +100,7 @@ describe("ProductGridClient — routing contracts", () => {
           products: [makeProduct({ id: "55" })],
           totalItems: 1,
         })}
-      />
+      />,
     );
 
     await user.click(screen.getByRole("button", { name: /view details/i }));
@@ -112,7 +114,7 @@ describe("ProductGridClient — routing contracts", () => {
     render(
       <ProductGridClient
         {...buildProps({ page: 1, pageSize: 10, totalItems: 25 })}
-      />
+      />,
     );
 
     await user.click(screen.getByRole("button", { name: /go to next page/i }));
@@ -126,10 +128,12 @@ describe("ProductGridClient — routing contracts", () => {
     render(
       <ProductGridClient
         {...buildProps({ page: 2, pageSize: 10, totalItems: 25 })}
-      />
+      />,
     );
 
-    await user.click(screen.getByRole("button", { name: /go to previous page/i }));
+    await user.click(
+      screen.getByRole("button", { name: /go to previous page/i }),
+    );
 
     expect(mockRouter.push).toHaveBeenCalledOnce();
     expect(mockRouter.push).toHaveBeenCalledWith("/products?page=1");
@@ -143,7 +147,7 @@ describe("ProductGridClient — routing contracts", () => {
           products: [makeProduct({ id: "7", stockQuantity: 3 })],
           totalItems: 1,
         })}
-      />
+      />,
     );
 
     await user.click(screen.getByTestId(addToCartTestId("7")));
@@ -164,7 +168,7 @@ describe("ProductGridClient — routing contracts", () => {
           products: [makeProduct({ id: "8", stockQuantity: 2 })],
           totalItems: 1,
         })}
-      />
+      />,
     );
 
     await user.click(screen.getByTestId(addToCartTestId("8")));

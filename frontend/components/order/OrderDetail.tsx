@@ -596,7 +596,6 @@ function OrderSummary({ order }: { order: OrderViewModel }) {
             {formatMoney(total, currency)}
           </span>
         </div>
-
       </CardContent>
     </Card>
   );

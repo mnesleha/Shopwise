@@ -63,12 +63,19 @@ describe("ProductDetailClient — routing contracts", () => {
 
   it("calls addCartItem and does NOT navigate to /cart after add-to-cart", async () => {
     const user = userEvent.setup();
-    render(<ProductDetailClient product={makeProduct({ id: "10", stockQuantity: 5 })} />);
+    render(
+      <ProductDetailClient
+        product={makeProduct({ id: "10", stockQuantity: 5 })}
+      />,
+    );
 
     await user.click(screen.getByRole("button", { name: /add to cart/i }));
 
     expect(mockAddCartItem).toHaveBeenCalledOnce();
-    expect(mockAddCartItem).toHaveBeenCalledWith({ productId: 10, quantity: 1 });
+    expect(mockAddCartItem).toHaveBeenCalledWith({
+      productId: 10,
+      quantity: 1,
+    });
     // User stays on the product page — no redirect to /cart.
     await vi.waitFor(() => {
       expect(mockRouter.push).not.toHaveBeenCalledWith("/cart");
