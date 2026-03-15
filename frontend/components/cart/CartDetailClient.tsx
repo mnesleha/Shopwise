@@ -30,9 +30,8 @@ export default function CartDetailClient({ initialCartVm }: Props) {
   const [busy, setBusy] = useState(false);
 
   // Show a positive toast when an order-level discount is newly applied.
-  // Seed initialApplied from the server-rendered cart so that a discount
-  // already active on page load does not trigger a spurious toast.
-  useOrderDiscountToast(initialCartVm.orderDiscount !== undefined);
+  // The hook reads current cart state from the CartProvider; call without args.
+  useOrderDiscountToast();
 
   // ── Stock-adjustment warnings (one-time, from sessionStorage) ────────────
   const [mergeWarnings, setMergeWarnings] = useState<CartMergeWarning[]>([]);

@@ -202,10 +202,30 @@ class CartSerializer(serializers.ModelSerializer):
     # ------------------------------------------------------------------
 
     def _get_cart_pricing(self, instance):
-        """Compute cart pricing once per serializer invocation and cache it."""
+        """Compute cart pricing once per serializer invocation and cache it.
+
+        Phase 4 / Slice 5B: when a ``request`` is present in the serializer
+        context and the session contains a claimed CAMPAIGN_APPLY offer, the
+        campaign offer pricing function is used instead of the AUTO_APPLY
+        resolver, so the discount is reflected in the cart response.
+        """
         if not hasattr(self, "_cart_pricing_cache"):
-            from carts.services.pricing import get_cart_pricing_with_order_discount  # noqa: PLC0415
-            self._cart_pricing_cache = get_cart_pricing_with_order_discount(instance)
+            from carts.services.pricing import (  # noqa: PLC0415
+                get_cart_pricing_with_campaign_offer,
+                get_cart_pricing_with_order_discount,
+            )
+            from api.services.campaign_offer_session import (  # noqa: PLC0415
+                get_claimed_campaign_offer,
+            )
+
+            request = self.context.get("request")
+            claimed_offer = get_claimed_campaign_offer(request)
+            if claimed_offer is not None:
+                self._cart_pricing_cache = get_cart_pricing_with_campaign_offer(
+                    instance, claimed_offer
+                )
+            else:
+                self._cart_pricing_cache = get_cart_pricing_with_order_discount(instance)
         return self._cart_pricing_cache
 
     # ------------------------------------------------------------------

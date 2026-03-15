@@ -3,14 +3,16 @@
  *
  * Contract guarded:
  * - Fires toast.success on false → true transition of orderDiscountApplied
- * - Does NOT fire when initialApplied=true (discount already active on mount)
+ * - Does NOT fire when discount is already active on mount (prevRef seeded from live state)
  * - Does NOT fire on re-render when discount is unchanged (no spurious toasts)
  * - After discount is removed and re-applied, fires again (true → false → true)
+ * - Does NOT fire when component remounts while discount is still active
  * - Toast message includes discount amount when available
  * - Toast message is generic when amount is absent
  * - Toast is sticky (duration: Infinity)
- * - Toast is dismissed when the user navigates to a different route
+ * - Toast is dismissed when the user navigates to a different route (pathname change)
  * - Toast is NOT dismissed when the pathname stays the same
+ * - Toast IS dismissed when the component unmounts (navigation away from the host page)
  */
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -64,7 +66,7 @@ beforeEach(() => {
 describe("useOrderDiscountToast", () => {
   describe("toast on false → true transition", () => {
     it("fires toast.success when orderDiscountApplied transitions from false to true", () => {
-      const { rerender } = renderHook(() => useOrderDiscountToast(false));
+      const { rerender } = renderHook(() => useOrderDiscountToast());
 
       expect(mockToastSuccess).not.toHaveBeenCalled();
 
@@ -77,22 +79,19 @@ describe("useOrderDiscountToast", () => {
     });
 
     it("toast message contains 'Good news'", () => {
-      renderHook(() => useOrderDiscountToast(false));
+      const { rerender } = renderHook(() => useOrderDiscountToast());
 
       act(() => {
         cartState.orderDiscountApplied = true;
       });
-      // re-render is implicit via act + state update in renderHook context
-      renderHook(() => useOrderDiscountToast(false));
+      rerender();
 
-      // Ensure the first call's message starts with "Good news"
-      const calls = mockToastSuccess.mock.calls;
-      const message = calls[calls.length - 1]?.[0] as string;
+      const message = mockToastSuccess.mock.calls[0]?.[0] as string;
       expect(message).toMatch(/good news/i);
     });
 
     it("includes the discount amount in the message when amount is > 0", () => {
-      const { rerender } = renderHook(() => useOrderDiscountToast(false));
+      const { rerender } = renderHook(() => useOrderDiscountToast());
 
       act(() => {
         cartState.orderDiscountApplied = true;
@@ -106,7 +105,7 @@ describe("useOrderDiscountToast", () => {
 
     it("uses generic message when discount amount is null", () => {
       cartState.orderDiscountAmount = null;
-      const { rerender } = renderHook(() => useOrderDiscountToast(false));
+      const { rerender } = renderHook(() => useOrderDiscountToast());
 
       act(() => {
         cartState.orderDiscountApplied = true;
@@ -119,7 +118,7 @@ describe("useOrderDiscountToast", () => {
     });
 
     it("toast is sticky — duration is Infinity", () => {
-      const { rerender } = renderHook(() => useOrderDiscountToast(false));
+      const { rerender } = renderHook(() => useOrderDiscountToast());
 
       act(() => {
         cartState.orderDiscountApplied = true;
@@ -134,16 +133,16 @@ describe("useOrderDiscountToast", () => {
   });
 
   describe("no spurious toasts", () => {
-    it("does NOT fire when initialApplied=true and discount is already active on mount", () => {
+    it("does NOT fire when discount is already active on mount (prevRef seeded from live state)", () => {
       cartState.orderDiscountApplied = true;
-      renderHook(() => useOrderDiscountToast(true));
+      renderHook(() => useOrderDiscountToast());
 
       expect(mockToastSuccess).not.toHaveBeenCalled();
     });
 
     it("does NOT fire on subsequent re-renders when discount remains true", () => {
       cartState.orderDiscountApplied = true;
-      const { rerender } = renderHook(() => useOrderDiscountToast(true));
+      const { rerender } = renderHook(() => useOrderDiscountToast());
 
       rerender();
       rerender();
@@ -152,20 +151,39 @@ describe("useOrderDiscountToast", () => {
     });
 
     it("does NOT fire when discount stays false across re-renders", () => {
-      const { rerender } = renderHook(() => useOrderDiscountToast(false));
+      const { rerender } = renderHook(() => useOrderDiscountToast());
 
       rerender();
       rerender();
 
       expect(mockToastSuccess).not.toHaveBeenCalled();
     });
+
+    it("does NOT fire when component remounts while discount is still active", () => {
+      // First mount: discount transitions false → true and fires once.
+      cartState.orderDiscountApplied = false;
+      const { rerender, unmount } = renderHook(() => useOrderDiscountToast());
+      act(() => {
+        cartState.orderDiscountApplied = true;
+      });
+      rerender();
+      expect(mockToastSuccess).toHaveBeenCalledOnce();
+      mockToastSuccess.mockClear();
+
+      // Simulate unmount (navigation away) and remount (back to same page).
+      unmount();
+      renderHook(() => useOrderDiscountToast());
+
+      // Still active on remount — must NOT fire a second toast.
+      expect(mockToastSuccess).not.toHaveBeenCalled();
+    });
   });
 
   describe("re-application after removal", () => {
     it("fires again when discount is removed and then re-applied", () => {
-      // Initial mount: discount active, seeded as true → no toast
+      // Initial mount: discount active, prevRef seeded from live state → no toast
       cartState.orderDiscountApplied = true;
-      const { rerender } = renderHook(() => useOrderDiscountToast(true));
+      const { rerender } = renderHook(() => useOrderDiscountToast());
       expect(mockToastSuccess).not.toHaveBeenCalled();
 
       // Discount removed
@@ -187,7 +205,7 @@ describe("useOrderDiscountToast", () => {
   describe("navigation dismissal", () => {
     it("dismisses the sticky toast when the user navigates to a different route", () => {
       // Fire the toast first.
-      const { rerender } = renderHook(() => useOrderDiscountToast(false));
+      const { rerender } = renderHook(() => useOrderDiscountToast());
       act(() => {
         cartState.orderDiscountApplied = true;
       });
@@ -204,7 +222,7 @@ describe("useOrderDiscountToast", () => {
     });
 
     it("does NOT dismiss the toast while the pathname stays the same", () => {
-      const { rerender } = renderHook(() => useOrderDiscountToast(false));
+      const { rerender } = renderHook(() => useOrderDiscountToast());
       act(() => {
         cartState.orderDiscountApplied = true;
       });
@@ -218,12 +236,36 @@ describe("useOrderDiscountToast", () => {
 
     it("does NOT call dismiss if no toast was shown before navigation", () => {
       // Discount never applies — no toast fired.
-      const { rerender } = renderHook(() => useOrderDiscountToast(false));
+      const { rerender } = renderHook(() => useOrderDiscountToast());
 
       act(() => {
         currentPathname = "/checkout";
       });
       rerender();
+
+      expect(mockToastDismiss).not.toHaveBeenCalled();
+    });
+
+    it("dismisses the toast when the component unmounts (page navigation)", () => {
+      // Fire the toast first.
+      const { rerender, unmount } = renderHook(() => useOrderDiscountToast());
+      act(() => {
+        cartState.orderDiscountApplied = true;
+      });
+      rerender();
+      expect(mockToastSuccess).toHaveBeenCalledOnce();
+      mockToastDismiss.mockClear();
+
+      // Unmount (e.g. user navigates away from /products to /cart).
+      unmount();
+
+      expect(mockToastDismiss).toHaveBeenCalledWith("test-toast-id");
+    });
+
+    it("does NOT call dismiss on unmount when no toast was shown", () => {
+      // Discount never applied during this mount.
+      const { unmount } = renderHook(() => useOrderDiscountToast());
+      unmount();
 
       expect(mockToastDismiss).not.toHaveBeenCalled();
     });

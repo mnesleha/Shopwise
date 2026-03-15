@@ -61,7 +61,7 @@ export default function ProductGridClient({
   const { refreshCart } = useCart();
 
   // Show a positive toast when an order-level discount is newly applied.
-  useOrderDiscountToast(false);
+  useOrderDiscountToast();
 
   const onAddToCart = useCallback(
     async (productId: string) => {

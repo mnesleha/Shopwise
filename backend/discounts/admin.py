@@ -1,5 +1,10 @@
 from django.contrib import admin
+from django.conf import settings
+from django.template.response import TemplateResponse
+
+from notifications.jobs import send_campaign_offer_email as _send_campaign_offer_email
 from .models import (
+    AcquisitionMode,
     Discount,
     Offer,
     OrderPromotion,
@@ -176,3 +181,66 @@ class OfferAdmin(admin.ModelAdmin):
     search_fields = ("token", "promotion__code", "promotion__name")
     ordering = ("token",)
     raw_id_fields = ("promotion",)
+    actions = ["send_offer_email"]
+
+    @admin.action(description="Send campaign offer email")
+    def send_offer_email(self, request, queryset):
+        """Admin action: send a campaign-applied offer via email to a chosen recipient.
+
+        Phase 4 / Slice 5A.
+        Supports a single offer at a time.  The promotion must be CAMPAIGN_APPLY.
+        """
+        if queryset.count() != 1:
+            self.message_user(
+                request,
+                "Please select exactly one offer to send.",
+                level="error",
+            )
+            return
+
+        offer = queryset.first()
+
+        if offer.promotion.acquisition_mode != AcquisitionMode.CAMPAIGN_APPLY:
+            self.message_user(
+                request,
+                (
+                    f"Offer '{offer.token}' cannot be sent: its promotion "
+                    f"({offer.promotion.code}) is not CAMPAIGN_APPLY."
+                ),
+                level="error",
+            )
+            return
+
+        # Step 2: form submitted with the recipient email address.
+        if "confirm" in request.POST:
+            recipient_email = request.POST.get("recipient_email", "").strip()
+            if not recipient_email:
+                self.message_user(
+                    request, "Recipient email is required.", level="error"
+                )
+                return
+
+            offer_url = (
+                f"{settings.PUBLIC_BASE_URL}/claim-offer?token={offer.token}"
+            )
+            _send_campaign_offer_email(
+                recipient_email=recipient_email,
+                offer_url=offer_url,
+                promotion_name=offer.promotion.name,
+            )
+            self.message_user(
+                request,
+                f"Campaign offer email sent to {recipient_email}.",
+            )
+            return
+
+        # Step 1: render intermediate form asking for recipient email.
+        return TemplateResponse(
+            request,
+            "admin/discounts/send_offer_email.html",
+            {
+                "offer": offer,
+                "opts": self.model._meta,
+                "title": "Send campaign offer email",
+            },
+        )

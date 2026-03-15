@@ -156,3 +156,31 @@ export async function mergeCart(): Promise<CartMergeReport> {
   const res = await api.post<CartMergeReport>("/cart/merge/");
   return res.data;
 }
+
+// ---------------------------------------------------------------------------
+// Phase 4 / Slice 5B: campaign offer claim
+// ---------------------------------------------------------------------------
+
+export type ClaimOfferResponse = {
+  /** Human-readable name of the applied promotion. */
+  promotion_name: string;
+  /** Internal code of the applied promotion. */
+  promotion_code: string;
+};
+
+/**
+ * POST /cart/offer/claim/
+ *
+ * Validates the given offer token and binds it to the current session.
+ * Subsequent ``GET /cart/`` calls will reflect the campaign discount.
+ *
+ * Throws on 400 (inactive/non-claimable offer) or 404 (offer not found).
+ */
+export async function claimCampaignOffer(
+  token: string,
+): Promise<ClaimOfferResponse> {
+  const res = await api.post<ClaimOfferResponse>("/cart/offer/claim/", {
+    token,
+  });
+  return res.data;
+}

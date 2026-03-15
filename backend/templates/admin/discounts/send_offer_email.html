@@ -1,0 +1,38 @@
+{% extends "admin/base_site.html" %} {% block title %}Send campaign offer
+email{% endblock %} {% block content %}
+<h1>Send campaign offer email</h1>
+
+<p>You are about to send a campaign offer email for the following offer:</p>
+<ul>
+  <li><strong>Token:</strong> {{ offer.token }}</li>
+  <li>
+    <strong>Promotion:</strong> {{ offer.promotion.name }} ({{
+    offer.promotion.code }})
+  </li>
+</ul>
+
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="send_offer_email" />
+  <input type="hidden" name="_selected_action" value="{{ offer.pk }}" />
+  <input type="hidden" name="confirm" value="1" />
+  <p>
+    <label for="id_recipient_email"
+      ><strong>Recipient email address:</strong></label
+    ><br />
+    <input
+      type="email"
+      name="recipient_email"
+      id="id_recipient_email"
+      required
+      size="50"
+      autofocus
+    />
+  </p>
+  <input type="submit" value="Send offer email" class="button default" />
+  &nbsp;
+  <a href="{% url 'admin:discounts_offer_changelist' %}" class="button"
+    >Cancel</a
+  >
+</form>
+{% endblock %}

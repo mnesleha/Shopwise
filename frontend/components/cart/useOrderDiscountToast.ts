@@ -4,18 +4,18 @@
  * Fires a positive Sonner toast exactly once when the cart transitions from
  * having no auto-applied order-level discount to having one.
  *
- * Call sites must pass `initialApplied = true` when the server-rendered cart
- * already has an active discount so that the initial state is silently synced
- * without displaying a spurious toast on mount.
- *
  * Guard behaviour:
  * - No toast on initial render, regardless of the discount state.
- * - Toast fires only on the false → true transition during the current
- *   browsing session (tracked via a React ref, not persisted across page
- *   refreshes).
- * - The toast auto-dismisses after 8 seconds; the user can also close it
- *   manually.  It is NOT shown again until the discount is removed and
- *   re-applied within the same session.
+ * - Toast fires only on the false → true transition while this hook is mounted.
+ * - Initialises from the current live cart state so that remounting the host
+ *   component (e.g. returning to /products while a discount is still active)
+ *   never produces a duplicate toast.
+ * - The sticky toast is automatically dismissed when the host component
+ *   unmounts (navigation away) or when the user navigates to a different
+ *   pathname while the component is still mounted.
+ * - Toast can also be closed manually via the close button.
+ * - It fires again only if the discount is removed and then re-applied within
+ *   the same component lifetime.
  */
 
 "use client";
@@ -25,16 +25,17 @@ import { toast } from "sonner";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/components/cart/CartProvider";
 
-export function useOrderDiscountToast(initialApplied = false): void {
+export function useOrderDiscountToast(): void {
   const { orderDiscountApplied, orderDiscountAmount } = useCart();
   const pathname = usePathname();
 
   /**
    * prevRef tracks the last known discount state so we can detect the
-   * false → true edge.  Initialised from the server-rendered state so that
-   * a discount already active on mount does not trigger a toast.
+   * false → true edge.  Initialised from the *current* live cart state so
+   * that remounting the component while an active discount is already present
+   * does not trigger a spurious toast.
    */
-  const prevRef = useRef<boolean>(initialApplied);
+  const prevRef = useRef<boolean>(orderDiscountApplied);
 
   /**
    * toastIdRef stores the ID of the active sticky toast so we can
@@ -48,7 +49,19 @@ export function useOrderDiscountToast(initialApplied = false): void {
    */
   const prevPathnameRef = useRef<string>(pathname);
 
-  // Dismiss the sticky toast when the user navigates to a different page.
+  // Dismiss the sticky toast when the host component unmounts (e.g. the user
+  // navigates away from the page that renders this hook).
+  useEffect(() => {
+    return () => {
+      if (toastIdRef.current !== null) {
+        toast.dismiss(toastIdRef.current);
+        toastIdRef.current = null;
+      }
+    };
+  }, []);
+
+  // Dismiss the sticky toast when the user navigates to a different page
+  // while the component remains mounted.
   useEffect(() => {
     if (prevPathnameRef.current !== pathname && toastIdRef.current !== null) {
       toast.dismiss(toastIdRef.current);
@@ -65,8 +78,8 @@ export function useOrderDiscountToast(initialApplied = false): void {
           : "Good news — your order discount has been applied.";
 
       // The toast is sticky (duration: Infinity) so the user can read it
-      // at their own pace.  It is dismissed either manually (closeButton)
-      // or automatically when a pathname change is detected above.
+      // at their own pace.  It is dismissed on unmount, on pathname change,
+      // or manually via the close button.
       const id = toast.success(msg, {
         duration: Infinity,
         closeButton: true,

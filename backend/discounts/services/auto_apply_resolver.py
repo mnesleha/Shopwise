@@ -20,6 +20,14 @@ resolution stage — stacking policy governs how an order-level discount
 interacts with *line-level* promotions, which is a concern of the caller.
 
 Returns ``None`` when no AUTO_APPLY promotion is currently eligible.
+
+Public helpers
+--------------
+- :func:`resolve_auto_apply_order_promotion` — existing: returns single winner
+  for AUTO_APPLY-only flows (used by ``get_cart_pricing_with_order_discount``).
+- :func:`resolve_all_eligible_auto_apply_promotions` — returns ALL eligible
+  AUTO_APPLY promotions for use in exclusive winner-selection where campaign
+  offers must also be considered as candidates.
 """
 
 from __future__ import annotations
@@ -191,3 +199,46 @@ def resolve_threshold_reward_progress(
         remaining=remaining,
         currency=currency,
     )
+
+def resolve_all_eligible_auto_apply_promotions(
+    cart_gross: Decimal,
+    currency: str,  # noqa: ARG001  — reserved for future multi-currency filtering
+) -> list:
+    """Return all currently eligible AUTO_APPLY OrderPromotions for *cart_gross*.
+
+    Unlike :func:`resolve_auto_apply_order_promotion`, which stops at the first
+    eligible candidate (sorted by priority + id), this function returns the
+    *complete* list so that a caller which must also consider CAMPAIGN_APPLY
+    candidates can perform its own cross-acquisition-mode winner selection.
+
+    Parameters
+    ----------
+    cart_gross:
+        Post-line-promotion cart total gross.
+    currency:
+        ISO 4217 currency code (reserved for future multi-currency support).
+
+    Returns
+    -------
+    list[OrderPromotion]
+        All eligible AUTO_APPLY promotions, ordered by ``(-priority, id)``.
+        Empty list when none are eligible.
+    """
+    now = timezone.now()
+
+    candidates = (
+        OrderPromotion.objects.filter(
+            acquisition_mode=AcquisitionMode.AUTO_APPLY,
+            is_active=True,
+        )
+        .filter(
+            Q(active_from__isnull=True) | Q(active_from__lte=now),
+            Q(active_to__isnull=True) | Q(active_to__gte=now),
+        )
+        .order_by("-priority", "id")
+    )
+
+    return [
+        p for p in candidates
+        if p.minimum_order_value is None or cart_gross >= p.minimum_order_value
+    ]

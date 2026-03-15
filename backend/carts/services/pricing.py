@@ -34,7 +34,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from decimal import Decimal, ROUND_HALF_UP
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from prices import Money
 
@@ -338,3 +338,192 @@ def get_cart_pricing_with_order_discount(cart: "Cart") -> CartTotalsResult:
 
     return replace(pricing, order_discount=order_discount, threshold_reward=threshold_reward)
 
+
+# ---------------------------------------------------------------------------
+# Exclusive promotion winner selection helpers
+# ---------------------------------------------------------------------------
+
+
+def _compute_promotion_gross_discount(promotion: Any, total_gross: Decimal) -> Decimal:
+    """Compute the gross discount a promotion would yield on *total_gross*.
+
+    Used to evaluate candidate order-level promotions on the same cart so
+    the winner can be selected by highest customer benefit.
+
+    Parameters
+    ----------
+    promotion:
+        An ``OrderPromotion`` instance.
+    total_gross:
+        Pre-order-discount gross total of the cart (``CartTotalsResult.total_gross``).
+
+    Returns
+    -------
+    Decimal
+        Gross discount amount (≥ 0, ≤ total_gross).
+    """
+    # Lazy import to avoid a top-level discounts → carts circular path.
+    from discounts.models import PromotionType  # noqa: PLC0415
+
+    if total_gross <= Decimal(0):
+        return Decimal("0.00")
+    if promotion.type == PromotionType.PERCENT:
+        return (total_gross * promotion.value / Decimal("100")).quantize(
+            _QUANTIZE, ROUND_HALF_UP
+        )
+    # FIXED — gross-inclusive amount, capped at available gross.
+    return min(promotion.value, total_gross).quantize(_QUANTIZE, ROUND_HALF_UP)
+
+
+def _pick_exclusive_promotion_winner(candidates: list, total_gross: Decimal) -> Any:
+    """Return the winning promotion from *candidates* using the EXCLUSIVE rule.
+
+    Selection order (ADR-042 §4.2):
+
+    1. Highest gross benefit evaluated on *total_gross*.
+    2. Highest explicit priority.
+    3. Lowest id as stable deterministic fallback.
+
+    Parameters
+    ----------
+    candidates:
+        Non-empty list of ``OrderPromotion`` instances.
+    total_gross:
+        Pre-order-discount cart gross used to evaluate each candidate's benefit.
+
+    Returns
+    -------
+    OrderPromotion or None
+        The single winning promotion, or ``None`` when *candidates* is empty.
+    """
+    if not candidates:
+        return None
+    return max(
+        candidates,
+        key=lambda p: (
+            _compute_promotion_gross_discount(p, total_gross),
+            p.priority,
+            -p.id,  # lower id wins on tie → negate for max()
+        ),
+    )
+
+
+def get_cart_pricing_with_campaign_offer(
+    cart: "Cart",
+    offer: "Any",
+) -> CartTotalsResult:
+    """Return cart pricing enriched with an EXCLUSIVE order-level promotion.
+
+    Phase 4 / Slice 5B (corrected by exclusive-winner alignment).
+
+    When the session contains a claimed CAMPAIGN_APPLY offer, this function
+    selects the **single winning** order-level promotion from:
+
+    - the claimed campaign offer's promotion, and
+    - all currently eligible AUTO_APPLY promotions.
+
+    Winner selection uses the EXCLUSIVE rule (ADR-042 §4.2):
+
+    1. Highest gross benefit on the current cart.
+    2. Highest explicit ``priority``.
+    3. Lowest ``id`` as a stable tie-breaker.
+
+    This guarantees that the customer always receives the best available
+    discount and that only one promotion is reflected in the pricing output.
+
+    Parameters
+    ----------
+    cart:
+        An active ``Cart`` instance.
+    offer:
+        A validated, active ``Offer`` instance whose
+        ``promotion.acquisition_mode`` is ``CAMPAIGN_APPLY``.
+    """
+    # Lazy imports to avoid circular dependencies at module load time.
+    from discounts.services.auto_apply_resolver import (  # noqa: PLC0415
+        resolve_all_eligible_auto_apply_promotions,
+        resolve_threshold_reward_progress,
+    )
+    from discounts.services.order_discount_allocation import (  # noqa: PLC0415
+        allocate_order_discount,
+        OrderDiscountInput,
+        OrderLineInput,
+    )
+    from dataclasses import replace as dc_replace  # noqa: PLC0415
+
+    pricing = get_cart_pricing(cart)
+
+    # Threshold reward is always computed from the pre-order-discount total.
+    threshold_reward = resolve_threshold_reward_progress(
+        cart_gross=pricing.total_gross.amount,
+        currency=pricing.currency,
+    )
+
+    # Build per-line inputs for the VAT allocation engine.
+    lines = []
+    for line in pricing.items:
+        if line.unit_pricing is None:
+            continue
+        qty = Decimal(str(line.quantity))
+        lines.append(
+            OrderLineInput(
+                line_net=(line.unit_pricing.discounted.net.amount * qty).quantize(
+                    _QUANTIZE, ROUND_HALF_UP
+                ),
+                line_gross=(line.unit_pricing.discounted.gross.amount * qty).quantize(
+                    _QUANTIZE, ROUND_HALF_UP
+                ),
+                tax_rate=line.unit_pricing.discounted.tax_rate,
+                currency=pricing.currency,
+            )
+        )
+
+    if not lines:
+        # All products are unmigrated — cannot apply order discount.
+        return dc_replace(pricing, threshold_reward=threshold_reward)
+
+    # ------------------------------------------------------------------
+    # Exclusive winner selection: consider the campaign offer AND all
+    # eligible AUTO_APPLY promotions, then pick the one that gives the
+    # highest customer benefit.
+    # ------------------------------------------------------------------
+    auto_apply_candidates = resolve_all_eligible_auto_apply_promotions(
+        cart_gross=pricing.total_gross.amount,
+        currency=pricing.currency,
+    )
+    all_candidates = [offer.promotion] + auto_apply_candidates
+
+    winner = _pick_exclusive_promotion_winner(
+        all_candidates,
+        pricing.total_gross.amount,
+    )
+
+    if winner is None:
+        return dc_replace(pricing, threshold_reward=threshold_reward)
+
+    discount_input = OrderDiscountInput(
+        type=winner.type,
+        value=winner.value,
+        currency=pricing.currency,
+    )
+
+    allocation = allocate_order_discount(lines=lines, discount=discount_input)
+
+    order_discount = OrderDiscountSummary(
+        gross_reduction=Money(
+            allocation.total_gross_reduction.quantize(_QUANTIZE, ROUND_HALF_UP),
+            pricing.currency,
+        ),
+        promotion_code=winner.code,
+        promotion_name=winner.name,
+        total_gross_after=Money(
+            allocation.total_adjusted_gross.quantize(_QUANTIZE, ROUND_HALF_UP),
+            pricing.currency,
+        ),
+        total_tax_after=Money(
+            allocation.total_adjusted_tax.quantize(_QUANTIZE, ROUND_HALF_UP),
+            pricing.currency,
+        ),
+    )
+
+    return dc_replace(pricing, order_discount=order_discount, threshold_reward=threshold_reward)

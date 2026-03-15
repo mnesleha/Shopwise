@@ -8,6 +8,7 @@ break request flows or background workers.
 
 from notifications.email_service import EmailService
 from notifications.renderers import (
+    render_campaign_offer_email,
     render_email_change_cancel_notification,
     render_email_change_confirm,
     render_email_verification,
@@ -18,6 +19,44 @@ from notifications.renderers import (
 )
 from notifications.exceptions import NotificationSendError
 from notifications.error_handler import NotificationErrorHandler
+
+
+def send_campaign_offer_email(
+    *, recipient_email: str, offer_url: str, promotion_name: str
+) -> None:
+    """
+    Send a campaign offer email containing the offer link.
+
+    Phase 4 / Slice 5A: called from Django admin when an admin sends an offer
+    to a specific recipient.
+
+    Best-effort semantics:
+    - Failures MUST NOT propagate.
+    - Errors are delegated to NotificationErrorHandler.
+    """
+    try:
+        subject, body = render_campaign_offer_email(
+            recipient_email=recipient_email,
+            offer_url=offer_url,
+            promotion_name=promotion_name,
+        )
+        EmailService.send_plain_text(
+            to_email=recipient_email,
+            subject=subject,
+            body=body,
+        )
+    except Exception:
+        NotificationErrorHandler.handle(
+            NotificationSendError(
+                code="CAMPAIGN_OFFER_EMAIL_SEND_FAILED",
+                message="Failed to send campaign offer email.",
+                context={
+                    "recipient_email": recipient_email,
+                    "offer_url": offer_url,
+                    "promotion_name": promotion_name,
+                },
+            )
+        )
 
 
 def send_email_verification(*, recipient_email: str, verification_url: str) -> None:
