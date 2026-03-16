@@ -133,6 +133,26 @@ class OrderPromotionAdmin(admin.ModelAdmin):
     search_fields = ("name", "code")
     ordering = ("-priority", "name")
     inlines = [OfferInline]
+
+    def get_form(self, request, obj=None, **kwargs):
+        """Attach field-level help text so merchants see inline guidance."""
+        kwargs.setdefault("help_texts", {})
+        kwargs["help_texts"].update(
+            {
+                "priority": (
+                    "Higher value wins. When two exclusive order discounts are eligible at the "
+                    "same time, the one with the <strong>highest priority</strong> is applied — "
+                    "regardless of which one would give a larger discount. "
+                    "Use equal priorities when you want the larger discount to win instead."
+                ),
+                "stacking_policy": (
+                    "<strong>EXCLUSIVE</strong> promotions do not combine with other "
+                    "order-level promotions — only the single winner is applied."
+                ),
+            }
+        )
+        return super().get_form(request, obj, **kwargs)
+
     fieldsets = (
         (
             None,
@@ -146,6 +166,12 @@ class OrderPromotionAdmin(admin.ModelAdmin):
                     "stacking_policy",
                     "priority",
                     "minimum_order_value",
+                ),
+                "description": (
+                    "<strong>Winner resolution for simultaneous exclusive promotions:</strong> "
+                    "highest priority wins first; if equal, the larger customer discount wins; "
+                    "if still equal, the lower ID wins. Only one order-level promotion is "
+                    "ever applied at a time."
                 ),
             },
         ),

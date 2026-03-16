@@ -24,6 +24,11 @@ type CartState = {
    * discount is applied.  Updated in sync with orderDiscountApplied.
    */
   orderDiscountAmount: string | null;
+  /**
+   * Human-readable name of the currently winning order-level promotion, or
+   * null.  Used by useOrderDiscountToast to detect winner changes.
+   */
+  orderDiscountPromotionName: string | null;
 };
 
 const CartContext = createContext<CartState | null>(null);
@@ -40,6 +45,7 @@ export function CartProvider({
   const [orderDiscountAmount, setOrderDiscountAmount] = useState<string | null>(
     null,
   );
+  const [orderDiscountPromotionName, setOrderDiscountPromotionName] = useState<string | null>(null);
 
   const refreshCart = useCallback(async () => {
     try {
@@ -48,10 +54,12 @@ export function CartProvider({
       setCount(total);
       setOrderDiscountApplied(cart.totals?.order_discount_applied ?? false);
       setOrderDiscountAmount(cart.totals?.order_discount_amount ?? null);
+      setOrderDiscountPromotionName(cart.totals?.order_discount_promotion_name ?? null);
     } catch {
       setCount(0);
       setOrderDiscountApplied(false);
       setOrderDiscountAmount(null);
+      setOrderDiscountPromotionName(null);
     }
   }, []);
 
@@ -64,8 +72,9 @@ export function CartProvider({
       resetCount,
       orderDiscountApplied,
       orderDiscountAmount,
+      orderDiscountPromotionName,
     }),
-    [count, refreshCart, resetCount, orderDiscountApplied, orderDiscountAmount],
+    [count, refreshCart, resetCount, orderDiscountApplied, orderDiscountAmount, orderDiscountPromotionName],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

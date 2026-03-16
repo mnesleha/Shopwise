@@ -160,6 +160,22 @@ class CartTotalsResult:
     :func:`~discounts.services.auto_apply_resolver.resolve_threshold_reward_progress`.
     """
 
+    campaign_outcome: Optional[str] = field(default=None)
+    """
+    Campaign offer outcome when a claimed CAMPAIGN_APPLY offer is present.
+
+    ``"APPLIED"``   — the campaign offer is the current exclusive winner.
+    ``"SUPERSEDED"`` — a better auto-apply promotion superseded the offer.
+    ``None``         — no campaign offer context.
+    """
+
+    order_discount_upgrade: Optional[Any] = field(default=None)
+    """
+    Next meaningful winner-transition opportunity
+    (:class:`~discounts.services.order_discount_decision.OrderDiscountUpgrade`),
+    or ``None`` when no better promotion exists at any higher cart value.
+    """
+
 
 # ---------------------------------------------------------------------------
 # Service function
@@ -285,7 +301,19 @@ def get_cart_pricing_with_order_discount(cart: "Cart") -> CartTotalsResult:
     )
 
     if promotion is None:
-        return replace(pricing, threshold_reward=threshold_reward)
+        from discounts.services.order_discount_decision import (  # noqa: PLC0415
+            resolve_order_discount_decision_state,
+        )
+        decision = resolve_order_discount_decision_state(
+            cart_gross=pricing.total_gross.amount,
+            currency=pricing.currency,
+            current_winner=None,
+        )
+        return replace(
+            pricing,
+            threshold_reward=threshold_reward,
+            order_discount_upgrade=decision.next_upgrade,
+        )
 
     # Build per-line inputs for the VAT allocation engine.
     lines = []
@@ -309,7 +337,19 @@ def get_cart_pricing_with_order_discount(cart: "Cart") -> CartTotalsResult:
 
     if not lines:
         # All products are unmigrated — cannot apply order discount.
-        return replace(pricing, threshold_reward=threshold_reward)
+        from discounts.services.order_discount_decision import (  # noqa: PLC0415
+            resolve_order_discount_decision_state,
+        )
+        decision = resolve_order_discount_decision_state(
+            cart_gross=pricing.total_gross.amount,
+            currency=pricing.currency,
+            current_winner=None,
+        )
+        return replace(
+            pricing,
+            threshold_reward=threshold_reward,
+            order_discount_upgrade=decision.next_upgrade,
+        )
 
     discount_input = OrderDiscountInput(
         type=promotion.type,
@@ -336,7 +376,20 @@ def get_cart_pricing_with_order_discount(cart: "Cart") -> CartTotalsResult:
         ),
     )
 
-    return replace(pricing, order_discount=order_discount, threshold_reward=threshold_reward)
+    from discounts.services.order_discount_decision import (  # noqa: PLC0415
+        resolve_order_discount_decision_state,
+    )
+    decision = resolve_order_discount_decision_state(
+        cart_gross=pricing.total_gross.amount,
+        currency=pricing.currency,
+        current_winner=promotion,
+    )
+    return replace(
+        pricing,
+        order_discount=order_discount,
+        threshold_reward=threshold_reward,
+        order_discount_upgrade=decision.next_upgrade,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -378,11 +431,17 @@ def _compute_promotion_gross_discount(promotion: Any, total_gross: Decimal) -> D
 def _pick_exclusive_promotion_winner(candidates: list, total_gross: Decimal) -> Any:
     """Return the winning promotion from *candidates* using the EXCLUSIVE rule.
 
-    Selection order (ADR-042 §4.2):
+    Selection order — priority-first (ADR-042 §4.2, corrected alignment):
 
-    1. Highest gross benefit evaluated on *total_gross*.
-    2. Highest explicit priority.
-    3. Lowest id as stable deterministic fallback.
+    1. Highest explicit **priority** — merchant-configured; respected above
+       all other criteria.
+    2. Highest gross benefit evaluated on *total_gross* — tiebreaker when
+       priorities are equal.
+    3. Lowest id — stable deterministic final fallback.
+
+    This ordering is identical to ``resolve_auto_apply_order_promotion`` and
+    ``_pick_winner`` in the decision engine, ensuring a single consistent
+    winner policy across the whole order-discount subsystem.
 
     Parameters
     ----------
@@ -401,8 +460,8 @@ def _pick_exclusive_promotion_winner(candidates: list, total_gross: Decimal) -> 
     return max(
         candidates,
         key=lambda p: (
-            _compute_promotion_gross_discount(p, total_gross),
             p.priority,
+            _compute_promotion_gross_discount(p, total_gross),
             -p.id,  # lower id wins on tie → negate for max()
         ),
     )
@@ -478,9 +537,24 @@ def get_cart_pricing_with_campaign_offer(
             )
         )
 
+    from discounts.services.order_discount_decision import (  # noqa: PLC0415
+        resolve_order_discount_decision_state,
+    )
+
     if not lines:
         # All products are unmigrated — cannot apply order discount.
-        return dc_replace(pricing, threshold_reward=threshold_reward)
+        decision = resolve_order_discount_decision_state(
+            cart_gross=pricing.total_gross.amount,
+            currency=pricing.currency,
+            current_winner=None,
+            campaign_offer_promotion=offer.promotion,
+        )
+        return dc_replace(
+            pricing,
+            threshold_reward=threshold_reward,
+            campaign_outcome=decision.campaign_outcome,
+            order_discount_upgrade=decision.next_upgrade,
+        )
 
     # ------------------------------------------------------------------
     # Exclusive winner selection: consider the campaign offer AND all
@@ -499,7 +573,18 @@ def get_cart_pricing_with_campaign_offer(
     )
 
     if winner is None:
-        return dc_replace(pricing, threshold_reward=threshold_reward)
+        decision = resolve_order_discount_decision_state(
+            cart_gross=pricing.total_gross.amount,
+            currency=pricing.currency,
+            current_winner=None,
+            campaign_offer_promotion=offer.promotion,
+        )
+        return dc_replace(
+            pricing,
+            threshold_reward=threshold_reward,
+            campaign_outcome=decision.campaign_outcome,
+            order_discount_upgrade=decision.next_upgrade,
+        )
 
     discount_input = OrderDiscountInput(
         type=winner.type,
@@ -526,4 +611,16 @@ def get_cart_pricing_with_campaign_offer(
         ),
     )
 
-    return dc_replace(pricing, order_discount=order_discount, threshold_reward=threshold_reward)
+    decision = resolve_order_discount_decision_state(
+        cart_gross=pricing.total_gross.amount,
+        currency=pricing.currency,
+        current_winner=winner,
+        campaign_offer_promotion=offer.promotion,
+    )
+    return dc_replace(
+        pricing,
+        order_discount=order_discount,
+        threshold_reward=threshold_reward,
+        campaign_outcome=decision.campaign_outcome,
+        order_discount_upgrade=decision.next_upgrade,
+    )

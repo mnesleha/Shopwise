@@ -1,20 +1,18 @@
 /**
  * useOrderDiscountToast
  *
- * Fires a positive Sonner toast exactly once when the cart transitions from
- * having no auto-applied order-level discount to having one.
+ * Fires a positive Sonner toast whenever the cart gains (or changes) an
+ * auto-applied order-level discount:
  *
- * Guard behaviour:
  * - No toast on initial render, regardless of the discount state.
- * - Toast fires only on the false → true transition while this hook is mounted.
+ * - Toast fires on the false → true transition of orderDiscountApplied.
+ * - Toast also fires when the *winning promotion changes* while
+ *   orderDiscountApplied remains true (e.g. cart crosses a higher threshold).
  * - Initialises from the current live cart state so that remounting the host
- *   component (e.g. returning to /products while a discount is still active)
- *   never produces a duplicate toast.
- * - The sticky toast is automatically dismissed when the host component
- *   unmounts (navigation away) or when the user navigates to a different
- *   pathname while the component is still mounted.
- * - Toast can also be closed manually via the close button.
- * - It fires again only if the discount is removed and then re-applied within
+ *   component never produces a duplicate toast.
+ * - The sticky toast is automatically dismissed on unmount, on pathname change,
+ *   or when the user closes it manually.
+ * - Fires again only if the discount is removed and then re-applied within
  *   the same component lifetime.
  */
 
@@ -26,7 +24,7 @@ import { usePathname } from "next/navigation";
 import { useCart } from "@/components/cart/CartProvider";
 
 export function useOrderDiscountToast(): void {
-  const { orderDiscountApplied, orderDiscountAmount } = useCart();
+  const { orderDiscountApplied, orderDiscountAmount, orderDiscountPromotionName } = useCart();
   const pathname = usePathname();
 
   /**
@@ -36,6 +34,12 @@ export function useOrderDiscountToast(): void {
    * does not trigger a spurious toast.
    */
   const prevRef = useRef<boolean>(orderDiscountApplied);
+
+  /**
+   * prevNameRef tracks the last known winning promotion name so we can detect
+   * a winner-change while the discount remains applied.
+   */
+  const prevNameRef = useRef<string | null>(orderDiscountPromotionName);
 
   /**
    * toastIdRef stores the ID of the active sticky toast so we can
@@ -71,7 +75,21 @@ export function useOrderDiscountToast(): void {
   }, [pathname]);
 
   useEffect(() => {
-    if (!prevRef.current && orderDiscountApplied) {
+    const gainedDiscount = !prevRef.current && orderDiscountApplied;
+    const winnerChanged =
+      orderDiscountApplied &&
+      prevRef.current &&
+      orderDiscountPromotionName !== null &&
+      prevNameRef.current !== orderDiscountPromotionName;
+
+    if (gainedDiscount || winnerChanged) {
+      // Dismiss the previous sticky toast before firing a new one so we never
+      // accumulate stale toasts when the winner changes.
+      if (toastIdRef.current !== null) {
+        toast.dismiss(toastIdRef.current);
+        toastIdRef.current = null;
+      }
+
       const msg =
         orderDiscountAmount && parseFloat(orderDiscountAmount) > 0
           ? `Good news — a ${orderDiscountAmount} discount has been applied to your order.`
@@ -86,6 +104,8 @@ export function useOrderDiscountToast(): void {
       });
       toastIdRef.current = id;
     }
+
     prevRef.current = orderDiscountApplied;
-  }, [orderDiscountApplied, orderDiscountAmount]);
+    prevNameRef.current = orderDiscountPromotionName;
+  }, [orderDiscountApplied, orderDiscountAmount, orderDiscountPromotionName]);
 }

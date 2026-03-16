@@ -63,6 +63,28 @@ export type CartTotalsDto = {
     remaining: string;
     currency: string;
   } | null;
+  // Phase 4 / Slice 5C: order discount decision engine
+  /**
+   * Campaign offer outcome:
+   * - "APPLIED"    — the claimed offer is the current winner.
+   * - "SUPERSEDED" — a better auto-apply promotion is already active.
+   * - null          — no campaign offer context.
+   */
+  campaign_outcome?: string | null;
+  /**
+   * Next meaningful order-level winner transition, or null when no better
+   * promotion exists at a higher cart value.
+   */
+  order_discount_next_upgrade?: {
+    /** Cart gross total at which the better promotion becomes the winner. */
+    threshold: string;
+    /** Additional spend required to reach the threshold. */
+    remaining: string;
+    /** Human-readable name of the next winning promotion. */
+    promotion_name: string;
+    /** ISO 4217 currency code. */
+    currency: string;
+  } | null;
 };
 
 export type CartDto = {

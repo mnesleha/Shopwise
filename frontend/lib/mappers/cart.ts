@@ -55,6 +55,28 @@ export type CartVm = {
     /** Currency code, e.g. "EUR". */
     currency: string;
   };
+  /**
+   * Phase 4 / Slice 5C: campaign offer outcome.
+   * Present only when a campaign offer cookie is active.
+   *
+   * - "APPLIED"    — the claimed offer is the current exclusive winner.
+   * - "SUPERSEDED" — a better auto-apply promotion superseded the offer.
+   */
+  campaignOutcome?: "APPLIED" | "SUPERSEDED";
+  /**
+   * Phase 4 / Slice 5C: next meaningful order-level upgrade opportunity.
+   * Undefined when no better promotion exists at any higher cart value.
+   */
+  orderDiscountUpgrade?: {
+    /** Cart gross total at which the better promotion becomes the winner. */
+    threshold: string;
+    /** Additional spend required to reach the threshold. */
+    remaining: string;
+    /** Human-readable name of the next winning promotion. */
+    promotionName: string;
+    /** ISO 4217 currency code. */
+    currency: string;
+  };
   subtotal: string;
   tax?: string;
   total: string;
@@ -145,6 +167,23 @@ export function mapCartToVm(dto: CartDto): CartVm {
       };
     }
 
+    // Phase 4 / Slice 5C: campaign outcome and next upgrade.
+    let campaignOutcome: CartVm["campaignOutcome"];
+    if (t.campaign_outcome === "APPLIED" || t.campaign_outcome === "SUPERSEDED") {
+      campaignOutcome = t.campaign_outcome;
+    }
+
+    let orderDiscountUpgrade: CartVm["orderDiscountUpgrade"];
+    if (t.order_discount_next_upgrade) {
+      const u = t.order_discount_next_upgrade;
+      orderDiscountUpgrade = {
+        threshold: u.threshold,
+        remaining: u.remaining,
+        promotionName: u.promotion_name,
+        currency: u.currency,
+      };
+    }
+
     // The displayed total is the post-order-discount figure when one is applied.
     const total = orderDiscount ? orderDiscount.totalGrossAfter : t.total_gross;
 
@@ -165,6 +204,8 @@ export function mapCartToVm(dto: CartDto): CartVm {
       discount: totalDiscountNum > 0 ? { amount: t.total_discount } : undefined,
       orderDiscount,
       thresholdReward,
+      campaignOutcome,
+      orderDiscountUpgrade,
       // Subtotal = original amount before promotion reductions.
       subtotal: t.subtotal_undiscounted,
       // Tax component (informational — already included in total).

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 import { CartDetail } from "@/components/cart/CartDetail";
 import {
   clearCart,
@@ -100,6 +101,16 @@ export default function CartDetailClient({ initialCartVm }: Props) {
           productId: Number(productIdStr),
           quantity: nextQty,
         });
+        await refresh();
+      } catch (err: unknown) {
+        const status = (err as { response?: { status?: number } })?.response
+          ?.status;
+        if (status === 409) {
+          toast.error("Not enough stock available.");
+        } else {
+          toast.error("Could not update quantity. Please try again.");
+        }
+        // Re-sync local cart state even on error so the UI stays consistent.
         await refresh();
       } finally {
         setBusy(false);

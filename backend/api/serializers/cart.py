@@ -148,6 +148,38 @@ class CartTotalsSerializer(serializers.Serializer):
             "currency": tr.currency,
         }
 
+    # ------------------------------------------------------------------
+    # Phase 4 / Slice 5C: order discount decision engine
+    # ------------------------------------------------------------------
+
+    campaign_outcome = serializers.SerializerMethodField(
+        help_text=(
+            "Campaign offer outcome: 'APPLIED' when the claimed offer is the "
+            "current winner, 'SUPERSEDED' when a better auto-apply promotion "
+            "is active, or null when no campaign offer context exists."
+        )
+    )
+    order_discount_next_upgrade = serializers.SerializerMethodField(
+        help_text=(
+            "Next meaningful order-level winner transition, or null.  Shape: "
+            "{threshold, remaining, promotion_name, currency}."
+        )
+    )
+
+    def get_campaign_outcome(self, obj) -> str | None:
+        return getattr(obj, "campaign_outcome", None)
+
+    def get_order_discount_next_upgrade(self, obj) -> dict | None:
+        upg = getattr(obj, "order_discount_upgrade", None)
+        if upg is None:
+            return None
+        return {
+            "threshold": str(upg.threshold),
+            "remaining": str(upg.remaining),
+            "promotion_name": upg.promotion_name,
+            "currency": upg.currency,
+        }
+
 
 class CartItemProductSerializer(serializers.ModelSerializer):
     """

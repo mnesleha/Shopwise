@@ -3,6 +3,7 @@
  *
  * Contract guarded:
  * - Fires toast.success on false → true transition of orderDiscountApplied
+ * - Fires toast.success when the winning promotion changes while discount remains applied
  * - Does NOT fire when discount is already active on mount (prevRef seeded from live state)
  * - Does NOT fire on re-render when discount is unchanged (no spurious toasts)
  * - After discount is removed and re-applied, fires again (true → false → true)
@@ -22,12 +23,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const cartState: {
   orderDiscountApplied: boolean;
   orderDiscountAmount: string | null;
+  orderDiscountPromotionName: string | null;
   refreshCart: ReturnType<typeof vi.fn>;
   count: number;
   resetCount: ReturnType<typeof vi.fn>;
 } = {
   orderDiscountApplied: false,
   orderDiscountAmount: null,
+  orderDiscountPromotionName: null,
   refreshCart: vi.fn(),
   count: 0,
   resetCount: vi.fn(),
@@ -56,6 +59,7 @@ import { useOrderDiscountToast } from "@/components/cart/useOrderDiscountToast";
 beforeEach(() => {
   cartState.orderDiscountApplied = false;
   cartState.orderDiscountAmount = null;
+  cartState.orderDiscountPromotionName = null;
   currentPathname = "/products";
   mockToastSuccess.mockClear();
   mockToastDismiss.mockClear();
@@ -199,6 +203,69 @@ describe("useOrderDiscountToast", () => {
       });
       rerender();
       expect(mockToastSuccess).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("toast on winner change (promotion name changes while discount stays applied)", () => {
+    it("fires a new toast when the winning promotion changes while discount remains applied", () => {
+      // Initial mount: discount active with OL-Percent-40
+      cartState.orderDiscountApplied = true;
+      cartState.orderDiscountPromotionName = "OL-Percent-40";
+      const { rerender } = renderHook(() => useOrderDiscountToast());
+      // No toast on initial mount (prevRef seeded)
+      expect(mockToastSuccess).not.toHaveBeenCalled();
+
+      // Winner changes to OL-Fixed-500 while discount still applied
+      act(() => {
+        cartState.orderDiscountPromotionName = "OL-Fixed-500";
+      });
+      rerender();
+
+      expect(mockToastSuccess).toHaveBeenCalledOnce();
+    });
+
+    it("dismisses the previous toast before firing the winner-change toast", () => {
+      // Start with discount off, then gain it with promotion A
+      const { rerender } = renderHook(() => useOrderDiscountToast());
+      act(() => {
+        cartState.orderDiscountApplied = true;
+        cartState.orderDiscountPromotionName = "OL-Percent-40";
+      });
+      rerender();
+      // First toast fired (false → true)
+      expect(mockToastSuccess).toHaveBeenCalledOnce();
+      mockToastDismiss.mockClear();
+
+      // Winner changes
+      act(() => {
+        cartState.orderDiscountPromotionName = "OL-Fixed-500";
+      });
+      rerender();
+
+      // Old toast should have been dismissed before the new one fires
+      expect(mockToastDismiss).toHaveBeenCalledWith("test-toast-id");
+      expect(mockToastSuccess).toHaveBeenCalledTimes(2);
+    });
+
+    it("does NOT fire when promotion name stays the same on re-render", () => {
+      cartState.orderDiscountApplied = true;
+      cartState.orderDiscountPromotionName = "OL-Percent-40";
+      const { rerender } = renderHook(() => useOrderDiscountToast());
+
+      rerender();
+      rerender();
+
+      expect(mockToastSuccess).not.toHaveBeenCalled();
+    });
+
+    it("does NOT fire when promotionName is null even if discount is applied", () => {
+      cartState.orderDiscountApplied = true;
+      cartState.orderDiscountPromotionName = null;
+      const { rerender } = renderHook(() => useOrderDiscountToast());
+
+      rerender();
+
+      expect(mockToastSuccess).not.toHaveBeenCalled();
     });
   });
 

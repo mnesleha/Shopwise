@@ -75,6 +75,22 @@ interface Cart {
   orderDiscount?: CartOrderDiscount;
   /** Phase 4 / Slice 4: threshold reward progress. */
   thresholdReward?: CartThresholdReward;
+  /**
+   * Phase 4 / Slice 5C: campaign offer outcome.
+   * "APPLIED" — the claimed offer is the current winner.
+   * "SUPERSEDED" — a better auto-apply promotion took precedence.
+   */
+  campaignOutcome?: "APPLIED" | "SUPERSEDED";
+  /**
+   * Phase 4 / Slice 5C: next meaningful order-level upgrade opportunity.
+   * Undefined when no better promotion exists at a higher cart value.
+   */
+  orderDiscountUpgrade?: {
+    threshold: string;
+    remaining: string;
+    promotionName: string;
+    currency: string;
+  };
   subtotal: string;
   tax?: string;
   total: string;
@@ -334,6 +350,28 @@ function OrderSummary({
           </div>
         )}
 
+        {/* Phase 4 / Slice 5C: campaign offer superseded message */}
+        {cart.campaignOutcome === "SUPERSEDED" && (
+          <div
+            className="rounded-md bg-muted/50 px-3 py-2 text-sm text-muted-foreground"
+            data-testid="campaign-outcome-superseded"
+          >
+            A better discount is already applied.
+          </div>
+        )}
+
+        {/* Phase 4 / Slice 5C: next order-level upgrade opportunity */}
+        {cart.orderDiscountUpgrade && (
+          <div
+            className="rounded-md bg-muted/50 px-3 py-2 text-sm text-muted-foreground"
+            data-testid="order-discount-upgrade-banner"
+          >
+            Spend{" "}
+            {formatCurrency(currency, cart.orderDiscountUpgrade.remaining)}{" "}
+            more to unlock {cart.orderDiscountUpgrade.promotionName}.
+          </div>
+        )}
+
         {/* Tax */}
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Tax</span>
@@ -346,8 +384,10 @@ function OrderSummary({
 
         <Separator className="my-1" />
 
-        {/* Phase 4 / Slice 4: threshold reward progress banner */}
-        {cart.thresholdReward && (
+        {/* Phase 4 / Slice 4: threshold reward progress banner.
+            Suppressed when the decision engine's upgrade banner is already
+            shown (orderDiscountUpgrade) — they would express the same info. */}
+        {cart.thresholdReward && !cart.orderDiscountUpgrade && (
           <ThresholdRewardBanner
             thresholdReward={cart.thresholdReward}
             currency={currency}

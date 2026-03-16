@@ -86,4 +86,45 @@ describe("CartDetail — exclusive order-level discount display", () => {
     expect(bodyText).not.toMatch(/better discount/i);
     expect(bodyText).not.toMatch(/another offer/i);
   });
+
+  it("SUPERSEDED message is customer-neutral — no priority or internal mechanics exposed", () => {
+    // When a campaign offer is superseded, the storefront should show a simple
+    // neutral message.  It must not reveal priority levels, promotion IDs, or
+    // any internal resolution detail that could confuse the customer.
+    const cartSuperseded = makeCart({
+      items: [makeCartItem({ productId: "1", unitPrice: "100.00", quantity: 1 })],
+      subtotal: "100.00",
+      total: "50.00",
+      orderDiscount: {
+        promotionName: "Auto Apply Winner",
+        amount: "50.00",
+        totalGrossAfter: "50.00",
+        totalTaxAfter: "0.00",
+      },
+      campaignOutcome: "SUPERSEDED",
+    });
+    renderWith({ cart: cartSuperseded });
+
+    const banner = document.querySelector("[data-testid='campaign-outcome-superseded']");
+    expect(banner).not.toBeNull();
+    const text = banner!.textContent ?? "";
+    // Correct customer-safe wording:
+    expect(text).toContain("A better discount is already applied");
+    // Must NOT expose internal mechanics:
+    expect(text).not.toMatch(/priority/i);
+    expect(text).not.toMatch(/superseded/i);
+    expect(text).not.toMatch(/auto.?apply/i);
+    expect(text).not.toMatch(/campaign.*lost/i);
+  });
+
+  it("does not render an upgrade banner unless the backend explicitly signals one", () => {
+    // Guards against a regression where the frontend would predict or invent
+    // upgrade messaging without a backend signal — all upgrade logic must live
+    // in the backend decision engine.
+    renderWith({ cart: cartWithDiscount });
+
+    expect(
+      document.querySelector("[data-testid='order-discount-upgrade-banner']"),
+    ).toBeNull();
+  });
 });
