@@ -24,7 +24,11 @@ import { usePathname } from "next/navigation";
 import { useCart } from "@/components/cart/CartProvider";
 
 export function useOrderDiscountToast(): void {
-  const { orderDiscountApplied, orderDiscountAmount, orderDiscountPromotionName } = useCart();
+  const {
+    orderDiscountApplied,
+    orderDiscountAmount,
+    orderDiscountPromotionName,
+  } = useCart();
   const pathname = usePathname();
 
   /**

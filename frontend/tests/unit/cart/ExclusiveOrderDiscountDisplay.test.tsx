@@ -92,7 +92,9 @@ describe("CartDetail — exclusive order-level discount display", () => {
     // neutral message.  It must not reveal priority levels, promotion IDs, or
     // any internal resolution detail that could confuse the customer.
     const cartSuperseded = makeCart({
-      items: [makeCartItem({ productId: "1", unitPrice: "100.00", quantity: 1 })],
+      items: [
+        makeCartItem({ productId: "1", unitPrice: "100.00", quantity: 1 }),
+      ],
       subtotal: "100.00",
       total: "50.00",
       orderDiscount: {
@@ -105,7 +107,9 @@ describe("CartDetail — exclusive order-level discount display", () => {
     });
     renderWith({ cart: cartSuperseded });
 
-    const banner = document.querySelector("[data-testid='campaign-outcome-superseded']");
+    const banner = document.querySelector(
+      "[data-testid='campaign-outcome-superseded']",
+    );
     expect(banner).not.toBeNull();
     const text = banner!.textContent ?? "";
     // Correct customer-safe wording:

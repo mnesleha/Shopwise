@@ -367,8 +367,8 @@ function OrderSummary({
             data-testid="order-discount-upgrade-banner"
           >
             Spend{" "}
-            {formatCurrency(currency, cart.orderDiscountUpgrade.remaining)}{" "}
-            more to unlock {cart.orderDiscountUpgrade.promotionName}.
+            {formatCurrency(currency, cart.orderDiscountUpgrade.remaining)} more
+            to unlock {cart.orderDiscountUpgrade.promotionName}.
           </div>
         )}
 

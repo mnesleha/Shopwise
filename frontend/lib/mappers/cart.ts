@@ -169,7 +169,10 @@ export function mapCartToVm(dto: CartDto): CartVm {
 
     // Phase 4 / Slice 5C: campaign outcome and next upgrade.
     let campaignOutcome: CartVm["campaignOutcome"];
-    if (t.campaign_outcome === "APPLIED" || t.campaign_outcome === "SUPERSEDED") {
+    if (
+      t.campaign_outcome === "APPLIED" ||
+      t.campaign_outcome === "SUPERSEDED"
+    ) {
       campaignOutcome = t.campaign_outcome;
     }
 

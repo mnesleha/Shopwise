@@ -40,7 +40,9 @@ function renderCartDetail(
   renderWithProviders(
     <CartDetail
       cart={makeCart({
-        items: [makeCartItem({ productId: "1", unitPrice: "100.00", quantity: 1 })],
+        items: [
+          makeCartItem({ productId: "1", unitPrice: "100.00", quantity: 1 }),
+        ],
         subtotal: "100.00",
         total: "80.00",
         orderDiscount: {
@@ -69,7 +71,9 @@ describe("CartDetail — order-discount-upgrade-banner", () => {
   it("shows the upgrade banner when orderDiscountUpgrade is present", () => {
     renderCartDetail({
       cart: makeCart({
-        items: [makeCartItem({ productId: "1", unitPrice: "100.00", quantity: 1 })],
+        items: [
+          makeCartItem({ productId: "1", unitPrice: "100.00", quantity: 1 }),
+        ],
         subtotal: "100.00",
         total: "80.00",
         orderDiscount: {
@@ -95,7 +99,9 @@ describe("CartDetail — order-discount-upgrade-banner", () => {
   it("includes the promotion name in the upgrade banner text", () => {
     renderCartDetail({
       cart: makeCart({
-        items: [makeCartItem({ productId: "1", unitPrice: "350.00", quantity: 1 })],
+        items: [
+          makeCartItem({ productId: "1", unitPrice: "350.00", quantity: 1 }),
+        ],
         subtotal: "350.00",
         total: "315.00",
         orderDiscount: {
@@ -121,7 +127,9 @@ describe("CartDetail — order-discount-upgrade-banner", () => {
   it("does not show the upgrade banner when orderDiscountUpgrade is absent", () => {
     renderCartDetail({
       cart: makeCart({
-        items: [makeCartItem({ productId: "1", unitPrice: "100.00", quantity: 1 })],
+        items: [
+          makeCartItem({ productId: "1", unitPrice: "100.00", quantity: 1 }),
+        ],
         subtotal: "100.00",
         total: "80.00",
         orderDiscount: {
@@ -147,7 +155,9 @@ describe("CartDetail — campaign-outcome-superseded", () => {
   it("shows the SUPERSEDED banner when campaignOutcome is 'SUPERSEDED'", () => {
     renderCartDetail({
       cart: makeCart({
-        items: [makeCartItem({ productId: "1", unitPrice: "100.00", quantity: 1 })],
+        items: [
+          makeCartItem({ productId: "1", unitPrice: "100.00", quantity: 1 }),
+        ],
         subtotal: "100.00",
         total: "50.00",
         orderDiscount: {
@@ -162,13 +172,17 @@ describe("CartDetail — campaign-outcome-superseded", () => {
 
     const banner = screen.getByTestId("campaign-outcome-superseded");
     expect(banner).toBeInTheDocument();
-    expect(banner.textContent).toContain("A better discount is already applied");
+    expect(banner.textContent).toContain(
+      "A better discount is already applied",
+    );
   });
 
   it("does not show the SUPERSEDED banner when campaignOutcome is 'APPLIED'", () => {
     renderCartDetail({
       cart: makeCart({
-        items: [makeCartItem({ productId: "1", unitPrice: "100.00", quantity: 1 })],
+        items: [
+          makeCartItem({ productId: "1", unitPrice: "100.00", quantity: 1 }),
+        ],
         subtotal: "100.00",
         total: "60.00",
         orderDiscount: {
@@ -272,9 +286,7 @@ describe("mapCartToVm — order discount upgrade (Phase 4 / Slice 5C)", () => {
   });
 
   it("leaves orderDiscountUpgrade undefined when order_discount_next_upgrade is null", () => {
-    const vm = mapCartToVm(
-      makeCartDto({ order_discount_next_upgrade: null }),
-    );
+    const vm = mapCartToVm(makeCartDto({ order_discount_next_upgrade: null }));
     expect(vm.orderDiscountUpgrade).toBeUndefined();
   });
 
