@@ -17,19 +17,20 @@ Responsibility:
 
 EXCLUSIVE winner-selection policy
 -----------------------------------
-All resolution in this module uses the same priority-first rule applied by
+All resolution in this module uses the same benefit-first rule applied by
 ``resolve_auto_apply_order_promotion`` and
 ``_pick_exclusive_promotion_winner`` in the pricing engine:
 
-    1. **Highest priority** — merchant-configured; takes precedence over
-       everything else.
-    2. **Highest customer benefit** (gross discount at the evaluation cart
-       value) — tiebreaker when priorities are equal.
+    1. **Highest customer benefit** (gross discount at the evaluation cart
+       value) — the customer always receives the best available discount.
+    2. **Highest priority** — merchant-configured; secondary tiebreaker when
+       two promotions give equal gross benefit.
     3. **Lowest id** — stable, deterministic final fallback.
 
-This means a higher-priority promotion wins *regardless of its discount
-size*.  Crossover analysis between two promotions with **different**
-priorities is therefore never a real winner transition and is omitted.
+This means any pair of promotions can swap winner positions as the cart
+value grows (PERCENT overtakes FIXED at the crossover point), regardless
+of their configured priorities.  Crossover analysis is therefore performed
+for *all* PERCENT/FIXED pairs, not only same-priority ones.
 
 Types of transition points considered
 --------------------------------------
@@ -176,11 +177,11 @@ def _compute_gross_discount(promotion: "OrderPromotion", total_gross: Decimal) -
 def _pick_winner(candidates: list, total_gross: Decimal) -> Optional["OrderPromotion"]:
     """Select the EXCLUSIVE winner from *candidates* at *total_gross*.
 
-    Uses the priority-first EXCLUSIVE rule, identical to
+    Uses the benefit-first EXCLUSIVE rule, identical to
     ``carts.services.pricing._pick_exclusive_promotion_winner``:
 
-    1. Highest ``priority``.
-    2. Highest gross benefit evaluated on *total_gross*.
+    1. Highest gross benefit evaluated on *total_gross*.
+    2. Highest ``priority`` — secondary tiebreaker.
     3. Lowest ``id`` as a stable deterministic fallback.
 
     Parameters
@@ -200,8 +201,8 @@ def _pick_winner(candidates: list, total_gross: Decimal) -> Optional["OrderPromo
     return max(
         candidates,
         key=lambda p: (
-            p.priority,
             _compute_gross_discount(p, total_gross),
+            p.priority,
             -p.id,
         ),
     )
@@ -248,10 +249,9 @@ def _collect_transition_points(
             points.add(p.minimum_order_value.quantize(_QUANTIZE, ROUND_HALF_UP))
 
     # Type 2: PERCENT/FIXED crossovers.
-    # Under priority-first policy, promotions with *different* priorities never
-    # swap their winner position regardless of benefit — the higher-priority
-    # one always wins.  Crossovers are therefore only meaningful (can represent
-    # a real winner transition) when both promotions share the same priority.
+    # Under benefit-first policy every PERCENT/FIXED pair can swap winner
+    # positions at the crossover cart value, regardless of their priorities.
+    # We compute the crossover for every pair so no real transition is missed.
     percent_promos = [p for p in all_candidates if p.type == PromotionType.PERCENT]
     fixed_promos = [p for p in all_candidates if p.type == PromotionType.FIXED]
 
@@ -259,10 +259,8 @@ def _collect_transition_points(
         if pp.value <= 0:
             continue
         for fp in fixed_promos:
-            if pp.priority != fp.priority:
-                # Different priorities → higher-priority promo always wins;
-                # this pair can never produce a real winner transition.
-                continue
+            # Under benefit-first policy every PERCENT/FIXED pair can swap
+            # winner positions at the crossover value regardless of priority.
             # First cart value where (cart × pp.value / 100) quantised with
             # ROUND_HALF_UP is strictly > fp.value.  The +0.005 numerator
             # offset shifts the rounding boundary by exactly one cent.

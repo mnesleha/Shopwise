@@ -6,12 +6,15 @@ import {
   type CheckoutValues,
 } from "@/components/checkout/CheckoutForm";
 import { checkoutCart } from "@/lib/api/checkout";
+import { useCart } from "@/components/cart/CartProvider";
 
 export default function GuestCheckoutPage() {
   const router = useRouter();
+  const { resetCount } = useCart();
 
   const onSubmit = async (values: CheckoutValues) => {
     await checkoutCart(values);
+    resetCount();
     router.push("/guest/checkout/success");
   };
 

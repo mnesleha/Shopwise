@@ -431,12 +431,12 @@ def _compute_promotion_gross_discount(promotion: Any, total_gross: Decimal) -> D
 def _pick_exclusive_promotion_winner(candidates: list, total_gross: Decimal) -> Any:
     """Return the winning promotion from *candidates* using the EXCLUSIVE rule.
 
-    Selection order — priority-first (ADR-042 §4.2, corrected alignment):
+    Selection order — benefit-first (ADR-042 §4.2, benefit-first simplification):
 
-    1. Highest explicit **priority** — merchant-configured; respected above
-       all other criteria.
-    2. Highest gross benefit evaluated on *total_gross* — tiebreaker when
-       priorities are equal.
+    1. Highest gross benefit evaluated on *total_gross* — the customer always
+       gets the largest possible order-level discount.
+    2. Highest explicit **priority** — secondary tiebreaker when two promotions
+       produce identical gross benefit.
     3. Lowest id — stable deterministic final fallback.
 
     This ordering is identical to ``resolve_auto_apply_order_promotion`` and
@@ -460,8 +460,8 @@ def _pick_exclusive_promotion_winner(candidates: list, total_gross: Decimal) -> 
     return max(
         candidates,
         key=lambda p: (
-            p.priority,
             _compute_promotion_gross_discount(p, total_gross),
+            p.priority,
             -p.id,  # lower id wins on tie → negate for max()
         ),
     )

@@ -13,11 +13,13 @@ import {
   type PriceChangePayload,
 } from "@/lib/api/checkout";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useCart } from "@/components/cart/CartProvider";
 import { getPriceChangeMessage } from "@/lib/utils/priceChange";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
+  const { resetCount } = useCart();
   const isAuthenticatedRef = useRef(isAuthenticated);
   useEffect(() => {
     isAuthenticatedRef.current = isAuthenticated;
@@ -58,6 +60,7 @@ export default function CheckoutPage() {
 
   const onSubmit = async (values: CheckoutValues) => {
     const order = await checkoutCart(values);
+    resetCount();
     router.push(orderTarget(order.id));
   };
 

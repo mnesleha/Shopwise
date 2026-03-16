@@ -17,14 +17,15 @@ Scenario matrix
 6. Campaign offer is SUPERSEDED when another promotion superseded the offer.
 7. FE-facing cart payload is deterministic across identical inputs.
 
-Priority-first policy tests (added in corrective alignment)
-------------------------------------------------------------
-8.  Higher priority beats higher benefit (priority is king).
-9.  Equal priority — higher benefit wins.
-10. Equal priority, equal benefit — lower id is stable tiebreaker.
-11. Different-priority PERCENT/FIXED crossover is NOT surfaced as upgrade.
-12. Campaign outcome respects priority-first: high-priority low-benefit auto
-    supersedes low-priority high-benefit campaign offer.
+Benefit-first policy tests
+--------------------------
+8.  Higher benefit beats higher priority (benefit is king).
+9.  Equal benefit — higher priority wins (secondary tiebreaker).
+10. Equal benefit and equal priority — lower id is stable tiebreaker.
+11. Different-priority PERCENT/FIXED crossovers ARE surfaced as upgrades
+    because benefit determines the winner, not priority.
+12. Campaign outcome respects benefit-first: high-benefit campaign offer is
+    APPLIED even when competing auto-apply has higher priority.
 """
 
 from decimal import Decimal
@@ -379,43 +380,39 @@ def test_decision_state_deterministic():
 
 
 # ===========================================================================
-# Priority-first winner policy — corrective alignment tests
+# Benefit-first winner policy tests
 # ===========================================================================
 
 
 @pytest.mark.django_db
-def test_higher_priority_beats_higher_benefit():
-    """A lower-value promo with higher priority wins over a higher-value promo.
+def test_higher_benefit_beats_higher_priority():
+    """Under benefit-first policy, the promotion with the largest gross savings
+    wins, even when a competing promotion has a higher priority.
 
-    Priority is the first criterion.  Benefit is only a tiebreaker when
-    priorities are equal.  This test specifically guards against accidental
-    reversion to a benefit-first policy.
+    Priority is only a secondary tiebreaker — it cannot override a larger
+    customer benefit.
     """
-    # priority=10 but tiny discount
-    high_prio = _auto_apply(
+    # small discount, high priority
+    _auto_apply(
         Decimal("5"),
         promo_type=PromotionType.FIXED,
         priority=10,
         name="HighPrioLowBenefit",
     )
-    # priority=1 but large discount
-    _auto_apply(
+    # large discount, low priority — wins under benefit-first
+    high_benefit = _auto_apply(
         Decimal("200"),
         promo_type=PromotionType.FIXED,
         priority=1,
         name="LowPrioHighBenefit",
     )
 
-    # high_prio (priority=10) is the current winner — correct under priority-first.
-    # No transition point can ever flip the winner to LowPrioHighBenefit because
-    # HighPrioLowBenefit always has a higher priority.
+    # high_benefit is the current winner; nothing can displace it.
     state = resolve_order_discount_decision_state(
         cart_gross=Decimal("500"),
         currency="EUR",
-        current_winner=high_prio,
+        current_winner=high_benefit,
     )
-    # No upgrade should be signalled — LowPrioHighBenefit can never displace
-    # HighPrioLowBenefit under priority-first selection.
     assert state.next_upgrade is None
 
 
@@ -487,20 +484,21 @@ def test_equal_priority_equal_benefit_lower_id_wins():
 
 
 @pytest.mark.django_db
-def test_different_priority_crossover_never_triggers_upgrade():
-    """PERCENT/FIXED crossovers between different-priority promos are not upgrades.
+def test_different_priority_crossover_triggers_upgrade():
+    """Under benefit-first policy, PERCENT/FIXED crossovers are real upgrades
+    even when the two promotions have different priorities.
 
-    Reproduces the real-world scenario that caused false "Spend EUR 3689 more"
-    banners:
+    Under the old priority-first policy this pair would never trigger an
+    upgrade because Fixed-500 (priority=1) always "won" over Percent-40
+    (priority=0) regardless of benefit.  Under benefit-first, the winner is
+    whichever gives the customer a larger gross saving, so the crossover at
+    ~1250.02 is a genuine transition point that should be signalled.
 
-    - OL-Fixed-500 (priority=1, FIXED=500, min=500): always wins when eligible.
-    - OL-Percent-40 (priority=0, PERCENT=40%, min=300): can never win while
-      OL-Fixed-500 is active (lower priority).
+    Setup:
+    - OL-Fixed-500 (priority=1, FIXED=500, min=500)
+    - OL-Percent-40 (priority=0, PERCENT=40%, min=300)
 
-    Above the crossover value where 40% × cart > 500 (i.e. cart > 1250),
-    OL-Percent-40 would give more gross benefit.  However, under priority-first
-    selection OL-Fixed-500 still wins because priority=1 > priority=0.
-    No upgrade banner should ever appear in this configuration.
+    Crossover = ceil((500 + 0.005) × 100 / 40, 2 dp) = ceil(1250.0125) = 1250.02.
     """
     fixed_high_prio = _auto_apply(
         Decimal("500"),
@@ -509,7 +507,7 @@ def test_different_priority_crossover_never_triggers_upgrade():
         minimum_order_value=Decimal("500"),
         name="FixedHighPrio",
     )
-    _auto_apply(
+    percent_low_prio = _auto_apply(
         Decimal("40"),
         promo_type=PromotionType.PERCENT,
         priority=0,
@@ -517,49 +515,60 @@ def test_different_priority_crossover_never_triggers_upgrade():
         name="PercentLowPrio",
     )
 
-    # Well above both thresholds and above the benefit crossover (~1250).
-    for cart_value in (Decimal("1200.00"), Decimal("1310.30"), Decimal("5000.00")):
-        state = resolve_order_discount_decision_state(
-            cart_gross=cart_value,
-            currency="EUR",
-            current_winner=fixed_high_prio,
-        )
-        assert state.next_upgrade is None, (
-            f"Expected no upgrade at cart={cart_value}, "
-            f"got threshold={state.next_upgrade.threshold if state.next_upgrade else None}"
-        )
+    # Below crossover: FIXED wins (€500 > 40% × 1200 = €480).
+    # The decision engine should signal an upgrade at the crossover.
+    state_below = resolve_order_discount_decision_state(
+        cart_gross=Decimal("1200.00"),
+        currency="EUR",
+        current_winner=fixed_high_prio,
+    )
+    assert state_below.next_upgrade is not None, (
+        "Expected upgrade signal below crossover under benefit-first policy"
+    )
+    assert state_below.next_upgrade.threshold == Decimal("1250.02")
+    assert state_below.next_upgrade.promotion_name == percent_low_prio.name
+
+    # At/above crossover: PERCENT wins (40% × 1250.02 rounds to €500.01 > €500).
+    # No further upgrade — PERCENT is already the winner.
+    state_above = resolve_order_discount_decision_state(
+        cart_gross=Decimal("1250.02"),
+        currency="EUR",
+        current_winner=percent_low_prio,
+    )
+    assert state_above.next_upgrade is None
 
 
 @pytest.mark.django_db
-def test_campaign_outcome_superseded_by_higher_priority_lower_benefit():
-    """Campaign offer is SUPERSEDED when a higher-priority auto-apply wins,
-    even if the campaign offer gives a larger gross discount.
+def test_campaign_outcome_applied_when_higher_benefit_despite_lower_priority():
+    """Campaign offer is APPLIED when it gives the highest customer benefit,
+    even if a competing auto-apply promotion has a higher priority.
 
-    Priority-first means the auto-apply promotion wins regardless of benefit.
+    Benefit-first policy means the customer always receives the best discount;
+    priority cannot override a larger gross saving.
     """
     # Auto-apply: high priority, tiny discount.
-    auto_high_prio = _auto_apply(
+    _auto_apply(
         Decimal("5"),
         promo_type=PromotionType.FIXED,
         priority=10,
         name="HighPrioAutoApply",
     )
-    # Campaign offer: lower priority, generous discount.
-    camp_low_prio = _campaign(
+    # Campaign offer: lower priority, generous discount — wins on benefit.
+    camp_high_benefit = _campaign(
         Decimal("50"),
         promo_type=PromotionType.FIXED,
         priority=1,
         name="HighBenefitCampaign",
     )
 
-    # Pricing engine (priority-first) picks auto_high_prio as current_winner.
+    # Pricing engine (benefit-first) picks camp_high_benefit as current_winner.
     state = resolve_order_discount_decision_state(
         cart_gross=Decimal("200"),
         currency="EUR",
-        current_winner=auto_high_prio,
-        campaign_offer_promotion=camp_low_prio,
+        current_winner=camp_high_benefit,
+        campaign_offer_promotion=camp_high_benefit,
     )
-    assert state.campaign_outcome == "SUPERSEDED"
+    assert state.campaign_outcome == "APPLIED"
 
 
 # ===========================================================================

@@ -140,10 +140,12 @@ class OrderPromotionAdmin(admin.ModelAdmin):
         kwargs["help_texts"].update(
             {
                 "priority": (
-                    "Higher value wins. When two exclusive order discounts are eligible at the "
-                    "same time, the one with the <strong>highest priority</strong> is applied — "
-                    "regardless of which one would give a larger discount. "
-                    "Use equal priorities when you want the larger discount to win instead."
+                    "Advanced tiebreak field. The storefront always applies the order discount "
+                    "that gives the customer the <strong>largest gross saving</strong>. "
+                    "Priority is used as a secondary tiebreaker only when two eligible "
+                    "promotions produce exactly equal benefit — the one with the higher "
+                    "priority value wins. Leave at the default (0) unless you have a specific "
+                    "reason to override identical-benefit ties."
                 ),
                 "stacking_policy": (
                     "<strong>EXCLUSIVE</strong> promotions do not combine with other "
@@ -169,9 +171,10 @@ class OrderPromotionAdmin(admin.ModelAdmin):
                 ),
                 "description": (
                     "<strong>Winner resolution for simultaneous exclusive promotions:</strong> "
-                    "highest priority wins first; if equal, the larger customer discount wins; "
-                    "if still equal, the lower ID wins. Only one order-level promotion is "
-                    "ever applied at a time."
+                    "the promotion that gives the customer the <strong>largest gross discount"
+                    "</strong> wins. If two promotions produce equal benefit, the one with the "
+                    "higher Priority value wins. If still equal, the lower ID wins. "
+                    "Only one order-level promotion is ever applied at a time."
                 ),
             },
         ),

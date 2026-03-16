@@ -39,10 +39,21 @@ from typing import Optional
 from django.db.models import Q
 from django.utils import timezone
 
-from discounts.models import AcquisitionMode, OrderPromotion
+from discounts.models import AcquisitionMode, OrderPromotion, PromotionType
 
 
 _QUANTIZE = Decimal("0.01")
+
+
+def _compute_gross_discount(promotion: "OrderPromotion", total_gross: Decimal) -> Decimal:
+    """Return the gross discount a promotion yields on *total_gross* (2 dp)."""
+    if total_gross <= Decimal(0):
+        return Decimal("0.00")
+    if promotion.type == PromotionType.PERCENT:
+        return (total_gross * promotion.value / Decimal("100")).quantize(
+            _QUANTIZE, ROUND_HALF_UP
+        )
+    return min(promotion.value, total_gross).quantize(_QUANTIZE, ROUND_HALF_UP)
 
 
 @dataclass
@@ -100,7 +111,7 @@ def resolve_auto_apply_order_promotion(
     """
     now = timezone.now()
 
-    candidates = (
+    all_candidates = list(
         OrderPromotion.objects.filter(
             acquisition_mode=AcquisitionMode.AUTO_APPLY,
             is_active=True,
@@ -109,15 +120,29 @@ def resolve_auto_apply_order_promotion(
             Q(active_from__isnull=True) | Q(active_from__lte=now),
             Q(active_to__isnull=True) | Q(active_to__gte=now),
         )
-        .order_by("-priority", "id")
+        .order_by("id")  # stable ordering; winner selected by max() below
     )
 
-    for promotion in candidates:
-        min_val = promotion.minimum_order_value
-        if min_val is None or cart_gross >= min_val:
-            return promotion
+    # Filter to only currently-eligible promotions (minimum_order_value met).
+    eligible = [
+        p for p in all_candidates
+        if p.minimum_order_value is None or cart_gross >= p.minimum_order_value
+    ]
+    if not eligible:
+        return None
 
-    return None
+    # Benefit-first storefront policy:
+    #   1. Highest customer benefit (gross discount at current cart value)
+    #   2. Highest explicit priority  (tiebreak)
+    #   3. Lowest id                  (stable deterministic fallback)
+    return max(
+        eligible,
+        key=lambda p: (
+            _compute_gross_discount(p, cart_gross),
+            p.priority,
+            -p.id,
+        ),
+    )
 
 
 def resolve_threshold_reward_progress(
@@ -173,18 +198,25 @@ def resolve_threshold_reward_progress(
     if not candidates:
         return None
 
-    # Prefer showing an already-unlocked reward (highest priority that is met).
-    for promo in candidates:
-        min_val = promo.minimum_order_value
-        if cart_gross >= min_val:
-            return ThresholdRewardProgress(
-                is_unlocked=True,
-                promotion_name=promo.name,
-                threshold=min_val.quantize(_QUANTIZE, ROUND_HALF_UP),
-                current_basis=cart_gross.quantize(_QUANTIZE, ROUND_HALF_UP),
-                remaining=Decimal("0.00"),
-                currency=currency,
-            )
+    # Prefer showing an already-unlocked reward.
+    # Under benefit-first policy, show the winner — the one with the highest
+    # gross customer benefit at the current cart value (same key as the
+    # storefront winner resolver).
+    unlocked = [p for p in candidates if cart_gross >= p.minimum_order_value]
+    if unlocked:
+        best = max(
+            unlocked,
+            key=lambda p: (_compute_gross_discount(p, cart_gross), p.priority, -p.id),
+        )
+        min_val = best.minimum_order_value
+        return ThresholdRewardProgress(
+            is_unlocked=True,
+            promotion_name=best.name,
+            threshold=min_val.quantize(_QUANTIZE, ROUND_HALF_UP),
+            current_basis=cart_gross.quantize(_QUANTIZE, ROUND_HALF_UP),
+            remaining=Decimal("0.00"),
+            currency=currency,
+        )
 
     # No threshold met yet — find the promotion with the smallest remaining gap.
     best = min(candidates, key=lambda p: p.minimum_order_value - cart_gross)
