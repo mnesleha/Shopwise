@@ -23,7 +23,7 @@ from notifications.error_handler import NotificationErrorHandler
 
 def send_campaign_offer_email(
     *, recipient_email: str, offer_url: str, promotion_name: str
-) -> None:
+) -> bool:
     """
     Send a campaign offer email containing the offer link.
 
@@ -33,6 +33,9 @@ def send_campaign_offer_email(
     Best-effort semantics:
     - Failures MUST NOT propagate.
     - Errors are delegated to NotificationErrorHandler.
+
+    Returns:
+        True if the email was delivered successfully, False otherwise.
     """
     try:
         subject, body = render_campaign_offer_email(
@@ -45,6 +48,7 @@ def send_campaign_offer_email(
             subject=subject,
             body=body,
         )
+        return True
     except Exception:
         NotificationErrorHandler.handle(
             NotificationSendError(
@@ -57,6 +61,7 @@ def send_campaign_offer_email(
                 },
             )
         )
+        return False
 
 
 def send_email_verification(*, recipient_email: str, verification_url: str) -> None:

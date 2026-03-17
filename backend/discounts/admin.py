@@ -156,7 +156,7 @@ class OfferInline(admin.TabularInline):
     model = Offer
     extra = 0
     fields = ("token", "status", "is_active", "active_from", "active_to")
-    readonly_fields = ()
+    readonly_fields = ("status",)
     verbose_name = "Campaign offer token"
     verbose_name_plural = "Campaign offer tokens"
     show_change_link = True
@@ -633,7 +633,7 @@ class OfferAdmin(admin.ModelAdmin):
 
     # ── Fieldsets ────────────────────────────────────────────────────────────
 
-    readonly_fields = ("offer_summary",)
+    readonly_fields = ("offer_summary", "status")
 
     fieldsets = (
         (
@@ -718,11 +718,18 @@ class OfferAdmin(admin.ModelAdmin):
             offer_url = (
                 f"{settings.PUBLIC_BASE_URL}/claim-offer?token={offer.token}"
             )
-            _send_campaign_offer_email(
+            sent = _send_campaign_offer_email(
                 recipient_email=recipient_email,
                 offer_url=offer_url,
                 promotion_name=offer.promotion.name,
             )
+            if sent:
+                # Advance lifecycle: CREATED / DELIVERED → DELIVERED.
+                # Do not overwrite CLAIMED or REDEEMED.
+                Offer.objects.filter(
+                    pk=offer.pk,
+                    status__in=[OfferStatus.CREATED, OfferStatus.DELIVERED],
+                ).update(status=OfferStatus.DELIVERED)
             self.message_user(
                 request,
                 f"Campaign offer email sent to {recipient_email}.",

@@ -16,7 +16,7 @@ from django.db import transaction
 
 from notifications.jobs import send_campaign_offer_email
 
-from ..models import AcquisitionMode, Offer, OrderPromotion, StackingPolicy
+from ..models import AcquisitionMode, Offer, OfferStatus, OrderPromotion, StackingPolicy
 
 if TYPE_CHECKING:
     import datetime
@@ -88,10 +88,17 @@ def create_and_send_campaign_offer(
 
     # Intentionally outside the transaction — best-effort, failures do not
     # roll back the already-committed promotion / offer rows.
-    send_campaign_offer_email(
+    # The return value tells us whether delivery succeeded so we can advance
+    # the offer lifecycle from CREATED → DELIVERED.
+    delivered = send_campaign_offer_email(
         recipient_email=recipient_email,
         offer_url=claim_url,
         promotion_name=promotion.name,
     )
+    if delivered:
+        # Only advance forward; never overwrite CLAIMED / REDEEMED.
+        Offer.objects.filter(
+            pk=offer.pk, status=OfferStatus.CREATED
+        ).update(status=OfferStatus.DELIVERED)
 
     return promotion, offer, claim_url
