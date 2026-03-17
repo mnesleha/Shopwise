@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.conf import settings
 from django.template.response import TemplateResponse
+from django.contrib import messages
 
 from notifications.jobs import send_campaign_offer_email as _send_campaign_offer_email
 from .models import (
@@ -223,7 +224,7 @@ class OfferAdmin(admin.ModelAdmin):
             self.message_user(
                 request,
                 "Please select exactly one offer to send.",
-                level="error",
+                level=messages.ERROR,
             )
             return
 
@@ -236,7 +237,7 @@ class OfferAdmin(admin.ModelAdmin):
                     f"Offer '{offer.token}' cannot be sent: its promotion "
                     f"({offer.promotion.code}) is not CAMPAIGN_APPLY."
                 ),
-                level="error",
+                level=messages.ERROR,
             )
             return
 
@@ -245,7 +246,9 @@ class OfferAdmin(admin.ModelAdmin):
             recipient_email = request.POST.get("recipient_email", "").strip()
             if not recipient_email:
                 self.message_user(
-                    request, "Recipient email is required.", level="error"
+                    request,
+                    "Recipient email is required.",
+                    level=messages.ERROR,
                 )
                 return
 
