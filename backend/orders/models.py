@@ -148,6 +148,25 @@ class Order(models.Model):
         blank=True,
         help_text="Total discount amount across all items at order time.",
     )
+    order_discount_gross = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=(
+            "Phase 4: gross reduction from the order-level promotion applied at checkout. "
+            "Null when no order-level discount was applied."
+        ),
+    )
+    order_promotion_code = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text=(
+            "Phase 4: code of the OrderPromotion applied at checkout. "
+            "Null when no order-level discount was applied."
+        ),
+    )
     currency = models.CharField(
         max_length=3,
         choices=CURRENCY_CHOICES,

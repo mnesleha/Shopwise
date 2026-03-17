@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from api.views.products import ProductViewSet
 from api.views.categories import CategoryViewSet
-from api.views.carts import CartCheckoutView, CartCheckoutPreflightView
+from api.views.carts import CartCheckoutView, CartCheckoutPreflightView, ClaimOfferView
 from api.views.orders import OrderViewSet
 from api.views.discounts import DiscountViewSet
 from api.views.carts import CartView, CartItemCreateView, CartItemDetailView
@@ -74,6 +74,7 @@ urlpatterns = [
         CartItemDetailView.as_view(),
         name="cart-item-detail",
     ),
+    path("cart/offer/claim/", ClaimOfferView.as_view(), name="cart-offer-claim"),
     path("cart/checkout/preflight/", CartCheckoutPreflightView.as_view(), name="cart-checkout-preflight"),
     path("cart/checkout/", CartCheckoutView.as_view()),
     path("cart/merge/", CartMergeView.as_view(), name="cart-merge"),

@@ -111,6 +111,27 @@ export function makeCartItem(
   };
 }
 
+export interface CartOrderDiscountFixture {
+  promotionName: string;
+  amount: string;
+  totalGrossAfter: string;
+  totalTaxAfter: string;
+}
+
+export interface CartThresholdRewardFixture {
+  isUnlocked: boolean;
+  promotionName: string;
+  remaining: string;
+  threshold: string;
+}
+
+export interface CartOrderDiscountUpgradeFixture {
+  threshold: string;
+  remaining: string;
+  promotionName: string;
+  currency: string;
+}
+
 export interface CartFixture {
   id: string;
   currency?: string;
@@ -118,6 +139,18 @@ export interface CartFixture {
   subtotal: string;
   tax?: string;
   total: string;
+  /** Phase 4 / Slice 3: auto-applied order-level discount. */
+  orderDiscount?: CartOrderDiscountFixture;
+  /** Phase 4 / Slice 4: threshold reward progress. */
+  thresholdReward?: CartThresholdRewardFixture;
+  /**
+   * Phase 4 / Slice 5C: campaign offer outcome.
+   * "APPLIED" — the claimed offer is the current winner.
+   * "SUPERSEDED" — a better auto-apply promotion took precedence.
+   */
+  campaignOutcome?: "APPLIED" | "SUPERSEDED";
+  /** Phase 4 / Slice 5C: next order-level upgrade opportunity. */
+  orderDiscountUpgrade?: CartOrderDiscountUpgradeFixture;
 }
 
 export function makeCart(overrides?: Partial<CartFixture>): CartFixture {

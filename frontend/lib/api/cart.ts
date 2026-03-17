@@ -40,6 +40,51 @@ export type CartTotalsDto = {
   total_gross: string;
   currency: string;
   item_count: number;
+  // Phase 4 / Slice 3: order-level AUTO_APPLY promotion
+  /** True when an order-level promotion is automatically applied. */
+  order_discount_applied: boolean;
+  /** Gross reduction from the order-level promotion, or null when none. */
+  order_discount_amount: string | null;
+  /** Code of the applied order promotion, or null. */
+  order_discount_promotion_code: string | null;
+  /** Name of the applied order promotion, or null. */
+  order_discount_promotion_name: string | null;
+  /** Total gross payable after order-level discount, or null when none. */
+  total_gross_after_order_discount: string | null;
+  /** Total VAT after order-level discount reallocation, or null when none. */
+  total_tax_after_order_discount: string | null;
+  // Phase 4 / Slice 4: threshold reward progress
+  /** Progress towards a threshold-based order reward, or null when none exists. */
+  threshold_reward?: {
+    is_unlocked: boolean;
+    promotion_name: string;
+    threshold: string;
+    current_basis: string;
+    remaining: string;
+    currency: string;
+  } | null;
+  // Phase 4 / Slice 5C: order discount decision engine
+  /**
+   * Campaign offer outcome:
+   * - "APPLIED"    — the claimed offer is the current winner.
+   * - "SUPERSEDED" — a better auto-apply promotion is already active.
+   * - null          — no campaign offer context.
+   */
+  campaign_outcome?: string | null;
+  /**
+   * Next meaningful order-level winner transition, or null when no better
+   * promotion exists at a higher cart value.
+   */
+  order_discount_next_upgrade?: {
+    /** Cart gross total at which the better promotion becomes the winner. */
+    threshold: string;
+    /** Additional spend required to reach the threshold. */
+    remaining: string;
+    /** Human-readable name of the next winning promotion. */
+    promotion_name: string;
+    /** ISO 4217 currency code. */
+    currency: string;
+  } | null;
 };
 
 export type CartDto = {
@@ -131,5 +176,33 @@ export type CartMergeReport = {
  */
 export async function mergeCart(): Promise<CartMergeReport> {
   const res = await api.post<CartMergeReport>("/cart/merge/");
+  return res.data;
+}
+
+// ---------------------------------------------------------------------------
+// Phase 4 / Slice 5B: campaign offer claim
+// ---------------------------------------------------------------------------
+
+export type ClaimOfferResponse = {
+  /** Human-readable name of the applied promotion. */
+  promotion_name: string;
+  /** Internal code of the applied promotion. */
+  promotion_code: string;
+};
+
+/**
+ * POST /cart/offer/claim/
+ *
+ * Validates the given offer token and binds it to the current session.
+ * Subsequent ``GET /cart/`` calls will reflect the campaign discount.
+ *
+ * Throws on 400 (inactive/non-claimable offer) or 404 (offer not found).
+ */
+export async function claimCampaignOffer(
+  token: string,
+): Promise<ClaimOfferResponse> {
+  const res = await api.post<ClaimOfferResponse>("/cart/offer/claim/", {
+    token,
+  });
   return res.data;
 }

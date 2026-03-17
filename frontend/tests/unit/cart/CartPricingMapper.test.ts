@@ -59,6 +59,12 @@ function makeTotals(overrides: Partial<CartTotalsDto> = {}): CartTotalsDto {
     total_gross: "100.00",
     currency: "EUR",
     item_count: 1,
+    order_discount_applied: false,
+    order_discount_amount: null,
+    order_discount_promotion_code: null,
+    order_discount_promotion_name: null,
+    total_gross_after_order_discount: null,
+    total_tax_after_order_discount: null,
     ...overrides,
   };
 }
@@ -317,7 +323,7 @@ describe("mapCartToVm — empty cart", () => {
       id: 2,
       status: "ACTIVE",
       items: [],
-      totals: {
+      totals: makeTotals({
         subtotal_undiscounted: "0.00",
         subtotal_discounted: "0.00",
         total_discount: "0.00",
@@ -325,7 +331,7 @@ describe("mapCartToVm — empty cart", () => {
         total_gross: "0.00",
         currency: "EUR",
         item_count: 0,
-      },
+      }),
     };
     const vm = mapCartToVm(dto);
     expect(vm.items).toHaveLength(0);
@@ -358,5 +364,213 @@ describe("mapCartToVm — legacy response without totals", () => {
     expect(vm.subtotal).toBe("20.00");
     expect(vm.total).toBe("20.00");
     expect(vm.discount).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Phase 4 / Slice 3: order-level discount mapping
+// ---------------------------------------------------------------------------
+
+describe("mapCartToVm — order-level discount (Phase 4 / Slice 3)", () => {
+  function makeTotalsWithOrderDiscount(
+    overrides: Partial<CartTotalsDto> = {},
+  ): CartTotalsDto {
+    return makeTotals({
+      total_gross: "100.00",
+      total_tax: "18.70",
+      order_discount_applied: true,
+      order_discount_amount: "10.00",
+      order_discount_promotion_code: "AUTO10",
+      order_discount_promotion_name: "Spring Discount",
+      total_gross_after_order_discount: "90.00",
+      total_tax_after_order_discount: "16.83",
+      ...overrides,
+    });
+  }
+
+  it("populates orderDiscount when order_discount_applied is true", () => {
+    const dto = makeDto({ totals: makeTotalsWithOrderDiscount() });
+    const vm = mapCartToVm(dto);
+    expect(vm.orderDiscount).toBeDefined();
+  });
+
+  it("maps promotionName from order_discount_promotion_name", () => {
+    const dto = makeDto({ totals: makeTotalsWithOrderDiscount() });
+    const vm = mapCartToVm(dto);
+    expect(vm.orderDiscount?.promotionName).toBe("Spring Discount");
+  });
+
+  it("maps amount from order_discount_amount", () => {
+    const dto = makeDto({ totals: makeTotalsWithOrderDiscount() });
+    const vm = mapCartToVm(dto);
+    expect(vm.orderDiscount?.amount).toBe("10.00");
+  });
+
+  it("maps totalGrossAfter from total_gross_after_order_discount", () => {
+    const dto = makeDto({ totals: makeTotalsWithOrderDiscount() });
+    const vm = mapCartToVm(dto);
+    expect(vm.orderDiscount?.totalGrossAfter).toBe("90.00");
+  });
+
+  it("maps totalTaxAfter from total_tax_after_order_discount", () => {
+    const dto = makeDto({ totals: makeTotalsWithOrderDiscount() });
+    const vm = mapCartToVm(dto);
+    expect(vm.orderDiscount?.totalTaxAfter).toBe("16.83");
+  });
+
+  it("uses totalGrossAfter as the cart total when order discount is applied", () => {
+    const dto = makeDto({ totals: makeTotalsWithOrderDiscount() });
+    const vm = mapCartToVm(dto);
+    expect(vm.total).toBe("90.00");
+  });
+
+  it("uses totalTaxAfter as the cart tax when order discount is applied and tax > 0", () => {
+    const dto = makeDto({ totals: makeTotalsWithOrderDiscount() });
+    const vm = mapCartToVm(dto);
+    expect(vm.tax).toBe("16.83");
+  });
+
+  it("omits tax when totalTaxAfter is 0.00 even after order discount", () => {
+    const dto = makeDto({
+      totals: makeTotalsWithOrderDiscount({
+        total_tax_after_order_discount: "0.00",
+      }),
+    });
+    const vm = mapCartToVm(dto);
+    expect(vm.tax).toBeUndefined();
+  });
+
+  it("leaves orderDiscount undefined when order_discount_applied is false", () => {
+    const dto = makeDto({
+      totals: makeTotals({ order_discount_applied: false }),
+    });
+    const vm = mapCartToVm(dto);
+    expect(vm.orderDiscount).toBeUndefined();
+  });
+
+  it("leaves orderDiscount undefined when totals field is absent", () => {
+    const dto: CartDto = {
+      id: 1,
+      status: "ACTIVE",
+      items: [],
+    };
+    const vm = mapCartToVm(dto);
+    expect(vm.orderDiscount).toBeUndefined();
+  });
+
+  it("falls back to total_gross as the cart total when no order discount", () => {
+    const dto = makeDto({
+      totals: makeTotals({ total_gross: "120.00" }),
+    });
+    const vm = mapCartToVm(dto);
+    expect(vm.total).toBe("120.00");
+  });
+
+  it("orderDiscount and line-level discount can coexist", () => {
+    const dto = makeDto({
+      totals: makeTotalsWithOrderDiscount({
+        total_discount: "5.00",
+        subtotal_undiscounted: "100.00",
+        subtotal_discounted: "95.00",
+      }),
+    });
+    const vm = mapCartToVm(dto);
+    expect(vm.discount).toBeDefined();
+    expect(vm.orderDiscount).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Phase 4 / Slice 4: threshold reward mapping
+// ---------------------------------------------------------------------------
+
+describe("mapCartToVm — threshold reward (Phase 4 / Slice 4)", () => {
+  function makeTotalsWithThresholdReward(
+    trOverrides: Partial<NonNullable<CartTotalsDto["threshold_reward"]>> = {},
+    totalsOverrides: Partial<CartTotalsDto> = {},
+  ): CartTotalsDto {
+    return makeTotals({
+      threshold_reward: {
+        is_unlocked: false,
+        promotion_name: "Free Shipping",
+        threshold: "100.00",
+        current_basis: "60.00",
+        remaining: "40.00",
+        currency: "EUR",
+        ...trOverrides,
+      },
+      ...totalsOverrides,
+    });
+  }
+
+  it("maps thresholdReward when threshold_reward is present", () => {
+    const dto = makeDto({ totals: makeTotalsWithThresholdReward() });
+    const vm = mapCartToVm(dto);
+    expect(vm.thresholdReward).toBeDefined();
+  });
+
+  it("maps isUnlocked correctly for locked state", () => {
+    const dto = makeDto({
+      totals: makeTotalsWithThresholdReward({ is_unlocked: false }),
+    });
+    const vm = mapCartToVm(dto);
+    expect(vm.thresholdReward?.isUnlocked).toBe(false);
+  });
+
+  it("maps isUnlocked correctly for unlocked state", () => {
+    const dto = makeDto({
+      totals: makeTotalsWithThresholdReward({
+        is_unlocked: true,
+        remaining: "0.00",
+      }),
+    });
+    const vm = mapCartToVm(dto);
+    expect(vm.thresholdReward?.isUnlocked).toBe(true);
+  });
+
+  it("maps remaining from threshold_reward.remaining", () => {
+    const dto = makeDto({
+      totals: makeTotalsWithThresholdReward({ remaining: "25.50" }),
+    });
+    const vm = mapCartToVm(dto);
+    expect(vm.thresholdReward?.remaining).toBe("25.50");
+  });
+
+  it("maps promotionName from threshold_reward.promotion_name", () => {
+    const dto = makeDto({
+      totals: makeTotalsWithThresholdReward({ promotion_name: "Gold Tier" }),
+    });
+    const vm = mapCartToVm(dto);
+    expect(vm.thresholdReward?.promotionName).toBe("Gold Tier");
+  });
+
+  it("maps currentBasis from threshold_reward.current_basis", () => {
+    const dto = makeDto({
+      totals: makeTotalsWithThresholdReward({ current_basis: "80.00" }),
+    });
+    const vm = mapCartToVm(dto);
+    expect(vm.thresholdReward?.currentBasis).toBe("80.00");
+  });
+
+  it("maps threshold from threshold_reward.threshold", () => {
+    const dto = makeDto({
+      totals: makeTotalsWithThresholdReward({ threshold: "150.00" }),
+    });
+    const vm = mapCartToVm(dto);
+    expect(vm.thresholdReward?.threshold).toBe("150.00");
+  });
+
+  it("leaves thresholdReward undefined when threshold_reward is null", () => {
+    const dto = makeDto({
+      totals: makeTotals({ threshold_reward: null }),
+    });
+    const vm = mapCartToVm(dto);
+    expect(vm.thresholdReward).toBeUndefined();
+  });
+
+  it("leaves thresholdReward undefined when threshold_reward is absent", () => {
+    const dto = makeDto({ totals: makeTotals() });
+    const vm = mapCartToVm(dto);
+    expect(vm.thresholdReward).toBeUndefined();
   });
 });

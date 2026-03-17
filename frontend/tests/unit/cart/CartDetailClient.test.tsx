@@ -8,6 +8,8 @@
  * - onClearCart calls clearCart() once (not deleteCartItem in a loop)
  * - refresh (getCart) runs after onClearCart succeeds
  * - onIncreaseQty / onDecreaseQty call updateCartItemQuantity (PATCH-backed)
+ * - Shows toast.error "Not enough stock available." on 409 from updateCartItemQuantity
+ * - Shows generic toast.error on non-409 errors from updateCartItemQuantity
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
@@ -76,8 +78,24 @@ vi.mock("@/components/auth/AuthProvider", () => ({
 }));
 
 vi.mock("@/components/cart/CartProvider", () => ({
-  useCart: () => ({ refreshCart: vi.fn(), count: 0, resetCount: vi.fn() }),
+  useCart: () => ({
+    refreshCart: vi.fn(),
+    count: 0,
+    resetCount: vi.fn(),
+    orderDiscountApplied: false,
+    orderDiscountAmount: null,
+    orderDiscountPromotionName: null,
+  }),
   CartProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+const mockToastError = vi.fn();
+vi.mock("sonner", () => ({
+  toast: {
+    error: (...args: unknown[]) => mockToastError(...args),
+    success: vi.fn(),
+    dismiss: vi.fn(),
+  },
 }));
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -225,6 +243,74 @@ describe("CartDetailClient", () => {
     });
 
     it("calls getCart (refresh) after quantity update resolves", async () => {
+      const user = userEvent.setup();
+      renderClient(makeCart() as CartVm);
+
+      await user.click(
+        screen.getByRole("button", {
+          name: /increase quantity of test mouse/i,
+        }),
+      );
+
+      await waitFor(() => {
+        expect(mockGetCart).toHaveBeenCalled();
+      });
+    });
+  });
+
+  // ── Stock-conflict error handling (409) ───────────────────────────────────────
+
+  describe("409 stock-conflict error handling", () => {
+    it('shows "Not enough stock available." toast on 409 from updateCartItemQuantity', async () => {
+      const stockError = Object.assign(new Error("Conflict"), {
+        response: { status: 409 },
+      });
+      mockUpdateCartItemQuantity.mockRejectedValueOnce(stockError);
+
+      const user = userEvent.setup();
+      renderClient(makeCart() as CartVm);
+
+      await user.click(
+        screen.getByRole("button", {
+          name: /increase quantity of test mouse/i,
+        }),
+      );
+
+      await waitFor(() => {
+        expect(mockToastError).toHaveBeenCalledWith(
+          "Not enough stock available.",
+        );
+      });
+    });
+
+    it("shows generic error toast on non-409 errors from updateCartItemQuantity", async () => {
+      const serverError = Object.assign(new Error("Server Error"), {
+        response: { status: 500 },
+      });
+      mockUpdateCartItemQuantity.mockRejectedValueOnce(serverError);
+
+      const user = userEvent.setup();
+      renderClient(makeCart() as CartVm);
+
+      await user.click(
+        screen.getByRole("button", {
+          name: /increase quantity of test mouse/i,
+        }),
+      );
+
+      await waitFor(() => {
+        expect(mockToastError).toHaveBeenCalledWith(
+          "Could not update quantity. Please try again.",
+        );
+      });
+    });
+
+    it("still calls getCart (refresh) after a 409 error to re-sync cart state", async () => {
+      const stockError = Object.assign(new Error("Conflict"), {
+        response: { status: 409 },
+      });
+      mockUpdateCartItemQuantity.mockRejectedValueOnce(stockError);
+
       const user = userEvent.setup();
       renderClient(makeCart() as CartVm);
 

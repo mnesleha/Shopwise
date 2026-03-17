@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { addCartItem } from "@/lib/api/cart";
 import { useCart } from "@/components/cart/CartProvider";
+import { useOrderDiscountToast } from "@/components/cart/useOrderDiscountToast";
 
 export type ProductGridItem = {
   id: string;
@@ -59,13 +60,18 @@ export default function ProductGridClient({
 
   const { refreshCart } = useCart();
 
+  // Show a positive toast when an order-level discount is newly applied.
+  useOrderDiscountToast();
+
   const onAddToCart = useCallback(
     async (productId: string) => {
       await addCartItem({ productId: Number(productId), quantity: 1 });
       await refreshCart();
-      router.push("/cart");
+      // No redirect — the user stays on the catalogue to continue shopping.
+      // The cart badge updates as feedback; the toast hook fires if a new
+      // order-level discount was triggered by crossing a spend threshold.
     },
-    [router, refreshCart],
+    [refreshCart],
   );
 
   return (

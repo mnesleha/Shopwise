@@ -115,6 +115,27 @@ def render_password_reset_email(*, recipient_email: str, reset_url: str) -> tupl
     return subject, body
 
 
+def render_campaign_offer_email(
+    *, recipient_email: str, offer_url: str, promotion_name: str
+) -> tuple[str, str]:
+    """
+    Render subject/body for a campaign offer email (plain-text).
+
+    Requirements:
+    - Body MUST include the exact offer_url so the recipient can click through.
+    - Body MUST include the promotion_name so the offer is identifiable.
+    """
+    subject = f"Your exclusive offer: {promotion_name}"
+    body = (
+        f"Hi {recipient_email},\n\n"
+        f"You have been sent an exclusive offer: {promotion_name}.\n\n"
+        "Click the link below to apply it to your next order:\n\n"
+        f"{offer_url}\n\n"
+        "If you did not expect this email, you can safely ignore it.\n"
+    )
+    return subject, body
+
+
 def render_order_system_cancelled_notification(
     *, recipient_email: str, order_id: int
 ) -> tuple[str, str]:

@@ -67,7 +67,7 @@ function buildDiscountNote(dto: OrderItemDto): string | null {
     effectivePct = Math.round((fixedAmount / originalGross) * 100);
   }
 
-  return `Discount applied: ${effectivePct}%`;
+  return `Line discount: ${effectivePct}%`;
 }
 
 function mapItem(dto: OrderItemDto): OrderItem {
@@ -126,15 +126,22 @@ export function mapOrderToVm(dto: OrderDto): OrderViewModel {
 
     items: dto.items.map(mapItem),
 
-    // Phase 3 totals snapshot
-    subtotalNet: dto.subtotal_net ?? null,
-    subtotalGross: dto.subtotal_gross ?? null,
-    totalTax: dto.total_tax ?? null,
+    // Phase 3 totals snapshot (legacy field names, kept for backward compat).
+    subtotalNet:
+      dto.post_order_discount_subtotal_net ?? dto.subtotal_net ?? null,
+    // subtotalGross = gross subtotal BEFORE order-level discount (pre-OD subtotal).
+    // When the Phase 4 explicit field is present use it; otherwise fall back to
+    // subtotal_gross (which, without an OD, equals the final total).
+    subtotalGross:
+      dto.pre_order_discount_subtotal_gross ?? dto.subtotal_gross ?? null,
+    totalTax: dto.post_order_discount_total_tax ?? dto.total_tax ?? null,
     totalDiscount: dto.total_discount ?? null,
+    // Phase 4: order-level discount only (does not include per-item line discounts).
+    orderDiscountGross: dto.order_discount_gross ?? null,
     currency: dto.currency ?? "EUR",
     vatBreakdown,
 
-    // Legacy total kept for backward compat
-    total: dto.subtotal_gross ?? dto.total,
+    // Final gross total after all discounts (line-level + order-level).
+    total: dto.post_order_discount_total_gross ?? dto.total,
   };
 }

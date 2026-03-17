@@ -1,0 +1,276 @@
+"""Auto-apply order-level promotion resolver — Phase 4 / Slice 3.
+
+Responsibility:
+    Given the cart's post-line-promotion gross total, resolve the single
+    winning AUTO_APPLY ``OrderPromotion`` — the one the storefront should
+    silently apply without any user action required.
+
+Selection algorithm
+-------------------
+1. Filter: ``acquisition_mode = AUTO_APPLY``, ``is_active = True``,
+   within the active time window (``active_from <= now <= active_to``; NULL
+   bounds mean "open ended").
+2. Eligibility: ``minimum_order_value <= cart_gross``, or
+   ``minimum_order_value`` is NULL (always eligible regardless of cart value).
+3. Winner: iterate candidates ordered by ``-priority`` then ``id`` (ascending)
+   and return the first eligible one.
+
+Only one promotion is returned (the winner).  There is no stacking at the
+resolution stage — stacking policy governs how an order-level discount
+interacts with *line-level* promotions, which is a concern of the caller.
+
+Returns ``None`` when no AUTO_APPLY promotion is currently eligible.
+
+Public helpers
+--------------
+- :func:`resolve_auto_apply_order_promotion` — existing: returns single winner
+  for AUTO_APPLY-only flows (used by ``get_cart_pricing_with_order_discount``).
+- :func:`resolve_all_eligible_auto_apply_promotions` — returns ALL eligible
+  AUTO_APPLY promotions for use in exclusive winner-selection where campaign
+  offers must also be considered as candidates.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from decimal import Decimal, ROUND_HALF_UP
+from typing import Optional
+
+from django.db.models import Q
+from django.utils import timezone
+
+from discounts.models import AcquisitionMode, OrderPromotion, PromotionType
+
+
+_QUANTIZE = Decimal("0.01")
+
+
+def _compute_gross_discount(promotion: "OrderPromotion", total_gross: Decimal) -> Decimal:
+    """Return the gross discount a promotion yields on *total_gross* (2 dp)."""
+    if total_gross <= Decimal(0):
+        return Decimal("0.00")
+    if promotion.type == PromotionType.PERCENT:
+        return (total_gross * promotion.value / Decimal("100")).quantize(
+            _QUANTIZE, ROUND_HALF_UP
+        )
+    return min(promotion.value, total_gross).quantize(_QUANTIZE, ROUND_HALF_UP)
+
+
+@dataclass
+class ThresholdRewardProgress:
+    """Progress information for a threshold-based AUTO_APPLY order-level reward.
+
+    Attributes
+    ----------
+    is_unlocked:
+        ``True`` when ``current_basis >= threshold``, meaning the promotion has
+        been triggered and will be auto-applied by the pricing engine.
+    promotion_name:
+        Human-readable name of the threshold promotion (for customer messaging).
+    threshold:
+        Minimum order value (gross, post-line-promotion) required to unlock
+        the reward.
+    current_basis:
+        The cart's qualifying gross total — the same value passed to
+        ``resolve_auto_apply_order_promotion``
+        (``CartTotalsResult.total_gross``: post-line-discount, pre-order-discount).
+    remaining:
+        ``max(0, threshold − current_basis)``.  Zero when unlocked.
+    currency:
+        ISO 4217 currency code for all monetary amounts.
+    """
+
+    is_unlocked: bool
+    promotion_name: str
+    threshold: Decimal
+    current_basis: Decimal
+    remaining: Decimal
+    currency: str
+
+
+def resolve_auto_apply_order_promotion(
+    cart_gross: Decimal,
+    currency: str,  # noqa: ARG001  — reserved for future multi-currency filtering
+) -> Optional[OrderPromotion]:
+    """Return the single winning AUTO_APPLY OrderPromotion for *cart_gross*.
+
+    Parameters
+    ----------
+    cart_gross:
+        Post-line-promotion cart total gross
+        (``CartTotalsResult.total_gross.amount``).
+    currency:
+        ISO 4217 currency of the cart.  Currently unused for filtering
+        (the store is assumed single-currency).  Reserved for future use.
+
+    Returns
+    -------
+    OrderPromotion or None
+        The winning promotion, or ``None`` when no AUTO_APPLY promotion is
+        eligible for the given cart total.
+    """
+    now = timezone.now()
+
+    all_candidates = list(
+        OrderPromotion.objects.filter(
+            acquisition_mode=AcquisitionMode.AUTO_APPLY,
+            is_active=True,
+        )
+        .filter(
+            Q(active_from__isnull=True) | Q(active_from__lte=now),
+            Q(active_to__isnull=True) | Q(active_to__gte=now),
+        )
+        .order_by("id")  # stable ordering; winner selected by max() below
+    )
+
+    # Filter to only currently-eligible promotions (minimum_order_value met).
+    eligible = [
+        p for p in all_candidates
+        if p.minimum_order_value is None or cart_gross >= p.minimum_order_value
+    ]
+    if not eligible:
+        return None
+
+    # Benefit-first storefront policy:
+    #   1. Highest customer benefit (gross discount at current cart value)
+    #   2. Highest explicit priority  (tiebreak)
+    #   3. Lowest id                  (stable deterministic fallback)
+    return max(
+        eligible,
+        key=lambda p: (
+            _compute_gross_discount(p, cart_gross),
+            p.priority,
+            -p.id,
+        ),
+    )
+
+
+def resolve_threshold_reward_progress(
+    cart_gross: Decimal,
+    currency: str,
+) -> Optional[ThresholdRewardProgress]:
+    """Return progress info for the most relevant threshold-based order reward.
+
+    Scans active AUTO_APPLY promotions that have a ``minimum_order_value`` set
+    (threshold rewards).  Returns progress data for the most relevant one:
+
+    - If any threshold is already met, returns the highest-priority unlocked
+      promotion as ``is_unlocked=True``.
+    - Otherwise, returns the promotion closest to being unlocked (smallest
+      remaining gap), so the frontend can show an "add X more" message.
+
+    The threshold basis (``current_basis``) is ``cart_gross`` — the same value
+    used by :func:`resolve_auto_apply_order_promotion`.  This guarantees
+    consistency: when ``is_unlocked`` becomes ``True`` for a given promotion,
+    that same promotion will be picked up as the AUTO_APPLY winner and
+    reflected in ``CartTotalsResult.order_discount``.
+
+    Parameters
+    ----------
+    cart_gross:
+        Post-line-promotion cart total gross (``CartTotalsResult.total_gross``).
+        This is the authoritative threshold basis — the frontend must not
+        recompute it.
+    currency:
+        ISO 4217 currency of the cart.
+
+    Returns
+    -------
+    ThresholdRewardProgress or None
+        Progress info, or ``None`` when no threshold-based AUTO_APPLY
+        promotions exist.
+    """
+    now = timezone.now()
+
+    candidates = list(
+        OrderPromotion.objects.filter(
+            acquisition_mode=AcquisitionMode.AUTO_APPLY,
+            is_active=True,
+            minimum_order_value__isnull=False,
+        )
+        .filter(
+            Q(active_from__isnull=True) | Q(active_from__lte=now),
+            Q(active_to__isnull=True) | Q(active_to__gte=now),
+        )
+        .order_by("-priority", "id")
+    )
+
+    if not candidates:
+        return None
+
+    # Prefer showing an already-unlocked reward.
+    # Under benefit-first policy, show the winner — the one with the highest
+    # gross customer benefit at the current cart value (same key as the
+    # storefront winner resolver).
+    unlocked = [p for p in candidates if cart_gross >= p.minimum_order_value]
+    if unlocked:
+        best = max(
+            unlocked,
+            key=lambda p: (_compute_gross_discount(p, cart_gross), p.priority, -p.id),
+        )
+        min_val = best.minimum_order_value
+        return ThresholdRewardProgress(
+            is_unlocked=True,
+            promotion_name=best.name,
+            threshold=min_val.quantize(_QUANTIZE, ROUND_HALF_UP),
+            current_basis=cart_gross.quantize(_QUANTIZE, ROUND_HALF_UP),
+            remaining=Decimal("0.00"),
+            currency=currency,
+        )
+
+    # No threshold met yet — find the promotion with the smallest remaining gap.
+    best = min(candidates, key=lambda p: p.minimum_order_value - cart_gross)
+    remaining = (best.minimum_order_value - cart_gross).quantize(
+        _QUANTIZE, ROUND_HALF_UP
+    )
+    return ThresholdRewardProgress(
+        is_unlocked=False,
+        promotion_name=best.name,
+        threshold=best.minimum_order_value.quantize(_QUANTIZE, ROUND_HALF_UP),
+        current_basis=cart_gross.quantize(_QUANTIZE, ROUND_HALF_UP),
+        remaining=remaining,
+        currency=currency,
+    )
+
+def resolve_all_eligible_auto_apply_promotions(
+    cart_gross: Decimal,
+    currency: str,  # noqa: ARG001  — reserved for future multi-currency filtering
+) -> list:
+    """Return all currently eligible AUTO_APPLY OrderPromotions for *cart_gross*.
+
+    Unlike :func:`resolve_auto_apply_order_promotion`, which stops at the first
+    eligible candidate (sorted by priority + id), this function returns the
+    *complete* list so that a caller which must also consider CAMPAIGN_APPLY
+    candidates can perform its own cross-acquisition-mode winner selection.
+
+    Parameters
+    ----------
+    cart_gross:
+        Post-line-promotion cart total gross.
+    currency:
+        ISO 4217 currency code (reserved for future multi-currency support).
+
+    Returns
+    -------
+    list[OrderPromotion]
+        All eligible AUTO_APPLY promotions, ordered by ``(-priority, id)``.
+        Empty list when none are eligible.
+    """
+    now = timezone.now()
+
+    candidates = (
+        OrderPromotion.objects.filter(
+            acquisition_mode=AcquisitionMode.AUTO_APPLY,
+            is_active=True,
+        )
+        .filter(
+            Q(active_from__isnull=True) | Q(active_from__lte=now),
+            Q(active_to__isnull=True) | Q(active_to__gte=now),
+        )
+        .order_by("-priority", "id")
+    )
+
+    return [
+        p for p in candidates
+        if p.minimum_order_value is None or cart_gross >= p.minimum_order_value
+    ]

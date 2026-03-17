@@ -3,6 +3,12 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from rest_framework import serializers
 
+from discounts.models import PromotionType
+from discounts.services.order_discount_allocation import (
+    OrderDiscountInput,
+    OrderLineInput,
+    allocate_order_discount,
+)
 from orders.models import Order
 from orderitems.models import OrderItem
 
@@ -103,7 +109,7 @@ class OrderResponseSerializer(serializers.Serializer):
     created_at = serializers.SerializerMethodField()
     items = OrderItemResponseSerializer(many=True, read_only=True)
     total = serializers.SerializerMethodField()
-    # Phase 3 order-level totals snapshot
+    # Phase 3 order-level totals snapshot (legacy names kept for backward compat)
     subtotal_net = serializers.SerializerMethodField()
     subtotal_gross = serializers.SerializerMethodField()
     total_tax = serializers.SerializerMethodField()
@@ -111,6 +117,14 @@ class OrderResponseSerializer(serializers.Serializer):
     currency = serializers.SerializerMethodField()
     # VAT breakdown grouped by tax rate — backend-owned for FE invoice rendering
     vat_breakdown = serializers.SerializerMethodField()
+    # Phase 4 — explicit pre/post order-discount fields for FE accounting truth.
+    # These replace the ambiguously-named snapshot fields above for any UI that
+    # needs to distinguish pre- and post-order-discount values.
+    order_discount_gross = serializers.SerializerMethodField()
+    pre_order_discount_subtotal_gross = serializers.SerializerMethodField()
+    post_order_discount_subtotal_net = serializers.SerializerMethodField()
+    post_order_discount_total_tax = serializers.SerializerMethodField()
+    post_order_discount_total_gross = serializers.SerializerMethodField()
 
     def get_created_at(self, obj: Order) -> str | None:
         if obj.created_at:
@@ -118,6 +132,8 @@ class OrderResponseSerializer(serializers.Serializer):
         return None
 
     def get_total(self, obj: Order) -> str:
+        # post_order_discount_total_gross = subtotal_gross after applying OD
+        # (when OD exists, subtotal_gross is already post-OD).
         if obj.subtotal_gross is not None:
             return _format_decimal(obj.subtotal_gross)
         total = sum(
@@ -141,33 +157,137 @@ class OrderResponseSerializer(serializers.Serializer):
     def get_currency(self, obj: Order) -> str | None:
         return obj.currency
 
+    # ------------------------------------------------------------------
+    # Phase 4: explicit pre/post order-discount fields
+    # ------------------------------------------------------------------
+
+    def get_order_discount_gross(self, obj: Order) -> str | None:
+        """Gross order-level discount applied at checkout.
+
+        Null when no order-level discount was applied.
+        This is the *order-level* discount only — does not include
+        per-item line discounts (see total_discount for the combined total).
+        """
+        return _format_decimal_or_none(obj.order_discount_gross)
+
+    def get_pre_order_discount_subtotal_gross(self, obj: Order) -> str | None:
+        """Gross subtotal incl. VAT after line discounts, BEFORE order-level discount.
+
+        This is the customer-visible "subtotal" that serves as the basis for
+        the order-level discount deduction.  Derivation:
+            pre_order_discount_subtotal_gross = subtotal_gross + order_discount_gross
+
+        When no order-level discount exists, equals subtotal_gross (= final total).
+        Null for legacy orders that lack the Phase 3 snapshot.
+        """
+        if obj.subtotal_gross is None:
+            return None
+        order_discount = (
+            Decimal(str(obj.order_discount_gross))
+            if obj.order_discount_gross is not None
+            else Decimal("0.00")
+        )
+        return _format_decimal(Decimal(str(obj.subtotal_gross)) + order_discount)
+
+    def get_post_order_discount_subtotal_net(self, obj: Order) -> str | None:
+        """Net subtotal (tax base) after ALL discounts — the final accounting net.
+
+        Aliases subtotal_net.  Null for legacy orders.
+        """
+        return _format_decimal_or_none(obj.subtotal_net)
+
+    def get_post_order_discount_total_tax(self, obj: Order) -> str | None:
+        """Total VAT after ALL discounts — consistent with the VAT breakdown totals.
+
+        Aliases total_tax.  Null for legacy orders.
+        """
+        return _format_decimal_or_none(obj.total_tax)
+
+    def get_post_order_discount_total_gross(self, obj: Order) -> str | None:
+        """Final gross total (incl. VAT) after ALL discounts — the amount the customer pays.
+
+        Aliases subtotal_gross (which stores the post-order-discount gross in the
+        checkout pipeline).  Null for legacy orders; fall back to total field.
+        """
+        return _format_decimal_or_none(obj.subtotal_gross)
+
     def get_vat_breakdown(self, obj: Order) -> list:
         """Return VAT breakdown grouped by tax rate.
 
-        Each entry contains:
-          tax_rate      — percentage string, e.g. "10.00"
-          tax_base      — sum of net line totals for this rate
-          vat_amount    — sum of (gross - net) line amounts for this rate
-          total_incl_vat — sum of gross line totals for this rate
+        When an order-level discount is present (order_discount_gross != null),
+        values reflect the *post-order-discount* allocation truth: the discount
+        is proportionally distributed across VAT-rate buckets via the
+        allocate_order_discount engine, so that tax_base, vat_amount and
+        total_incl_vat per bucket are accounting-correct after the deduction.
+
+        When no order-level discount exists, each bucket is simply the sum of
+        pre-discount (post-line-promotion) item line totals for that rate.
 
         Only items with fully-populated Phase 3 snapshot fields are included.
-        Items without line_total_net or line_total_gross snapshots are skipped
-        (pre-snapshot records or unmigrated products).
+        Items without line_total_net or line_total_gross snapshots are skipped.
         """
-        # Use Decimal accumulators per rate to avoid float precision issues.
         _ZERO = Decimal("0")
+
+        # Collect items with full Phase 3 snapshot fields.
+        items_with_snapshots = [
+            item
+            for item in obj.items.all()
+            if (
+                item.line_total_net_at_order_time is not None
+                and item.line_total_gross_at_order_time is not None
+            )
+        ]
+
+        if not items_with_snapshots:
+            return []
+
+        # When order-level discount exists, use the allocation engine to obtain
+        # post-discount per-bucket accounting truth.
+        if (
+            obj.order_discount_gross is not None
+            and obj.order_discount_gross > _ZERO
+            and obj.currency
+        ):
+            lines = [
+                OrderLineInput(
+                    line_net=Decimal(str(item.line_total_net_at_order_time)),
+                    line_gross=Decimal(str(item.line_total_gross_at_order_time)),
+                    tax_rate=(
+                        Decimal(str(item.tax_rate_at_order_time))
+                        if item.tax_rate_at_order_time is not None
+                        else _ZERO
+                    ),
+                    currency=obj.currency,
+                )
+                for item in items_with_snapshots
+            ]
+            discount = OrderDiscountInput(
+                type=PromotionType.FIXED,
+                value=Decimal(str(obj.order_discount_gross)),
+                currency=obj.currency,
+            )
+            result = allocate_order_discount(lines=lines, discount=discount)
+            return [
+                {
+                    "tax_rate": _format_decimal(bucket.tax_rate),
+                    "tax_base": _format_decimal(bucket.adjusted_net),
+                    "vat_amount": _format_decimal(bucket.adjusted_tax),
+                    "total_incl_vat": _format_decimal(bucket.adjusted_gross),
+                }
+                for bucket in result.buckets
+            ]
+
+        # No order-level discount: group item line totals directly.
         groups: dict[str, dict] = defaultdict(
             lambda: {"tax_base": _ZERO, "vat_amount": _ZERO, "total_incl_vat": _ZERO}
         )
 
-        for item in obj.items.all():
-            if (
-                item.line_total_net_at_order_time is None
-                or item.line_total_gross_at_order_time is None
-            ):
-                continue
-
-            rate_raw = item.tax_rate_at_order_time if item.tax_rate_at_order_time is not None else _ZERO
+        for item in items_with_snapshots:
+            rate_raw = (
+                item.tax_rate_at_order_time
+                if item.tax_rate_at_order_time is not None
+                else _ZERO
+            )
             rate_key = _format_decimal(Decimal(str(rate_raw)))
 
             line_net = Decimal(str(item.line_total_net_at_order_time))

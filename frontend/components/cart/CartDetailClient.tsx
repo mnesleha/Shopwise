@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 import { CartDetail } from "@/components/cart/CartDetail";
 import {
   clearCart,
@@ -15,6 +16,7 @@ import type { CartVm } from "@/lib/mappers/cart";
 import { mapCartToVm } from "@/lib/mappers/cart";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useCart } from "@/components/cart/CartProvider";
+import { useOrderDiscountToast } from "@/components/cart/useOrderDiscountToast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type Props = {
@@ -27,6 +29,10 @@ export default function CartDetailClient({ initialCartVm }: Props) {
   const { refreshCart } = useCart();
   const [cart, setCart] = useState<CartVm>(initialCartVm);
   const [busy, setBusy] = useState(false);
+
+  // Show a positive toast when an order-level discount is newly applied.
+  // The hook reads current cart state from the CartProvider; call without args.
+  useOrderDiscountToast();
 
   // ── Stock-adjustment warnings (one-time, from sessionStorage) ────────────
   const [mergeWarnings, setMergeWarnings] = useState<CartMergeWarning[]>([]);
@@ -95,6 +101,16 @@ export default function CartDetailClient({ initialCartVm }: Props) {
           productId: Number(productIdStr),
           quantity: nextQty,
         });
+        await refresh();
+      } catch (err: unknown) {
+        const status = (err as { response?: { status?: number } })?.response
+          ?.status;
+        if (status === 409) {
+          toast.error("Not enough stock available.");
+        } else {
+          toast.error("Could not update quantity. Please try again.");
+        }
+        // Re-sync local cart state even on error so the UI stays consistent.
         await refresh();
       } finally {
         setBusy(false);

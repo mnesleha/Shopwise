@@ -26,6 +26,17 @@ vi.mock("@/lib/api/cart", () => ({
   addCartItem: (...args: unknown[]) => mockAddCartItem(...args),
 }));
 
+vi.mock("@/components/cart/CartProvider", () => ({
+  useCart: () => ({
+    refreshCart: vi.fn().mockResolvedValue(undefined),
+    count: 0,
+    resetCount: vi.fn(),
+    orderDiscountApplied: false,
+    orderDiscountAmount: null,
+  }),
+  CartProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 // Import after mocks are set up
 import ProductDetailClient from "@/components/product/ProductDetailClient";
 
@@ -50,17 +61,24 @@ describe("ProductDetailClient — routing contracts", () => {
     expect(mockRouter.push).toHaveBeenCalledWith("/products");
   });
 
-  it("calls addCartItem and navigates to /cart when add-to-cart is clicked", async () => {
+  it("calls addCartItem and does NOT navigate to /cart after add-to-cart", async () => {
     const user = userEvent.setup();
-    render(<ProductDetailClient product={makeProduct({ id: "10", stockQuantity: 5 })} />);
+    render(
+      <ProductDetailClient
+        product={makeProduct({ id: "10", stockQuantity: 5 })}
+      />,
+    );
 
     await user.click(screen.getByRole("button", { name: /add to cart/i }));
 
     expect(mockAddCartItem).toHaveBeenCalledOnce();
-    expect(mockAddCartItem).toHaveBeenCalledWith({ productId: 10, quantity: 1 });
-    // Router.push("/cart") is called after the async addCartItem resolves
+    expect(mockAddCartItem).toHaveBeenCalledWith({
+      productId: 10,
+      quantity: 1,
+    });
+    // User stays on the product page — no redirect to /cart.
     await vi.waitFor(() => {
-      expect(mockRouter.push).toHaveBeenCalledWith("/cart");
+      expect(mockRouter.push).not.toHaveBeenCalledWith("/cart");
     });
   });
 });

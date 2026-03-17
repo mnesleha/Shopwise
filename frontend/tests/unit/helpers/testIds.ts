@@ -13,6 +13,7 @@ export const LOGIN_SUBMIT = "login-submit";
 
 // ── Cart ─────────────────────────────────────────────────────────────────────
 export const CART_CHECKOUT_BUTTON = "cart-checkout";
+export const CART_THRESHOLD_REWARD = "threshold-reward-banner";
 
 /** Pass productId to get the cart item testid */
 export const cartItem = (productId: string | number) =>
@@ -42,5 +43,9 @@ export const ORDER_ITEMS_TABLE = "order-items-table";
 export const VAT_BREAKDOWN = "vat-breakdown";
 export const ORDER_SUMMARY = "order-summary";
 export const ITEM_DISCOUNT_NOTE = "item-discount-note";
+export const ORDER_DISCOUNT_NOTE = "order-discount-note";
+export const ORDER_DISCOUNT_ROW = "order-discount-row";
+export const VAT_BREAKDOWN_ORDER_DISCOUNT_NOTE =
+  "vat-breakdown-order-discount-note";
 /** Returns the testid for a specific VAT rate row, e.g. vatBreakdownRow("10.00") */
 export const vatBreakdownRow = (rate: string) => `vat-row-${rate}`;

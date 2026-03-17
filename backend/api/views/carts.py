@@ -29,7 +29,7 @@ from api.serializers.cart import (
     CartCheckoutResponseSerializer,
 )
 from api.serializers.common import ErrorResponseSerializer
-from carts.services.pricing import get_cart_pricing
+from carts.services.pricing import get_cart_pricing, get_cart_pricing_with_order_discount
 from carts.services.price_change import detect_price_changes, serialize_price_change_summary
 from carts.services.snapshot import get_snapshot_gross_price
 from api.services.cookies import cart_token_cookie_kwargs
@@ -57,6 +57,13 @@ from orders.services.inventory_reservation_service import reserve_for_checkout
 from orders.services.guest_order_access_service import (
     GuestOrderAccessService,
     generate_guest_access_url,
+)
+from discounts.models import AcquisitionMode, Offer
+from carts.services.pricing import get_cart_pricing_with_campaign_offer
+from api.services.campaign_offer_session import (
+    get_claimed_campaign_offer as _get_claimed_campaign_offer,
+    set_campaign_offer_cookie as _set_campaign_offer_cookie,
+    clear_campaign_offer_cookie as _clear_campaign_offer_cookie,
 )
 from django_q.tasks import async_task
 
@@ -186,6 +193,84 @@ def _create_anonymous_cart_with_unique_token(max_attempts: int = 3):
     raise last_error
 
 
+class ClaimOfferView(APIView):
+    """Claim a campaign offer token into the current session.
+
+    Phase 4 / Slice 5B.
+
+    Validates the offer token and stores it in the session so that
+    subsequent cart GET and checkout POST requests apply the campaign
+    discount automatically.
+    """
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=["Cart"],
+        summary="Claim a campaign offer",
+        description="""
+Validates a campaign offer token and binds it to the current session.
+
+Once claimed, the offer's discount is automatically reflected in
+``GET /cart/`` and applied at checkout via the pricing pipeline.
+
+Returns the promotion name and code on success so the frontend can show
+a confirmation message.
+
+Error codes:
+- ``OFFER_NOT_FOUND`` (404) — token does not exist.
+- ``OFFER_INACTIVE`` (400) — offer is inactive or outside its date window.
+- ``OFFER_NOT_CLAIMABLE`` (400) — promotion is not ``CAMPAIGN_APPLY``.
+""",
+        responses={200: None, 400: None, 404: None},
+    )
+    def post(self, request):
+        token = request.data.get("token", "")
+        if isinstance(token, str):
+            token = token.strip()
+        if not token:
+            return Response(
+                {"code": "OFFER_NOT_FOUND", "message": "Offer not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        try:
+            offer = Offer.objects.select_related("promotion").get(token=token)
+        except Offer.DoesNotExist:
+            return Response(
+                {"code": "OFFER_NOT_FOUND", "message": "Offer not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        if not offer.is_currently_active():
+            return Response(
+                {
+                    "code": "OFFER_INACTIVE",
+                    "message": "This offer is no longer active.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if offer.promotion.acquisition_mode != AcquisitionMode.CAMPAIGN_APPLY:
+            return Response(
+                {
+                    "code": "OFFER_NOT_CLAIMABLE",
+                    "message": "This offer cannot be claimed via link.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        # Persist the token in a dedicated HttpOnly cookie so it is
+        # available to the cart GET and checkout endpoints.  A cookie is used
+        # (not the Django session) because SESSION_COOKIE_SECURE=True would
+        # prevent the browser from storing a session cookie on HTTP in dev.
+        response = Response(
+            {
+                "promotion_name": offer.promotion.name,
+                "promotion_code": offer.promotion.code,
+            },
+            status=status.HTTP_200_OK,
+        )
+        _set_campaign_offer_cookie(response, token)
+        return response
+
+
 class CartView(APIView):
     permission_classes = [AllowAny]
 
@@ -247,7 +332,7 @@ HTTP semantics:
     )
     def get(self, request):
         cart, created, raw_token = _resolve_or_create_cart(request)
-        serializer = CartSerializer(cart)
+        serializer = CartSerializer(cart, context={"request": request})
         response = Response(
             serializer.data,
             status=status.HTTP_200_OK,
@@ -484,14 +569,24 @@ Notes:
 class CartItemDetailView(APIView):
     permission_classes = [AllowAny]
 
-    def _delete_cart_item_and_respond(self, *, cart, product_id: int, raw_token: str | None) -> Response:
+    def _delete_cart_item_and_respond(
+        self,
+        *,
+        cart,
+        product_id: int,
+        raw_token: str | None,
+        request=None,
+    ) -> Response:
         CartItem.objects.filter(cart=cart, product_id=product_id).delete()
 
         # Ensure serializer sees the updated state
         cart.refresh_from_db()
 
-        response = Response(CartSerializer(cart).data,
-                            status=status.HTTP_200_OK)
+        ctx = {"request": request} if request is not None else {}
+        response = Response(
+            CartSerializer(cart, context=ctx).data,
+            status=status.HTTP_200_OK,
+        )
         if raw_token:
             response.set_cookie(
                 "cart_token",
@@ -540,7 +635,7 @@ HTTP semantics:
         # quantity=0 is DELETE alias
         if quantity == 0:
             return self._delete_cart_item_and_respond(
-                cart=cart, product_id=product_id, raw_token=raw_token
+                cart=cart, product_id=product_id, raw_token=raw_token, request=request
             )
 
         try:
@@ -608,7 +703,7 @@ HTTP semantics:
         cart.refresh_from_db()
 
         response = Response(
-            CartSerializer(cart).data,
+            CartSerializer(cart, context={"request": request}).data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
         if raw_token:
@@ -626,7 +721,9 @@ HTTP semantics:
     )
     def delete(self, request, product_id: int):
         cart, _, raw_token = _resolve_or_create_cart(request)
-        return self._delete_cart_item_and_respond(cart=cart, product_id=product_id, raw_token=raw_token)
+        return self._delete_cart_item_and_respond(
+            cart=cart, product_id=product_id, raw_token=raw_token, request=request
+        )
 
 
 class CartCheckoutView(APIView):
@@ -817,7 +914,18 @@ Notes:
                 # source for checkout pricing.  price_at_add_time is retained
                 # on CartItem as the customer-visible gross baseline for
                 # price-change detection (Phase 3 Slice 2).
-                cart_pricing = get_cart_pricing(cart)
+                # Phase 4 / Slice 3: also resolves AUTO_APPLY order-level
+                # promotions and populates cart_pricing.order_discount when one
+                # is eligible.
+                # Phase 4 / Slice 5B: when a CAMPAIGN_APPLY offer has been
+                # claimed via session, it takes precedence over AUTO_APPLY.
+                _checkout_campaign_offer = _get_claimed_campaign_offer(request)
+                if _checkout_campaign_offer is not None:
+                    cart_pricing = get_cart_pricing_with_campaign_offer(
+                        cart, _checkout_campaign_offer
+                    )
+                else:
+                    cart_pricing = get_cart_pricing_with_order_discount(cart)
 
                 # Detect price changes before order items are created so that
                 # the comparison uses the pre-checkout cart snapshot values.
@@ -915,15 +1023,33 @@ Notes:
                         line_total_gross_at_order_time=snap_line_total_gross,
                     )
 
-                # Phase 3: persist order-level totals snapshot.
-                _subtotal_gross = cart_pricing.subtotal_discounted.amount
-                _total_tax = cart_pricing.total_tax.amount
+                # Phase 3 / 4: persist order-level totals snapshot.
+                # Phase 4 / Slice 3: when an order-level discount is applied,
+                # subtotal_gross and total_tax are adjusted to the post-discount
+                # values returned by the VAT allocation engine.
+                od = cart_pricing.order_discount
+                if od is not None:
+                    _subtotal_gross = od.total_gross_after.amount
+                    _total_tax = od.total_tax_after.amount
+                    _order_discount_gross = od.gross_reduction.amount
+                    _order_promotion_code = od.promotion_code
+                else:
+                    _subtotal_gross = cart_pricing.subtotal_discounted.amount
+                    _total_tax = cart_pricing.total_tax.amount
+                    _order_discount_gross = None
+                    _order_promotion_code = None
+
                 order.subtotal_gross = _subtotal_gross
                 order.subtotal_net = (
                     _subtotal_gross - _total_tax
                 ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                 order.total_tax = _total_tax
-                order.total_discount = cart_pricing.total_discount.amount
+                order.total_discount = (
+                    cart_pricing.total_discount.amount
+                    + (_order_discount_gross or Decimal("0"))
+                ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                order.order_discount_gross = _order_discount_gross
+                order.order_promotion_code = _order_promotion_code
                 order.currency = cart_pricing.currency
                 order.save(
                     update_fields=[
@@ -931,6 +1057,8 @@ Notes:
                         "subtotal_gross",
                         "total_tax",
                         "total_discount",
+                        "order_discount_gross",
+                        "order_promotion_code",
                         "currency",
                     ]
                 )
@@ -952,7 +1080,11 @@ Notes:
 
         response_data = dict(CartCheckoutResponseSerializer(order).data)
         response_data["price_change"] = price_change_data
-        return Response(response_data, status=status.HTTP_201_CREATED)
+        # Phase 4 / Slice 5B: clear the campaign offer cookie after a
+        # successful checkout so the same offer is not applied again.
+        checkout_response = Response(response_data, status=status.HTTP_201_CREATED)
+        _clear_campaign_offer_cookie(checkout_response)
+        return checkout_response
 
 
 class CartCheckoutPreflightView(APIView):
