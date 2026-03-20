@@ -90,7 +90,7 @@ function ProductCard({
       {/* Image */}
       <div className="relative aspect-square w-full overflow-hidden">
         {(() => {
-          const src = product.primaryImage?.variants.thumb ?? product.imageUrl;
+          const src = product.primaryImage?.variants.medium ?? product.imageUrl;
           return src ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img

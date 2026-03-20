@@ -1,0 +1,211 @@
+{% extends "admin/base_site.html" %} {% load i18n %} {% block title %}Create and
+send campaign{% endblock %} {% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a>
+  &rsaquo;
+  <a href="{% url 'admin:discounts_orderpromotion_changelist' %}"
+    >Order Promotions</a
+  >
+  &rsaquo; Create and send campaign
+</div>
+{% endblock %} {% block content %}
+<h1>Create and send campaign</h1>
+
+<p style="max-width: 680px; margin-bottom: 1.5em; color: #666">
+  Use this form to define a campaign discount, generate a unique claim link, and
+  send it to a recipient in one step. The system will create the promotion and
+  offer token automatically — you only need to fill in the details below.
+</p>
+
+{% if messages %}
+<ul class="messagelist">
+  {% for message in messages %}
+  <li class="{{ message.tags }}">{{ message }}</li>
+  {% endfor %}
+</ul>
+{% endif %} {% if form.errors %}
+<p class="errornote">Please correct the errors below.</p>
+{% endif %}
+
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  <fieldset class="module aligned">
+    <h2>Campaign discount</h2>
+
+    <!-- name -->
+    <div class="form-row{% if form.name.errors %} errors{% endif %}">
+      <label class="required" for="{{ form.name.id_for_label }}"
+        >{{ form.name.label }}:</label
+      >
+      {{ form.name }} {% if form.name.errors %}
+      <ul class="errorlist">
+        {% for e in form.name.errors %}
+        <li>{{ e }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <p class="help">{{ form.name.help_text|safe }}</p>
+    </div>
+
+    <!-- code -->
+    <div class="form-row{% if form.code.errors %} errors{% endif %}">
+      <label class="required" for="{{ form.code.id_for_label }}"
+        >{{ form.code.label }}:</label
+      >
+      {{ form.code }} {% if form.code.errors %}
+      <ul class="errorlist">
+        {% for e in form.code.errors %}
+        <li>{{ e }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <p class="help">{{ form.code.help_text|safe }}</p>
+    </div>
+
+    <!-- type -->
+    <div class="form-row{% if form.type.errors %} errors{% endif %}">
+      <label class="required" for="{{ form.type.id_for_label }}"
+        >{{ form.type.label }}:</label
+      >
+      {{ form.type }} {% if form.type.errors %}
+      <ul class="errorlist">
+        {% for e in form.type.errors %}
+        <li>{{ e }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <p class="help">{{ form.type.help_text|safe }}</p>
+    </div>
+
+    <!-- value -->
+    <div class="form-row{% if form.value.errors %} errors{% endif %}">
+      <label class="required" for="{{ form.value.id_for_label }}"
+        >{{ form.value.label }}:</label
+      >
+      {{ form.value }} {% if form.value.errors %}
+      <ul class="errorlist">
+        {% for e in form.value.errors %}
+        <li>{{ e }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <p class="help">{{ form.value.help_text|safe }}</p>
+    </div>
+
+    <!-- minimum_order_value -->
+    <div
+      class="form-row{% if form.minimum_order_value.errors %} errors{% endif %}"
+    >
+      <label for="{{ form.minimum_order_value.id_for_label }}"
+        >{{ form.minimum_order_value.label }}:</label
+      >
+      {{ form.minimum_order_value }} {% if form.minimum_order_value.errors %}
+      <ul class="errorlist">
+        {% for e in form.minimum_order_value.errors %}
+        <li>{{ e }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <p class="help">{{ form.minimum_order_value.help_text|safe }}</p>
+    </div>
+
+    <!-- is_discoverable -->
+    <div class="form-row{% if form.is_discoverable.errors %} errors{% endif %}">
+      <label for="{{ form.is_discoverable.id_for_label }}"
+        >{{ form.is_discoverable.label }}:</label
+      >
+      {{ form.is_discoverable }} {% if form.is_discoverable.errors %}
+      <ul class="errorlist">
+        {% for e in form.is_discoverable.errors %}
+        <li>{{ e }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <p class="help">{{ form.is_discoverable.help_text|safe }}</p>
+    </div>
+
+    <!-- active_from / active_to -->
+    <div class="form-row{% if form.active_from.errors %} errors{% endif %}">
+      <label for="{{ form.active_from.id_for_label }}"
+        >{{ form.active_from.label }}:</label
+      >
+      {{ form.active_from }} {% if form.active_from.errors %}
+      <ul class="errorlist">
+        {% for e in form.active_from.errors %}
+        <li>{{ e }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <p class="help">{{ form.active_from.help_text|safe }}</p>
+    </div>
+
+    <div class="form-row{% if form.active_to.errors %} errors{% endif %}">
+      <label for="{{ form.active_to.id_for_label }}"
+        >{{ form.active_to.label }}:</label
+      >
+      {{ form.active_to }} {% if form.active_to.errors %}
+      <ul class="errorlist">
+        {% for e in form.active_to.errors %}
+        <li>{{ e }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <p class="help">{{ form.active_to.help_text|safe }}</p>
+    </div>
+  </fieldset>
+
+  <fieldset class="module aligned">
+    <h2>Delivery</h2>
+    <p style="margin: 0 0 1em; color: #666; font-size: 0.9em">
+      A unique claim link is generated automatically and sent to the recipient.
+      The customer clicks the link to activate the discount on their cart.
+    </p>
+
+    <!-- recipient_email -->
+    <div class="form-row{% if form.recipient_email.errors %} errors{% endif %}">
+      <label class="required" for="{{ form.recipient_email.id_for_label }}"
+        >{{ form.recipient_email.label }}:</label
+      >
+      {{ form.recipient_email }} {% if form.recipient_email.errors %}
+      <ul class="errorlist">
+        {% for e in form.recipient_email.errors %}
+        <li>{{ e }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <p class="help">{{ form.recipient_email.help_text|safe }}</p>
+    </div>
+
+    <!-- offer_active_to -->
+    <div class="form-row{% if form.offer_active_to.errors %} errors{% endif %}">
+      <label for="{{ form.offer_active_to.id_for_label }}"
+        >{{ form.offer_active_to.label }}:</label
+      >
+      {{ form.offer_active_to }} {% if form.offer_active_to.errors %}
+      <ul class="errorlist">
+        {% for e in form.offer_active_to.errors %}
+        <li>{{ e }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <p class="help">{{ form.offer_active_to.help_text|safe }}</p>
+    </div>
+  </fieldset>
+
+  <div class="submit-row">
+    <input
+      type="submit"
+      value="Create campaign and send email"
+      class="default"
+    />
+    &nbsp;
+    <a
+      href="{% url 'admin:discounts_orderpromotion_changelist' %}"
+      class="button cancel-link"
+      style="background: #888"
+      >Cancel</a
+    >
+  </div>
+</form>
+{% endblock %}

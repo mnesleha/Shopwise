@@ -58,7 +58,7 @@ from orders.services.guest_order_access_service import (
     GuestOrderAccessService,
     generate_guest_access_url,
 )
-from discounts.models import AcquisitionMode, Offer
+from discounts.models import AcquisitionMode, Offer, OfferStatus
 from carts.services.pricing import get_cart_pricing_with_campaign_offer
 from api.services.campaign_offer_session import (
     get_claimed_campaign_offer as _get_claimed_campaign_offer,
@@ -260,6 +260,15 @@ Error codes:
         # available to the cart GET and checkout endpoints.  A cookie is used
         # (not the Django session) because SESSION_COOKIE_SECURE=True would
         # prevent the browser from storing a session cookie on HTTP in dev.
+
+        # Phase 4 / Offer status: advance lifecycle to CLAIMED.
+        # Only move forward (CREATED or DELIVERED → CLAIMED); never downgrade
+        # from REDEEMED or EXPIRED.
+        Offer.objects.filter(
+            pk=offer.pk,
+            status__in=[OfferStatus.CREATED, OfferStatus.DELIVERED],
+        ).update(status=OfferStatus.CLAIMED)
+
         response = Response(
             {
                 "promotion_name": offer.promotion.name,
@@ -1067,6 +1076,25 @@ Notes:
 
                 cart.status = Cart.Status.CONVERTED
                 cart.save()
+
+                # Phase 4 / Offer status: mark the campaign offer as REDEEMED
+                # only when it was the winning promotion actually applied to
+                # this order (not when an AUTO_APPLY promotion outbid it).
+                # The forward-only guard (status__in) prevents EXPIRED or other
+                # terminal states from being silently overwritten.
+                if (
+                    _checkout_campaign_offer is not None
+                    and od is not None
+                    and _order_promotion_code == _checkout_campaign_offer.promotion.code
+                ):
+                    Offer.objects.filter(
+                        pk=_checkout_campaign_offer.pk,
+                        status__in=[
+                            OfferStatus.CREATED,
+                            OfferStatus.DELIVERED,
+                            OfferStatus.CLAIMED,
+                        ],
+                    ).update(status=OfferStatus.REDEEMED)
 
         except APIException:
             raise
