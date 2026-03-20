@@ -470,18 +470,29 @@ class OrderPromotionAdmin(admin.ModelAdmin):
                         context,
                     )
 
-                self.message_user(
-                    request,
-                    format_html(
-                        'Campaign <strong>{name}</strong> created. '
-                        'Offer token <code>{token}</code> generated. '
-                        'Claim email sent to <strong>{email}</strong>.',
-                        name=promotion.name,
-                        token=offer.token,
-                        email=cd["recipient_email"],
-                    ),
-                    level=messages.SUCCESS,
-                )
+                if offer.status == OfferStatus.DELIVERED:
+                    self.message_user(
+                        request,
+                        format_html(
+                            'Campaign <strong>{name}</strong> created and claim email sent'
+                            ' to <strong>{email}</strong>.',
+                            name=promotion.name,
+                            email=cd["recipient_email"],
+                        ),
+                        level=messages.SUCCESS,
+                    )
+                else:
+                    self.message_user(
+                        request,
+                        format_html(
+                            'Campaign <strong>{name}</strong> created, but the email'
+                            ' could not be delivered to <strong>{email}</strong>.'
+                            ' The offer token has been generated and is ready to use.',
+                            name=promotion.name,
+                            email=cd["recipient_email"],
+                        ),
+                        level=messages.WARNING,
+                    )
                 change_url = reverse(
                     "admin:discounts_orderpromotion_change",
                     args=[promotion.pk],

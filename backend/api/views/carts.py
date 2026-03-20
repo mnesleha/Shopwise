@@ -1080,13 +1080,20 @@ Notes:
                 # Phase 4 / Offer status: mark the campaign offer as REDEEMED
                 # only when it was the winning promotion actually applied to
                 # this order (not when an AUTO_APPLY promotion outbid it).
+                # The forward-only guard (status__in) prevents EXPIRED or other
+                # terminal states from being silently overwritten.
                 if (
                     _checkout_campaign_offer is not None
                     and od is not None
                     and _order_promotion_code == _checkout_campaign_offer.promotion.code
                 ):
                     Offer.objects.filter(
-                        pk=_checkout_campaign_offer.pk
+                        pk=_checkout_campaign_offer.pk,
+                        status__in=[
+                            OfferStatus.CREATED,
+                            OfferStatus.DELIVERED,
+                            OfferStatus.CLAIMED,
+                        ],
                     ).update(status=OfferStatus.REDEEMED)
 
         except APIException:

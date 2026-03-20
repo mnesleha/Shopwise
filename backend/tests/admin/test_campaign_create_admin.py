@@ -180,13 +180,41 @@ def test_valid_post_redirects_to_promotion_change_page(admin_client, valid_post_
 
 @pytest.mark.django_db
 def test_valid_post_sets_success_message(admin_client, valid_post_data):
-    """After a valid POST the success message includes promotion name and recipient."""
-    with patch("discounts.services.campaign.send_campaign_offer_email"):
+    """After a valid POST with successful email delivery the SUCCESS message
+    includes promotion name and recipient email."""
+    with patch(
+        "discounts.services.campaign.send_campaign_offer_email",
+        return_value=True,
+    ):
         response = admin_client.post(CAMPAIGN_URL, valid_post_data, follow=True)
 
     content = response.content.decode()
     assert "Spring 10% Off" in content
     assert "customer@example.com" in content
+    # Must not contain the failure wording
+    assert "could not be delivered" not in content
+
+
+@pytest.mark.django_db
+def test_valid_post_shows_warning_on_email_failure(admin_client, valid_post_data):
+    """When email delivery fails the view shows a WARNING (not a false-positive
+    SUCCESS) and still creates the promotion and offer."""
+    with patch(
+        "discounts.services.campaign.send_campaign_offer_email",
+        return_value=False,
+    ):
+        response = admin_client.post(CAMPAIGN_URL, valid_post_data, follow=True)
+
+    # Promotion and offer still created
+    assert OrderPromotion.objects.filter(code="spring-2026-10pct").exists()
+    assert Offer.objects.filter(promotion__code="spring-2026-10pct").exists()
+
+    content = response.content.decode()
+    # User-facing failure wording present
+    assert "could not be delivered" in content
+    assert "customer@example.com" in content
+    # Must not claim the email was sent
+    assert "claim email sent" not in content.lower()
 
 
 # ---------------------------------------------------------------------------

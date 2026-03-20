@@ -13,9 +13,12 @@ Covers:
 8. Claiming a REDEEMED offer does not downgrade its status.
 9. Successful checkout where campaign offer is the winning discount advances to REDEEMED.
 10. Checkout without a campaign offer does not change an unrelated Offer's status.
+11. create_and_send_campaign_offer returns an Offer with DELIVERED status in-memory
+    (no extra refresh needed by callers) when email succeeds.
+12. EXPIRED offer is not transitioned to REDEEMED at checkout (forward-only guard).
 
-EXPIRED: intentionally deferred — no background scheduler is wired in this
-phase.  The EXPIRED status value exists and can be set manually by admins, but
+EXPIRED: automatic expiration via scheduler is intentionally deferred —
+the EXPIRED status value exists and can be set manually by admins, but
 automatic expiration is out of scope until a scheduled-job slice is added.
 """
 
@@ -319,3 +322,86 @@ def test_checkout_without_campaign_offer_does_not_change_offer_status():
     assert resp.status_code == 201, resp.json()
     offer.refresh_from_db()
     assert offer.status == OfferStatus.DELIVERED  # must remain unchanged
+
+
+# ---------------------------------------------------------------------------
+# 11. In-memory Offer.status consistency after service call (Fix 3)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_campaign_service_offer_status_is_delivered_in_memory_after_success():
+    """create_and_send_campaign_offer must return an Offer whose .status is
+    already DELIVERED when email sending succeeded — callers must not need to
+    refresh_from_db to read the correct lifecycle state."""
+    from discounts.services.campaign import create_and_send_campaign_offer
+
+    with patch(
+        "discounts.services.campaign.send_campaign_offer_email",
+        return_value=True,
+    ):
+        _promo, offer, _url = create_and_send_campaign_offer(
+            name="In-Memory Check",
+            code=_unique_code(),
+            type=PromotionType.FIXED,
+            value=Decimal("10"),
+            recipient_email="check@example.com",
+        )
+
+    # In-memory instance must already be consistent — no refresh required.
+    assert offer.status == OfferStatus.DELIVERED
+
+
+@pytest.mark.django_db
+def test_campaign_service_offer_status_remains_created_in_memory_on_failure():
+    """When email delivery fails the returned Offer's in-memory status is
+    CREATED (not falsely DELIVERED)."""
+    from discounts.services.campaign import create_and_send_campaign_offer
+
+    with patch(
+        "discounts.services.campaign.send_campaign_offer_email",
+        return_value=False,
+    ):
+        _promo, offer, _url = create_and_send_campaign_offer(
+            name="In-Memory Fail",
+            code=_unique_code(),
+            type=PromotionType.FIXED,
+            value=Decimal("10"),
+            recipient_email="check@example.com",
+        )
+
+    assert offer.status == OfferStatus.CREATED
+
+
+# ---------------------------------------------------------------------------
+# 12. EXPIRED offer is not overwritten by REDEEMED at checkout (Fix 4)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_checkout_does_not_transition_expired_offer_to_redeemed():
+    """An EXPIRED offer present in the checkout session must not be
+    transitioned to REDEEMED — the forward-only guard must block it."""
+    promo = _campaign_promo(
+        value=Decimal("20"),
+        promo_type=PromotionType.FIXED,
+        priority=99,
+    )
+    offer = _offer(promo, status=OfferStatus.EXPIRED)
+    product = _product(price_net=Decimal("100.00"))
+
+    client = APIClient()
+    client.post(CART_ITEMS_URL, {"product_id": product.id, "quantity": 1}, format="json")
+    # Inject the expired offer cookie so checkout attempts to use it.
+    client.cookies[CAMPAIGN_OFFER_COOKIE] = offer.token
+
+    resp = client.post(CHECKOUT_URL, checkout_payload(), format="json")
+
+    # Checkout request itself succeeds (the view reads pricing from the cookie
+    # but the status update is filtered; the promotion discount may or may not
+    # apply depending on is_currently_active — that's orthogonal).
+    # The important assertion is that status was not overwritten.
+    offer.refresh_from_db()
+    assert offer.status == OfferStatus.EXPIRED, (
+        f"Expected EXPIRED, got {offer.status} — forward-only guard failed"
+    )

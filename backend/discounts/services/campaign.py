@@ -100,5 +100,8 @@ def create_and_send_campaign_offer(
         Offer.objects.filter(
             pk=offer.pk, status=OfferStatus.CREATED
         ).update(status=OfferStatus.DELIVERED)
+        # Keep the in-memory instance consistent with the DB row so callers
+        # can read offer.status without an extra DB round-trip.
+        offer.status = OfferStatus.DELIVERED
 
     return promotion, offer, claim_url
