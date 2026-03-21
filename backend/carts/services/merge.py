@@ -26,11 +26,12 @@ class CartMergeWarning(TypedDict):
 
 class CartMergeReport(TypedDict):
     performed: bool
-    result: str        # "NOOP" | "ADOPTED" | "MERGED"
+    result: str             # "NOOP" | "ADOPTED" | "MERGED"
     items_added: int
     items_updated: int
     items_removed: int
-    warnings: list     # list[CartMergeWarning]
+    warnings: list          # list[CartMergeWarning]
+    winning_offer_token: Optional[str]  # token of campaign offer surviving merge; None if none
 
 
 def _noop_report() -> CartMergeReport:
@@ -41,7 +42,82 @@ def _noop_report() -> CartMergeReport:
         items_updated=0,
         items_removed=0,
         warnings=[],
+        winning_offer_token=None,
     )
+
+
+def _resolve_winning_offer_for_merge(
+    guest_offer_token: Optional[str],
+    auth_offer_token: Optional[str],
+    merged_cart: Cart,
+) -> Optional[object]:
+    """
+    Determine the best valid CAMPAIGN_APPLY offer for the merged cart.
+
+    Compares the guest cart's and auth cart's claimed campaign offer tokens,
+    validates each against the database, and returns the single Offer that
+    yields the greatest gross benefit on the merged cart.  Returns ``None``
+    when neither token resolves to a currently-active CAMPAIGN_APPLY offer.
+
+    Winner selection reuses :func:`~carts.services.pricing._pick_exclusive_promotion_winner`
+    (benefit-first → priority → lowest-id), ensuring the same deterministic
+    policy as the rest of the order-discount subsystem.
+    """
+    # Lazy imports to avoid circular dependencies.
+    from discounts.models import AcquisitionMode, Offer  # noqa: PLC0415
+
+    def _validate_offer(token: Optional[str]) -> Optional[object]:
+        """Return the Offer if it is valid for campaign apply; otherwise None."""
+        if not token:
+            return None
+        try:
+            offer = Offer.objects.select_related("promotion").get(token=token)
+        except Offer.DoesNotExist:
+            return None
+        if (
+            not offer.is_currently_active()
+            or offer.promotion.acquisition_mode != AcquisitionMode.CAMPAIGN_APPLY
+        ):
+            return None
+        return offer
+
+    guest_offer = _validate_offer(guest_offer_token)
+    auth_offer = _validate_offer(auth_offer_token)
+
+    # Build deduplicated candidate list (same token can appear on both sides).
+    candidates: list = []
+    seen_pks: set = set()
+    for offer in (guest_offer, auth_offer):
+        if offer is not None and offer.pk not in seen_pks:
+            candidates.append(offer)
+            seen_pks.add(offer.pk)
+
+    if not candidates:
+        return None
+
+    if len(candidates) == 1:
+        return candidates[0]
+
+    # Two distinct valid offers: evaluate on the merged cart and pick the winner.
+    from carts.services.pricing import (  # noqa: PLC0415
+        get_cart_pricing,
+        _pick_exclusive_promotion_winner,
+    )
+
+    pricing = get_cart_pricing(merged_cart)
+    winning_promotion = _pick_exclusive_promotion_winner(
+        [o.promotion for o in candidates],
+        pricing.total_gross.amount,
+    )
+
+    if winning_promotion is None:
+        return candidates[0]
+
+    for offer in candidates:
+        if offer.promotion_id == winning_promotion.id:
+            return offer
+
+    return candidates[0]  # deterministic fallback (should never be reached)
 
 
 def merge_or_adopt_guest_cart(*, user, raw_token: Optional[str]) -> CartMergeReport:
@@ -113,14 +189,26 @@ def merge_or_adopt_guest_cart(*, user, raw_token: Optional[str]) -> CartMergeRep
                     item.save(update_fields=["quantity"])
                 items_added += 1
 
+            # Evaluate campaign offer context from the guest cart before
+            # adopting it.  No competition from an auth cart (none exists),
+            # so we just validate the guest's claimed offer.
+            winning_offer = _resolve_winning_offer_for_merge(
+                guest_offer_token=anonymous_cart.claimed_offer_token,
+                auth_offer_token=None,
+                merged_cart=anonymous_cart,
+            )
+            winning_offer_token = winning_offer.token if winning_offer else None
+
             anonymous_cart.user = user
             anonymous_cart.anonymous_token_hash = None
+            anonymous_cart.claimed_offer_token = winning_offer_token
             anonymous_cart.merged_into_cart = None
             anonymous_cart.merged_at = None
             anonymous_cart.save(
                 update_fields=[
                     "user",
                     "anonymous_token_hash",
+                    "claimed_offer_token",
                     "merged_into_cart",
                     "merged_at",
                 ]
@@ -132,6 +220,7 @@ def merge_or_adopt_guest_cart(*, user, raw_token: Optional[str]) -> CartMergeRep
                 items_updated=0,
                 items_removed=0,
                 warnings=warnings,
+                winning_offer_token=winning_offer_token,
             )
 
         # ------------------------------------------------------------------ MERGE
@@ -207,6 +296,20 @@ def merge_or_adopt_guest_cart(*, user, raw_token: Optional[str]) -> CartMergeRep
         if anonymous_ids_to_delete:
             CartItem.objects.filter(id__in=anonymous_ids_to_delete).delete()
 
+        # Evaluate campaign offer context from both carts against the now-merged
+        # user cart and pick the best valid outcome for the customer.
+        winning_offer = _resolve_winning_offer_for_merge(
+            guest_offer_token=anonymous_cart.claimed_offer_token,
+            auth_offer_token=user_cart.claimed_offer_token,
+            merged_cart=user_cart,
+        )
+        winning_offer_token = winning_offer.token if winning_offer else None
+
+        # Persist the winner on the surviving cart so subsequent cart reads
+        # remain consistent even before the cookie is updated by the caller.
+        user_cart.claimed_offer_token = winning_offer_token
+        user_cart.save(update_fields=["claimed_offer_token"])
+
         anonymous_cart.status = Cart.Status.MERGED
         anonymous_cart.anonymous_token_hash = None
         anonymous_cart.merged_into_cart = user_cart
@@ -226,6 +329,7 @@ def merge_or_adopt_guest_cart(*, user, raw_token: Optional[str]) -> CartMergeRep
             items_updated=items_updated,
             items_removed=0,
             warnings=warnings,
+            winning_offer_token=winning_offer_token,
         )
 
     """

@@ -779,6 +779,7 @@ class CartMergeView(APIView):
 
         if not cart_token:
             # No guest token present — return NOOP report immediately.
+            # Do not touch the campaign offer cookie for NOOP.
             from carts.services.merge import _noop_report
             report = _noop_report()
             return Response(CartMergeReportSerializer(report).data, status=status.HTTP_200_OK)
@@ -794,6 +795,24 @@ class CartMergeView(APIView):
             max_age=0,
             **cart_token_cookie_kwargs(),
         )
+
+        # Sync the campaign offer cookie to the merge winner so the browser
+        # always carries the best valid offer after a guest→auth merge.
+        # Only applied when a merge was actually performed (ADOPTED or MERGED);
+        # NOOP short-circuits above and never reaches this point.
+        if report["performed"]:
+            from api.services.campaign_offer_session import (  # noqa: PLC0415
+                set_campaign_offer_cookie as _set_offer_cookie,
+                clear_campaign_offer_cookie as _clear_offer_cookie,
+            )
+            winning_token = report.get("winning_offer_token")
+            if winning_token:
+                _set_offer_cookie(response, winning_token)
+            else:
+                # Neither cart had a valid campaign offer — clear any stale cookie
+                # so the browser does not carry an expired/invalid token.
+                _clear_offer_cookie(response)
+
         return response
 
 

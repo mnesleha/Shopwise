@@ -386,6 +386,8 @@ class CartMergeReportSerializer(serializers.Serializer):
     ``performed`` is False when there was no guest token to process (NOOP).
     ``result`` is one of: "NOOP" | "ADOPTED" | "MERGED".
     Warning codes: "STOCK_ADJUSTED".
+    ``winning_offer_token`` is the campaign offer token that should be active
+    after the merge (None when no valid offer survived).
     """
 
     performed = serializers.BooleanField()
@@ -394,3 +396,4 @@ class CartMergeReportSerializer(serializers.Serializer):
     items_updated = serializers.IntegerField()
     items_removed = serializers.IntegerField()
     warnings = CartMergeWarningSerializer(many=True)
+    winning_offer_token = serializers.CharField(allow_null=True, default=None)

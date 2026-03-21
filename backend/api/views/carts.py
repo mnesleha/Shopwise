@@ -269,6 +269,20 @@ Error codes:
             status__in=[OfferStatus.CREATED, OfferStatus.DELIVERED],
         ).update(status=OfferStatus.CLAIMED)
 
+        # Also persist the token on the current active cart (if one already
+        # exists).  This cart-level field acts as the server-side mirror of
+        # the cookie and enables best-for-customer comparison during the
+        # guest→authenticated cart merge — without it, one side of the
+        # comparison would always be invisible to the merge service.
+        # Best-effort: a failure here must not abort the claim response.
+        try:
+            current_cart = _get_active_cart_for_request(request)
+            if current_cart is not None:
+                current_cart.claimed_offer_token = offer.token
+                current_cart.save(update_fields=["claimed_offer_token"])
+        except Exception:
+            pass
+
         response = Response(
             {
                 "promotion_name": offer.promotion.name,

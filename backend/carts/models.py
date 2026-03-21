@@ -41,6 +41,16 @@ class Cart(models.Model):
     )
     merged_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    claimed_offer_token = models.CharField(
+        max_length=64,
+        null=True,
+        blank=True,
+        help_text=(
+            "Token of the most recently claimed CAMPAIGN_APPLY offer for this cart. "
+            "Mirrors the campaign_offer_token cookie and enables best-for-customer "
+            "comparison during guest→authenticated cart merge."
+        ),
+    )
 
     def clean(self):
         """
