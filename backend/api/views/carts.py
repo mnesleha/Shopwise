@@ -1,5 +1,8 @@
+import logging
 import secrets
 from decimal import Decimal, ROUND_HALF_UP
+
+import sentry_sdk
 
 from django.conf import settings
 from django.db import transaction, IntegrityError
@@ -68,6 +71,8 @@ from api.services.campaign_offer_session import (
 from django_q.tasks import async_task
 
 from notifications.enqueue import enqueue_best_effort
+
+logger = logging.getLogger(__name__)
 from notifications.error_handler import NotificationErrorHandler
 from notifications.exceptions import NotificationSendError
 
@@ -281,7 +286,21 @@ Error codes:
                 current_cart.claimed_offer_token = offer.token
                 current_cart.save(update_fields=["claimed_offer_token"])
         except Exception:
-            pass
+            with sentry_sdk.new_scope() as scope:
+                scope.set_tag("category", "application")
+                scope.set_tag("subsystem", "campaign_offer")
+                scope.set_tag("operation", "cart_sync")
+                scope.set_context("campaign_offer_cart_sync", {
+                    "offer_id": offer.pk,
+                    "offer_token_suffix": offer.token[-6:] if offer.token else None,
+                    "user_id": getattr(request.user, "pk", None),
+                    "is_authenticated": getattr(request.user, "is_authenticated", False),
+                })
+                logger.warning(
+                    "Failed to sync claimed_offer_token to cart (best-effort). offer_id=%s",
+                    offer.pk,
+                    exc_info=True,
+                )
 
         response = Response(
             {

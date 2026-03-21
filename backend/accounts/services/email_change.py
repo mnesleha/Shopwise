@@ -14,6 +14,8 @@ import logging
 import secrets
 from datetime import timedelta
 
+import sentry_sdk
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -77,11 +79,18 @@ def _blacklist_all_user_tokens(user) -> None:
         for token_obj in outstanding:
             BlacklistedToken.objects.get_or_create(token=token_obj)
     except Exception:
-        logger.warning(
-            "Failed to blacklist JWT tokens for user_id=%s during email change confirm.",
-            getattr(user, "pk", None),
-            exc_info=True,
-        )
+        with sentry_sdk.new_scope() as scope:
+            scope.set_tag("category", "application")
+            scope.set_tag("subsystem", "email")
+            scope.set_tag("operation", "token_blacklist")
+            scope.set_context("email_change", {
+                "user_id": getattr(user, "pk", None),
+            })
+            logger.warning(
+                "Failed to blacklist JWT tokens for user_id=%s during email change confirm.",
+                getattr(user, "pk", None),
+                exc_info=True,
+            )
 
 
 def _emit_audit(*, action: str, user, metadata: dict | None = None) -> None:
@@ -97,12 +106,20 @@ def _emit_audit(*, action: str, user, metadata: dict | None = None) -> None:
             fail_silently=True,
         )
     except Exception:
-        logger.warning(
-            "Audit event emission failed (best-effort). action=%s user_id=%s",
-            action,
-            getattr(user, "pk", None),
-            exc_info=True,
-        )
+        with sentry_sdk.new_scope() as scope:
+            scope.set_tag("category", "application")
+            scope.set_tag("subsystem", "email")
+            scope.set_tag("operation", "audit_emit")
+            scope.set_context("email_change", {
+                "action": action,
+                "user_id": getattr(user, "pk", None),
+            })
+            logger.warning(
+                "Audit event emission failed (best-effort). action=%s user_id=%s",
+                action,
+                getattr(user, "pk", None),
+                exc_info=True,
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -182,10 +199,18 @@ def request_email_change(
             confirm_url=confirm_url,
         )
     except Exception:
-        logger.warning(
-            "Failed to enqueue email-change confirmation email (best-effort).",
-            exc_info=True,
-        )
+        with sentry_sdk.new_scope() as scope:
+            scope.set_tag("category", "application")
+            scope.set_tag("subsystem", "email")
+            scope.set_tag("operation", "delivery")
+            scope.set_context("email_change", {
+                "email_type": "email_change_confirm",
+                "user_id": getattr(user, "pk", None),
+            })
+            logger.warning(
+                "Failed to enqueue email-change confirmation email (best-effort).",
+                exc_info=True,
+            )
 
     # Best-effort: send cancellation/notification email to old_email.
     try:
@@ -195,10 +220,18 @@ def request_email_change(
             cancel_url=cancel_url,
         )
     except Exception:
-        logger.warning(
-            "Failed to enqueue email-change cancellation email (best-effort).",
-            exc_info=True,
-        )
+        with sentry_sdk.new_scope() as scope:
+            scope.set_tag("category", "application")
+            scope.set_tag("subsystem", "email")
+            scope.set_tag("operation", "delivery")
+            scope.set_context("email_change", {
+                "email_type": "email_change_cancel_notification",
+                "user_id": getattr(user, "pk", None),
+            })
+            logger.warning(
+                "Failed to enqueue email-change cancellation email (best-effort).",
+                exc_info=True,
+            )
 
     # Best-effort audit
     _emit_audit(

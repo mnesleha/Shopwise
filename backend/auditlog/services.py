@@ -1,4 +1,7 @@
 import logging
+
+import sentry_sdk
+
 from auditlog.models import AuditEvent
 
 
@@ -40,12 +43,22 @@ class AuditService:
         except Exception:
             if not fail_silently:
                 raise
-            logger.warning(
-                "AuditEvent write failed (best-effort). action=%s entity=%s:%s actor_type=%s",
-                action,
-                entity_type,
-                entity_id,
-                actor_type,
-                exc_info=True,
-            )
+            with sentry_sdk.new_scope() as scope:
+                scope.set_tag("category", "application")
+                scope.set_tag("subsystem", "auditlog")
+                scope.set_tag("operation", "db_write")
+                scope.set_context("audit_event", {
+                    "action": action,
+                    "entity_type": entity_type,
+                    "entity_id": entity_id,
+                    "actor_type": actor_type,
+                })
+                logger.warning(
+                    "AuditEvent write failed (best-effort). action=%s entity=%s:%s actor_type=%s",
+                    action,
+                    entity_type,
+                    entity_id,
+                    actor_type,
+                    exc_info=True,
+                )
             return None
