@@ -42,6 +42,7 @@ export function AddressDialog({ open, onOpenChange, initial, onSaved }: Props) {
       country: (data.get("country") as string).trim(),
       company: (data.get("company") as string).trim(),
       vat_id: (data.get("vat_id") as string).trim(),
+      phone: (data.get("phone") as string).trim(),
     };
 
     setBusy(true);
@@ -136,6 +137,13 @@ export function AddressDialog({ open, onOpenChange, initial, onSaved }: Props) {
             label="VAT ID (optional)"
             id="vat_id"
             defaultValue={initial?.vat_id ?? ""}
+          />
+          <Field
+            label="Phone"
+            id="phone"
+            type="tel"
+            defaultValue={initial?.phone ?? ""}
+            required
           />
 
           <DialogFooter className="pt-2">

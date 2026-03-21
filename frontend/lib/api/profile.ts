@@ -27,6 +27,7 @@ export type AddressDto = {
   country: string;
   company: string;
   vat_id: string;
+  phone: string;
 };
 
 export type AddressPayload = Omit<AddressDto, "id">;

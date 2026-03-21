@@ -102,6 +102,9 @@ export function AddressesCard({ addresses }: Props) {
                       {addr.postal_code} {addr.city}
                     </p>
                     <p>{getCountryName(addr.country)}</p>
+                    {addr.phone ? (
+                      <p className="text-muted-foreground">{addr.phone}</p>
+                    ) : null}
                   </div>
                   <div className="flex gap-1 shrink-0">
                     <Button

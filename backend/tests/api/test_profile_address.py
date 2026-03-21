@@ -32,6 +32,7 @@ class TestProfileAndAddressAPIV1:
             "country": "CZ",
             "company": "",
             "vat_id": "",
+            "phone": "+420123456789",
         }
         data.update(overrides)
         return data
@@ -63,6 +64,7 @@ class TestProfileAndAddressAPIV1:
             "country",
             "company",
             "vat_id",
+            "phone",
         ]:
             assert field in sample
 
@@ -89,3 +91,104 @@ class TestProfileAndAddressAPIV1:
 
         resp = c1.patch(self.PROFILE_URL, {"default_shipping_address": foreign.data["id"]}, format="json")
         assert resp.status_code == 400, resp.data
+
+    # ------------------------------------------------------------------
+    # Phone field tests
+    # ------------------------------------------------------------------
+
+    def test_create_address_with_phone_succeeds(self):
+        user = self._create_user("addr_phone_1@example.com")
+        c = self._auth_client(user)
+
+        resp = c.post(self.ADDRESSES_URL, self._address_payload(phone="+420777111222"), format="json")
+        assert resp.status_code == 201, resp.data
+        assert resp.data["phone"] == "+420777111222"
+
+    def test_create_address_without_phone_fails(self):
+        user = self._create_user("addr_phone_2@example.com")
+        c = self._auth_client(user)
+
+        payload = self._address_payload()
+        del payload["phone"]
+        resp = c.post(self.ADDRESSES_URL, payload, format="json")
+        assert resp.status_code == 400, resp.data
+        assert "phone" in resp.data.get("errors", resp.data)
+
+    def test_create_address_with_blank_phone_fails(self):
+        user = self._create_user("addr_phone_3@example.com")
+        c = self._auth_client(user)
+
+        resp = c.post(self.ADDRESSES_URL, self._address_payload(phone=""), format="json")
+        assert resp.status_code == 400, resp.data
+        assert "phone" in resp.data.get("errors", resp.data)
+
+    def test_patch_address_with_phone_succeeds(self):
+        user = self._create_user("addr_phone_4@example.com")
+        c = self._auth_client(user)
+
+        create = c.post(self.ADDRESSES_URL, self._address_payload(), format="json")
+        assert create.status_code == 201, create.data
+        addr_id = create.data["id"]
+
+        resp = c.patch(f"{self.ADDRESSES_URL}{addr_id}/", {"phone": "+420999888777"}, format="json")
+        assert resp.status_code == 200, resp.data
+        assert resp.data["phone"] == "+420999888777"
+
+    def test_patch_address_with_blank_phone_fails(self):
+        user = self._create_user("addr_phone_5@example.com")
+        c = self._auth_client(user)
+
+        create = c.post(self.ADDRESSES_URL, self._address_payload(), format="json")
+        assert create.status_code == 201, create.data
+        addr_id = create.data["id"]
+
+        resp = c.patch(f"{self.ADDRESSES_URL}{addr_id}/", {"phone": ""}, format="json")
+        assert resp.status_code == 400, resp.data
+        assert "phone" in resp.data.get("errors", resp.data)
+
+    def test_patch_address_without_phone_preserves_existing_phone(self):
+        """PATCH without phone in payload must not clear the existing value."""
+        user = self._create_user("addr_phone_6@example.com")
+        c = self._auth_client(user)
+
+        create = c.post(self.ADDRESSES_URL, self._address_payload(phone="+420123000000"), format="json")
+        assert create.status_code == 201, create.data
+        addr_id = create.data["id"]
+
+        resp = c.patch(f"{self.ADDRESSES_URL}{addr_id}/", {"city": "Brno"}, format="json")
+        assert resp.status_code == 200, resp.data
+        assert resp.data["phone"] == "+420123000000"
+
+    def test_legacy_address_without_phone_is_readable(self):
+        """
+        An address row created directly (bypassing the serializer) with no
+        phone should still be readable via the API without errors.
+        This simulates legacy data that existed before the phone field.
+        """
+        from accounts.models import Address, CustomerProfile
+
+        user = self._create_user("addr_legacy_1@example.com")
+        c = self._auth_client(user)
+        profile, _ = CustomerProfile.objects.get_or_create(user=user)
+
+        # Insert a legacy row with no phone (blank) directly, bypassing the
+        # serializer layer.
+        legacy = Address.objects.create(
+            profile=profile,
+            first_name="Legacy",
+            last_name="User",
+            street_line_1="Old Road 1",
+            street_line_2="",
+            city="Prague",
+            postal_code="11000",
+            country="CZ",
+            company="",
+            vat_id="",
+            phone="",
+        )
+
+        resp = c.get(self.ADDRESSES_URL)
+        assert resp.status_code == 200, resp.data
+        found = next((a for a in resp.data if a["id"] == legacy.id), None)
+        assert found is not None
+        assert found["phone"] == ""

@@ -16,6 +16,11 @@ class AddressSerializer(serializers.ModelSerializer):
     # django-countries validation on the model layer.
     country = CountryField()
 
+    # Phone is required for all create / update operations at the application
+    # level.  The underlying DB column allows blank so that existing rows
+    # created before this field existed remain readable without crashing.
+    phone = serializers.CharField(max_length=32)
+
     class Meta:
         model = Address
         fields = [
@@ -29,6 +34,7 @@ class AddressSerializer(serializers.ModelSerializer):
             "country",
             "company",
             "vat_id",
+            "phone",
         ]
         read_only_fields = ["id"]
 

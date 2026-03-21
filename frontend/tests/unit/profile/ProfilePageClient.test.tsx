@@ -83,6 +83,7 @@ function makeAddress(overrides?: Partial<AddressDto>): AddressDto {
     country: "CZ",
     company: "",
     vat_id: "",
+    phone: "+420123456789",
     ...overrides,
   };
 }
@@ -168,6 +169,7 @@ describe("AddressDialog – create mode", () => {
     await user.type(screen.getByLabelText(/street/i), "Oak Avenue 5");
     await user.type(screen.getByLabelText(/postal code/i), "10000");
     await user.type(screen.getByLabelText(/city/i), "Brno");
+    await user.type(screen.getByLabelText(/phone/i), "+420777111222");
     // Country defaults to "CZ" in CountryPicker — no user interaction needed.
 
     await user.click(screen.getByTestId("address-dialog-submit"));
@@ -178,6 +180,7 @@ describe("AddressDialog – create mode", () => {
           first_name: "Jane",
           last_name: "Doe",
           city: "Brno",
+          phone: "+420777111222",
         }),
       );
     });
@@ -209,6 +212,7 @@ describe("AddressDialog – create mode", () => {
     await user.type(screen.getByLabelText(/street/i), "Oak Avenue 5");
     await user.type(screen.getByLabelText(/postal code/i), "10000");
     await user.type(screen.getByLabelText(/city/i), "Brno");
+    await user.type(screen.getByLabelText(/phone/i), "+420000000000");
     // Country defaults to "CZ" in CountryPicker — no user interaction needed.
 
     await user.click(screen.getByTestId("address-dialog-submit"));
@@ -244,6 +248,7 @@ describe("AddressDialog – submit payload", () => {
     await user.type(screen.getByLabelText(/street/i), "Elm St 7");
     await user.type(screen.getByLabelText(/postal code/i), "60200");
     await user.type(screen.getByLabelText(/city/i), "Brno");
+    await user.type(screen.getByLabelText(/phone/i), "+420111222333");
     // Country defaults to "CZ" in CountryPicker — no user interaction needed.
 
     await user.click(screen.getByTestId("address-dialog-submit"));
@@ -257,6 +262,94 @@ describe("AddressDialog – submit payload", () => {
     expect(calledWith).toHaveProperty("first_name", "Alice");
     expect(calledWith).toHaveProperty("last_name", "Smith");
     expect(calledWith).not.toHaveProperty("full_name");
+  });
+});
+
+describe("AddressDialog – phone field", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("renders a phone input field", async () => {
+    const { AddressDialog } =
+      await import("@/components/profile/AddressDialog");
+
+    renderWithProviders(
+      <AddressDialog
+        open
+        initial={null}
+        onOpenChange={vi.fn()}
+        onSaved={vi.fn()}
+      />,
+    );
+
+    const phoneInput = screen.getByLabelText(/phone/i);
+    expect(phoneInput).toBeInTheDocument();
+  });
+
+  it("phone input has the required attribute", async () => {
+    const { AddressDialog } =
+      await import("@/components/profile/AddressDialog");
+
+    renderWithProviders(
+      <AddressDialog
+        open
+        initial={null}
+        onOpenChange={vi.fn()}
+        onSaved={vi.fn()}
+      />,
+    );
+
+    const phoneInput = screen.getByLabelText(/phone/i);
+    expect(phoneInput).toBeRequired();
+  });
+
+  it("populates phone from initial address in edit mode", async () => {
+    const { AddressDialog } =
+      await import("@/components/profile/AddressDialog");
+
+    renderWithProviders(
+      <AddressDialog
+        open
+        initial={makeAddress({ phone: "+420987654321" })}
+        onOpenChange={vi.fn()}
+        onSaved={vi.fn()}
+      />,
+    );
+
+    const phoneInput = screen.getByLabelText(/phone/i) as HTMLInputElement;
+    expect(phoneInput.value).toBe("+420987654321");
+  });
+
+  it("includes phone in the create payload", async () => {
+    const { AddressDialog } =
+      await import("@/components/profile/AddressDialog");
+    const user = userEvent.setup();
+    mockCreateAddress.mockResolvedValue({ id: 55 });
+
+    renderWithProviders(
+      <AddressDialog
+        open
+        initial={null}
+        onOpenChange={vi.fn()}
+        onSaved={vi.fn()}
+      />,
+    );
+
+    await user.type(screen.getByLabelText(/first name/i), "Test");
+    await user.type(screen.getByLabelText(/last name/i), "User");
+    await user.type(screen.getByLabelText(/street/i), "Test Street 1");
+    await user.type(screen.getByLabelText(/postal code/i), "10000");
+    await user.type(screen.getByLabelText(/city/i), "Prague");
+    await user.type(screen.getByLabelText(/phone/i), "+420555444333");
+
+    await user.click(screen.getByTestId("address-dialog-submit"));
+
+    await waitFor(() => {
+      expect(mockCreateAddress).toHaveBeenCalledWith(
+        expect.objectContaining({ phone: "+420555444333" }),
+      );
+    });
   });
 });
 

@@ -161,6 +161,11 @@ class Address(models.Model):
     country = CountryField()
     company = models.CharField(max_length=255, blank=True)
     vat_id = models.CharField(max_length=64, blank=True)
+    # Phone number for this address.
+    # DB-level blank=True preserves compatibility with existing rows created
+    # before this field existed.  Application-level validation (serializer)
+    # requires phone for all new create / update operations.
+    phone = models.CharField(max_length=32, blank=True)
 
     def __str__(self) -> str:
         return f"Address(profile_id={self.profile_id}, city={self.city})"
