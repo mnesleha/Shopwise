@@ -1,5 +1,7 @@
 from sentry_sdk.integrations.django import DjangoIntegration
 import sentry_sdk
+from sentry_sdk.integrations.logging import LoggingIntegration
+import logging
 import os
 from pathlib import Path
 from datetime import timedelta
@@ -147,10 +149,18 @@ def auth_cookie_kwargs():
 # Sentry - can be disabled via SENTRY_ENABLED=false
 SENTRY_ENABLED = os.getenv("SENTRY_ENABLED", "true").lower() == "true"
 
+sentry_logging = LoggingIntegration(
+    level=logging.INFO,
+    event_level=logging.WARNING
+)
+
 if SENTRY_ENABLED:
     sentry_sdk.init(
         dsn="https://2becc686d197008cfe9d5b4bd58b42f7@o4510765395476480.ingest.de.sentry.io/4510765407862864",
-        integrations=[DjangoIntegration()],
+        integrations=[
+            DjangoIntegration(),
+            sentry_logging,
+        ],
         traces_sample_rate=0.1,
         environment="development",
         send_default_pii=True,
