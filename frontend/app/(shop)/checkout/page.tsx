@@ -15,10 +15,12 @@ import {
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useCart } from "@/components/cart/CartProvider";
 import { getPriceChangeMessage } from "@/lib/utils/priceChange";
+import { getProfile, listAddresses } from "@/lib/api/profile";
+import { buildCheckoutPrefill } from "@/lib/utils/buildCheckoutPrefill";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, email } = useAuth();
   const { resetCount } = useCart();
   const isAuthenticatedRef = useRef(isAuthenticated);
   useEffect(() => {
@@ -28,6 +30,37 @@ export default function CheckoutPage() {
   /** Non-null when preflight reports a WARNING-level price change. */
   const [warningPayload, setWarningPayload] =
     useState<PriceChangePayload | null>(null);
+
+  // ── Profile prefill for authenticated users ────────────────────────────────
+  // `null` means "still loading" (blocks form render); `{}` means ready with no
+  // prefill; `{...data}` means ready with prefill values.
+  // Auth state is hydrated from SSR so isAuthenticated is stable on first render.
+  const [prefill, setPrefill] = useState<Partial<CheckoutValues> | null>(() =>
+    isAuthenticated ? null : {},
+  );
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setPrefill({});
+      return;
+    }
+
+    let cancelled = false;
+    Promise.all([getProfile(), listAddresses()])
+      .then(([profile, addresses]) => {
+        if (cancelled) return;
+        setPrefill(buildCheckoutPrefill({ profile, addresses, email }));
+      })
+      .catch(() => {
+        // On error, render without prefill rather than blocking the checkout.
+        if (!cancelled) setPrefill({});
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Run once after mount only. isAuthenticated is stable from SSR hydration.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Run preflight check when the page first mounts ────────────────────────
   useEffect(() => {
@@ -73,11 +106,14 @@ export default function CheckoutPage() {
         </p>
       </div>
 
-      <CheckoutForm
-        onBackToCart={onBackToCart}
-        onSubmit={onSubmit}
-        priceChangePayload={warningPayload}
-      />
+      {prefill === null ? null : (
+        <CheckoutForm
+          initialValues={prefill}
+          onBackToCart={onBackToCart}
+          onSubmit={onSubmit}
+          priceChangePayload={warningPayload}
+        />
+      )}
     </div>
   );
 }
