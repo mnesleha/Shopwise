@@ -418,7 +418,9 @@ function DetailsStep({
                 type="text"
                 placeholder="John"
                 defaultValue={values.shipping_first_name}
-                onChange={(e) => onChange("shipping_first_name", e.target.value)}
+                onChange={(e) =>
+                  onChange("shipping_first_name", e.target.value)
+                }
                 aria-invalid={!!errors.shipping_first_name}
                 ref={getInputRef("shipping_first_name")}
               />
@@ -582,7 +584,9 @@ function DetailsStep({
                   type="text"
                   placeholder="John"
                   defaultValue={values.billing_first_name}
-                  onChange={(e) => onChange("billing_first_name", e.target.value)}
+                  onChange={(e) =>
+                    onChange("billing_first_name", e.target.value)
+                  }
                   aria-invalid={!!errors.billing_first_name}
                   ref={getInputRef("billing_first_name")}
                 />
@@ -599,7 +603,9 @@ function DetailsStep({
                   type="text"
                   placeholder="Doe"
                   defaultValue={values.billing_last_name}
-                  onChange={(e) => onChange("billing_last_name", e.target.value)}
+                  onChange={(e) =>
+                    onChange("billing_last_name", e.target.value)
+                  }
                   aria-invalid={!!errors.billing_last_name}
                   ref={getInputRef("billing_last_name")}
                 />

@@ -30,7 +30,9 @@ function renderForm(
 }
 
 // Filled initialValues covering all required Step 2 fields
-const VALID_STEP2: Partial<React.ComponentProps<typeof CheckoutForm>["initialValues"]> = {
+const VALID_STEP2: Partial<
+  React.ComponentProps<typeof CheckoutForm>["initialValues"]
+> = {
   customer_email: "buyer@example.com",
   shipping_first_name: "Jane",
   shipping_last_name: "Doe",
@@ -46,7 +48,9 @@ describe("CheckoutForm", () => {
   describe("step 1 rendering", () => {
     it("renders shipping method options on first load", () => {
       renderForm();
-      expect(screen.getByRole("radio", { name: /standard/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("radio", { name: /standard/i }),
+      ).toBeInTheDocument();
     });
 
     it("renders payment method options on first load", () => {
@@ -104,7 +108,9 @@ describe("CheckoutForm", () => {
       const { user } = await goToStep2();
       await user.type(screen.getByLabelText(/email/i), "buyer@example.com");
       await user.click(screen.getByTestId(CHECKOUT_SUBMIT));
-      expect(await screen.findByText(/first name is required/i)).toBeInTheDocument();
+      expect(
+        await screen.findByText(/first name is required/i),
+      ).toBeInTheDocument();
     });
 
     it("shows 'valid email' error for malformed email", async () => {
@@ -143,9 +149,13 @@ describe("CheckoutForm", () => {
   describe("initialValues", () => {
     it("pre-populates the email field from initialValues", async () => {
       const user = userEvent.setup();
-      renderForm({ initialValues: { customer_email: "prefilled@example.com" } });
+      renderForm({
+        initialValues: { customer_email: "prefilled@example.com" },
+      });
       await user.click(screen.getByTestId(CHECKOUT_CONTINUE));
-      expect(screen.getByDisplayValue("prefilled@example.com")).toBeInTheDocument();
+      expect(
+        screen.getByDisplayValue("prefilled@example.com"),
+      ).toBeInTheDocument();
     });
   });
 
