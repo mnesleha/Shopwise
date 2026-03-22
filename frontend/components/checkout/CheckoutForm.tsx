@@ -38,6 +38,9 @@ export interface CheckoutValues {
   // Shipping address
   shipping_first_name: string;
   shipping_last_name: string;
+  shipping_company: string;
+  shipping_company_id: string;
+  shipping_vat_id: string;
   shipping_address_line1: string;
   shipping_address_line2: string;
   shipping_city: string;
@@ -48,6 +51,9 @@ export interface CheckoutValues {
   billing_same_as_shipping: boolean;
   billing_first_name: string;
   billing_last_name: string;
+  billing_company: string;
+  billing_company_id: string;
+  billing_vat_id: string;
   billing_address_line1: string;
   billing_address_line2: string;
   billing_city: string;
@@ -80,6 +86,9 @@ const defaultValues: CheckoutValues = {
   customer_email: "",
   shipping_first_name: "",
   shipping_last_name: "",
+  shipping_company: "",
+  shipping_company_id: "",
+  shipping_vat_id: "",
   shipping_address_line1: "",
   shipping_address_line2: "",
   shipping_city: "",
@@ -89,6 +98,9 @@ const defaultValues: CheckoutValues = {
   billing_same_as_shipping: true,
   billing_first_name: "",
   billing_last_name: "",
+  billing_company: "",
+  billing_company_id: "",
+  billing_vat_id: "",
   billing_address_line1: "",
   billing_address_line2: "",
   billing_city: "",
@@ -443,6 +455,46 @@ function DetailsStep({
               />
             </FormField>
             <div className="sm:col-span-2">
+              <FormField id="shipping_company" label="Company (optional)">
+                <Input
+                  name="shipping_company"
+                  id="shipping_company"
+                  type="text"
+                  placeholder="Acme Corp"
+                  defaultValue={values.shipping_company}
+                  onChange={(e) =>
+                    onChange("shipping_company", e.target.value)
+                  }
+                />
+              </FormField>
+            </div>
+            <div className="sm:col-span-2">
+              <FormField id="shipping_company_id" label="Company ID (optional)">
+                <Input
+                  name="shipping_company_id"
+                  id="shipping_company_id"
+                  type="text"
+                  placeholder="Business / trade registration number"
+                  defaultValue={values.shipping_company_id}
+                  onChange={(e) =>
+                    onChange("shipping_company_id", e.target.value)
+                  }
+                />
+              </FormField>
+            </div>
+            <div className="sm:col-span-2">
+              <FormField id="shipping_vat_id" label="VAT ID (optional)">
+                <Input
+                  name="shipping_vat_id"
+                  id="shipping_vat_id"
+                  type="text"
+                  placeholder="EU123456789"
+                  defaultValue={values.shipping_vat_id}
+                  onChange={(e) => onChange("shipping_vat_id", e.target.value)}
+                />
+              </FormField>
+            </div>
+            <div className="sm:col-span-2">
               <FormField
                 id="shipping_address_line1"
                 label="Address line 1"
@@ -610,6 +662,46 @@ function DetailsStep({
                   ref={getInputRef("billing_last_name")}
                 />
               </FormField>
+              <div className="sm:col-span-2">
+                <FormField id="billing_company" label="Company (optional)">
+                  <Input
+                    id="billing_company"
+                    name="billing_company"
+                    type="text"
+                    placeholder="Acme Corp"
+                    defaultValue={values.billing_company}
+                    onChange={(e) =>
+                      onChange("billing_company", e.target.value)
+                    }
+                  />
+                </FormField>
+              </div>
+              <div className="sm:col-span-2">
+                <FormField id="billing_company_id" label="Company ID (optional)">
+                  <Input
+                    id="billing_company_id"
+                    name="billing_company_id"
+                    type="text"
+                    placeholder="Business / trade registration number"
+                    defaultValue={values.billing_company_id}
+                    onChange={(e) =>
+                      onChange("billing_company_id", e.target.value)
+                    }
+                  />
+                </FormField>
+              </div>
+              <div className="sm:col-span-2">
+                <FormField id="billing_vat_id" label="VAT ID (optional)">
+                  <Input
+                    id="billing_vat_id"
+                    name="billing_vat_id"
+                    type="text"
+                    placeholder="EU123456789"
+                    defaultValue={values.billing_vat_id}
+                    onChange={(e) => onChange("billing_vat_id", e.target.value)}
+                  />
+                </FormField>
+              </div>
               <div className="sm:col-span-2">
                 <FormField
                   id="billing_address_line1"

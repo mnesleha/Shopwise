@@ -14,6 +14,9 @@ function toShipping(
   CheckoutValues,
   | "shipping_first_name"
   | "shipping_last_name"
+  | "shipping_company"
+  | "shipping_company_id"
+  | "shipping_vat_id"
   | "shipping_address_line1"
   | "shipping_address_line2"
   | "shipping_city"
@@ -24,6 +27,9 @@ function toShipping(
   return {
     shipping_first_name: addr.first_name,
     shipping_last_name: addr.last_name,
+    shipping_company: addr.company,
+    shipping_company_id: addr.company_id,
+    shipping_vat_id: addr.vat_id,
     shipping_address_line1: addr.street_line_1,
     shipping_address_line2: addr.street_line_2,
     shipping_city: addr.city,
@@ -42,6 +48,9 @@ function toBilling(
   CheckoutValues,
   | "billing_first_name"
   | "billing_last_name"
+  | "billing_company"
+  | "billing_company_id"
+  | "billing_vat_id"
   | "billing_address_line1"
   | "billing_address_line2"
   | "billing_city"
@@ -52,6 +61,9 @@ function toBilling(
   return {
     billing_first_name: addr.first_name,
     billing_last_name: addr.last_name,
+    billing_company: addr.company,
+    billing_company_id: addr.company_id,
+    billing_vat_id: addr.vat_id,
     billing_address_line1: addr.street_line_1,
     billing_address_line2: addr.street_line_2,
     billing_city: addr.city,
@@ -70,6 +82,9 @@ function addressesMatch(a: AddressDto, b: AddressDto): boolean {
   return (
     a.first_name === b.first_name &&
     a.last_name === b.last_name &&
+    a.company === b.company &&
+    a.company_id === b.company_id &&
+    a.vat_id === b.vat_id &&
     a.street_line_1 === b.street_line_1 &&
     a.street_line_2 === b.street_line_2 &&
     a.city === b.city &&

@@ -59,6 +59,12 @@ def create_valid_order(*, user=None, status=None, **overrides) -> Order:
         "billing_postal_code": payload.get("billing_postal_code"),
         "billing_country": payload.get("billing_country"),
         "billing_phone": payload.get("billing_phone"),
+        "shipping_company": payload.get("shipping_company") or None,
+        "shipping_company_id": payload.get("shipping_company_id") or None,
+        "shipping_vat_id": payload.get("shipping_vat_id") or None,
+        "billing_company": payload.get("billing_company") or None,
+        "billing_company_id": payload.get("billing_company_id") or None,
+        "billing_vat_id": payload.get("billing_vat_id") or None,
     }
 
     order = Order(**order_kwargs)

@@ -221,4 +221,56 @@ describe("CheckoutForm", () => {
       );
     });
   });
+
+  describe("company and VAT ID fields", () => {
+    it("renders Company, Company ID and VAT ID inputs in the shipping section", async () => {
+      const user = userEvent.setup();
+      renderForm();
+      await user.click(screen.getByTestId(CHECKOUT_CONTINUE));
+      expect(screen.getByLabelText(/company \(optional\)/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/company id \(optional\)/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/vat id \(optional\)/i)).toBeInTheDocument();
+    });
+
+    it("company and vat_id from initialValues appear in submitted values", async () => {
+      const user = userEvent.setup();
+      const { onSubmit } = renderForm({
+        initialValues: {
+          ...VALID_STEP2,
+          shipping_company: "Acme Corp",
+          shipping_vat_id: "EU999",
+        },
+      });
+      await user.click(screen.getByTestId(CHECKOUT_CONTINUE));
+      await user.click(screen.getByTestId(CHECKOUT_SUBMIT));
+      await waitFor(() =>
+        expect(onSubmit).toHaveBeenCalledWith(
+          expect.objectContaining({
+            shipping_company: "Acme Corp",
+            shipping_vat_id: "EU999",
+          }),
+        ),
+      );
+    });
+
+    it("shipping_company_id from initialValues appears in submitted values", async () => {
+      const user = userEvent.setup();
+      const { onSubmit } = renderForm({
+        initialValues: {
+          ...VALID_STEP2,
+          shipping_company: "Acme Corp",
+          shipping_company_id: "CRN-2024",
+        },
+      });
+      await user.click(screen.getByTestId(CHECKOUT_CONTINUE));
+      await user.click(screen.getByTestId(CHECKOUT_SUBMIT));
+      await waitFor(() =>
+        expect(onSubmit).toHaveBeenCalledWith(
+          expect.objectContaining({
+            shipping_company_id: "CRN-2024",
+          }),
+        ),
+      );
+    });
+  });
 });

@@ -125,6 +125,10 @@ class OrderResponseSerializer(serializers.Serializer):
     post_order_discount_subtotal_net = serializers.SerializerMethodField()
     post_order_discount_total_tax = serializers.SerializerMethodField()
     post_order_discount_total_gross = serializers.SerializerMethodField()
+    # Business address snapshot fields — shipping and billing nested objects.
+    # Both include company / company_id / vat_id when present.
+    shipping_address = serializers.SerializerMethodField()
+    billing_address = serializers.SerializerMethodField()
 
     def get_created_at(self, obj: Order) -> str | None:
         if obj.created_at:
@@ -305,3 +309,44 @@ class OrderResponseSerializer(serializers.Serializer):
             }
             for rate, g in sorted(groups.items(), key=lambda x: Decimal(x[0]))
         ]
+    def get_shipping_address(self, obj: Order) -> dict:
+        """Full shipping address snapshot including business fields.
+
+        Returns a consistent dict for all orders; business fields default to
+        empty string for legacy orders where the fields were not captured.
+        """
+        return {
+            "name": obj.shipping_name or "",
+            "address_line1": obj.shipping_address_line1 or "",
+            "address_line2": obj.shipping_address_line2 or "",
+            "city": obj.shipping_city or "",
+            "postal_code": obj.shipping_postal_code or "",
+            "country": obj.shipping_country or "",
+            "phone": obj.shipping_phone or "",
+            "company": obj.shipping_company or "",
+            "company_id": obj.shipping_company_id or "",
+            "vat_id": obj.shipping_vat_id or "",
+        }
+
+    def get_billing_address(self, obj: Order) -> dict | None:
+        """Full billing address snapshot including business fields.
+
+        Returns None when billing_same_as_shipping is True, indicating the
+        caller should fall back to shipping_address for billing display.
+        Returns a dict when a distinct billing address was captured.
+        Business fields default to empty string for legacy orders.
+        """
+        if obj.billing_same_as_shipping:
+            return None
+        return {
+            "name": obj.billing_name or "",
+            "address_line1": obj.billing_address_line1 or "",
+            "address_line2": obj.billing_address_line2 or "",
+            "city": obj.billing_city or "",
+            "postal_code": obj.billing_postal_code or "",
+            "country": obj.billing_country or "",
+            "phone": obj.billing_phone or "",
+            "company": obj.billing_company or "",
+            "company_id": obj.billing_company_id or "",
+            "vat_id": obj.billing_vat_id or "",
+        }

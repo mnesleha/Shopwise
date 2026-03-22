@@ -35,6 +35,7 @@ function makeAddress(overrides: Partial<AddressDto> = {}): AddressDto {
     postal_code: "11000",
     country: "CZ",
     company: "",
+    company_id: "",
     vat_id: "",
     phone: "+420123456789",
     ...overrides,
@@ -55,6 +56,9 @@ function expectedShipping(addr: AddressDto) {
   return {
     shipping_first_name: addr.first_name,
     shipping_last_name: addr.last_name,
+    shipping_company: addr.company,
+    shipping_company_id: addr.company_id,
+    shipping_vat_id: addr.vat_id,
     shipping_address_line1: addr.street_line_1,
     shipping_address_line2: addr.street_line_2,
     shipping_city: addr.city,
@@ -69,6 +73,9 @@ function expectedBilling(addr: AddressDto) {
   return {
     billing_first_name: addr.first_name,
     billing_last_name: addr.last_name,
+    billing_company: addr.company,
+    billing_company_id: addr.company_id,
+    billing_vat_id: addr.vat_id,
     billing_address_line1: addr.street_line_1,
     billing_address_line2: addr.street_line_2,
     billing_city: addr.city,
@@ -351,6 +358,129 @@ describe("buildCheckoutPrefill", () => {
       });
       expect(result.billing_first_name).toBe("Jane");
       expect(result.billing_last_name).toBe("Smith");
+    });
+  });
+
+  // ── Company and VAT ID prefill ────────────────────────────────────────────
+  describe("company and VAT ID prefill", () => {
+    it("maps company and vat_id from address to shipping_ fields", () => {
+      const addr = makeAddress({ id: 1, company: "Acme Ltd", vat_id: "EU111" });
+      const result = buildCheckoutPrefill({
+        profile: makeProfile({ default_shipping_address: 1 }),
+        addresses: [addr],
+      });
+      expect(result.shipping_company).toBe("Acme Ltd");
+      expect(result.shipping_vat_id).toBe("EU111");
+    });
+
+    it("maps company and vat_id from address to billing_ fields (fallback)", () => {
+      const addr = makeAddress({ id: 1, company: "Beta GmbH", vat_id: "DE999" });
+      const result = buildCheckoutPrefill({
+        profile: makeProfile({ default_shipping_address: 1 }),
+        addresses: [addr],
+      });
+      expect(result.billing_company).toBe("Beta GmbH");
+      expect(result.billing_vat_id).toBe("DE999");
+    });
+
+    it("maps distinct company/vat_id when shipping and billing from different addresses", () => {
+      const s = makeAddress({ id: 1, company: "Ship Corp", vat_id: "VAT_S" });
+      const b = makeAddress({
+        id: 2,
+        company: "Bill Corp",
+        vat_id: "VAT_B",
+        city: "Brno",
+      });
+      const result = buildCheckoutPrefill({
+        profile: makeProfile({
+          default_shipping_address: 1,
+          default_billing_address: 2,
+        }),
+        addresses: [s, b],
+      });
+      expect(result.shipping_company).toBe("Ship Corp");
+      expect(result.shipping_vat_id).toBe("VAT_S");
+      expect(result.billing_company).toBe("Bill Corp");
+      expect(result.billing_vat_id).toBe("VAT_B");
+    });
+
+    it("sets billing_same_as_shipping=false when company differs", () => {
+      const s = makeAddress({ id: 1, company: "Ship Corp" });
+      const b = makeAddress({ id: 2, company: "Bill Corp" });
+      const result = buildCheckoutPrefill({
+        profile: makeProfile({
+          default_shipping_address: 1,
+          default_billing_address: 2,
+        }),
+        addresses: [s, b],
+      });
+      expect(result.billing_same_as_shipping).toBe(false);
+    });
+
+    it("sets billing_same_as_shipping=false when vat_id differs", () => {
+      const s = makeAddress({ id: 1, vat_id: "VAT_A" });
+      const b = makeAddress({ id: 2, vat_id: "VAT_B" });
+      const result = buildCheckoutPrefill({
+        profile: makeProfile({
+          default_shipping_address: 1,
+          default_billing_address: 2,
+        }),
+        addresses: [s, b],
+      });
+      expect(result.billing_same_as_shipping).toBe(false);
+    });
+
+    it("sets billing_same_as_shipping=true when company and vat_id match", () => {
+      const s = makeAddress({ id: 1, company: "Same Corp", vat_id: "SAME" });
+      const b = makeAddress({ id: 2, company: "Same Corp", vat_id: "SAME" });
+      const result = buildCheckoutPrefill({
+        profile: makeProfile({
+          default_shipping_address: 1,
+          default_billing_address: 2,
+        }),
+        addresses: [s, b],
+      });
+      expect(result.billing_same_as_shipping).toBe(true);
+    });
+
+    it("maps company_id to shipping_company_id and billing_company_id", () => {
+      const s = makeAddress({ id: 1, company_id: "CRN-S" });
+      const b = makeAddress({ id: 2, company_id: "CRN-B", city: "Brno" });
+      const result = buildCheckoutPrefill({
+        profile: makeProfile({
+          default_shipping_address: 1,
+          default_billing_address: 2,
+        }),
+        addresses: [s, b],
+      });
+      expect(result.shipping_company_id).toBe("CRN-S");
+      expect(result.billing_company_id).toBe("CRN-B");
+    });
+
+    it("sets billing_same_as_shipping=false when company_id differs", () => {
+      const s = makeAddress({ id: 1, company_id: "CRN-A" });
+      const b = makeAddress({ id: 2, company_id: "CRN-B" });
+      const result = buildCheckoutPrefill({
+        profile: makeProfile({
+          default_shipping_address: 1,
+          default_billing_address: 2,
+        }),
+        addresses: [s, b],
+      });
+      expect(result.billing_same_as_shipping).toBe(false);
+    });
+
+    it("sets billing_same_as_shipping=true when company_id matches", () => {
+      const s = makeAddress({ id: 1, company_id: "SAME-CRN" });
+      const b = makeAddress({ id: 2, company_id: "SAME-CRN" });
+      const result = buildCheckoutPrefill({
+        profile: makeProfile({
+          default_shipping_address: 1,
+          default_billing_address: 2,
+        }),
+        addresses: [s, b],
+      });
+      expect(result.billing_same_as_shipping).toBe(true);
     });
   });
 });

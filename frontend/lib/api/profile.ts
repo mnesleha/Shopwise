@@ -26,6 +26,7 @@ export type AddressDto = {
   postal_code: string;
   country: string;
   company: string;
+  company_id: string;
   vat_id: string;
   phone: string;
 };

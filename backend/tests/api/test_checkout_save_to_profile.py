@@ -92,6 +92,8 @@ def test_save_to_profile_shipping_address_fields(auth_client, user):
         shipping_postal_code="12345",
         shipping_country="US",
         shipping_phone="+10000000001",
+        shipping_company="Acme Corp",
+        shipping_vat_id="US123456789",
     )
     resp = auth_client.post("/api/v1/cart/checkout/", payload, format="json")
 
@@ -107,6 +109,8 @@ def test_save_to_profile_shipping_address_fields(auth_client, user):
     assert addr.postal_code == "12345"
     assert str(addr.country) == "US"
     assert addr.phone == "+10000000001"
+    assert addr.company == "Acme Corp"
+    assert addr.vat_id == "US123456789"
 
 
 # ---------------------------------------------------------------------------
@@ -285,6 +289,9 @@ def _make_matching_address(profile, **overrides):
         postal_code="00000",
         country="US",
         phone="+10000000000",
+        company="",
+        company_id="",
+        vat_id="",
     )
     fields.update(overrides)
     return Address.objects.create(profile=profile, **fields)
@@ -536,6 +543,268 @@ def test_no_op_whitespace_normalization(auth_client, user):
 
     assert resp.status_code == 201
     # No new rows despite whitespace difference in stored values
+    assert Address.objects.filter(profile=profile).count() == 2
+    profile.refresh_from_db()
+    assert profile.default_shipping_address_id == existing_ship.pk
+    assert profile.default_billing_address_id == existing_bill.pk
+
+
+# ---------------------------------------------------------------------------
+# Company and VAT ID fields
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_save_to_profile_billing_company_vat_id_persisted(auth_client, user):
+    """
+    When billing_same_as_shipping=False and billing_company / billing_vat_id
+    are supplied, they are stored on the billing Address row.
+    """
+    _add_product_to_cart(auth_client)
+
+    payload = checkout_payload(
+        customer_email=user.email,
+        save_to_profile=True,
+        billing_same_as_shipping=False,
+        billing_first_name="Corp",
+        billing_last_name="User",
+        billing_address_line1="1 Business Park",
+        billing_address_line2="",
+        billing_city="Commerce City",
+        billing_postal_code="55555",
+        billing_country="US",
+        billing_phone="+10000000055",
+        billing_company="BigCo Ltd",
+        billing_vat_id="EU987654321",
+    )
+    resp = auth_client.post("/api/v1/cart/checkout/", payload, format="json")
+
+    assert resp.status_code == 201
+    profile = CustomerProfile.objects.get(user=user)
+    bill = profile.default_billing_address
+
+    assert bill.company == "BigCo Ltd"
+    assert bill.vat_id == "EU987654321"
+
+
+@pytest.mark.django_db
+def test_no_op_company_changed_triggers_new_row(auth_client, user):
+    """
+    When the existing profile address has company="Old Corp" but the checkout
+    submits company="New Corp", a new Address row must be created.
+    """
+    profile, _ = CustomerProfile.objects.get_or_create(user=user)
+    existing_ship = _make_matching_address(profile, company="Old Corp")
+    existing_bill = _make_matching_address(profile, company="Old Corp")
+    profile.default_shipping_address = existing_ship
+    profile.default_billing_address = existing_bill
+    profile.save()
+
+    initial_addr_count = Address.objects.filter(profile=profile).count()
+
+    _add_product_to_cart(auth_client)
+    resp = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(
+            customer_email=user.email,
+            save_to_profile=True,
+            shipping_company="New Corp",
+            # billing_same_as_shipping=True by default, so effective billing
+            # also gets company="New Corp"
+        ),
+        format="json",
+    )
+
+    assert resp.status_code == 201
+    # Both sides changed → 2 new rows
+    assert Address.objects.filter(profile=profile).count() == initial_addr_count + 2
+    profile.refresh_from_db()
+    assert profile.default_shipping_address.company == "New Corp"
+
+
+@pytest.mark.django_db
+def test_no_op_vat_id_changed_triggers_new_row(auth_client, user):
+    """
+    Changing only vat_id (all other fields unchanged) causes a new Address row.
+    """
+    profile, _ = CustomerProfile.objects.get_or_create(user=user)
+    existing_ship = _make_matching_address(profile, vat_id="OLD_VAT")
+    existing_bill = _make_matching_address(profile, vat_id="OLD_VAT")
+    profile.default_shipping_address = existing_ship
+    profile.default_billing_address = existing_bill
+    profile.save()
+
+    initial_addr_count = Address.objects.filter(profile=profile).count()
+
+    _add_product_to_cart(auth_client)
+    resp = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(
+            customer_email=user.email,
+            save_to_profile=True,
+            shipping_vat_id="NEW_VAT",
+        ),
+        format="json",
+    )
+
+    assert resp.status_code == 201
+    assert Address.objects.filter(profile=profile).count() == initial_addr_count + 2
+    profile.refresh_from_db()
+    assert profile.default_shipping_address.vat_id == "NEW_VAT"
+
+
+@pytest.mark.django_db
+def test_no_op_company_vat_id_match_no_new_row(auth_client, user):
+    """
+    When both company and vat_id in the existing address match what the
+    checkout submits, no new row should be created.
+    """
+    profile, _ = CustomerProfile.objects.get_or_create(user=user)
+    existing_ship = _make_matching_address(
+        profile, company="Stable Corp", vat_id="STABLE_VAT"
+    )
+    existing_bill = _make_matching_address(
+        profile, company="Stable Corp", vat_id="STABLE_VAT"
+    )
+    profile.default_shipping_address = existing_ship
+    profile.default_billing_address = existing_bill
+    profile.save()
+
+    _add_product_to_cart(auth_client)
+    resp = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(
+            customer_email=user.email,
+            save_to_profile=True,
+            shipping_company="Stable Corp",
+            shipping_vat_id="STABLE_VAT",
+        ),
+        format="json",
+    )
+
+    assert resp.status_code == 201
+    assert Address.objects.filter(profile=profile).count() == 2
+    profile.refresh_from_db()
+    assert profile.default_shipping_address_id == existing_ship.pk
+    assert profile.default_billing_address_id == existing_bill.pk
+
+
+# ---------------------------------------------------------------------------
+# company_id field
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_save_to_profile_shipping_company_id_persisted(auth_client, user):
+    """shipping_company_id is stored on the shipping Address row."""
+    _add_product_to_cart(auth_client)
+
+    resp = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(
+            customer_email=user.email,
+            save_to_profile=True,
+            shipping_company="Acme Ltd",
+            shipping_company_id="CRN-001",
+        ),
+        format="json",
+    )
+
+    assert resp.status_code == 201
+    from accounts.models import CustomerProfile
+
+    profile = CustomerProfile.objects.get(user=user)
+    assert profile.default_shipping_address.company_id == "CRN-001"
+
+
+@pytest.mark.django_db
+def test_save_to_profile_billing_company_id_persisted(auth_client, user):
+    """billing_company_id is stored on the distinct billing Address row."""
+    _add_product_to_cart(auth_client)
+
+    resp = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(
+            customer_email=user.email,
+            save_to_profile=True,
+            billing_same_as_shipping=False,
+            billing_first_name="Corp",
+            billing_last_name="User",
+            billing_address_line1="1 Trade St",
+            billing_address_line2="",
+            billing_city="Commerce City",
+            billing_postal_code="55555",
+            billing_country="US",
+            billing_phone="+10000000055",
+            billing_company="BigCo Ltd",
+            billing_company_id="CRN-999",
+            billing_vat_id="EU999",
+        ),
+        format="json",
+    )
+
+    assert resp.status_code == 201
+    from accounts.models import CustomerProfile
+
+    profile = CustomerProfile.objects.get(user=user)
+    assert profile.default_billing_address.company_id == "CRN-999"
+
+
+@pytest.mark.django_db
+def test_no_op_company_id_changed_triggers_new_row(auth_client, user):
+    """Changing only company_id causes a new Address row (no-op protection)."""
+    from accounts.models import CustomerProfile
+
+    profile, _ = CustomerProfile.objects.get_or_create(user=user)
+    existing_ship = _make_matching_address(profile, company_id="OLD-CRN")
+    existing_bill = _make_matching_address(profile, company_id="OLD-CRN")
+    profile.default_shipping_address = existing_ship
+    profile.default_billing_address = existing_bill
+    profile.save()
+
+    initial_count = Address.objects.filter(profile=profile).count()
+
+    _add_product_to_cart(auth_client)
+    resp = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(
+            customer_email=user.email,
+            save_to_profile=True,
+            shipping_company_id="NEW-CRN",
+        ),
+        format="json",
+    )
+
+    assert resp.status_code == 201
+    assert Address.objects.filter(profile=profile).count() == initial_count + 2
+    profile.refresh_from_db()
+    assert profile.default_shipping_address.company_id == "NEW-CRN"
+
+
+@pytest.mark.django_db
+def test_no_op_company_id_match_no_new_row(auth_client, user):
+    """When company_id matches the existing address, no new row is created."""
+    from accounts.models import CustomerProfile
+
+    profile, _ = CustomerProfile.objects.get_or_create(user=user)
+    existing_ship = _make_matching_address(profile, company_id="STABLE-CRN")
+    existing_bill = _make_matching_address(profile, company_id="STABLE-CRN")
+    profile.default_shipping_address = existing_ship
+    profile.default_billing_address = existing_bill
+    profile.save()
+
+    _add_product_to_cart(auth_client)
+    resp = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(
+            customer_email=user.email,
+            save_to_profile=True,
+            shipping_company_id="STABLE-CRN",
+        ),
+        format="json",
+    )
+
+    assert resp.status_code == 201
     assert Address.objects.filter(profile=profile).count() == 2
     profile.refresh_from_db()
     assert profile.default_shipping_address_id == existing_ship.pk

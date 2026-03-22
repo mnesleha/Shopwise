@@ -318,6 +318,9 @@ class CartCheckoutRequestSerializer(serializers.Serializer):
     shipping_postal_code = serializers.CharField()
     shipping_country = serializers.CharField()
     shipping_phone = serializers.CharField()
+    shipping_company = serializers.CharField(required=False, allow_blank=True)
+    shipping_company_id = serializers.CharField(required=False, allow_blank=True)
+    shipping_vat_id = serializers.CharField(required=False, allow_blank=True)
     billing_same_as_shipping = serializers.BooleanField(default=True)
     billing_first_name = serializers.CharField(
         required=False,
@@ -348,6 +351,18 @@ class CartCheckoutRequestSerializer(serializers.Serializer):
         allow_blank=True,
     )
     billing_phone = serializers.CharField(
+        required=False,
+        allow_blank=True,
+    )
+    billing_company = serializers.CharField(
+        required=False,
+        allow_blank=True,
+    )
+    billing_company_id = serializers.CharField(
+        required=False,
+        allow_blank=True,
+    )
+    billing_vat_id = serializers.CharField(
         required=False,
         allow_blank=True,
     )

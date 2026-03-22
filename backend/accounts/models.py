@@ -160,6 +160,11 @@ class Address(models.Model):
     # ISO 3166-1 alpha-2 country code; validated via django-countries
     country = CountryField()
     company = models.CharField(max_length=255, blank=True)
+    company_id = models.CharField(
+        max_length=64,
+        blank=True,
+        help_text="Business / trade registration number (optional).",
+    )
     vat_id = models.CharField(max_length=64, blank=True)
     # Phone number for this address.
     # DB-level blank=True preserves compatibility with existing rows created

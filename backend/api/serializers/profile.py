@@ -33,6 +33,7 @@ class AddressSerializer(serializers.ModelSerializer):
             "postal_code",
             "country",
             "company",
+            "company_id",
             "vat_id",
             "phone",
         ]

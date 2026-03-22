@@ -785,10 +785,8 @@ def _save_checkout_addresses_to_profile(user, checkout_data: dict) -> None:
     that already matches their saved profile address.
 
     Fields compared: ``first_name``, ``last_name``, ``street_line_1``,
-    ``street_line_2``, ``city``, ``postal_code``, ``country``, ``phone``.
-    ``company`` and ``vat_id`` are not captured by the checkout form and are
-    excluded from comparison; having those fields populated on an existing
-    address does not force a new row.
+    ``street_line_2``, ``city``, ``postal_code``, ``country``, ``phone``,
+    ``company``, ``company_id``, ``vat_id``.
 
     When ``billing_same_as_shipping=True`` the billing address is derived
     from the shipping fields for comparison purposes.
@@ -800,7 +798,9 @@ def _save_checkout_addresses_to_profile(user, checkout_data: dict) -> None:
 
     def _checkout_addr_matches(existing: Address, eff: dict) -> bool:
         """Return True when *existing* address equals *eff* on all checkout-
-        captured fields (``company`` and ``vat_id`` are not compared)."""
+        captured fields (``first_name``, ``last_name``, ``street_line_1``,
+        ``street_line_2``, ``city``, ``postal_code``, ``country``, ``phone``,
+        ``company``, ``company_id``, ``vat_id``)."""
         return (
             _norm(existing.first_name) == _norm(eff["first_name"])
             and _norm(existing.last_name) == _norm(eff["last_name"])
@@ -810,6 +810,9 @@ def _save_checkout_addresses_to_profile(user, checkout_data: dict) -> None:
             and _norm(existing.postal_code) == _norm(eff["postal_code"])
             and _norm(str(existing.country)) == _norm(eff["country"])
             and _norm(existing.phone) == _norm(eff["phone"])
+            and _norm(existing.company) == _norm(eff["company"])
+            and _norm(existing.company_id) == _norm(eff["company_id"])
+            and _norm(existing.vat_id) == _norm(eff["vat_id"])
         )
 
     profile, _ = CustomerProfile.objects.get_or_create(user=user)
@@ -824,6 +827,9 @@ def _save_checkout_addresses_to_profile(user, checkout_data: dict) -> None:
         "postal_code": checkout_data["shipping_postal_code"],
         "country": checkout_data["shipping_country"],
         "phone": checkout_data.get("shipping_phone", ""),
+        "company": checkout_data.get("shipping_company", ""),
+        "company_id": checkout_data.get("shipping_company_id", ""),
+        "vat_id": checkout_data.get("shipping_vat_id", ""),
     }
 
     # Build effective billing address dict
@@ -839,6 +845,9 @@ def _save_checkout_addresses_to_profile(user, checkout_data: dict) -> None:
             "postal_code": checkout_data.get("billing_postal_code", ""),
             "country": checkout_data.get("billing_country", ""),
             "phone": checkout_data.get("billing_phone", ""),
+            "company": checkout_data.get("billing_company", ""),
+            "company_id": checkout_data.get("billing_company_id", ""),
+            "vat_id": checkout_data.get("billing_vat_id", ""),
         }
 
     update_fields = []
@@ -1009,6 +1018,12 @@ Notes:
                         "billing_postal_code"),
                     billing_country=checkout_data.get("billing_country"),
                     billing_phone=checkout_data.get("billing_phone"),
+                    shipping_company=checkout_data.get("shipping_company") or None,
+                    shipping_company_id=checkout_data.get("shipping_company_id") or None,
+                    shipping_vat_id=checkout_data.get("shipping_vat_id") or None,
+                    billing_company=checkout_data.get("billing_company") or None,
+                    billing_company_id=checkout_data.get("billing_company_id") or None,
+                    billing_vat_id=checkout_data.get("billing_vat_id") or None,
                 )
                 try:
                     order.full_clean()

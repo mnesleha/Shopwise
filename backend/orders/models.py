@@ -72,6 +72,10 @@ class Order(models.Model):
         max_length=64, null=False, blank=False)
     shipping_country = models.CharField(max_length=64, null=False, blank=False)
     shipping_phone = models.CharField(max_length=64, null=False, blank=False)
+    # Business address snapshot fields — always optional; null on pre-business-address orders.
+    shipping_company = models.CharField(max_length=255, null=True, blank=True)
+    shipping_company_id = models.CharField(max_length=64, null=True, blank=True)
+    shipping_vat_id = models.CharField(max_length=64, null=True, blank=True)
     billing_same_as_shipping = models.BooleanField(default=True)
     billing_name = models.CharField(max_length=255, null=True, blank=True)
     billing_address_line1 = models.CharField(
@@ -83,6 +87,10 @@ class Order(models.Model):
         max_length=64, null=True, blank=True)
     billing_country = models.CharField(max_length=64, null=True, blank=True)
     billing_phone = models.CharField(max_length=64, null=True, blank=True)
+    # Billing business address snapshot fields — null on legacy/B2C orders.
+    billing_company = models.CharField(max_length=255, null=True, blank=True)
+    billing_company_id = models.CharField(max_length=64, null=True, blank=True)
+    billing_vat_id = models.CharField(max_length=64, null=True, blank=True)
     is_claimed = models.BooleanField(default=False)
     claimed_at = models.DateTimeField(null=True, blank=True)
     claimed_by_user = models.ForeignKey(

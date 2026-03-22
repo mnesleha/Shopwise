@@ -48,6 +48,9 @@ export async function checkoutCart(
 
     shipping_first_name: values.shipping_first_name,
     shipping_last_name: values.shipping_last_name,
+    shipping_company: values.shipping_company,
+    shipping_company_id: values.shipping_company_id,
+    shipping_vat_id: values.shipping_vat_id,
     shipping_address_line1: values.shipping_address_line1,
     shipping_address_line2: values.shipping_address_line2,
     shipping_city: values.shipping_city,
@@ -62,6 +65,9 @@ export async function checkoutCart(
       : {
           billing_first_name: values.billing_first_name,
           billing_last_name: values.billing_last_name,
+          billing_company: values.billing_company,
+          billing_company_id: values.billing_company_id,
+          billing_vat_id: values.billing_vat_id,
           billing_address_line1: values.billing_address_line1,
           billing_address_line2: values.billing_address_line2,
           billing_city: values.billing_city,

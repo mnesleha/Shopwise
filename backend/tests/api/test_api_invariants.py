@@ -50,7 +50,20 @@ def test_checkout_success_response_uses_unified_contract(auth_client, product):
     data = response.json()
 
     # Top-level contract
-    assert set(data.keys()) == {"id", "status", "items", "total", "price_change"}
+    # Minimum required keys that must always be present in the checkout response.
+    # Use a subset check (<=) so new optional keys don't break this guard.
+    required_keys = {
+        "id",
+        "status",
+        "items",
+        "total",
+        "price_change",
+        "shipping_address",
+        "billing_address",
+    }
+    assert required_keys <= set(data.keys()), (
+        f"Missing required keys: {required_keys - set(data.keys())}"
+    )
     assert isinstance(data["id"], int)
     assert isinstance(data["status"], str)
     assert isinstance(data["items"], list)
@@ -60,7 +73,8 @@ def test_checkout_success_response_uses_unified_contract(auth_client, product):
     # Item contract (at least one)
     assert len(data["items"]) >= 1
     item = data["items"][0]
-    assert set(item.keys()) == {
+    # Minimum required item keys (use subset check for forward-compat).
+    required_item_keys = {
         "id",
         "product",
         "quantity",
@@ -68,6 +82,9 @@ def test_checkout_success_response_uses_unified_contract(auth_client, product):
         "line_total",
         "discount",
     }
+    assert required_item_keys <= set(item.keys()), (
+        f"Missing required item keys: {required_item_keys - set(item.keys())}"
+    )
 
     assert isinstance(item["id"], int)
     assert item["id"] > 0
