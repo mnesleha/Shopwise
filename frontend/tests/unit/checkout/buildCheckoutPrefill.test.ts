@@ -374,7 +374,11 @@ describe("buildCheckoutPrefill", () => {
     });
 
     it("maps company and vat_id from address to billing_ fields (fallback)", () => {
-      const addr = makeAddress({ id: 1, company: "Beta GmbH", vat_id: "DE999" });
+      const addr = makeAddress({
+        id: 1,
+        company: "Beta GmbH",
+        vat_id: "DE999",
+      });
       const result = buildCheckoutPrefill({
         profile: makeProfile({ default_shipping_address: 1 }),
         addresses: [addr],

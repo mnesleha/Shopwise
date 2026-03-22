@@ -227,8 +227,12 @@ describe("CheckoutForm", () => {
       const user = userEvent.setup();
       renderForm();
       await user.click(screen.getByTestId(CHECKOUT_CONTINUE));
-      expect(screen.getByLabelText(/company \(optional\)/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/company id \(optional\)/i)).toBeInTheDocument();
+      expect(
+        screen.getByLabelText(/company \(optional\)/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByLabelText(/company id \(optional\)/i),
+      ).toBeInTheDocument();
       expect(screen.getByLabelText(/vat id \(optional\)/i)).toBeInTheDocument();
     });
 

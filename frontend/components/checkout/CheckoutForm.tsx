@@ -462,9 +462,7 @@ function DetailsStep({
                   type="text"
                   placeholder="Acme Corp"
                   defaultValue={values.shipping_company}
-                  onChange={(e) =>
-                    onChange("shipping_company", e.target.value)
-                  }
+                  onChange={(e) => onChange("shipping_company", e.target.value)}
                 />
               </FormField>
             </div>
@@ -677,7 +675,10 @@ function DetailsStep({
                 </FormField>
               </div>
               <div className="sm:col-span-2">
-                <FormField id="billing_company_id" label="Company ID (optional)">
+                <FormField
+                  id="billing_company_id"
+                  label="Company ID (optional)"
+                >
                   <Input
                     id="billing_company_id"
                     name="billing_company_id"
