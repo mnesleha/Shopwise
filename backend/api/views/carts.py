@@ -768,6 +768,99 @@ HTTP semantics:
         )
 
 
+def _save_checkout_addresses_to_profile(user, checkout_data: dict) -> None:
+    """
+    Conditionally create Address records from checkout_data and update the
+    user's CustomerProfile default addresses.
+
+    Called after a successful checkout when ``save_to_profile=True``.
+    Any error is logged and silently swallowed — callers MUST NOT propagate
+    failures here to the checkout response.
+
+    No-op protection
+    ----------------
+    Each side (shipping / billing) is only written when the effective checkout
+    address differs from the current profile default.  This prevents
+    unnecessary duplicate rows when the user checks out with prefilled data
+    that already matches their saved profile address.
+
+    Fields compared: ``first_name``, ``last_name``, ``street_line_1``,
+    ``street_line_2``, ``city``, ``postal_code``, ``country``, ``phone``.
+    ``company`` and ``vat_id`` are not captured by the checkout form and are
+    excluded from comparison; having those fields populated on an existing
+    address does not force a new row.
+
+    When ``billing_same_as_shipping=True`` the billing address is derived
+    from the shipping fields for comparison purposes.
+    """
+    from accounts.models import Address, CustomerProfile
+
+    def _norm(v) -> str:
+        return (v or "").strip()
+
+    def _checkout_addr_matches(existing: Address, eff: dict) -> bool:
+        """Return True when *existing* address equals *eff* on all checkout-
+        captured fields (``company`` and ``vat_id`` are not compared)."""
+        return (
+            _norm(existing.first_name) == _norm(eff["first_name"])
+            and _norm(existing.last_name) == _norm(eff["last_name"])
+            and _norm(existing.street_line_1) == _norm(eff["street_line_1"])
+            and _norm(existing.street_line_2) == _norm(eff["street_line_2"])
+            and _norm(existing.city) == _norm(eff["city"])
+            and _norm(existing.postal_code) == _norm(eff["postal_code"])
+            and _norm(str(existing.country)) == _norm(eff["country"])
+            and _norm(existing.phone) == _norm(eff["phone"])
+        )
+
+    profile, _ = CustomerProfile.objects.get_or_create(user=user)
+
+    # Build effective shipping address dict
+    eff_shipping = {
+        "first_name": checkout_data["shipping_first_name"],
+        "last_name": checkout_data["shipping_last_name"],
+        "street_line_1": checkout_data["shipping_address_line1"],
+        "street_line_2": checkout_data.get("shipping_address_line2", ""),
+        "city": checkout_data["shipping_city"],
+        "postal_code": checkout_data["shipping_postal_code"],
+        "country": checkout_data["shipping_country"],
+        "phone": checkout_data.get("shipping_phone", ""),
+    }
+
+    # Build effective billing address dict
+    if checkout_data.get("billing_same_as_shipping", True):
+        eff_billing = dict(eff_shipping)
+    else:
+        eff_billing = {
+            "first_name": checkout_data.get("billing_first_name", ""),
+            "last_name": checkout_data.get("billing_last_name", ""),
+            "street_line_1": checkout_data.get("billing_address_line1", ""),
+            "street_line_2": checkout_data.get("billing_address_line2", ""),
+            "city": checkout_data.get("billing_city", ""),
+            "postal_code": checkout_data.get("billing_postal_code", ""),
+            "country": checkout_data.get("billing_country", ""),
+            "phone": checkout_data.get("billing_phone", ""),
+        }
+
+    update_fields = []
+
+    # Shipping side: create new row only when address has actually changed
+    existing_ship = profile.default_shipping_address
+    if existing_ship is None or not _checkout_addr_matches(existing_ship, eff_shipping):
+        new_ship = Address.objects.create(profile=profile, **eff_shipping)
+        profile.default_shipping_address = new_ship
+        update_fields.append("default_shipping_address")
+
+    # Billing side: create new row only when address has actually changed
+    existing_bill = profile.default_billing_address
+    if existing_bill is None or not _checkout_addr_matches(existing_bill, eff_billing):
+        new_bill = Address.objects.create(profile=profile, **eff_billing)
+        profile.default_billing_address = new_bill
+        update_fields.append("default_billing_address")
+
+    if update_fields:
+        profile.save(update_fields=update_fields)
+
+
 class CartCheckoutView(APIView):
     permission_classes = [AllowAny]
 
@@ -888,7 +981,10 @@ Notes:
                 order = Order(
                     user=request.user if request.user.is_authenticated else None,
                     customer_email=checkout_data["customer_email"],
-                    shipping_name=checkout_data["shipping_name"],
+                    shipping_name=(
+                        f"{checkout_data['shipping_first_name']} "
+                        f"{checkout_data['shipping_last_name']}"
+                    ).strip(),
                     shipping_address_line1=checkout_data["shipping_address_line1"],
                     shipping_address_line2=checkout_data.get(
                         "shipping_address_line2", ""
@@ -900,7 +996,10 @@ Notes:
                     billing_same_as_shipping=checkout_data.get(
                         "billing_same_as_shipping", True
                     ),
-                    billing_name=checkout_data.get("billing_name"),
+                    billing_name=(
+                        f"{checkout_data.get('billing_first_name', '')} "
+                        f"{checkout_data.get('billing_last_name', '')}"
+                    ).strip() or None,
                     billing_address_line1=checkout_data.get(
                         "billing_address_line1"),
                     billing_address_line2=checkout_data.get(
@@ -1138,6 +1237,16 @@ Notes:
         except Exception:
             # atomic block guarantees rollback
             raise CheckoutFailedException()
+
+        # ── Optional: save checkout addresses to the user's profile ─────────
+        if checkout_data.get("save_to_profile") and request.user.is_authenticated:
+            try:
+                _save_checkout_addresses_to_profile(request.user, checkout_data)
+            except Exception:
+                logger.exception(
+                    "Failed to save checkout addresses to profile for user %s",
+                    request.user.pk,
+                )
 
         response_data = dict(CartCheckoutResponseSerializer(order).data)
         response_data["price_change"] = price_change_data

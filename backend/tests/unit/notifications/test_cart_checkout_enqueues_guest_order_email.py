@@ -42,7 +42,8 @@ def test_anonymous_checkout_enqueues_guest_order_link_email(monkeypatch, setting
     # --- Prepare request payload expected by CartCheckoutRequestSerializer ---
     payload = {
         "customer_email": "guest@example.com",
-        "shipping_name": "Guest User",
+        "shipping_first_name": "Guest",
+        "shipping_last_name": "User",
         "shipping_address_line1": "Somewhere 1",
         "shipping_city": "City",
         "shipping_postal_code": "12345",

@@ -1,7 +1,7 @@
 import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
-from tests.conftest import checkout_payload
+from tests.conftest import create_valid_order
 from accounts.services.email_verification import issue_email_verification_token
 from orders.models import Order
 
@@ -13,10 +13,7 @@ def test_verify_email_token_claims_guest_orders():
     Endpoint must NOT require auth.
     """
     # 1) Create a guest order via ORM (fast + deterministic)
-    guest_order = Order.objects.create(
-        user=None,
-        **checkout_payload(customer_email="customer@example.com"),
-    )
+    guest_order = create_valid_order(customer_email="customer@example.com")
     assert guest_order.user_id is None
     assert guest_order.is_claimed is False
 
@@ -55,8 +52,7 @@ def test_verify_email_is_idempotent():
     user = User.objects.create_user(
         email="customer@example.com", password="Passw0rd!123")
 
-    Order.objects.create(
-        user=None, **checkout_payload(customer_email="customer@example.com"))
+    create_valid_order(customer_email="customer@example.com")
 
     token = issue_email_verification_token(user)
 

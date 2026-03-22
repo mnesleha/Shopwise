@@ -44,7 +44,8 @@ def test_guest_checkout_enqueues_guest_order_email_on_commit(monkeypatch, client
 
     payload = {
         "customer_email": "guest@example.com",
-        "shipping_name": "E2E Customer",
+        "shipping_first_name": "E2E",
+        "shipping_last_name": "Customer",
         "shipping_address_line1": "E2E Main Street 1",
         "shipping_address_line2": "",
         "shipping_city": "E2E City",

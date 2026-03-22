@@ -112,6 +112,7 @@ export default function CheckoutPage() {
           onBackToCart={onBackToCart}
           onSubmit={onSubmit}
           priceChangePayload={warningPayload}
+          isAuthenticated={isAuthenticated}
         />
       )}
     </div>

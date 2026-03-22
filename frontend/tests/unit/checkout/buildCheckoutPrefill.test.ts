@@ -53,7 +53,8 @@ function makeProfile(overrides: Partial<ProfileDto> = {}): ProfileDto {
 /** Expected shipping fields derived from a given address fixture. */
 function expectedShipping(addr: AddressDto) {
   return {
-    shipping_name: `${addr.first_name} ${addr.last_name}`.trim(),
+    shipping_first_name: addr.first_name,
+    shipping_last_name: addr.last_name,
     shipping_address_line1: addr.street_line_1,
     shipping_address_line2: addr.street_line_2,
     shipping_city: addr.city,
@@ -66,7 +67,8 @@ function expectedShipping(addr: AddressDto) {
 /** Expected billing fields derived from a given address fixture. */
 function expectedBilling(addr: AddressDto) {
   return {
-    billing_name: `${addr.first_name} ${addr.last_name}`.trim(),
+    billing_first_name: addr.first_name,
+    billing_last_name: addr.last_name,
     billing_address_line1: addr.street_line_1,
     billing_address_line2: addr.street_line_2,
     billing_city: addr.city,
@@ -221,13 +223,15 @@ describe("buildCheckoutPrefill", () => {
     });
 
     it("does not include any shipping address fields", () => {
-      expect(result.shipping_name).toBeUndefined();
+      expect(result.shipping_first_name).toBeUndefined();
+      expect(result.shipping_last_name).toBeUndefined();
       expect(result.shipping_city).toBeUndefined();
       expect(result.shipping_phone).toBeUndefined();
     });
 
     it("does not include any billing address fields", () => {
-      expect(result.billing_name).toBeUndefined();
+      expect(result.billing_first_name).toBeUndefined();
+      expect(result.billing_last_name).toBeUndefined();
       expect(result.billing_city).toBeUndefined();
       expect(result.billing_phone).toBeUndefined();
     });
@@ -251,7 +255,7 @@ describe("buildCheckoutPrefill", () => {
 
     it("returns only email prefill", () => {
       expect(result.customer_email).toBe("guest@example.com");
-      expect(result.shipping_name).toBeUndefined();
+      expect(result.shipping_first_name).toBeUndefined();
     });
   });
 
@@ -319,9 +323,9 @@ describe("buildCheckoutPrefill", () => {
     });
   });
 
-  // ── First/last name join ───────────────────────────────────────────────────
+  // ── First/last name passthrough ────────────────────────────────────────────
   describe("name mapping", () => {
-    it("joins first_name and last_name into shipping_name", () => {
+    it("maps first_name directly to shipping_first_name", () => {
       const addr = makeAddress({
         id: 1,
         first_name: "Jane",
@@ -331,10 +335,11 @@ describe("buildCheckoutPrefill", () => {
         profile: makeProfile({ default_shipping_address: 1 }),
         addresses: [addr],
       });
-      expect(result.shipping_name).toBe("Jane Smith");
+      expect(result.shipping_first_name).toBe("Jane");
+      expect(result.shipping_last_name).toBe("Smith");
     });
 
-    it("joins first_name and last_name into billing_name", () => {
+    it("maps first_name directly to billing_first_name", () => {
       const addr = makeAddress({
         id: 1,
         first_name: "Jane",
@@ -344,7 +349,8 @@ describe("buildCheckoutPrefill", () => {
         profile: makeProfile({ default_shipping_address: 1 }),
         addresses: [addr],
       });
-      expect(result.billing_name).toBe("Jane Smith");
+      expect(result.billing_first_name).toBe("Jane");
+      expect(result.billing_last_name).toBe("Smith");
     });
   });
 });

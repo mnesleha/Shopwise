@@ -36,7 +36,8 @@ export interface CheckoutValues {
   // Step 2: Customer info
   customer_email: string;
   // Shipping address
-  shipping_name: string;
+  shipping_first_name: string;
+  shipping_last_name: string;
   shipping_address_line1: string;
   shipping_address_line2: string;
   shipping_city: string;
@@ -45,13 +46,16 @@ export interface CheckoutValues {
   shipping_phone: string;
   // Billing
   billing_same_as_shipping: boolean;
-  billing_name: string;
+  billing_first_name: string;
+  billing_last_name: string;
   billing_address_line1: string;
   billing_address_line2: string;
   billing_city: string;
   billing_postal_code: string;
   billing_country: string;
   billing_phone: string;
+  // Profile save (only relevant for authenticated users)
+  save_to_profile: boolean;
 }
 
 interface CheckoutFormProps {
@@ -64,6 +68,8 @@ interface CheckoutFormProps {
    * inside Step 1 (before shipping method cards).  Not shown in Step 2.
    */
   priceChangePayload?: PriceChangePayload | null;
+  /** When true, the "Save addresses to my profile" checkbox is shown in Step 2. */
+  isAuthenticated?: boolean;
 }
 
 type FieldErrors = Partial<Record<keyof CheckoutValues, string>>;
@@ -72,7 +78,8 @@ const defaultValues: CheckoutValues = {
   shipping_method: "STANDARD",
   payment_method: "CARD",
   customer_email: "",
-  shipping_name: "",
+  shipping_first_name: "",
+  shipping_last_name: "",
   shipping_address_line1: "",
   shipping_address_line2: "",
   shipping_city: "",
@@ -80,13 +87,15 @@ const defaultValues: CheckoutValues = {
   shipping_country: "",
   shipping_phone: "",
   billing_same_as_shipping: true,
-  billing_name: "",
+  billing_first_name: "",
+  billing_last_name: "",
   billing_address_line1: "",
   billing_address_line2: "",
   billing_city: "",
   billing_postal_code: "",
   billing_country: "",
   billing_phone: "",
+  save_to_profile: true,
 };
 
 // Stepper component
@@ -343,6 +352,7 @@ function DetailsStep({
   onBack,
   onSubmit,
   firstErrorRef,
+  isAuthenticated,
 }: {
   values: CheckoutValues;
   errors: FieldErrors;
@@ -350,6 +360,7 @@ function DetailsStep({
   onBack: () => void;
   onSubmit: () => void;
   firstErrorRef: React.RefObject<HTMLInputElement | null>;
+  isAuthenticated?: boolean;
 }) {
   const getInputRef = (field: keyof CheckoutValues) => {
     // Return ref for the first error field
@@ -395,25 +406,40 @@ function DetailsStep({
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <FormField
-                id="shipping_name"
-                label="Full name"
-                required
-                error={errors.shipping_name}
-              >
-                <Input
-                  name="shipping_name"
-                  id="shipping_name"
-                  type="text"
-                  placeholder="John Doe"
-                  defaultValue={values.shipping_name}
-                  onChange={(e) => onChange("shipping_name", e.target.value)}
-                  aria-invalid={!!errors.shipping_name}
-                  ref={getInputRef("shipping_name")}
-                />
-              </FormField>
-            </div>
+            <FormField
+              id="shipping_first_name"
+              label="First name"
+              required
+              error={errors.shipping_first_name}
+            >
+              <Input
+                name="shipping_first_name"
+                id="shipping_first_name"
+                type="text"
+                placeholder="John"
+                defaultValue={values.shipping_first_name}
+                onChange={(e) => onChange("shipping_first_name", e.target.value)}
+                aria-invalid={!!errors.shipping_first_name}
+                ref={getInputRef("shipping_first_name")}
+              />
+            </FormField>
+            <FormField
+              id="shipping_last_name"
+              label="Last name"
+              required
+              error={errors.shipping_last_name}
+            >
+              <Input
+                name="shipping_last_name"
+                id="shipping_last_name"
+                type="text"
+                placeholder="Doe"
+                defaultValue={values.shipping_last_name}
+                onChange={(e) => onChange("shipping_last_name", e.target.value)}
+                aria-invalid={!!errors.shipping_last_name}
+                ref={getInputRef("shipping_last_name")}
+              />
+            </FormField>
             <div className="sm:col-span-2">
               <FormField
                 id="shipping_address_line1"
@@ -544,25 +570,40 @@ function DetailsStep({
 
           {!values.billing_same_as_shipping && (
             <div className="grid gap-4 pt-2 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <FormField
-                  id="billing_name"
-                  label="Full name"
-                  required
-                  error={errors.billing_name}
-                >
-                  <Input
-                    id="billing_name"
-                    name="billing_name"
-                    type="text"
-                    placeholder="John Doe"
-                    defaultValue={values.billing_name}
-                    onChange={(e) => onChange("billing_name", e.target.value)}
-                    aria-invalid={!!errors.billing_name}
-                    ref={getInputRef("billing_name")}
-                  />
-                </FormField>
-              </div>
+              <FormField
+                id="billing_first_name"
+                label="First name"
+                required
+                error={errors.billing_first_name}
+              >
+                <Input
+                  id="billing_first_name"
+                  name="billing_first_name"
+                  type="text"
+                  placeholder="John"
+                  defaultValue={values.billing_first_name}
+                  onChange={(e) => onChange("billing_first_name", e.target.value)}
+                  aria-invalid={!!errors.billing_first_name}
+                  ref={getInputRef("billing_first_name")}
+                />
+              </FormField>
+              <FormField
+                id="billing_last_name"
+                label="Last name"
+                required
+                error={errors.billing_last_name}
+              >
+                <Input
+                  id="billing_last_name"
+                  name="billing_last_name"
+                  type="text"
+                  placeholder="Doe"
+                  defaultValue={values.billing_last_name}
+                  onChange={(e) => onChange("billing_last_name", e.target.value)}
+                  aria-invalid={!!errors.billing_last_name}
+                  ref={getInputRef("billing_last_name")}
+                />
+              </FormField>
               <div className="sm:col-span-2">
                 <FormField
                   id="billing_address_line1"
@@ -673,6 +714,22 @@ function DetailsStep({
         </CardContent>
       </Card>
 
+      {/* Save to Profile */}
+      {isAuthenticated && (
+        <label className="flex cursor-pointer items-center gap-3">
+          <Checkbox
+            id="save_to_profile"
+            checked={values.save_to_profile}
+            onCheckedChange={(checked) =>
+              onChange("save_to_profile", checked === true)
+            }
+          />
+          <span className="text-sm font-medium text-foreground">
+            Save addresses to my profile
+          </span>
+        </label>
+      )}
+
       {/* Actions */}
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
         <Button
@@ -702,6 +759,7 @@ export function CheckoutForm({
   onSubmit,
   onBackToCart,
   priceChangePayload,
+  isAuthenticated,
 }: CheckoutFormProps) {
   const [step, setStep] = React.useState<1 | 2>(1);
   // Once the user advances past step 1 the warning banner is considered
@@ -740,8 +798,11 @@ export function CheckoutForm({
     }
 
     // Shipping required fields
-    if (!values.shipping_name.trim()) {
-      newErrors.shipping_name = "Name is required";
+    if (!values.shipping_first_name.trim()) {
+      newErrors.shipping_first_name = "First name is required";
+    }
+    if (!values.shipping_last_name.trim()) {
+      newErrors.shipping_last_name = "Last name is required";
     }
     if (!values.shipping_address_line1.trim()) {
       newErrors.shipping_address_line1 = "Address is required";
@@ -761,8 +822,11 @@ export function CheckoutForm({
 
     // Billing fields (if different from shipping)
     if (!values.billing_same_as_shipping) {
-      if (!values.billing_name.trim()) {
-        newErrors.billing_name = "Name is required";
+      if (!values.billing_first_name.trim()) {
+        newErrors.billing_first_name = "First name is required";
+      }
+      if (!values.billing_last_name.trim()) {
+        newErrors.billing_last_name = "Last name is required";
       }
       if (!values.billing_address_line1.trim()) {
         newErrors.billing_address_line1 = "Address is required";
@@ -831,6 +895,7 @@ export function CheckoutForm({
           onBack={() => setStep(1)}
           onSubmit={handleSubmit}
           firstErrorRef={firstErrorRef}
+          isAuthenticated={isAuthenticated}
         />
       )}
     </div>

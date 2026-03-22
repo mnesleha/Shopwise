@@ -16,7 +16,8 @@ from orderitems.models import OrderItem
 def checkout_payload(customer_email: str = "customer@example.com", **overrides) -> dict:
     data = {
         "customer_email": customer_email,
-        "shipping_name": "E2E Customer",
+        "shipping_first_name": "E2E",
+        "shipping_last_name": "Customer",
         "shipping_address_line1": "E2E Main Street 1",
         "shipping_address_line2": "",
         "shipping_city": "E2E City",
@@ -38,7 +39,9 @@ def create_valid_order(*, user=None, status=None, **overrides) -> Order:
         "user": user,
         "status": status or Order.Status.CREATED,
         "customer_email": payload["customer_email"],
-        "shipping_name": payload["shipping_name"],
+        "shipping_name": (
+            f"{payload['shipping_first_name']} {payload['shipping_last_name']}"
+        ).strip(),
         "shipping_address_line1": payload["shipping_address_line1"],
         "shipping_address_line2": payload.get("shipping_address_line2", ""),
         "shipping_city": payload["shipping_city"],
@@ -46,7 +49,10 @@ def create_valid_order(*, user=None, status=None, **overrides) -> Order:
         "shipping_country": payload["shipping_country"],
         "shipping_phone": payload["shipping_phone"],
         "billing_same_as_shipping": payload.get("billing_same_as_shipping", True),
-        "billing_name": payload.get("billing_name"),
+        "billing_name": (
+            f"{payload.get('billing_first_name', '')} "
+            f"{payload.get('billing_last_name', '')}"
+        ).strip() or None,
         "billing_address_line1": payload.get("billing_address_line1"),
         "billing_address_line2": payload.get("billing_address_line2"),
         "billing_city": payload.get("billing_city"),

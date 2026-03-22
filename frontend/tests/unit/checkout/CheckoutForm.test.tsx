@@ -32,7 +32,8 @@ function renderForm(
 // Filled initialValues covering all required Step 2 fields
 const VALID_STEP2: Partial<React.ComponentProps<typeof CheckoutForm>["initialValues"]> = {
   customer_email: "buyer@example.com",
-  shipping_name: "Jane Doe",
+  shipping_first_name: "Jane",
+  shipping_last_name: "Doe",
   shipping_address_line1: "Test Street 1",
   shipping_city: "Prague",
   shipping_postal_code: "11000",
@@ -99,11 +100,11 @@ describe("CheckoutForm", () => {
       expect(await screen.findByText(/email is required/i)).toBeInTheDocument();
     });
 
-    it("shows 'Name is required' when shipping name is empty on submit", async () => {
+    it("shows 'First name is required' when shipping first name is empty on submit", async () => {
       const { user } = await goToStep2();
       await user.type(screen.getByLabelText(/email/i), "buyer@example.com");
       await user.click(screen.getByTestId(CHECKOUT_SUBMIT));
-      expect(await screen.findByText(/name is required/i)).toBeInTheDocument();
+      expect(await screen.findByText(/first name is required/i)).toBeInTheDocument();
     });
 
     it("shows 'valid email' error for malformed email", async () => {
@@ -130,7 +131,8 @@ describe("CheckoutForm", () => {
         expect(onSubmit).toHaveBeenCalledWith(
           expect.objectContaining({
             customer_email: "buyer@example.com",
-            shipping_name: "Jane Doe",
+            shipping_first_name: "Jane",
+            shipping_last_name: "Doe",
             shipping_city: "Prague",
           }),
         ),
@@ -144,6 +146,69 @@ describe("CheckoutForm", () => {
       renderForm({ initialValues: { customer_email: "prefilled@example.com" } });
       await user.click(screen.getByTestId(CHECKOUT_CONTINUE));
       expect(screen.getByDisplayValue("prefilled@example.com")).toBeInTheDocument();
+    });
+  });
+
+  describe("save_to_profile checkbox", () => {
+    async function goToStep2WithAuth(isAuthenticated: boolean) {
+      const user = userEvent.setup();
+      const result = renderForm({
+        initialValues: VALID_STEP2,
+        isAuthenticated,
+      });
+      await user.click(screen.getByTestId(CHECKOUT_CONTINUE));
+      return { user, ...result };
+    }
+
+    it("renders the save-to-profile checkbox for authenticated users", async () => {
+      await goToStep2WithAuth(true);
+      expect(
+        screen.getByLabelText(/save addresses to my profile/i),
+      ).toBeInTheDocument();
+    });
+
+    it("does not render the save-to-profile checkbox for guests", async () => {
+      await goToStep2WithAuth(false);
+      expect(
+        screen.queryByLabelText(/save addresses to my profile/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does not render the save-to-profile checkbox when isAuthenticated is omitted", async () => {
+      const user = userEvent.setup();
+      renderForm({ initialValues: VALID_STEP2 });
+      await user.click(screen.getByTestId(CHECKOUT_CONTINUE));
+      expect(
+        screen.queryByLabelText(/save addresses to my profile/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("checkbox is checked by default for authenticated users", async () => {
+      await goToStep2WithAuth(true);
+      const checkbox = screen.getByLabelText(/save addresses to my profile/i);
+      expect(checkbox).toBeChecked();
+    });
+
+    it("submitted values include save_to_profile=true by default for auth users", async () => {
+      const { user, onSubmit } = await goToStep2WithAuth(true);
+      await user.click(screen.getByTestId(CHECKOUT_SUBMIT));
+      await waitFor(() =>
+        expect(onSubmit).toHaveBeenCalledWith(
+          expect.objectContaining({ save_to_profile: true }),
+        ),
+      );
+    });
+
+    it("unchecking sets save_to_profile=false in submitted values", async () => {
+      const { user, onSubmit } = await goToStep2WithAuth(true);
+      const checkbox = screen.getByLabelText(/save addresses to my profile/i);
+      await user.click(checkbox);
+      await user.click(screen.getByTestId(CHECKOUT_SUBMIT));
+      await waitFor(() =>
+        expect(onSubmit).toHaveBeenCalledWith(
+          expect.objectContaining({ save_to_profile: false }),
+        ),
+      );
     });
   });
 });

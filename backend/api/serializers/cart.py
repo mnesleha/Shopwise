@@ -307,7 +307,8 @@ class CartItemUpdateRequestSerializer(serializers.Serializer):
 
 class CartCheckoutRequestSerializer(serializers.Serializer):
     customer_email = serializers.EmailField()
-    shipping_name = serializers.CharField()
+    shipping_first_name = serializers.CharField()
+    shipping_last_name = serializers.CharField()
     shipping_address_line1 = serializers.CharField()
     shipping_address_line2 = serializers.CharField(
         required=False,
@@ -318,7 +319,11 @@ class CartCheckoutRequestSerializer(serializers.Serializer):
     shipping_country = serializers.CharField()
     shipping_phone = serializers.CharField()
     billing_same_as_shipping = serializers.BooleanField(default=True)
-    billing_name = serializers.CharField(
+    billing_first_name = serializers.CharField(
+        required=False,
+        allow_blank=True,
+    )
+    billing_last_name = serializers.CharField(
         required=False,
         allow_blank=True,
     )
@@ -346,11 +351,13 @@ class CartCheckoutRequestSerializer(serializers.Serializer):
         required=False,
         allow_blank=True,
     )
+    save_to_profile = serializers.BooleanField(default=False, required=False)
 
     def validate(self, attrs):
         if attrs.get("billing_same_as_shipping") is False:
             required_fields = [
-                "billing_name",
+                "billing_first_name",
+                "billing_last_name",
                 "billing_address_line1",
                 "billing_city",
                 "billing_postal_code",

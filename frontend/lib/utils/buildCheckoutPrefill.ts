@@ -6,20 +6,14 @@ import type { CheckoutValues } from "@/components/checkout/CheckoutForm";
 // ---------------------------------------------------------------------------
 
 /**
- * Combine first and last name into the full-name string used by checkout fields.
- */
-function fullName(addr: AddressDto): string {
-  return `${addr.first_name} ${addr.last_name}`.trim();
-}
-
-/**
  * Map a profile address into the shipping-address portion of CheckoutValues.
  */
 function toShipping(
   addr: AddressDto,
 ): Pick<
   CheckoutValues,
-  | "shipping_name"
+  | "shipping_first_name"
+  | "shipping_last_name"
   | "shipping_address_line1"
   | "shipping_address_line2"
   | "shipping_city"
@@ -28,7 +22,8 @@ function toShipping(
   | "shipping_phone"
 > {
   return {
-    shipping_name: fullName(addr),
+    shipping_first_name: addr.first_name,
+    shipping_last_name: addr.last_name,
     shipping_address_line1: addr.street_line_1,
     shipping_address_line2: addr.street_line_2,
     shipping_city: addr.city,
@@ -45,7 +40,8 @@ function toBilling(
   addr: AddressDto,
 ): Pick<
   CheckoutValues,
-  | "billing_name"
+  | "billing_first_name"
+  | "billing_last_name"
   | "billing_address_line1"
   | "billing_address_line2"
   | "billing_city"
@@ -54,7 +50,8 @@ function toBilling(
   | "billing_phone"
 > {
   return {
-    billing_name: fullName(addr),
+    billing_first_name: addr.first_name,
+    billing_last_name: addr.last_name,
     billing_address_line1: addr.street_line_1,
     billing_address_line2: addr.street_line_2,
     billing_city: addr.city,

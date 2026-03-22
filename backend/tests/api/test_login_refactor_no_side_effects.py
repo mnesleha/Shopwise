@@ -319,12 +319,10 @@ def test_orders_claim_integration_assigns_guest_orders():
     test_login_claims_guest_orders_for_verified_user.
     """
     from orders.models import Order
-    from tests.conftest import checkout_payload
+    from tests.conftest import checkout_payload, create_valid_order
 
     # Create a guest order before the user account exists.
-    guest_order = Order.objects.create(
-        user=None, **checkout_payload(customer_email="claimer@example.com")
-    )
+    guest_order = create_valid_order(customer_email="claimer@example.com")
 
     user = _create_user(email="claimer@example.com", verified=True)
 

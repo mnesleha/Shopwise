@@ -36,7 +36,8 @@ def test_guest_order_link_email_is_delivered_to_mailpit(client, settings, monkey
 
     payload = {
         "customer_email": "guest@example.com",
-        "shipping_name": "John Doe",
+        "shipping_first_name": "John",
+        "shipping_last_name": "Doe",
         "shipping_address_line1": "123 Main St",
         "shipping_address_line2": "",
         "shipping_city": "Chicago",

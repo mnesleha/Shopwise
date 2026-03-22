@@ -46,7 +46,8 @@ export async function checkoutCart(
   const payload = {
     customer_email: values.customer_email,
 
-    shipping_name: values.shipping_name,
+    shipping_first_name: values.shipping_first_name,
+    shipping_last_name: values.shipping_last_name,
     shipping_address_line1: values.shipping_address_line1,
     shipping_address_line2: values.shipping_address_line2,
     shipping_city: values.shipping_city,
@@ -59,7 +60,8 @@ export async function checkoutCart(
     ...(values.billing_same_as_shipping
       ? {}
       : {
-          billing_name: values.billing_name,
+          billing_first_name: values.billing_first_name,
+          billing_last_name: values.billing_last_name,
           billing_address_line1: values.billing_address_line1,
           billing_address_line2: values.billing_address_line2,
           billing_city: values.billing_city,
@@ -67,6 +69,8 @@ export async function checkoutCart(
           billing_country: values.billing_country,
           billing_phone: values.billing_phone,
         }),
+
+    save_to_profile: values.save_to_profile,
   };
 
   const res = await api.post<CheckoutOrderDto>("/cart/checkout/", payload);
