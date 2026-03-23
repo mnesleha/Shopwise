@@ -39,9 +39,8 @@ def create_valid_order(*, user=None, status=None, **overrides) -> Order:
         "user": user,
         "status": status or Order.Status.CREATED,
         "customer_email": payload["customer_email"],
-        "shipping_name": (
-            f"{payload['shipping_first_name']} {payload['shipping_last_name']}"
-        ).strip(),
+        "shipping_first_name": payload["shipping_first_name"],
+        "shipping_last_name": payload["shipping_last_name"],
         "shipping_address_line1": payload["shipping_address_line1"],
         "shipping_address_line2": payload.get("shipping_address_line2", ""),
         "shipping_city": payload["shipping_city"],
@@ -49,10 +48,8 @@ def create_valid_order(*, user=None, status=None, **overrides) -> Order:
         "shipping_country": payload["shipping_country"],
         "shipping_phone": payload["shipping_phone"],
         "billing_same_as_shipping": payload.get("billing_same_as_shipping", True),
-        "billing_name": (
-            f"{payload.get('billing_first_name', '')} "
-            f"{payload.get('billing_last_name', '')}"
-        ).strip() or None,
+        "billing_first_name": payload.get("billing_first_name") or None,
+        "billing_last_name": payload.get("billing_last_name") or None,
         "billing_address_line1": payload.get("billing_address_line1"),
         "billing_address_line2": payload.get("billing_address_line2"),
         "billing_city": payload.get("billing_city"),

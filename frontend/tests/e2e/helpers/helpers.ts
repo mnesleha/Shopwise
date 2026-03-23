@@ -26,7 +26,8 @@ export async function fillCheckoutForm(page: Page, email: string) {
   await page.locator('[data-testid="checkout-continue"]').click();
 
   await page.fill('input[name="customer_email"]', email);
-  await page.fill('input[name="shipping_name"]', "E2E Customer");
+  await page.fill('input[name="shipping_first_name"]', "E2E");
+  await page.fill('input[name="shipping_last_name"]', "Customer");
   await page.fill('input[name="shipping_address_line1"]', "E2E Street 1");
   await page.fill('input[name="shipping_city"]', "E2E City");
   await page.fill('input[name="shipping_postal_code"]', "12345");

@@ -226,8 +226,8 @@ def test_bootstrap_auth_cookies_set(client):
     assert django_settings.AUTH_COOKIE_REFRESH in resp.cookies
 
 
-def test_bootstrap_first_last_name_from_shipping_name(client):
-    """First/last name on the new account is derived from the order shipping name."""
+def test_bootstrap_first_last_name_from_shipping_fields(client):
+    """First/last name on the new account is taken directly from the order shipping name fields."""
     order, token = _make_guest_order(
         email="name@test.com",
         shipping_first_name="John",

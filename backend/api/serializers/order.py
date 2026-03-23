@@ -316,7 +316,9 @@ class OrderResponseSerializer(serializers.Serializer):
         empty string for legacy orders where the fields were not captured.
         """
         return {
-            "name": obj.shipping_name or "",
+            "first_name": obj.shipping_first_name or "",
+            "last_name": obj.shipping_last_name or "",
+            "name": f"{obj.shipping_first_name or ''} {obj.shipping_last_name or ''}".strip(),
             "address_line1": obj.shipping_address_line1 or "",
             "address_line2": obj.shipping_address_line2 or "",
             "city": obj.shipping_city or "",
@@ -339,7 +341,9 @@ class OrderResponseSerializer(serializers.Serializer):
         if obj.billing_same_as_shipping:
             return None
         return {
-            "name": obj.billing_name or "",
+            "first_name": obj.billing_first_name or "",
+            "last_name": obj.billing_last_name or "",
+            "name": f"{obj.billing_first_name or ''} {obj.billing_last_name or ''}".strip(),
             "address_line1": obj.billing_address_line1 or "",
             "address_line2": obj.billing_address_line2 or "",
             "city": obj.billing_city or "",

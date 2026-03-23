@@ -235,7 +235,8 @@ class Command(BaseCommand):
         defaults: dict[str, Any] = {
             "customer_email": str(customer_email),
             # --- shipping (required) ---
-            "shipping_name": raw_order.get("shipping_name", "E2E Customer"),
+            "shipping_first_name": raw_order.get("shipping_first_name", raw_order.get("shipping_name", "E2E Customer").split(" ")[0]),
+            "shipping_last_name": raw_order.get("shipping_last_name", " ".join(raw_order.get("shipping_name", "E2E Customer").split(" ")[1:]) or "Customer"),
             "shipping_address_line1": raw_order.get("shipping_address_line1", "E2E Main Street 1"),
             "shipping_address_line2": raw_order.get("shipping_address_line2", ""),
             "shipping_city": raw_order.get("shipping_city", "E2E City"),
@@ -244,7 +245,8 @@ class Command(BaseCommand):
             "shipping_phone": raw_order.get("shipping_phone", "+10000000000"),
             # --- billing (optional by default) ---
             "billing_same_as_shipping": bool(raw_order.get("billing_same_as_shipping", True)),
-            "billing_name": raw_order.get("billing_name"),
+            "billing_first_name": raw_order.get("billing_first_name") or (raw_order.get("billing_name", "") or "").split(" ")[0] or None,
+            "billing_last_name": raw_order.get("billing_last_name") or " ".join((raw_order.get("billing_name", "") or "").split(" ")[1:]) or None,
             "billing_address_line1": raw_order.get("billing_address_line1"),
             "billing_address_line2": raw_order.get("billing_address_line2"),
             "billing_city": raw_order.get("billing_city"),

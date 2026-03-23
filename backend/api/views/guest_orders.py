@@ -146,10 +146,9 @@ class GuestOrderBootstrapView(APIView):
 
         password = serializer.validated_data["password"]
 
-        # Derive first/last name from shipping snapshot.
-        name_parts = (order.shipping_name or "").strip().split(" ", 1)
-        first_name = name_parts[0]
-        last_name = name_parts[1] if len(name_parts) > 1 else ""
+        # Use first/last name directly from order shipping snapshot.
+        first_name = order.shipping_first_name or ""
+        last_name = order.shipping_last_name or ""
 
         try:
             with transaction.atomic():

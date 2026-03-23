@@ -990,10 +990,8 @@ Notes:
                 order = Order(
                     user=request.user if request.user.is_authenticated else None,
                     customer_email=checkout_data["customer_email"],
-                    shipping_name=(
-                        f"{checkout_data['shipping_first_name']} "
-                        f"{checkout_data['shipping_last_name']}"
-                    ).strip(),
+                    shipping_first_name=checkout_data["shipping_first_name"],
+                    shipping_last_name=checkout_data["shipping_last_name"],
                     shipping_address_line1=checkout_data["shipping_address_line1"],
                     shipping_address_line2=checkout_data.get(
                         "shipping_address_line2", ""
@@ -1005,10 +1003,8 @@ Notes:
                     billing_same_as_shipping=checkout_data.get(
                         "billing_same_as_shipping", True
                     ),
-                    billing_name=(
-                        f"{checkout_data.get('billing_first_name', '')} "
-                        f"{checkout_data.get('billing_last_name', '')}"
-                    ).strip() or None,
+                    billing_first_name=checkout_data.get("billing_first_name") or None,
+                    billing_last_name=checkout_data.get("billing_last_name") or None,
                     billing_address_line1=checkout_data.get(
                         "billing_address_line1"),
                     billing_address_line2=checkout_data.get(

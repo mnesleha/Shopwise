@@ -9,7 +9,8 @@ from django.utils import timezone
 def valid_order_kwargs():
     return {
         "customer_email": "customer@example.com",
-        "shipping_name": "John Doe",
+        "shipping_first_name": "John",
+        "shipping_last_name": "Doe",
         "shipping_address_line1": "123 Main St",
         "shipping_address_line2": "",
         "shipping_city": "Chicago",
@@ -23,7 +24,8 @@ def valid_order_kwargs():
 def build_order_kwargs(**overrides):
     data = {
         "customer_email": "guest@example.com",
-        "shipping_name": "Guest User",
+        "shipping_first_name": "Guest",
+        "shipping_last_name": "User",
         "shipping_address_line1": "123 Main St",
         "shipping_city": "Prague",
         "shipping_postal_code": "11000",
@@ -80,7 +82,8 @@ def test_billing_is_required_when_same_as_shipping_false():
         order.full_clean()
 
     errors = exc.value.message_dict
-    assert "billing_name" in errors
+    assert "billing_first_name" in errors
+    assert "billing_last_name" in errors
     assert "billing_address_line1" in errors
     assert "billing_city" in errors
     assert "billing_postal_code" in errors
@@ -125,7 +128,8 @@ def test_order_rejects_null_customer_email(valid_order_kwargs):
 
 
 REQUIRED_SHIPPING_FIELDS = [
-    "shipping_name",
+    "shipping_first_name",
+    "shipping_last_name",
     "shipping_address_line1",
     "shipping_city",
     "shipping_postal_code",
@@ -159,7 +163,7 @@ def test_billing_is_required_when_same_as_shipping_false(valid_order_kwargs):
     o = Order(**data)
     with pytest.raises(ValidationError) as exc:
         o.full_clean()
-    for f in ["billing_name", "billing_address_line1", "billing_city", "billing_postal_code", "billing_country"]:
+    for f in ["billing_first_name", "billing_last_name", "billing_address_line1", "billing_city", "billing_postal_code", "billing_country"]:
         assert f in exc.value.message_dict
 
 
@@ -168,7 +172,8 @@ def test_billing_separate_succeeds_when_required_fields_present(valid_order_kwar
     data = dict(valid_order_kwargs)
     data["billing_same_as_shipping"] = False
     data.update({
-        "billing_name": "Jane Billing",
+        "billing_first_name": "Jane",
+        "billing_last_name": "Billing",
         "billing_address_line1": "456 Billing Rd",
         "billing_city": "Chicago",
         "billing_postal_code": "60602",
@@ -178,7 +183,8 @@ def test_billing_separate_succeeds_when_required_fields_present(valid_order_kwar
     o = Order(**data)
     o.save()
     assert o.billing_same_as_shipping is False
-    assert o.billing_name == "Jane Billing"
+    assert o.billing_first_name == "Jane"
+    assert o.billing_last_name == "Billing"
 
 
 @pytest.mark.django_db

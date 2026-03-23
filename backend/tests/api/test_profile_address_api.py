@@ -30,6 +30,7 @@ class TestProfileAndAddressAPI:
             "city": "Prague",
             "postal_code": "11000",
             "country": "CZ",
+            "phone": "+420123456789",
             "company": "",
             "vat_id": "",
         }

@@ -39,18 +39,6 @@ def _normalize_country(value: str) -> str:
     return code or ""
 
 
-def _split_name(full_name: str) -> tuple[str, str]:
-    """
-    Split 'First Last' (or 'First Middle Last') into (first, rest).
-
-    Returns ("", "") for blank input.
-    """
-    parts = (full_name or "").strip().split(" ", 1)
-    if not parts or not parts[0]:
-        return "", ""
-    return parts[0], parts[1] if len(parts) > 1 else ""
-
-
 def seed_addresses_from_order(*, user, order: Order) -> None:
     """
     Seed CustomerProfile addresses from an order's shipping/billing snapshot.
@@ -65,12 +53,10 @@ def seed_addresses_from_order(*, user, order: Order) -> None:
     try:
         profile, _ = CustomerProfile.objects.get_or_create(user=user)
 
-        shipping_first, shipping_last = _split_name(order.shipping_name)
-
         shipping_addr = Address.objects.create(
             profile=profile,
-            first_name=shipping_first,
-            last_name=shipping_last,
+            first_name=order.shipping_first_name or "",
+            last_name=order.shipping_last_name or "",
             street_line_1=order.shipping_address_line1 or "",
             street_line_2=order.shipping_address_line2 or "",
             city=order.shipping_city or "",
@@ -88,8 +74,8 @@ def seed_addresses_from_order(*, user, order: Order) -> None:
             # both FK slots are populated and can be updated independently.
             billing_addr = Address.objects.create(
                 profile=profile,
-                first_name=shipping_first,
-                last_name=shipping_last,
+                first_name=order.shipping_first_name or "",
+                last_name=order.shipping_last_name or "",
                 street_line_1=order.shipping_address_line1 or "",
                 street_line_2=order.shipping_address_line2 or "",
                 city=order.shipping_city or "",
@@ -101,13 +87,10 @@ def seed_addresses_from_order(*, user, order: Order) -> None:
                 vat_id=order.shipping_vat_id or "",
             )
         else:
-            billing_first, billing_last = _split_name(
-                order.billing_name or order.shipping_name
-            )
             billing_addr = Address.objects.create(
                 profile=profile,
-                first_name=billing_first,
-                last_name=billing_last,
+                first_name=order.billing_first_name or order.shipping_first_name or "",
+                last_name=order.billing_last_name or order.shipping_last_name or "",
                 street_line_1=order.billing_address_line1 or "",
                 street_line_2=order.billing_address_line2 or "",
                 city=order.billing_city or "",

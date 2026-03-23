@@ -62,7 +62,8 @@ class Order(models.Model):
         blank=False,
         db_index=True,
     )
-    shipping_name = models.CharField(max_length=255, null=False, blank=False)
+    shipping_first_name = models.CharField(max_length=150, null=False, blank=False)
+    shipping_last_name = models.CharField(max_length=150, null=False, blank=False)
     shipping_address_line1 = models.CharField(
         max_length=255, null=False, blank=False)
     shipping_address_line2 = models.CharField(
@@ -77,7 +78,8 @@ class Order(models.Model):
     shipping_company_id = models.CharField(max_length=64, null=True, blank=True)
     shipping_vat_id = models.CharField(max_length=64, null=True, blank=True)
     billing_same_as_shipping = models.BooleanField(default=True)
-    billing_name = models.CharField(max_length=255, null=True, blank=True)
+    billing_first_name = models.CharField(max_length=150, null=True, blank=True)
+    billing_last_name = models.CharField(max_length=150, null=True, blank=True)
     billing_address_line1 = models.CharField(
         max_length=255, null=True, blank=True)
     billing_address_line2 = models.CharField(
@@ -216,7 +218,8 @@ class Order(models.Model):
 
         # --- shipping required snapshots (shipping_phone included) ---
         required_shipping = [
-            "shipping_name",
+            "shipping_first_name",
+            "shipping_last_name",
             "shipping_address_line1",
             "shipping_city",
             "shipping_postal_code",
@@ -234,7 +237,8 @@ class Order(models.Model):
         # --- billing snapshots conditional ---
         if self.billing_same_as_shipping is False:
             required_billing = [
-                "billing_name",
+                "billing_first_name",
+                "billing_last_name",
                 "billing_address_line1",
                 "billing_city",
                 "billing_postal_code",
