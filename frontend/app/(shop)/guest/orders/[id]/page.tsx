@@ -27,7 +27,38 @@ export default async function GuestOrderPage({
     );
   }
 
-  const dto = await getGuestOrderServer(id, token);
+  let dto;
+  try {
+    dto = await getGuestOrderServer(id, token);
+  } catch (err) {
+    const status = (err as { status?: number }).status;
+
+    if (status === 404) {
+      return (
+        <div className="container mx-auto px-4 py-8 space-y-2">
+          <h1 className="text-2xl font-semibold">Order not found</h1>
+          <p className="text-muted-foreground">
+            This order link is no longer valid. If you already created an
+            account, you can{" "}
+            <a href="/login" className="underline">
+              sign in
+            </a>{" "}
+            and view your orders from your profile.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="container mx-auto px-4 py-8 space-y-2">
+        <h1 className="text-2xl font-semibold">Something went wrong</h1>
+        <p className="text-muted-foreground">
+          Unable to load the order. Please try again later or contact support.
+        </p>
+      </div>
+    );
+  }
+
   const vm = mapOrderToVm(dto);
 
   return (
