@@ -79,6 +79,10 @@ LOGOUT_ALL_RL_WINDOW_S = 60
 CHANGE_PASSWORD_RL_PER_USER = 10000
 CHANGE_PASSWORD_RL_PER_IP = 10000
 CHANGE_PASSWORD_RL_WINDOW_S = 600
+BOOTSTRAP_RL_PER_IP = 10000
+BOOTSTRAP_RL_WINDOW_S = 60
+BOOTSTRAP_RL_PER_TOKEN = 10000
+BOOTSTRAP_RL_TOKEN_WINDOW_S = 60
 
 # Deterministic refresh TTLs for remember-me tests.
 # Values are intentionally short (seconds, not days) to keep test assertions fast,

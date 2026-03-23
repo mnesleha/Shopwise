@@ -11,6 +11,7 @@ from drf_spectacular.utils import (
     OpenApiTypes,
     extend_schema,
 )
+from rest_framework import status as http_status
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -21,6 +22,7 @@ from api.serializers.guest_bootstrap import (
     GuestBootstrapResponseSerializer,
 )
 from api.serializers.order import OrderResponseSerializer
+from api.services.rate_limit import rate_limit_hit
 from config.settings.base import auth_cookie_kwargs
 from accounts.services.session import issue_refresh_token
 from orders.services.bootstrap import seed_addresses_from_order
@@ -29,6 +31,19 @@ from orders.services.guest_order_access_service import GuestOrderAccessService
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Rate-limit defaults — guest bootstrap endpoint (POST only).
+# Read from Django settings at request time so tests can override them via
+# the settings fixture without re-importing the module.
+#
+# BOOTSTRAP_RL_PER_IP      / BOOTSTRAP_RL_WINDOW_S      — per-IP cap
+#   Default 5/60 s — same as the register endpoint (account creation).
+# BOOTSTRAP_RL_PER_TOKEN   / BOOTSTRAP_RL_TOKEN_WINDOW_S — per-token cap
+#   Default 5/60 s — a capability token should never be replayed more than
+#   a handful of times; this stops token-stuffing without affecting any
+#   realistic legitimate usage.
+# ---------------------------------------------------------------------------
 
 
 @extend_schema(
@@ -118,7 +133,30 @@ class GuestOrderBootstrapView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, order_id: int):
+        _rl_disabled = getattr(settings, "DISABLE_RATE_LIMITING_FOR_TESTS", False)
+        ip = (
+            (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
+            or request.META.get("REMOTE_ADDR")
+            or "unknown"
+        )
         token = request.query_params.get("token")
+        if not _rl_disabled:
+            ip_limited = rate_limit_hit(
+                key=f"rl:bootstrap:ip:{ip}",
+                limit=int(getattr(settings, "BOOTSTRAP_RL_PER_IP", 5)),
+                window_s=int(getattr(settings, "BOOTSTRAP_RL_WINDOW_S", 60)),
+            )
+            token_limited = bool(token) and rate_limit_hit(
+                key=f"rl:bootstrap:token:{token}",
+                limit=int(getattr(settings, "BOOTSTRAP_RL_PER_TOKEN", 5)),
+                window_s=int(getattr(settings, "BOOTSTRAP_RL_TOKEN_WINDOW_S", 60)),
+            )
+            if ip_limited or token_limited:
+                return Response(
+                    {"detail": "Too many requests. Please try again later."},
+                    status=http_status.HTTP_429_TOO_MANY_REQUESTS,
+                )
+
         order = GuestOrderAccessService.validate(
             order_id=order_id,
             token=token,

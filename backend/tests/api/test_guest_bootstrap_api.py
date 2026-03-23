@@ -428,3 +428,72 @@ def test_bootstrap_missing_password_returns_400(client):
         content_type="application/json",
     )
     assert resp.status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# 7. Rate limiting
+# ---------------------------------------------------------------------------
+
+
+def test_bootstrap_protected_by_ip_rate_limit(client, settings):
+    """Repeated bootstrap attempts from the same IP are throttled with 429."""
+    settings.DISABLE_RATE_LIMITING_FOR_TESTS = False
+    settings.BOOTSTRAP_RL_PER_IP = 1
+    settings.BOOTSTRAP_RL_WINDOW_S = 60
+
+    order, token = _make_guest_order(email="rl_ip@test.com")
+    invalid_payload = {"password": "abc", "password_confirm": "xyz"}  # mismatch → 400, order not claimed
+
+    # First request: counter = 1 ≤ limit (1) → not yet throttled, fails at serializer
+    client.post(_bootstrap_url(order.id, token), data=invalid_payload, content_type="application/json")
+
+    # Second request: counter = 2 > limit (1) → 429
+    resp = client.post(_bootstrap_url(order.id, token), data=invalid_payload, content_type="application/json")
+    assert resp.status_code == 429
+    assert "Too many requests" in resp.json()["detail"]
+
+
+def test_bootstrap_protected_by_token_rate_limit(client, settings):
+    """Repeated bootstrap attempts with the same token are throttled with 429."""
+    settings.DISABLE_RATE_LIMITING_FOR_TESTS = False
+    settings.BOOTSTRAP_RL_PER_IP = 10000  # disable IP limit for this test
+    settings.BOOTSTRAP_RL_WINDOW_S = 60
+    settings.BOOTSTRAP_RL_PER_TOKEN = 1
+    settings.BOOTSTRAP_RL_TOKEN_WINDOW_S = 60
+
+    order, token = _make_guest_order(email="rl_tok@test.com")
+    invalid_payload = {"password": "abc", "password_confirm": "xyz"}  # mismatch → 400, order not claimed
+
+    # First request: token counter = 1 ≤ limit (1) → not yet throttled, fails at serializer
+    client.post(_bootstrap_url(order.id, token), data=invalid_payload, content_type="application/json")
+
+    # Second request: token counter = 2 > limit (1) → 429
+    resp = client.post(_bootstrap_url(order.id, token), data=invalid_payload, content_type="application/json")
+    assert resp.status_code == 429
+    assert "Too many requests" in resp.json()["detail"]
+
+
+def test_bootstrap_rate_limit_does_not_block_normal_request(client):
+    """A single valid bootstrap request is still 201 (rate limiting does not block normal use)."""
+    order, token = _make_guest_order(email="rl_ok@test.com")
+    resp = client.post(_bootstrap_url(order.id, token), data=_BOOTSTRAP_PAYLOAD, content_type="application/json")
+    assert resp.status_code == 201
+
+
+def test_guest_order_retrieve_not_affected_by_bootstrap_rate_limit(client, settings):
+    """Rate limiting on bootstrap does not affect the read-only guest order GET view."""
+    settings.DISABLE_RATE_LIMITING_FOR_TESTS = False
+    settings.BOOTSTRAP_RL_PER_IP = 1
+    settings.BOOTSTRAP_RL_WINDOW_S = 60
+
+    order, token = _make_guest_order(email="rl_get@test.com")
+    invalid_payload = {"password": "abc", "password_confirm": "xyz"}  # mismatch; order remains unclaimed
+
+    # Saturate the bootstrap IP limit (invalid payload so the order is never claimed)
+    client.post(_bootstrap_url(order.id, token), data=invalid_payload, content_type="application/json")
+    throttled = client.post(_bootstrap_url(order.id, token), data=invalid_payload, content_type="application/json")
+    assert throttled.status_code == 429
+
+    # GET (retrieve) should be completely unaffected — no rate limit on that view
+    resp = client.get(_GUEST_DETAIL_URL.format(order_id=order.id), {"token": token})
+    assert resp.status_code == 200
