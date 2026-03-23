@@ -129,6 +129,8 @@ class OrderResponseSerializer(serializers.Serializer):
     # Both include company / company_id / vat_id when present.
     shipping_address = serializers.SerializerMethodField()
     billing_address = serializers.SerializerMethodField()
+    # Contact email captured at checkout.
+    customer_email = serializers.CharField(read_only=True)
 
     def get_created_at(self, obj: Order) -> str | None:
         if obj.created_at:

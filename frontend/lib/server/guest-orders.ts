@@ -1,17 +1,7 @@
 import { apiFetch } from "@/lib/server-fetch";
+import type { BaseOrderDto } from "@/lib/api/orders";
 
-export type GuestOrderDto = {
-  id: number;
-  status: string;
-  items: Array<{
-    id: number;
-    product: number;
-    quantity: number;
-    unit_price: string;
-    line_total: string;
-    discount: null | { type: "FIXED" | "PERCENT"; value: string };
-  }>;
-  total: string;
+export type GuestOrderDto = BaseOrderDto & {
   /**
    * True when the order's contact email already belongs to a registered account.
    * Used by the guest order page to decide whether to show the "create account"

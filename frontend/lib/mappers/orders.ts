@@ -1,4 +1,8 @@
-import type { OrderDto, OrderItemDto } from "@/lib/api/orders";
+import type {
+  OrderItemDto,
+  AddressSnapshotDto,
+  BaseOrderDto,
+} from "@/lib/api/orders";
 import type {
   OrderViewModel,
   OrderItem,
@@ -24,14 +28,42 @@ const DEFAULT_SUPPLIER = {
 };
 
 const DEFAULT_CUSTOMER = {
-  name: "Customer (missing in API)",
+  name: "—",
   addressLine1: "—",
   city: "—",
   postalCode: "—",
   country: "—",
-  email: "—",
-  phone: "—",
 };
+
+const countryNames = new Intl.DisplayNames(["en"], { type: "region" });
+
+function resolveCountry(code: string): string {
+  if (!code) return "—";
+  try {
+    return countryNames.of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
+
+function mapAddressToCustomer(addr: AddressSnapshotDto, email?: string | null) {
+  return {
+    name:
+      addr.name ||
+      [addr.first_name, addr.last_name].filter(Boolean).join(" ") ||
+      "—",
+    addressLine1: addr.address_line1 || "—",
+    addressLine2: addr.address_line2 || undefined,
+    city: addr.city || "—",
+    postalCode: addr.postal_code || "—",
+    country: resolveCountry(addr.country),
+    company: addr.company || undefined,
+    companyId: addr.company_id || undefined,
+    vatId: addr.vat_id || undefined,
+    phone: addr.phone || undefined,
+    email: email || undefined,
+  };
+}
 
 function formatOrderNumber(orderId: number): string {
   // simple demo formatting; replace once backend provides real order number
@@ -97,7 +129,7 @@ function mapItem(dto: OrderItemDto): OrderItem {
   };
 }
 
-export function mapOrderToVm(dto: OrderDto): OrderViewModel {
+export function mapOrderToVm(dto: BaseOrderDto): OrderViewModel {
   const orderNumber = formatOrderNumber(dto.id);
 
   const vatBreakdown: VatBreakdownLine[] | null = dto.vat_breakdown
@@ -118,7 +150,12 @@ export function mapOrderToVm(dto: OrderDto): OrderViewModel {
       : new Date().toLocaleDateString(),
 
     supplier: DEFAULT_SUPPLIER,
-    customer: DEFAULT_CUSTOMER,
+    // billing_address is null when billing_same_as_shipping; fall back to shipping.
+    customer: dto.billing_address
+      ? mapAddressToCustomer(dto.billing_address, dto.customer_email)
+      : dto.shipping_address
+        ? mapAddressToCustomer(dto.shipping_address, dto.customer_email)
+        : DEFAULT_CUSTOMER,
 
     shippingMethod: "Standard (simulated)",
     paymentMethod: "Card (simulated)",

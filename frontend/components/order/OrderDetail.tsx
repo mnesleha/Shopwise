@@ -38,6 +38,9 @@ type CustomerInfo = {
   city: string;
   postalCode: string;
   country: string;
+  company?: string; // company name (B2B)
+  companyId?: string; // ICO
+  vatId?: string; // DIC / VAT number
   phone?: string;
   email?: string;
 };
@@ -196,9 +199,10 @@ function AddressBlock({
   info: SupplierInfo | CustomerInfo;
   showBankAccount?: boolean;
 }) {
-  const isSupplier =
-    "companyId" in info || "vatId" in info || "bankAccount" in info;
+  const isSupplier = "bankAccount" in info;
   const supplierInfo = info as SupplierInfo;
+  // Both SupplierInfo and CustomerInfo may carry company / companyId / vatId.
+  const anyInfo = info as SupplierInfo & CustomerInfo;
 
   return (
     <Card className="h-full">
@@ -225,12 +229,11 @@ function AddressBlock({
           </div>
         )}
 
-        {isSupplier && (supplierInfo.companyId || supplierInfo.vatId) && (
+        {(anyInfo.company || anyInfo.companyId || anyInfo.vatId) && (
           <div className="mt-2 text-muted-foreground">
-            {supplierInfo.companyId && (
-              <p>Company ID: {supplierInfo.companyId}</p>
-            )}
-            {supplierInfo.vatId && <p>VAT ID: {supplierInfo.vatId}</p>}
+            {anyInfo.company && <p>{anyInfo.company}</p>}
+            {anyInfo.companyId && <p>Company ID: {anyInfo.companyId}</p>}
+            {anyInfo.vatId && <p>VAT ID: {anyInfo.vatId}</p>}
           </div>
         )}
 

@@ -35,6 +35,22 @@ export type OrderItemDto = {
   };
 };
 
+export type AddressSnapshotDto = {
+  first_name: string;
+  last_name: string;
+  /** Combined full name — convenience field computed by the backend */
+  name: string;
+  address_line1: string;
+  address_line2: string;
+  city: string;
+  postal_code: string;
+  country: string;
+  phone: string;
+  company: string;
+  company_id: string;
+  vat_id: string;
+};
+
 export type BaseOrderDto = {
   id: number;
   status: string;
@@ -65,6 +81,15 @@ export type BaseOrderDto = {
   post_order_discount_total_tax?: string | null;
   /** Final gross total after all discounts. Aliases subtotal_gross (when populated). */
   post_order_discount_total_gross?: string | null;
+  /** Shipping address snapshot captured at checkout. */
+  shipping_address?: AddressSnapshotDto | null;
+  /**
+   * Billing address snapshot captured at checkout.
+   * Null when billing_same_as_shipping was true — caller should fall back to shipping_address.
+   */
+  billing_address?: AddressSnapshotDto | null;
+  /** Contact email captured at checkout. */
+  customer_email?: string | null;
 };
 
 export type OrderDto = BaseOrderDto;
