@@ -11,6 +11,7 @@ from products.models import Product
 from discounts.models import Discount
 from orders.models import Order
 from orderitems.models import OrderItem
+from suppliers.models import Supplier, SupplierAddress, SupplierPaymentDetails
 
 
 def checkout_payload(customer_email: str = "customer@example.com", **overrides) -> dict:
@@ -123,6 +124,56 @@ def print_mysql_db_identity(request, db):
 
 #     if use_mysql:
 #         os.environ["DJANGO_SETTINGS_MODULE"] = "settings.local"
+
+
+def make_default_supplier() -> Supplier:
+    """
+    Create a minimal but fully-valid supplier configuration for tests.
+
+    Returns the Supplier instance.  Callers can modify or delete it to test
+    edge-cases (e.g. missing default, multiple defaults).
+    """
+    supplier = Supplier.objects.create(
+        name="Test Supplier Ltd.",
+        company_id="TEST-001",
+        vat_id="CZ00000001",
+        email="supplier@testshop.example",
+        phone="+420000000001",
+        is_active=True,
+    )
+    SupplierAddress.objects.create(
+        supplier=supplier,
+        label="HQ",
+        street_line_1="Supplier Street 1",
+        city="Prague",
+        postal_code="11000",
+        country="CZ",
+        is_default_for_orders=True,
+    )
+    SupplierPaymentDetails.objects.create(
+        supplier=supplier,
+        label="Main account",
+        bank_name="Test Bank",
+        account_number="123456789/0100",
+        iban="CZ6508000000192000145399",
+        swift="GIBACZPX",
+        is_default_for_orders=True,
+    )
+    return supplier
+
+
+@pytest.fixture(autouse=True)
+def _default_supplier_config(db):
+    """
+    Autouse fixture: create a valid default supplier configuration for every
+    DB-touching test so that the checkout endpoint can resolve supplier
+    snapshot data without extra per-test setup.
+
+    Tests that explicitly test missing / broken supplier configuration should
+    call ``Supplier.objects.all().delete()`` or manipulate the supplier inside
+    their own test body — the data is rolled back at transaction cleanup.
+    """
+    make_default_supplier()
 
 
 @pytest.fixture

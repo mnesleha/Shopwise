@@ -131,6 +131,9 @@ class OrderResponseSerializer(serializers.Serializer):
     billing_address = serializers.SerializerMethodField()
     # Contact email captured at checkout.
     customer_email = serializers.CharField(read_only=True)
+    # Supplier snapshot — populated from stored order truth (immutable after order creation).
+    # Returns None for pre-supplier orders (orders created before this feature was deployed).
+    supplier = serializers.SerializerMethodField()
 
     def get_created_at(self, obj: Order) -> str | None:
         if obj.created_at:
@@ -355,4 +358,39 @@ class OrderResponseSerializer(serializers.Serializer):
             "company": obj.billing_company or "",
             "company_id": obj.billing_company_id or "",
             "vat_id": obj.billing_vat_id or "",
+        }
+
+    def get_supplier(self, obj: Order) -> dict | None:
+        """Return supplier snapshot from stored order truth.
+
+        Returns a structured supplier block for invoice / order detail rendering.
+        All fields are read from the order's immutable snapshot — they reflect
+        the supplier configuration at order creation time and do NOT change when
+        the supplier is later updated in Django admin.
+
+        Returns None for pre-supplier orders (orders created before this feature
+        was deployed) where no snapshot was captured.
+        """
+        # If no supplier name was snapshotted this is a pre-supplier order.
+        if not obj.supplier_name:
+            return None
+
+        return {
+            # Identity
+            "name": obj.supplier_name or "",
+            "company_id": obj.supplier_company_id or "",
+            "vat_id": obj.supplier_vat_id or "",
+            "email": obj.supplier_email or "",
+            "phone": obj.supplier_phone or "",
+            # Address
+            "street_line_1": obj.supplier_street_line_1 or "",
+            "street_line_2": obj.supplier_street_line_2 or "",
+            "city": obj.supplier_city or "",
+            "postal_code": obj.supplier_postal_code or "",
+            "country": obj.supplier_country or "",
+            # Payment
+            "bank_name": obj.supplier_bank_name or "",
+            "account_number": obj.supplier_account_number or "",
+            "iban": obj.supplier_iban or "",
+            "swift": obj.supplier_swift or "",
         }

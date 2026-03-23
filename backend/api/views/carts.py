@@ -69,6 +69,7 @@ from api.services.campaign_offer_session import (
     clear_campaign_offer_cookie as _clear_campaign_offer_cookie,
 )
 from django_q.tasks import async_task
+from suppliers.services import resolve_order_supplier_snapshot
 
 from notifications.enqueue import enqueue_best_effort
 
@@ -987,6 +988,12 @@ Notes:
                 if not cart.items.exists():
                     raise CartEmptyException()
 
+                # Resolve supplier configuration before creating the order.
+                # This raises SupplierConfigurationError (HTTP 503) when the
+                # required supplier setup is missing or ambiguous, preventing
+                # order creation with incomplete supplier truth.
+                supplier_snap = resolve_order_supplier_snapshot()
+
                 order = Order(
                     user=request.user if request.user.is_authenticated else None,
                     customer_email=checkout_data["customer_email"],
@@ -1020,6 +1027,21 @@ Notes:
                     billing_company=checkout_data.get("billing_company") or None,
                     billing_company_id=checkout_data.get("billing_company_id") or None,
                     billing_vat_id=checkout_data.get("billing_vat_id") or None,
+                    # Supplier snapshot — immutable truth captured at checkout time.
+                    supplier_name=supplier_snap.name,
+                    supplier_company_id=supplier_snap.company_id,
+                    supplier_vat_id=supplier_snap.vat_id,
+                    supplier_email=supplier_snap.email,
+                    supplier_phone=supplier_snap.phone,
+                    supplier_street_line_1=supplier_snap.street_line_1,
+                    supplier_street_line_2=supplier_snap.street_line_2,
+                    supplier_city=supplier_snap.city,
+                    supplier_postal_code=supplier_snap.postal_code,
+                    supplier_country=supplier_snap.country,
+                    supplier_bank_name=supplier_snap.bank_name,
+                    supplier_account_number=supplier_snap.account_number,
+                    supplier_iban=supplier_snap.iban,
+                    supplier_swift=supplier_snap.swift,
                 )
                 try:
                     order.full_clean()

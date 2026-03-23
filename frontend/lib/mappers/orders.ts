@@ -2,6 +2,7 @@ import type {
   OrderItemDto,
   AddressSnapshotDto,
   BaseOrderDto,
+  SupplierSnapshotDto,
 } from "@/lib/api/orders";
 import type {
   OrderViewModel,
@@ -102,6 +103,27 @@ function buildDiscountNote(dto: OrderItemDto): string | null {
   return `Line discount: ${effectivePct}%`;
 }
 
+function mapSupplierSnapshot(s: SupplierSnapshotDto) {
+  return {
+    name: s.name || "—",
+    addressLine1: s.street_line_1 || "—",
+    addressLine2: s.street_line_2 || undefined,
+    city: s.city || "—",
+    postalCode: s.postal_code || "—",
+    country: resolveCountry(s.country),
+    companyId: s.company_id || undefined,
+    vatId: s.vat_id || undefined,
+    email: s.email || undefined,
+    phone: s.phone || undefined,
+    bankAccount: {
+      bankName: s.bank_name || undefined,
+      accountNumber: s.account_number || undefined,
+      iban: s.iban || undefined,
+      swift: s.swift || undefined,
+    },
+  };
+}
+
 function mapItem(dto: OrderItemDto): OrderItem {
   return {
     id: String(dto.id),
@@ -149,7 +171,9 @@ export function mapOrderToVm(dto: BaseOrderDto): OrderViewModel {
       ? new Date(dto.created_at).toLocaleDateString()
       : new Date().toLocaleDateString(),
 
-    supplier: DEFAULT_SUPPLIER,
+    supplier: dto.supplier
+      ? mapSupplierSnapshot(dto.supplier)
+      : DEFAULT_SUPPLIER,
     // billing_address is null when billing_same_as_shipping; fall back to shipping.
     customer: dto.billing_address
       ? mapAddressToCustomer(dto.billing_address, dto.customer_email)
