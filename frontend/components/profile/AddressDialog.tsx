@@ -41,6 +41,7 @@ export function AddressDialog({ open, onOpenChange, initial, onSaved }: Props) {
       postal_code: (data.get("postal_code") as string).trim(),
       country: (data.get("country") as string).trim(),
       company: (data.get("company") as string).trim(),
+      company_id: (data.get("company_id") as string).trim(),
       vat_id: (data.get("vat_id") as string).trim(),
       phone: (data.get("phone") as string).trim(),
     };
@@ -100,6 +101,11 @@ export function AddressDialog({ open, onOpenChange, initial, onSaved }: Props) {
             label="Company (optional)"
             id="company"
             defaultValue={initial?.company ?? ""}
+          />
+          <Field
+            label="Company ID (optional)"
+            id="company_id"
+            defaultValue={initial?.company_id ?? ""}
           />
           <Field
             label="Street"
