@@ -30,6 +30,12 @@ interface CountryPickerProps {
   /** Hidden input name — used by FormData on submit. */
   name: string;
   defaultValue?: string;
+  /**
+   * Called with the ISO 3166-1 alpha-2 code whenever the selection changes.
+   * Use this for controlled-state forms (e.g. CheckoutForm) where the parent
+   * tracks values explicitly rather than reading them from FormData.
+   */
+  onChange?: (value: string) => void;
 }
 
 /**
@@ -37,9 +43,19 @@ interface CountryPickerProps {
  * `new FormData(form)` picks up the ISO code without any controlled state in
  * the parent — consistent with the ADR-034 pattern used across all address forms.
  */
-export function CountryPicker({ name, defaultValue = "" }: CountryPickerProps) {
+export function CountryPicker({
+  name,
+  defaultValue = "",
+  onChange,
+}: CountryPickerProps) {
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState(defaultValue);
+
+  const handleSelect = (code: string) => {
+    setValue(code);
+    onChange?.(code);
+    setOpen(false);
+  };
 
   return (
     <>
@@ -69,10 +85,7 @@ export function CountryPicker({ name, defaultValue = "" }: CountryPickerProps) {
                 <CommandItem
                   key={option.value}
                   value={option.label}
-                  onSelect={() => {
-                    setValue(option.value);
-                    setOpen(false);
-                  }}
+                  onSelect={() => handleSelect(option.value)}
                 >
                   <Check
                     className={cn(

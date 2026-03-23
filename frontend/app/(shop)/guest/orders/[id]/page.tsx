@@ -1,4 +1,5 @@
 import OrderDetailClient from "@/components/order/OrderDetailClient";
+import GuestAccountBootstrapBanner from "@/components/order/GuestAccountBootstrapBanner";
 import { mapOrderToVm } from "@/lib/mappers/orders";
 import { getGuestOrderServer } from "@/lib/server/guest-orders";
 
@@ -31,6 +32,12 @@ export default async function GuestOrderPage({
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Account bootstrap / existing-account CTA */}
+      <GuestAccountBootstrapBanner
+        orderId={dto.id}
+        token={token}
+        emailAccountExists={dto.email_account_exists}
+      />
       <OrderDetailClient order={vm} />
     </div>
   );

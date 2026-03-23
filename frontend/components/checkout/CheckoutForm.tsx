@@ -26,6 +26,7 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CheckoutPriceChangeBanner } from "@/components/checkout/CheckoutPriceChangeBanner";
+import { CountryPicker } from "@/components/ui/country-picker";
 import type { PriceChangePayload } from "@/lib/api/checkout";
 
 // Types
@@ -569,15 +570,10 @@ function DetailsStep({
               required
               error={errors.shipping_country}
             >
-              <Input
-                id="shipping_country"
+              <CountryPicker
                 name="shipping_country"
-                type="text"
-                placeholder="United States"
                 defaultValue={values.shipping_country}
-                onChange={(e) => onChange("shipping_country", e.target.value)}
-                aria-invalid={!!errors.shipping_country}
-                ref={getInputRef("shipping_country")}
+                onChange={(code) => onChange("shipping_country", code)}
               />
             </FormField>
             <FormField
@@ -780,15 +776,10 @@ function DetailsStep({
                 required
                 error={errors.billing_country}
               >
-                <Input
-                  id="billing_country"
+                <CountryPicker
                   name="billing_country"
-                  type="text"
-                  placeholder="United States"
                   defaultValue={values.billing_country}
-                  onChange={(e) => onChange("billing_country", e.target.value)}
-                  aria-invalid={!!errors.billing_country}
-                  ref={getInputRef("billing_country")}
+                  onChange={(code) => onChange("billing_country", code)}
                 />
               </FormField>
               <FormField

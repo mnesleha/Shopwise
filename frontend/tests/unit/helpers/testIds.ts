@@ -49,3 +49,10 @@ export const VAT_BREAKDOWN_ORDER_DISCOUNT_NOTE =
   "vat-breakdown-order-discount-note";
 /** Returns the testid for a specific VAT rate row, e.g. vatBreakdownRow("10.00") */
 export const vatBreakdownRow = (rate: string) => `vat-row-${rate}`;
+
+// ── Guest account bootstrap banner ────────────────────────────────────────────
+export const GUEST_BOOTSTRAP_BANNER = "guest-bootstrap-banner";
+export const GUEST_BOOTSTRAP_EXISTING_ACCOUNT =
+  "guest-bootstrap-existing-account";
+export const GUEST_BOOTSTRAP_FORM = "guest-bootstrap-form";
+export const GUEST_BOOTSTRAP_SUBMIT = "guest-bootstrap-submit";
