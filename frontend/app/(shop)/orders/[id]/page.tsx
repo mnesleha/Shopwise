@@ -5,7 +5,11 @@ import Link from "next/link";
 
 type Params = { id: string };
 
-export default async function OrderDetailPage({ params }: { params: Promise<Params> }) {
+export default async function OrderDetailPage({
+  params,
+}: {
+  params: Promise<Params>;
+}) {
   const { id } = await params;
 
   let dto;
@@ -61,4 +65,3 @@ export default async function OrderDetailPage({ params }: { params: Promise<Para
     </div>
   );
 }
-
