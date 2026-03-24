@@ -301,3 +301,71 @@ def test_order_service_failure_still_works_after_delegation():
     assert payment.failed_at is not None
     order.refresh_from_db()
     assert order.status == Order.Status.PAYMENT_FAILED
+
+
+# ---------------------------------------------------------------------------
+# Corrective fixes (PR1 review follow-up)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_apply_result_persists_provider_payment_id_when_present():
+    """provider_payment_id from ProviderStartResult is saved onto the Payment."""
+    user = User.objects.create_user(email="corr1@example.com", password="pass")
+    order = create_valid_order(user=user)
+    payment = Payment.objects.create(
+        order=order, status=Payment.Status.PENDING, provider=Payment.Provider.DEV_FAKE
+    )
+
+    result = ProviderStartResult(success=True, provider_payment_id="ext-txn-999")
+    apply_provider_result(payment=payment, order=order, provider_result=result)
+    payment.refresh_from_db()
+
+    assert payment.provider_payment_id == "ext-txn-999"
+
+
+@pytest.mark.django_db
+def test_apply_result_provider_payment_id_stays_null_when_absent():
+    """provider_payment_id remains null when ProviderStartResult does not supply one."""
+    user = User.objects.create_user(email="corr2@example.com", password="pass")
+    order = create_valid_order(user=user)
+    payment = Payment.objects.create(
+        order=order, status=Payment.Status.PENDING, provider=Payment.Provider.DEV_FAKE
+    )
+
+    result = ProviderStartResult(success=True)  # no provider_payment_id
+    apply_provider_result(payment=payment, order=order, provider_result=result)
+    payment.refresh_from_db()
+
+    assert payment.provider_payment_id is None
+
+
+@pytest.mark.django_db
+def test_apply_result_success_order_paid_is_owned_by_commit_reservations():
+    """commit_reservations_for_paid is always called exactly once on the success path.
+
+    When it is a no-op (e.g. no reservations), the applier's own fallback
+    conditional save ensures the order reaches PAID status.  This test patches
+    commit_reservations as a no-op and verifies: (a) it is called, (b) payment
+    reaches SUCCESS.
+    """
+    user = User.objects.create_user(email="corr3@example.com", password="pass")
+    order = create_valid_order(user=user)
+    payment = Payment.objects.create(
+        order=order, status=Payment.Status.PENDING, provider=Payment.Provider.DEV_FAKE
+    )
+
+    with patch(
+        "payments.services.payment_result_applier.commit_reservations_for_paid",
+        wraps=lambda **kwargs: None,  # no-op but track that it was called
+    ) as mock_commit:
+        result = ProviderStartResult(success=True)
+        apply_provider_result(payment=payment, order=order, provider_result=result)
+
+    # commit_reservations_for_paid must be called exactly once
+    mock_commit.assert_called_once_with(order=order)
+
+    # After applying the result, payment is SUCCESS
+    payment.refresh_from_db()
+    assert payment.status == Payment.Status.SUCCESS
+

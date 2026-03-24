@@ -34,10 +34,22 @@ def apply_provider_result(
     if provider_result.success:
         payment.status = Payment.Status.SUCCESS
         payment.paid_at = timezone.now()
-        payment.save(update_fields=["status", "paid_at"])
+        success_fields = ["status", "paid_at"]
 
+        if provider_result.provider_payment_id:
+            payment.provider_payment_id = provider_result.provider_payment_id
+            success_fields.append("provider_payment_id")
+
+        payment.save(update_fields=success_fields)
+
+        # commit_reservations_for_paid decrements stock, commits reservations,
+        # and sets order.status = PAID (in-memory and persisted) when the order
+        # has active reservations.  For orders without reservations (rare but
+        # valid — e.g. all-digital goods), it returns early without touching the
+        # order status, so we handle that case with an explicit fallback save.
+        # No refresh_from_db() needed: commit_reservations_for_paid mutates the
+        # order object in-memory when it does set the status.
         commit_reservations_for_paid(order=order)
-        order.refresh_from_db()
         if order.status != Order.Status.PAID:
             order.status = Order.Status.PAID
             order.save(update_fields=["status"])
