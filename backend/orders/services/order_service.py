@@ -2,13 +2,10 @@ from django.db import transaction
 from django.utils import timezone
 
 from api.exceptions.orders import InvalidOrderStateException
-from api.exceptions.payment import PaymentAlreadyExistsException, OrderNotPayableException
 from orders.models import Order, InventoryReservation
-from orders.services.inventory_reservation_service import (
-    commit_reservations_for_paid,
-    release_reservations
-)
+from orders.services.inventory_reservation_service import release_reservations
 from payments.models import Payment
+from payments.services.payment_orchestration import PaymentOrchestrationService
 from auditlog.actions import AuditActions
 from auditlog.models import AuditEvent
 from auditlog.services import AuditService
@@ -42,63 +39,20 @@ class OrderService:
     ) -> Payment:
         """Create a new payment attempt for an order and apply its result.
 
+        Delegates to PaymentOrchestrationService.  The ``result`` string
+        ("success" / "fail") is forwarded as DEV_FAKE extra context.
+
         Note:
             ``actor_user`` is reserved for future auditing/authorization.
         """
-        with transaction.atomic():
-            order = (
-                Order.objects.select_for_update()
-                .filter(id=order.id)
-                .first()
-            )
-            if not order:
-                raise OrderNotPayableException()
+        if result not in ("success", "fail"):
+            raise ValueError(f"Invalid payment result: {result!r}")
 
-            status_map = {
-                "success": Payment.Status.SUCCESS,
-                "fail": Payment.Status.FAILED,
-            }
-
-            if result not in status_map:
-                # Defensive guard: serializer should validate this, but service layer
-                # must never rely on API validation.
-                raise ValueError(f"Invalid payment result: {result!r}")
-
-            # If a SUCCESS payment already exists, block any further attempts.
-            # This must take precedence over order status checks to return the expected error code.
-            if Payment.objects.filter(
-                order=order,
-                status=Payment.Status.SUCCESS,
-            ).exists():
-                raise PaymentAlreadyExistsException()
-
-            # Payable states: CREATED (first attempt) or PAYMENT_FAILED (retry).
-            if order.status not in (Order.Status.CREATED, Order.Status.PAYMENT_FAILED):
-                raise OrderNotPayableException()
-
-            payment = Payment.objects.create(
-                order=order,
-                status=status_map[result],
-                provider=Payment.Provider.DEV_FAKE,
-            )
-
-            if payment.status == Payment.Status.SUCCESS:
-                payment.paid_at = timezone.now()
-                payment.save(update_fields=["paid_at"])
-                commit_reservations_for_paid(order=order)
-                order.refresh_from_db()
-                if order.status != Order.Status.PAID:
-                    order.status = Order.Status.PAID
-                    order.save(update_fields=["status"])
-            else:
-                payment.failed_at = timezone.now()
-                payment.failure_reason = "Simulated payment failure"
-                payment.save(update_fields=["failed_at", "failure_reason"])
-                order.status = Order.Status.PAYMENT_FAILED
-                order.cancel_reason = Order.CancelReason.PAYMENT_FAILED
-                order.save(update_fields=["status", "cancel_reason"])
-
-            return payment
+        return PaymentOrchestrationService.start_payment(
+            order=order,
+            payment_method=None,  # legacy callers don't specify a method
+            extra={"simulated_result": result},
+        )
 
     @staticmethod
     def ship_by_admin(order: Order, actor_user) -> Order:
