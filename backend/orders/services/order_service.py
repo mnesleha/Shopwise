@@ -79,15 +79,21 @@ class OrderService:
             payment = Payment.objects.create(
                 order=order,
                 status=status_map[result],
+                provider=Payment.Provider.DEV_FAKE,
             )
 
             if payment.status == Payment.Status.SUCCESS:
+                payment.paid_at = timezone.now()
+                payment.save(update_fields=["paid_at"])
                 commit_reservations_for_paid(order=order)
                 order.refresh_from_db()
                 if order.status != Order.Status.PAID:
                     order.status = Order.Status.PAID
                     order.save(update_fields=["status"])
             else:
+                payment.failed_at = timezone.now()
+                payment.failure_reason = "Simulated payment failure"
+                payment.save(update_fields=["failed_at", "failure_reason"])
                 order.status = Order.Status.PAYMENT_FAILED
                 order.cancel_reason = Order.CancelReason.PAYMENT_FAILED
                 order.save(update_fields=["status", "cancel_reason"])
