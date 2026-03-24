@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "auditlog",
     "carts",
     "notifications",
+    "suppliers",
     "utils",
     'django_filters',
     'drf_spectacular',

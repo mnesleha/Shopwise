@@ -35,6 +35,26 @@ export type OrderItemDto = {
   };
 };
 
+export type SupplierSnapshotDto = {
+  // Identity
+  name: string;
+  company_id: string;
+  vat_id: string;
+  email: string;
+  phone: string;
+  // Address
+  street_line_1: string;
+  street_line_2: string;
+  city: string;
+  postal_code: string;
+  country: string;
+  // Payment
+  bank_name: string;
+  account_number: string;
+  iban: string;
+  swift: string;
+};
+
 export type AddressSnapshotDto = {
   first_name: string;
   last_name: string;
@@ -90,6 +110,11 @@ export type BaseOrderDto = {
   billing_address?: AddressSnapshotDto | null;
   /** Contact email captured at checkout. */
   customer_email?: string | null;
+  /**
+   * Supplier snapshot captured at order creation time.
+   * Null for pre-supplier orders (created before the supplier feature was deployed).
+   */
+  supplier?: SupplierSnapshotDto | null;
 };
 
 export type OrderDto = BaseOrderDto;

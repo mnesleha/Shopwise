@@ -185,6 +185,34 @@ class Order(models.Model):
         help_text="ISO 4217 currency code for all monetary snapshot fields on this order.",
     )
 
+    # ------------------------------------------------------------------
+    # Supplier snapshot fields — persisted at order creation time.
+    # Captures the active supplier configuration as immutable order truth.
+    # Historical orders keep the supplier data that was valid when the
+    # order was created; later admin changes do NOT affect these fields.
+    # Fields are nullable to allow safe migration of pre-supplier orders.
+    # ------------------------------------------------------------------
+
+    # Supplier identity snapshot
+    supplier_name = models.CharField(max_length=255, null=True, blank=True)
+    supplier_company_id = models.CharField(max_length=64, null=True, blank=True)
+    supplier_vat_id = models.CharField(max_length=64, null=True, blank=True)
+    supplier_email = models.EmailField(null=True, blank=True)
+    supplier_phone = models.CharField(max_length=64, null=True, blank=True)
+
+    # Supplier address snapshot
+    supplier_street_line_1 = models.CharField(max_length=255, null=True, blank=True)
+    supplier_street_line_2 = models.CharField(max_length=255, null=True, blank=True)
+    supplier_city = models.CharField(max_length=255, null=True, blank=True)
+    supplier_postal_code = models.CharField(max_length=64, null=True, blank=True)
+    supplier_country = models.CharField(max_length=64, null=True, blank=True)
+
+    # Supplier payment snapshot
+    supplier_bank_name = models.CharField(max_length=255, null=True, blank=True)
+    supplier_account_number = models.CharField(max_length=64, null=True, blank=True)
+    supplier_iban = models.CharField(max_length=64, null=True, blank=True)
+    supplier_swift = models.CharField(max_length=32, null=True, blank=True)
+
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
