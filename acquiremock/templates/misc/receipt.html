@@ -1,0 +1,165 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Receipt</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #F2F3F5;
+            padding: 40px 20px;
+            margin: 0;
+        }
+
+        .receipt-container {
+            max-width: 420px;
+            margin: 0 auto;
+            background: #FFFFFF;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+            position: relative;
+        }
+
+        .top-accent {
+            height: 8px;
+            background: linear-gradient(135deg, #C1666B 0%, #A54E53 100%);
+            width: 100%;
+        }
+
+        .header {
+            padding: 40px 40px 20px;
+            text-align: center;
+        }
+
+        .brand {
+            font-size: 14px;
+            font-weight: 700;
+            color: #858585;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .amount-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #C1666B;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .amount {
+            font-family: 'Playfair Display', serif;
+            font-size: 48px;
+            font-weight: 700;
+            margin: 0;
+            color: #1A1A1A;
+            line-height: 1;
+        }
+
+        .status-badge {
+            display: inline-block;
+            margin-top: 24px;
+            padding: 8px 16px;
+            background: #F7F7F9;
+            color: #1A1A1A;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .divider {
+            border-bottom: 1px dashed #E0E0E0;
+            margin: 20px 40px;
+        }
+
+        .content {
+            padding: 10px 40px 40px;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            align-items: baseline;
+        }
+
+        .row:last-child { margin-bottom: 0; }
+
+        .label {
+            color: #858585;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .value {
+            color: #1A1A1A;
+            font-weight: 600;
+            font-size: 14px;
+            text-align: right;
+        }
+
+        .value.ref {
+            font-family: 'Playfair Display', serif;
+            color: #D4B483;
+            font-size: 16px;
+        }
+
+        .footer {
+            background: #FAFAFA;
+            padding: 24px;
+            text-align: center;
+            color: #A0A0A0;
+            font-size: 11px;
+            border-top: 1px solid #F0F0F0;
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <div class="top-accent"></div>
+
+        <div class="header">
+            <div class="brand">AcquireMock</div>
+            <span class="amount-label">Paid Amount</span>
+            <div class="amount">{{ amount }} {{ currency_symbol }}</div>
+            <div class="status-badge">Success</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="content">
+            <div class="row">
+                <span class="label">Date</span>
+                <span class="value">{{ date }}</span>
+            </div>
+            <div class="row">
+                <span class="label">Reference</span>
+                <span class="value ref">#{{ reference }}</span>
+            </div>
+            <div class="row">
+                <span class="label">Card</span>
+                <span class="value">{{ card_mask }}</span>
+            </div>
+            <div class="row">
+                <span class="label">Payment ID</span>
+                <span class="value" style="font-family: monospace; font-size: 12px;">{{ payment_id }}</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            Thank you for your payment!<br>
+            Keep this receipt for your records.
+        </div>
+    </div>
+</body>
+</html>
