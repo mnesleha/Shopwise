@@ -7,6 +7,7 @@ from api.views.orders import OrderViewSet
 from api.views.discounts import DiscountViewSet
 from api.views.carts import CartView, CartItemCreateView, CartItemDetailView
 from api.views.payments import PaymentCreateView
+from api.views.webhooks import AcquireMockWebhookView
 from api.views.auth import (
     LoginView,
     LogoutView,
@@ -84,6 +85,7 @@ urlpatterns = [
     path("cart/checkout/", CartCheckoutView.as_view()),
     path("cart/merge/", CartMergeView.as_view(), name="cart-merge"),
     path("payments/", PaymentCreateView.as_view(), name="payment-create"),
+    path("webhooks/acquiremock/", AcquireMockWebhookView.as_view(), name="webhook-acquiremock"),
     path("auth/register/", RegisterView.as_view(), name="auth-register"),
     path("auth/login/", LoginView.as_view(), name="auth-login"),
     path("auth/logout/", LogoutView.as_view(), name="auth-logout"),

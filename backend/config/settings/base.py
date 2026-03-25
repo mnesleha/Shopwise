@@ -404,3 +404,6 @@ CHECKOUT_PRICE_CHANGE_WARNING_THRESHOLD_PERCENT: int = int(
 ACQUIREMOCK_BASE_URL: str = os.getenv("ACQUIREMOCK_BASE_URL", "")
 ACQUIREMOCK_API_KEY: str = os.getenv("ACQUIREMOCK_API_KEY", "")
 ACQUIREMOCK_TIMEOUT: int = int(os.getenv("ACQUIREMOCK_TIMEOUT", 10))
+# Shared secret used to verify HMAC-SHA256 webhook signatures from AcquireMock.
+# Must match the secret configured in the AcquireMock dashboard/environment.
+ACQUIREMOCK_WEBHOOK_SECRET: str = os.getenv("ACQUIREMOCK_WEBHOOK_SECRET", "")
