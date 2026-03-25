@@ -26,7 +26,7 @@ vi.mock("@/lib/api/orders", () => ({
   getOrder: (...args: unknown[]) => mockGetOrder(...args),
 }));
 
-const mockLoadAndClear = vi.fn<[], PaymentReturnContext | null>();
+const mockLoadAndClear = vi.fn<() => PaymentReturnContext | null>();
 
 vi.mock("@/lib/utils/paymentReturn", () => ({
   loadAndClearPaymentReturnContext: () => mockLoadAndClear(),

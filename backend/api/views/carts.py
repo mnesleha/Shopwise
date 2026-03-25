@@ -1283,7 +1283,10 @@ Notes:
         payment = PaymentOrchestrationService.start_payment(
             order=order,
             payment_method=checkout_data["payment_method"],
-            extra={"return_url": getattr(settings, "FRONTEND_RETURN_URL", "")},
+            extra={
+                "return_url": getattr(settings, "FRONTEND_RETURN_URL", ""),
+                "webhook_url": request.build_absolute_uri("/api/v1/webhooks/acquiremock/"),
+            },
         )
 
         # ── Optional: save checkout addresses to the user's profile ─────────

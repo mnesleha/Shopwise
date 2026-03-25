@@ -10,6 +10,7 @@ GUEST_ACCESS_TOKEN_PEPPER = "test-pepper"
 PUBLIC_BASE_URL = "http://192.168.1.106:8000"
 # Frontend base URL used in password-reset emails during tests.
 FRONTEND_BASE_URL = "http://localhost:3000"
+FRONTEND_RETURN_URL = "http://localhost:3000/checkout/payment/return"
 
 ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1", "192.168.1.106"]
 

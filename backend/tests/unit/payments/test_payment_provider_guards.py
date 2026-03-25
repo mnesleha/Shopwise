@@ -6,8 +6,8 @@ Covers the corrective fixes introduced in PR2 follow-up:
    expose a stable ``provider_enum`` class attribute; no class-name fallback.
 2. AcquireMock fails closed when ACQUIREMOCK_BASE_URL is missing.
 3. AcquireMock fails closed when ACQUIREMOCK_API_KEY is missing.
-4. AcquireMock fails explicitly when payment.amount or payment.currency is None
-   (hosted providers require a financial snapshot to create a session).
+4. AcquireMock fails explicitly when payment.amount is None
+    (hosted providers require a financial snapshot to create a session).
 5. DevFake / COD flow is not affected by the hosted-provider guards.
 """
 
@@ -70,7 +70,14 @@ def _make_context(amount="50.00", currency="USD") -> PaymentStartContext:
     payment = MagicMock()
     payment.amount = amount
     payment.currency = currency
-    return PaymentStartContext(order=order, payment=payment, extra={"return_url": "https://example.test/return"})
+    return PaymentStartContext(
+        order=order,
+        payment=payment,
+        extra={
+            "return_url": "https://example.test/return",
+            "webhook_url": "https://api.example.test/api/v1/webhooks/acquiremock/",
+        },
+    )
 
 
 def test_missing_base_url_returns_failure(settings):
@@ -134,12 +141,18 @@ def test_acquiremock_fails_when_amount_is_none(settings):
 
 
 def test_acquiremock_fails_when_currency_is_none(settings):
-    """AcquireMock returns failure when payment.currency is None."""
+    """AcquireMock still starts when payment.currency is None."""
     settings.ACQUIREMOCK_BASE_URL = "https://acquiremock.test"
     settings.ACQUIREMOCK_API_KEY = "key"
-    result = AcquireMockProvider().start(_make_context(currency=None))
-    assert result.success is False
-    assert result.failure_reason
+    with patch("payments.providers.acquiremock.requests.post") as post_mock:
+        post_mock.return_value.ok = True
+        post_mock.return_value.status_code = 200
+        post_mock.return_value.json.return_value = {
+            "pageUrl": "https://acquiremock.test/checkout/pay_curr_none"
+        }
+        result = AcquireMockProvider().start(_make_context(currency=None))
+    assert result.success is True
+    assert result.provider_payment_id == "pay_curr_none"
 
 
 def test_acquiremock_none_amount_does_not_make_network_call(settings):

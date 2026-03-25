@@ -25,7 +25,7 @@ from payments.models import Payment
 from tests.conftest import checkout_payload
 
 CHECKOUT_URL = "/api/v1/cart/checkout/"
-_ACQUIREMOCK_REDIRECT = "https://acquiremock.test/pay/test_session_001"
+_ACQUIREMOCK_REDIRECT = "https://acquiremock.test/checkout/pay_test_001"
 _ACQUIREMOCK_PAYMENT_ID = "pay_test_001"
 
 
@@ -55,11 +55,10 @@ def _mock_acquiremock_success(payment_id: str = _ACQUIREMOCK_PAYMENT_ID,
                               redirect_url: str = _ACQUIREMOCK_REDIRECT) -> MagicMock:
     """Return a mock requests.Response that simulates successful AcquireMock invoice creation."""
     mock_resp = MagicMock()
-    mock_resp.status_code = 201
+    mock_resp.status_code = 200
     mock_resp.ok = True
     mock_resp.json.return_value = {
-        "id": payment_id,
-        "redirect_url": redirect_url,
+        "pageUrl": redirect_url,
     }
     return mock_resp
 
@@ -425,12 +424,33 @@ def test_card_checkout_provider_payment_id_persisted_on_pending_payment(client, 
     settings.ACQUIREMOCK_API_KEY = "test-key"
     _add_product_to_cart(client)
     with patch("payments.providers.acquiremock.requests.post",
-               return_value=_mock_acquiremock_success(payment_id=_ACQUIREMOCK_PAYMENT_ID)):
+               return_value=_mock_acquiremock_success(redirect_url=_ACQUIREMOCK_REDIRECT)):
         response = client.post(CHECKOUT_URL, checkout_payload(payment_method="CARD"), format="json")
     order = Order.objects.get(id=response.json()["id"])
     payment = Payment.objects.get(order=order)
     assert payment.provider_payment_id == _ACQUIREMOCK_PAYMENT_ID
     assert payment.status == Payment.Status.PENDING
+
+
+@pytest.mark.django_db
+def test_card_checkout_sends_acquiremock_contract_body(client, settings):
+    """CARD checkout sends the current AcquireMock invoice contract."""
+    settings.ACQUIREMOCK_BASE_URL = "https://acquiremock.test"
+    settings.ACQUIREMOCK_API_KEY = "test-key"
+    _add_product_to_cart(client)
+    with patch("payments.providers.acquiremock.requests.post",
+               return_value=_mock_acquiremock_success()) as post_mock:
+        response = client.post(CHECKOUT_URL, checkout_payload(payment_method="CARD"), format="json")
+
+    assert response.status_code == 201
+    _, kwargs = post_mock.call_args
+    order = Order.objects.get(id=response.json()["id"])
+    payment = Payment.objects.get(order=order)
+    assert post_mock.call_args.args[0] == "https://acquiremock.test/api/create-invoice"
+    assert kwargs["json"]["amount"] == int(payment.amount * 100)
+    assert kwargs["json"]["reference"] == str(response.json()["id"])
+    assert kwargs["json"]["redirectUrl"] == settings.FRONTEND_RETURN_URL
+    assert kwargs["json"]["webhookUrl"].endswith("/api/v1/webhooks/acquiremock/")
 
 
 @pytest.mark.django_db
