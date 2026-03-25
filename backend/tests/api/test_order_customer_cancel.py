@@ -2,6 +2,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from orders.models import Order, InventoryReservation
+from orders.services.inventory_reservation_service import reserve_for_checkout
 from products.models import Product
 from tests.conftest import checkout_payload, create_valid_order
 
@@ -15,24 +16,16 @@ def test_customer_can_cancel_created_order(auth_client, user):
         is_active=True,
     )
 
-    # add to cart
-    auth_client.get("/api/v1/cart/")
-    auth_client.post(
-        "/api/v1/cart/items/",
-        {"product_id": product.id, "quantity": 2},
-        format="json",
+    # Create order + reservation directly (bypassing checkout auto-payment)
+    # so the order starts in CREATED state with an ACTIVE reservation.
+    order = create_valid_order(user=user, customer_email=user.email)
+    reserve_for_checkout(
+        order=order,
+        items=[{"product_id": product.id, "quantity": 2}],
     )
+    order_id = order.id
 
-    # checkout -> CREATED order + ACTIVE reservation
-    checkout_resp = auth_client.post(
-        "/api/v1/cart/checkout/",
-        checkout_payload(customer_email=user.email),
-        format="json",
-    )
-    assert checkout_resp.status_code == 201
-    order_id = checkout_resp.json()["id"]
-
-    # sanity check: reservation exists
+    # sanity check: reservation is ACTIVE (no payment was processed)
     r = InventoryReservation.objects.get(order_id=order_id, product=product)
     assert r.status == InventoryReservation.Status.ACTIVE
 
@@ -72,7 +65,7 @@ def test_customer_cannot_cancel_paid_order(auth_client, user):
         is_active=True,
     )
 
-    # checkout
+    # checkout with COD -> auto-payment marks order as PAID immediately
     auth_client.get("/api/v1/cart/")
     auth_client.post(
         "/api/v1/cart/items/",
@@ -84,17 +77,10 @@ def test_customer_cannot_cancel_paid_order(auth_client, user):
         checkout_payload(customer_email=user.email),
         format="json",
     )
+    assert checkout_resp.status_code == 201
     order_id = checkout_resp.json()["id"]
 
-    # payment success -> PAID
-    pay_resp = auth_client.post(
-        "/api/v1/payments/",
-        {"order_id": order_id, "result": "success"},
-        format="json",
-    )
-    assert pay_resp.status_code == 201
-
-    # attempt cancel
+    # order is already PAID via COD; attempting cancel must fail
     cancel_resp = auth_client.post(
         f"/api/v1/orders/{order_id}/cancel/",
         format="json",
@@ -115,18 +101,13 @@ def test_customer_cancel_is_not_idempotent_and_fails_on_second_call(auth_client,
         is_active=True,
     )
 
-    auth_client.get("/api/v1/cart/")
-    auth_client.post(
-        "/api/v1/cart/items/",
-        {"product_id": product.id, "quantity": 1},
-        format="json",
+    # Create order + reservation directly so order starts in CREATED state.
+    order = create_valid_order(user=user, customer_email=user.email)
+    reserve_for_checkout(
+        order=order,
+        items=[{"product_id": product.id, "quantity": 1}],
     )
-    checkout_resp = auth_client.post(
-        "/api/v1/cart/checkout/",
-        checkout_payload(customer_email=user.email),
-        format="json",
-    )
-    order_id = checkout_resp.json()["id"]
+    order_id = order.id
 
     # first cancel
     r1 = auth_client.post(f"/api/v1/orders/{order_id}/cancel/", format="json")

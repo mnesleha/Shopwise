@@ -40,6 +40,10 @@ def apply_provider_result(
             payment.provider_payment_id = provider_result.provider_payment_id
             success_fields.append("provider_payment_id")
 
+        if provider_result.redirect_url:
+            payment.redirect_url = provider_result.redirect_url
+            success_fields.append("redirect_url")
+
         payment.save(update_fields=success_fields)
 
         # commit_reservations_for_paid decrements stock, commits reservations,

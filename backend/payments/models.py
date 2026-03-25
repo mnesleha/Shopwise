@@ -102,6 +102,16 @@ class Payment(models.Model):
         blank=True,
     )
 
+    # Hosted-gateway redirect URL returned by the provider when a payment
+    # session is created.  Null for direct (synchronous) providers such as
+    # DEV_FAKE.  Persisted here so the frontend can be re-directed even if the
+    # checkout response is lost or replayed.
+    redirect_url = models.CharField(
+        max_length=2048,
+        null=True,
+        blank=True,
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def clean(self):

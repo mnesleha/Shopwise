@@ -19,6 +19,10 @@ from payments.providers.acquiremock_webhook import (
     parse_acquiremock_webhook,
     verify_acquiremock_signature,
 )
+from payments.services.acquiremock_webhook_processor import (
+    AcquireMockPaymentNotFound,
+    process_acquiremock_webhook_event,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +39,10 @@ class AcquireMockWebhookView(APIView):
         Body:   JSON with fields: payment_id, reference, amount, status, timestamp
 
     Responses:
-        200  {"status": "received"}    — valid signature, payload accepted
+        200  {"status": "received"}    — valid signature, payload processed
         400  {"code": "...", ...}       — malformed or unparseable JSON body
         403  {"code": "...", ...}       — missing or invalid signature
-
-    Idempotence, deduplication, and full business processing are out of scope
-    for this slice and will be added in the next webhook processing slice.
+        422  {"code": "...", ...}       — unknown payment or unsupported status
     """
 
     # No session/JWT authentication — signature is the only auth mechanism.
@@ -91,12 +93,35 @@ class AcquireMockWebhookView(APIView):
                 status=400,
             )
 
-        # 5. Processing boundary — idempotent business logic goes here in the
-        #    next slice (webhook processing / deduplication).
+        # 5. Process the verified event — idempotent state application.
+        try:
+            process_acquiremock_webhook_event(event)
+        except AcquireMockPaymentNotFound:
+            logger.warning(
+                "AcquireMock webhook references unknown payment: payment_id=%s",
+                event.payment_id,
+            )
+            return Response(
+                {
+                    "code": "PAYMENT_NOT_FOUND",
+                    "message": "No payment record matches this webhook.",
+                },
+                status=422,
+            )
+        except ValueError as exc:
+            logger.warning(
+                "AcquireMock webhook contains unsupported status: payment_id=%s error=%s",
+                event.payment_id,
+                exc,
+            )
+            return Response(
+                {"code": "UNSUPPORTED_STATUS", "message": str(exc)},
+                status=422,
+            )
+
         logger.info(
-            "AcquireMock webhook accepted: payment_id=%s status=%s",
+            "AcquireMock webhook processed: payment_id=%s status=%s",
             event.payment_id,
             event.status,
         )
-
         return Response({"status": "received"}, status=200)

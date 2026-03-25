@@ -368,6 +368,13 @@ class CartCheckoutRequestSerializer(serializers.Serializer):
     )
     save_to_profile = serializers.BooleanField(default=False, required=False)
 
+    # Payment method chosen by the customer.  Required; validated against the
+    # Payment.PaymentMethod enum so only known methods are accepted.
+    payment_method = serializers.ChoiceField(
+        choices=["CARD", "COD"],
+        help_text="Payment method: CARD (hosted redirect) or COD (cash on delivery).",
+    )
+
     def validate(self, attrs):
         if attrs.get("billing_same_as_shipping") is False:
             required_fields = [
@@ -389,7 +396,30 @@ class CartCheckoutRequestSerializer(serializers.Serializer):
 
 
 class CartCheckoutResponseSerializer(OrderResponseSerializer):
-    """Checkout response shares the same contract as Orders endpoints."""
+    """Checkout response: order data + payment initiation section."""
+
+
+class PaymentInitiationSerializer(serializers.Serializer):
+    """Provider-agnostic payment initiation result included in the checkout response.
+
+    ``payment_flow`` distinguishes between:
+    - ``REDIRECT`` — frontend must redirect the customer to ``redirect_url``
+                     to complete payment on a hosted gateway page.
+    - ``DIRECT``   — payment is handled directly (e.g. COD); no redirect needed.
+    """
+
+    payment_id = serializers.IntegerField(
+        help_text="Internal ID of the Payment record created for this checkout."
+    )
+    payment_flow = serializers.ChoiceField(
+        choices=["REDIRECT", "DIRECT"],
+        help_text="'REDIRECT' requires a frontend redirect; 'DIRECT' completes inline.",
+    )
+    redirect_url = serializers.CharField(
+        allow_null=True,
+        required=False,
+        help_text="URL to redirect the customer to.  Non-null only when payment_flow=REDIRECT.",
+    )
 
 
 class CartMergeWarningSerializer(serializers.Serializer):

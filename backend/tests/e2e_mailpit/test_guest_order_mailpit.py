@@ -44,7 +44,8 @@ def test_guest_order_link_email_is_delivered_to_mailpit(client, settings, monkey
         "shipping_postal_code": "60601",
         "shipping_country": "US",
         "shipping_phone": "+14155552671",
-        "billing_same_as_shipping": True
+        "billing_same_as_shipping": True,
+        "payment_method": "COD",
     }
 
     # Capture on_commit callbacks so we can run them deterministically after checkout

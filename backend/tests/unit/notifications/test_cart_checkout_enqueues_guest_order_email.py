@@ -50,6 +50,7 @@ def test_anonymous_checkout_enqueues_guest_order_link_email(monkeypatch, setting
         "shipping_country": "US",
         "shipping_phone": "+1 555 000",
         "billing_same_as_shipping": True,
+        "payment_method": "COD",
     }
 
     callbacks = _capture_on_commit(monkeypatch)

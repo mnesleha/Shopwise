@@ -1,7 +1,8 @@
 import pytest
 from orders.models import Order
+from orders.services.inventory_reservation_service import reserve_for_checkout
 from products.models import Product
-from tests.conftest import checkout_payload, create_order_via_checkout
+from tests.conftest import checkout_payload, create_order_via_checkout, create_valid_order
 
 
 @pytest.mark.django_db
@@ -13,20 +14,13 @@ def test_successful_payment_creates_payment_and_updates_order(auth_client, user)
         is_active=True,
     )
 
-    # checkout
-    auth_client.get("/api/v1/cart/")
-    auth_client.post(
-        "/api/v1/cart/items/",
-        {"product_id": product.id, "quantity": 2},
-        format="json",
+    # Create order + reservation directly (bypassing checkout auto-payment).
+    order = create_valid_order(user=user, customer_email=user.email)
+    reserve_for_checkout(
+        order=order,
+        items=[{"product_id": product.id, "quantity": 2}],
     )
-
-    checkout_response = auth_client.post(
-        "/api/v1/cart/checkout/",
-        checkout_payload(customer_email=user.email),
-        format="json",
-    ).json()
-    order_id = checkout_response["id"]
+    order_id = order.id
 
     response = auth_client.post(
         "/api/v1/payments/",
@@ -40,15 +34,16 @@ def test_successful_payment_creates_payment_and_updates_order(auth_client, user)
 
 @pytest.mark.django_db
 def test_failed_payment_marks_order_as_failed(auth_client, user, product):
-    order = create_order_via_checkout(
-        auth_client,
-        product,
-        customer_email=user.email,
+    # Create order + reservation directly (bypassing checkout auto-payment).
+    order_obj = create_valid_order(user=user, customer_email=user.email)
+    reserve_for_checkout(
+        order=order_obj,
+        items=[{"product_id": product.id, "quantity": 1}],
     )
 
     response = auth_client.post(
         "/api/v1/payments/",
-        {"order_id": order["id"], "result": "fail"},
+        {"order_id": order_obj.id, "result": "fail"},
         format="json",
     )
 

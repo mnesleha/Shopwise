@@ -1,13 +1,12 @@
 """API-level tests for the AcquireMock webhook endpoint.
 
 These tests exercise the full HTTP request lifecycle:
-- valid signature is accepted
-- invalid signature is rejected (403)
-- missing signature is rejected (403)
-- malformed JSON is rejected (400)
-- verified payload reaches the normalisation boundary
+- valid signature + known payment → 200 received
+- invalid or missing signature → 403
+- malformed JSON → 400
+- unknown payment_id → 422
+- unsupported status → 422
 
-No idempotence logic is tested here — that belongs to a future slice.
 No running AcquireMock server is required; signing is done inline.
 """
 
@@ -16,7 +15,14 @@ import hmac
 import json
 
 import pytest
+from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
+
+from orders.models import Order
+from payments.models import Payment
+from tests.conftest import create_valid_order
+
+User = get_user_model()
 
 WEBHOOK_URL = "/api/v1/webhooks/acquiremock/"
 _TEST_SECRET = "test-webhook-secret-abc123"
@@ -50,6 +56,20 @@ def anon_client():
     return APIClient()
 
 
+def _create_acquiremock_payment(provider_payment_id: str) -> Payment:
+    """Create an ACQUIREMOCK payment in PENDING state for webhook processing tests."""
+    user = User.objects.create_user(
+        email=f"wh_api_{provider_payment_id}@example.com", password="pass"
+    )
+    order = create_valid_order(user=user)
+    return Payment.objects.create(
+        order=order,
+        status=Payment.Status.PENDING,
+        provider=Payment.Provider.ACQUIREMOCK,
+        provider_payment_id=provider_payment_id,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Happy path
 # ---------------------------------------------------------------------------
@@ -57,8 +77,9 @@ def anon_client():
 
 @pytest.mark.django_db
 def test_valid_signature_is_accepted(anon_client, settings):
-    """A correctly signed webhook payload returns 200 OK."""
+    """A correctly signed webhook payload for a known payment returns 200 OK."""
     settings.ACQUIREMOCK_WEBHOOK_SECRET = _TEST_SECRET
+    _create_acquiremock_payment(SAMPLE_PAYLOAD["payment_id"])
     sig = _sign(SAMPLE_PAYLOAD, _TEST_SECRET)
 
     response = anon_client.post(
@@ -75,6 +96,7 @@ def test_valid_signature_is_accepted(anon_client, settings):
 def test_valid_response_body_is_acknowledgement(anon_client, settings):
     """Accepted webhook returns a simple acknowledgement body."""
     settings.ACQUIREMOCK_WEBHOOK_SECRET = _TEST_SECRET
+    _create_acquiremock_payment(SAMPLE_PAYLOAD["payment_id"])
     sig = _sign(SAMPLE_PAYLOAD, _TEST_SECRET)
 
     response = anon_client.post(
@@ -180,15 +202,11 @@ def test_empty_body_is_rejected(anon_client, settings):
 
 @pytest.mark.django_db
 def test_verified_payload_reaches_normalisation_boundary(anon_client, settings):
-    """A valid webhook triggers the normalisation handler (no side effects tested yet).
-
-    This test verifies the happy path reaches the processing boundary — the
-    actual idempotent business logic is out of scope for this slice.
-    """
+    """A valid webhook for a known payment returns 200 and applies state."""
     settings.ACQUIREMOCK_WEBHOOK_SECRET = _TEST_SECRET
+    _create_acquiremock_payment(SAMPLE_PAYLOAD["payment_id"])
     sig = _sign(SAMPLE_PAYLOAD, _TEST_SECRET)
 
-    # Verify no exception is raised and the endpoint returns 200.
     response = anon_client.post(
         WEBHOOK_URL,
         data=json.dumps(SAMPLE_PAYLOAD),
@@ -201,7 +219,7 @@ def test_verified_payload_reaches_normalisation_boundary(anon_client, settings):
 
 @pytest.mark.django_db
 def test_webhook_with_all_required_fields_is_accepted(anon_client, settings):
-    """Webhook with all documented AcquireMock fields is accepted."""
+    """Webhook with all documented AcquireMock fields for a known payment is accepted."""
     settings.ACQUIREMOCK_WEBHOOK_SECRET = _TEST_SECRET
     payload = {
         "payment_id": "pay_999",
@@ -210,6 +228,7 @@ def test_webhook_with_all_required_fields_is_accepted(anon_client, settings):
         "status": "FAILED",
         "timestamp": "2026-03-25T12:30:00Z",
     }
+    _create_acquiremock_payment(payload["payment_id"])
     sig = _sign(payload, _TEST_SECRET)
 
     response = anon_client.post(
@@ -220,3 +239,45 @@ def test_webhook_with_all_required_fields_is_accepted(anon_client, settings):
     )
 
     assert response.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# Error responses
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_unknown_payment_id_returns_422(anon_client, settings):
+    """A verified webhook referencing an unknown payment_id returns 422."""
+    settings.ACQUIREMOCK_WEBHOOK_SECRET = _TEST_SECRET
+    # No matching Payment created intentionally.
+    sig = _sign(SAMPLE_PAYLOAD, _TEST_SECRET)
+
+    response = anon_client.post(
+        WEBHOOK_URL,
+        data=json.dumps(SAMPLE_PAYLOAD),
+        content_type="application/json",
+        HTTP_X_SIGNATURE=sig,
+    )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "PAYMENT_NOT_FOUND"
+
+
+@pytest.mark.django_db
+def test_unsupported_status_returns_422(anon_client, settings):
+    """A verified webhook with an unsupported status string returns 422."""
+    settings.ACQUIREMOCK_WEBHOOK_SECRET = _TEST_SECRET
+    payload = {**SAMPLE_PAYLOAD, "status": "REFUNDED", "payment_id": "pay_refund_api"}
+    _create_acquiremock_payment(payload["payment_id"])
+    sig = _sign(payload, _TEST_SECRET)
+
+    response = anon_client.post(
+        WEBHOOK_URL,
+        data=json.dumps(payload),
+        content_type="application/json",
+        HTTP_X_SIGNATURE=sig,
+    )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "UNSUPPORTED_STATUS"
