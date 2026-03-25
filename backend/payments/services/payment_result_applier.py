@@ -5,6 +5,20 @@ mutations: payment status/timestamps and order status/inventory side-effects.
 
 This module is the single authority for "what does a provider result mean
 at the domain level."  Providers never touch order state directly.
+
+Provider result semantics
+-------------------------
+* success=True, redirect_url=None  — direct/synchronous payment completed
+  (e.g. COD via DevFake).  Transition payment → SUCCESS, order → PAID,
+  commit inventory.
+
+* success=True, redirect_url set   — hosted/redirect session created
+  (e.g. AcquireMock).  The customer has NOT yet paid.  Persist the provider
+  reference and redirect URL, leave payment PENDING, leave order CREATED,
+  leave inventory ACTIVE.  Final SUCCESS/PAID arrives via webhook.
+
+* success=False                    — provider-side failure.  Transition
+  payment → FAILED, order → PAYMENT_FAILED.
 """
 
 from django.utils import timezone
@@ -32,31 +46,51 @@ def apply_provider_result(
         provider_result: Normalized result returned by the provider's start().
     """
     if provider_result.success:
-        payment.status = Payment.Status.SUCCESS
-        payment.paid_at = timezone.now()
-        success_fields = ["status", "paid_at"]
-
-        if provider_result.provider_payment_id:
-            payment.provider_payment_id = provider_result.provider_payment_id
-            success_fields.append("provider_payment_id")
-
         if provider_result.redirect_url:
+            # ----------------------------------------------------------------
+            # Hosted/redirect session initiated.  The customer has NOT paid
+            # yet — they will be redirected to the hosted payment page.
+            # Final SUCCESS/PAID arrives exclusively via the provider webhook.
+            # Keep payment PENDING and order in its current non-final state.
+            # ----------------------------------------------------------------
+            pending_fields: list[str] = []
+
+            if provider_result.provider_payment_id:
+                payment.provider_payment_id = provider_result.provider_payment_id
+                pending_fields.append("provider_payment_id")
+
             payment.redirect_url = provider_result.redirect_url
-            success_fields.append("redirect_url")
+            pending_fields.append("redirect_url")
 
-        payment.save(update_fields=success_fields)
+            if pending_fields:
+                payment.save(update_fields=pending_fields)
 
-        # commit_reservations_for_paid decrements stock, commits reservations,
-        # and sets order.status = PAID (in-memory and persisted) when the order
-        # has active reservations.  For orders without reservations (rare but
-        # valid — e.g. all-digital goods), it returns early without touching the
-        # order status, so we handle that case with an explicit fallback save.
-        # No refresh_from_db() needed: commit_reservations_for_paid mutates the
-        # order object in-memory when it does set the status.
-        commit_reservations_for_paid(order=order)
-        if order.status != Order.Status.PAID:
-            order.status = Order.Status.PAID
-            order.save(update_fields=["status"])
+            # payment.status remains PENDING; order.status remains CREATED;
+            # inventory reservations remain ACTIVE.
+        else:
+            # ----------------------------------------------------------------
+            # Direct/synchronous payment completed (e.g. COD/DevFake).
+            # Finalize immediately.
+            # ----------------------------------------------------------------
+            payment.status = Payment.Status.SUCCESS
+            payment.paid_at = timezone.now()
+            success_fields = ["status", "paid_at"]
+
+            if provider_result.provider_payment_id:
+                payment.provider_payment_id = provider_result.provider_payment_id
+                success_fields.append("provider_payment_id")
+
+            payment.save(update_fields=success_fields)
+
+            # commit_reservations_for_paid decrements stock, commits reservations,
+            # and sets order.status = PAID (in-memory and persisted) when the order
+            # has active reservations.  For orders without reservations (rare but
+            # valid — e.g. all-digital goods), it returns early without touching
+            # the order status, so we handle that case with an explicit fallback save.
+            commit_reservations_for_paid(order=order)
+            if order.status != Order.Status.PAID:
+                order.status = Order.Status.PAID
+                order.save(update_fields=["status"])
     else:
         payment.status = Payment.Status.FAILED
         payment.failed_at = timezone.now()

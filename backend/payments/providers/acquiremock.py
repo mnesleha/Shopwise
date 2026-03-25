@@ -27,6 +27,7 @@ import logging
 import requests
 from django.conf import settings
 
+from payments.models import Payment
 from payments.providers.base import BasePaymentProvider, PaymentStartContext, ProviderStartResult
 
 logger = logging.getLogger(__name__)
@@ -44,6 +45,9 @@ class AcquireMockProvider(BasePaymentProvider):
     ``ProviderStartResult(success=False, ...)`` — never raises.
     """
 
+    #: Stable provider enum value — used by orchestration to set Payment.provider.
+    provider_enum = Payment.Provider.ACQUIREMOCK
+
     def start(self, context: PaymentStartContext) -> ProviderStartResult:
         """Send an invoice-creation request to AcquireMock.
 
@@ -60,6 +64,29 @@ class AcquireMockProvider(BasePaymentProvider):
         base_url = settings.ACQUIREMOCK_BASE_URL
         api_key = settings.ACQUIREMOCK_API_KEY
         timeout = getattr(settings, "ACQUIREMOCK_TIMEOUT", 10)
+
+        # --- Fail-closed configuration guards ---
+        if not base_url:
+            reason = "ACQUIREMOCK_BASE_URL is not configured — cannot initiate payment session."
+            logger.error("AcquireMock start failed — %s", reason)
+            return ProviderStartResult(success=False, failure_reason=reason)
+
+        if not api_key:
+            reason = "ACQUIREMOCK_API_KEY is not configured — cannot authenticate with AcquireMock."
+            logger.error("AcquireMock start failed — %s", reason)
+            return ProviderStartResult(success=False, failure_reason=reason)
+
+        # --- Financial snapshot validation ---
+        if context.payment.amount is None or context.payment.currency is None:
+            reason = (
+                "Payment amount or currency is missing from the payment snapshot. "
+                "Cannot create an AcquireMock session without a financial amount."
+            )
+            logger.error(
+                "AcquireMock start failed — missing amount/currency for order %s",
+                context.order.id,
+            )
+            return ProviderStartResult(success=False, failure_reason=reason)
 
         url = f"{base_url}{_CREATE_INVOICE_PATH}"
         headers = {

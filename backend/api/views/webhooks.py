@@ -72,6 +72,18 @@ class AcquireMockWebhookView(APIView):
 
         # 3. Verify HMAC-SHA256 signature.
         secret = settings.ACQUIREMOCK_WEBHOOK_SECRET
+        if not secret:
+            logger.error(
+                "AcquireMock webhook endpoint is not configured — "
+                "ACQUIREMOCK_WEBHOOK_SECRET is empty; rejecting all webhooks."
+            )
+            return Response(
+                {
+                    "code": "MISCONFIGURED",
+                    "message": "Webhook endpoint is not configured on this server.",
+                },
+                status=500,
+            )
         if not verify_acquiremock_signature(payload, signature, secret):
             logger.warning(
                 "AcquireMock webhook rejected — signature mismatch "

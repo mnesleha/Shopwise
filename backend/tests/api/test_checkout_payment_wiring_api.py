@@ -343,3 +343,110 @@ def test_checkout_delegates_provider_selection_not_hardcoded(client, settings):
                 CHECKOUT_URL, checkout_payload(payment_method="CARD"), format="json"
             )
     assert response.status_code == 201
+
+
+# ---------------------------------------------------------------------------
+# 7. Redirect payment semantics — CARD checkout must NOT finalize payment
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_card_checkout_payment_stays_pending(client, settings):
+    """CARD checkout initiates a redirect session; payment must remain PENDING.
+
+    AcquireMock success=True + redirect_url means 'session created', NOT
+    'payment received'.  Final SUCCESS arrives only via the webhook.
+    """
+    settings.ACQUIREMOCK_BASE_URL = "https://acquiremock.test"
+    settings.ACQUIREMOCK_API_KEY = "test-key"
+    _add_product_to_cart(client)
+    with patch("payments.providers.acquiremock.requests.post",
+               return_value=_mock_acquiremock_success()):
+        response = client.post(CHECKOUT_URL, checkout_payload(payment_method="CARD"), format="json")
+    assert response.status_code == 201
+    order = Order.objects.get(id=response.json()["id"])
+    payment = Payment.objects.get(order=order)
+    assert payment.status == Payment.Status.PENDING, (
+        "CARD payment must stay PENDING after checkout — "
+        "final SUCCESS is applied only by the AcquireMock webhook."
+    )
+
+
+@pytest.mark.django_db
+def test_card_checkout_order_is_not_paid(client, settings):
+    """CARD checkout must leave the order in a non-final payment state.
+
+    The order is CREATED at checkout time and transitions to PAID only after
+    the webhook confirms the customer completed payment.
+    """
+    settings.ACQUIREMOCK_BASE_URL = "https://acquiremock.test"
+    settings.ACQUIREMOCK_API_KEY = "test-key"
+    _add_product_to_cart(client)
+    with patch("payments.providers.acquiremock.requests.post",
+               return_value=_mock_acquiremock_success()):
+        response = client.post(CHECKOUT_URL, checkout_payload(payment_method="CARD"), format="json")
+    order = Order.objects.get(id=response.json()["id"])
+    assert order.status != Order.Status.PAID, (
+        "Order must not be PAID after CARD checkout — "
+        "PAID is set by the webhook, not by checkout."
+    )
+
+
+@pytest.mark.django_db
+def test_card_checkout_reservations_stay_active(client, settings):
+    """Inventory reservations must NOT be committed during CARD checkout.
+
+    Commitment (stock decrement) only happens once the webhook confirms payment.
+    """
+    from orders.models import InventoryReservation
+    settings.ACQUIREMOCK_BASE_URL = "https://acquiremock.test"
+    settings.ACQUIREMOCK_API_KEY = "test-key"
+    product = _add_product_to_cart(client)
+    with patch("payments.providers.acquiremock.requests.post",
+               return_value=_mock_acquiremock_success()):
+        response = client.post(CHECKOUT_URL, checkout_payload(payment_method="CARD"), format="json")
+    order = Order.objects.get(id=response.json()["id"])
+    reservations = InventoryReservation.objects.filter(order=order)
+    assert reservations.exists()
+    assert all(r.status == InventoryReservation.Status.ACTIVE for r in reservations), (
+        "Reservations must remain ACTIVE after CARD checkout; "
+        "commitment happens on webhook-confirmed success."
+    )
+    product.refresh_from_db()
+    assert product.stock_quantity == 10, (
+        "Stock must not be decremented during CARD checkout redirect initiation."
+    )
+
+
+@pytest.mark.django_db
+def test_card_checkout_provider_payment_id_persisted_on_pending_payment(client, settings):
+    """AcquireMock provider_payment_id is persisted even while payment is PENDING."""
+    settings.ACQUIREMOCK_BASE_URL = "https://acquiremock.test"
+    settings.ACQUIREMOCK_API_KEY = "test-key"
+    _add_product_to_cart(client)
+    with patch("payments.providers.acquiremock.requests.post",
+               return_value=_mock_acquiremock_success(payment_id=_ACQUIREMOCK_PAYMENT_ID)):
+        response = client.post(CHECKOUT_URL, checkout_payload(payment_method="CARD"), format="json")
+    order = Order.objects.get(id=response.json()["id"])
+    payment = Payment.objects.get(order=order)
+    assert payment.provider_payment_id == _ACQUIREMOCK_PAYMENT_ID
+    assert payment.status == Payment.Status.PENDING
+
+
+@pytest.mark.django_db
+def test_cod_checkout_payment_is_success(client):
+    """COD/direct flow must still result in SUCCESS payment immediately (unchanged)."""
+    _add_product_to_cart(client)
+    response = client.post(CHECKOUT_URL, checkout_payload(payment_method="COD"), format="json")
+    order = Order.objects.get(id=response.json()["id"])
+    payment = Payment.objects.get(order=order)
+    assert payment.status == Payment.Status.SUCCESS
+
+
+@pytest.mark.django_db
+def test_cod_checkout_order_is_paid(client):
+    """COD/direct flow must result in PAID order immediately (unchanged)."""
+    _add_product_to_cart(client)
+    response = client.post(CHECKOUT_URL, checkout_payload(payment_method="COD"), format="json")
+    order = Order.objects.get(id=response.json()["id"])
+    assert order.status == Order.Status.PAID

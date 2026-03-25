@@ -265,6 +265,7 @@ def test_orchestration_uses_resolve_provider_not_hardcoded():
 
     mock_provider = MagicMock()
     mock_provider.start.return_value = ProviderStartResult(success=True)
+    mock_provider.provider_enum = Payment.Provider.DEV_FAKE  # required by orchestration
 
     with patch(
         "payments.services.payment_orchestration.resolve_provider",

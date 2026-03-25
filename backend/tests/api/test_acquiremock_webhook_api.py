@@ -281,3 +281,108 @@ def test_unsupported_status_returns_422(anon_client, settings):
 
     assert response.status_code == 422
     assert response.json()["code"] == "UNSUPPORTED_STATUS"
+
+
+# ---------------------------------------------------------------------------
+# Fail-closed: empty webhook secret
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_empty_webhook_secret_is_rejected(anon_client, settings):
+    """When ACQUIREMOCK_WEBHOOK_SECRET is empty, all webhook calls must be rejected.
+
+    An empty secret would make hmac.compare_digest accept any zero-length or
+    trivially-computed signature.  The endpoint must refuse to process webhooks
+    when the secret is not configured.
+    """
+    settings.ACQUIREMOCK_WEBHOOK_SECRET = ""
+    # Even a correctly-crafted signature for an empty secret must not pass through.
+    sig = _sign(SAMPLE_PAYLOAD, "")  # HMAC with empty key — must still be rejected
+    _create_acquiremock_payment(SAMPLE_PAYLOAD["payment_id"])
+
+    response = anon_client.post(
+        WEBHOOK_URL,
+        data=json.dumps(SAMPLE_PAYLOAD),
+        content_type="application/json",
+        HTTP_X_SIGNATURE=sig,
+    )
+
+    # Must not be 200 — fail-closed means all webhooks are rejected when unconfigured.
+    assert response.status_code != 200, (
+        "Webhook endpoint must not process events when ACQUIREMOCK_WEBHOOK_SECRET is empty."
+    )
+
+
+@pytest.mark.django_db
+def test_empty_webhook_secret_with_signature_header_is_rejected(anon_client, settings):
+    """A syntactically valid X-Signature is still rejected when secret is unconfigured."""
+    settings.ACQUIREMOCK_WEBHOOK_SECRET = ""
+    sig = _sign(SAMPLE_PAYLOAD, "")
+
+    response = anon_client.post(
+        WEBHOOK_URL,
+        data=json.dumps(SAMPLE_PAYLOAD),
+        content_type="application/json",
+        HTTP_X_SIGNATURE=sig,
+    )
+
+    assert response.status_code in (403, 500)
+
+
+# ---------------------------------------------------------------------------
+# Webhook finalizes PENDING payment to SUCCESS (redirect flow end-to-end)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_webhook_finalizes_pending_acquiremock_payment_to_success(anon_client, settings):
+    """A PAID webhook event transitions a PENDING AcquireMock payment to SUCCESS.
+
+    This is the correct finalization path for CARD/redirect payments:
+      1. Checkout creates a PENDING payment.
+      2. Customer pays on the hosted page.
+      3. AcquireMock sends a PAID webhook → payment becomes SUCCESS, order PAID.
+    """
+    from orders.models import Order as OrderModel
+
+    settings.ACQUIREMOCK_WEBHOOK_SECRET = _TEST_SECRET
+
+    user = User.objects.create_user(email="wh_finalize@example.com", password="pass")
+    from tests.conftest import create_valid_order
+    order = create_valid_order(user=user)
+
+    payment = Payment.objects.create(
+        order=order,
+        status=Payment.Status.PENDING,
+        provider=Payment.Provider.ACQUIREMOCK,
+        provider_payment_id=SAMPLE_PAYLOAD["payment_id"],
+    )
+    from orders.services.inventory_reservation_service import reserve_for_checkout
+    from products.models import Product
+    product = Product.objects.create(
+        name="WH Finalize Product", price=100, stock_quantity=10, is_active=True)
+    reserve_for_checkout(order=order, items=[{"product_id": product.id, "quantity": 1}])
+
+    assert payment.status == Payment.Status.PENDING
+    assert order.status == OrderModel.Status.CREATED
+
+    sig = _sign(SAMPLE_PAYLOAD, _TEST_SECRET)
+    response = anon_client.post(
+        WEBHOOK_URL,
+        data=json.dumps(SAMPLE_PAYLOAD),
+        content_type="application/json",
+        HTTP_X_SIGNATURE=sig,
+    )
+
+    assert response.status_code == 200
+
+    payment.refresh_from_db()
+    order.refresh_from_db()
+
+    assert payment.status == Payment.Status.SUCCESS, (
+        "Webhook PAID event must finalize payment to SUCCESS."
+    )
+    assert order.status == OrderModel.Status.PAID, (
+        "Webhook PAID event must transition order to PAID."
+    )
