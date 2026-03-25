@@ -60,12 +60,6 @@ def test_resolver_returns_dev_fake_provider_for_none():
     assert isinstance(provider, DevFakeProvider)
 
 
-def test_resolver_raises_for_card():
-    """CARD raises ProviderNotConfiguredException — no real provider yet."""
-    with pytest.raises(ProviderNotConfiguredException):
-        resolve_provider(Payment.PaymentMethod.CARD)
-
-
 def test_resolver_raises_for_unknown_method():
     """Completely unknown method string raises ProviderNotConfiguredException."""
     with pytest.raises(ProviderNotConfiguredException):

@@ -164,17 +164,32 @@ def test_orchestration_none_method_falls_back_to_dev_fake():
 
 
 @pytest.mark.django_db
-def test_orchestration_raises_for_card_method():
-    """start_payment raises ProviderNotConfiguredException for CARD (no provider yet)."""
+def test_orchestration_card_resolves_to_acquiremock(monkeypatch):
+    """start_payment with CARD uses AcquireMockProvider (resolver wired correctly)."""
+    from payments.providers.acquiremock import AcquireMockProvider
+    from payments.providers.base import ProviderStartResult
+
     user = User.objects.create_user(email="orch4@example.com", password="pass")
     order = create_valid_order(user=user)
 
-    with pytest.raises(ProviderNotConfiguredException):
-        PaymentOrchestrationService.start_payment(
-            order=order,
-            payment_method=Payment.PaymentMethod.CARD,
-            extra={},
+    # Stub out the HTTP call — we only want to verify the provider is used
+    def fake_start(self, context):
+        return ProviderStartResult(
+            success=True,
+            provider_payment_id="mock-id-99",
+            redirect_url="https://acquiremock.test/pay/mock-id-99",
         )
+
+    monkeypatch.setattr(AcquireMockProvider, "start", fake_start)
+
+    payment = PaymentOrchestrationService.start_payment(
+        order=order,
+        payment_method=Payment.PaymentMethod.CARD,
+        extra={"return_url": "https://shop.test/return"},
+    )
+
+    assert payment.provider == Payment.Provider.ACQUIREMOCK
+    assert payment.provider_payment_id == "mock-id-99"
 
 
 @pytest.mark.django_db

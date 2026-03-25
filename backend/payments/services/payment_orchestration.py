@@ -28,6 +28,13 @@ from payments.providers.base import PaymentStartContext
 from payments.providers.resolver import resolve_provider
 from payments.services.payment_result_applier import apply_provider_result
 
+# Maps concrete provider classes to the Payment.Provider enum value recorded
+# on the payment record.  Add new entries here when new providers are introduced.
+_PROVIDER_CLASS_TO_ENUM = {
+    "DevFakeProvider": Payment.Provider.DEV_FAKE,
+    "AcquireMockProvider": Payment.Provider.ACQUIREMOCK,
+}
+
 
 class PaymentOrchestrationService:
 
@@ -85,11 +92,15 @@ class PaymentOrchestrationService:
                 raise OrderNotPayableException()
 
             # Create the payment record in PENDING state.
+            # Derive the provider enum value from the resolved concrete class.
+            provider_enum = _PROVIDER_CLASS_TO_ENUM.get(
+                type(provider).__name__, Payment.Provider.DEV_FAKE
+            )
             payment = Payment.objects.create(
                 order=locked_order,
                 status=Payment.Status.PENDING,
                 payment_method=payment_method,
-                provider=Payment.Provider.DEV_FAKE,  # updated per-provider in future slices
+                provider=provider_enum,
             )
 
             context = PaymentStartContext(

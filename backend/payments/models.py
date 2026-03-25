@@ -30,6 +30,8 @@ class Payment(models.Model):
     class Provider(models.TextChoices):
         # Current development / simulation provider.
         DEV_FAKE = "DEV_FAKE", "Dev Fake (simulation)"
+        # Hosted mock gateway — mirrors the contract of real card PSPs.
+        ACQUIREMOCK = "ACQUIREMOCK", "AcquireMock (hosted gateway)"
         # Future providers will be added here without touching existing data.
 
     order = models.ForeignKey(
