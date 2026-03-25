@@ -8,23 +8,35 @@ at the domain level."  Providers never touch order state directly.
 
 Provider result semantics
 -------------------------
-* success=True, redirect_url=None  — direct/synchronous payment completed
-  (e.g. COD via DevFake).  Transition payment → SUCCESS, order → PAID,
-  commit inventory.
+* success=True, redirect_url=None, deferred=False
+                           — direct/synchronous payment completed (explicit
+                             simulated result via POST /payments/).  Transition
+                             payment → SUCCESS, order → PAID, commit inventory.
 
-* success=True, redirect_url set   — hosted/redirect session created
-  (e.g. AcquireMock).  The customer has NOT yet paid.  Persist the provider
-  reference and redirect URL, leave payment PENDING, leave order CREATED,
-  leave inventory ACTIVE.  Final SUCCESS/PAID arrives via webhook.
+* success=True, redirect_url=None, deferred=True
+                           — deferred direct payment (e.g. COD checkout without
+                             an explicit simulated_result).  Order stays CREATED,
+                             payment stays PENDING.  Finalisation must happen via
+                             an explicit POST /payments/ call.
 
-* success=False                    — provider-side failure.  Transition
-  payment → FAILED, order → PAYMENT_FAILED.
+* success=True, redirect_url set
+                           — hosted/redirect session created (e.g. AcquireMock).
+                             The customer has NOT yet paid.  Persist the provider
+                             reference and redirect URL, leave payment PENDING,
+                             leave order CREATED, leave inventory ACTIVE.  Final
+                             SUCCESS/PAID arrives via webhook.
+
+* success=False            — provider-side failure.  Transition payment → FAILED,
+                             order → PAYMENT_FAILED.
 """
 
 from django.utils import timezone
 
-from orders.models import Order
-from orders.services.inventory_reservation_service import commit_reservations_for_paid
+from orders.models import InventoryReservation, Order
+from orders.services.inventory_reservation_service import (
+    commit_reservations_for_paid,
+    release_reservations,
+)
 from payments.models import Payment
 from payments.providers.base import ProviderStartResult
 
@@ -67,9 +79,18 @@ def apply_provider_result(
 
             # payment.status remains PENDING; order.status remains CREATED;
             # inventory reservations remain ACTIVE.
+        elif provider_result.deferred:
+            # ----------------------------------------------------------------
+            # Deferred direct payment (e.g. COD checkout without an explicit
+            # simulated_result).  The provider has acknowledged the order but
+            # finalisation happens via a separate explicit step: POST /payments/.
+            # Leave payment PENDING, leave order CREATED, leave inventory ACTIVE.
+            # ----------------------------------------------------------------
+            pass  # nothing to save — payment already PENDING, order already CREATED
         else:
             # ----------------------------------------------------------------
-            # Direct/synchronous payment completed (e.g. COD/DevFake).
+            # Direct/synchronous payment completed (e.g. COD/DevFake with an
+            # explicit simulated_result="success" via POST /payments/).
             # Finalize immediately.
             # ----------------------------------------------------------------
             payment.status = Payment.Status.SUCCESS
@@ -97,6 +118,14 @@ def apply_provider_result(
         payment.failure_reason = provider_result.failure_reason
         payment.save(update_fields=["status", "failed_at", "failure_reason"])
 
-        order.status = Order.Status.PAYMENT_FAILED
-        order.cancel_reason = Order.CancelReason.PAYMENT_FAILED
-        order.save(update_fields=["status", "cancel_reason"])
+        # Release any ACTIVE inventory reservations and transition the order
+        # to PAYMENT_FAILED.  This frees held stock so the customer can
+        # place a new order (retry with a different payment method, etc.).
+        # Without this, reservations would block subsequent checkout attempts
+        # until the TTL expiry job runs.
+        release_reservations(
+            order=order,
+            reason=InventoryReservation.ReleaseReason.PAYMENT_FAILED,
+            cancelled_by=None,
+            cancel_reason=Order.CancelReason.PAYMENT_FAILED,
+        )

@@ -67,7 +67,7 @@ export interface CheckoutValues {
 
 interface CheckoutFormProps {
   initialValues?: Partial<CheckoutValues>;
-  onSubmit: (values: CheckoutValues) => void;
+  onSubmit: (values: CheckoutValues) => Promise<void>;
   onBackToCart: () => void;
   onContinueShopping?: () => void;
   /**
@@ -366,6 +366,7 @@ function DetailsStep({
   onSubmit,
   firstErrorRef,
   isAuthenticated,
+  isSubmitting,
 }: {
   values: CheckoutValues;
   errors: FieldErrors;
@@ -374,6 +375,7 @@ function DetailsStep({
   onSubmit: () => void;
   firstErrorRef: React.RefObject<HTMLInputElement | null>;
   isAuthenticated?: boolean;
+  isSubmitting?: boolean;
 }) {
   const getInputRef = (field: keyof CheckoutValues) => {
     // Return ref for the first error field
@@ -835,8 +837,9 @@ function DetailsStep({
           data-testid="checkout-submit"
           onClick={onSubmit}
           className="gap-2"
+          disabled={isSubmitting}
         >
-          Place order
+          {isSubmitting ? "Placing order…" : "Place order"}
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
@@ -860,6 +863,7 @@ export function CheckoutForm({
     ...initialValues,
   });
   const [errors, setErrors] = React.useState<FieldErrors>({});
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const firstErrorRef = React.useRef<HTMLInputElement | null>(null);
 
   const handleChange = (
@@ -952,9 +956,14 @@ export function CheckoutForm({
     return true;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validateStep2()) {
-      onSubmit(values);
+      setIsSubmitting(true);
+      try {
+        await onSubmit(values);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -986,6 +995,7 @@ export function CheckoutForm({
           onSubmit={handleSubmit}
           firstErrorRef={firstErrorRef}
           isAuthenticated={isAuthenticated}
+          isSubmitting={isSubmitting}
         />
       )}
     </div>

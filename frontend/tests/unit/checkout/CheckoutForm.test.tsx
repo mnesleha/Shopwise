@@ -21,7 +21,7 @@ import { CHECKOUT_CONTINUE, CHECKOUT_SUBMIT } from "../helpers/testIds";
 function renderForm(
   props: Partial<React.ComponentProps<typeof CheckoutForm>> = {},
 ) {
-  const onSubmit = vi.fn();
+  const onSubmit = vi.fn().mockResolvedValue(undefined);
   const onBackToCart = vi.fn();
   renderWithProviders(
     <CheckoutForm onSubmit={onSubmit} onBackToCart={onBackToCart} {...props} />,

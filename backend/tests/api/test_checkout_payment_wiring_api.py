@@ -434,19 +434,33 @@ def test_card_checkout_provider_payment_id_persisted_on_pending_payment(client, 
 
 
 @pytest.mark.django_db
-def test_cod_checkout_payment_is_success(client):
-    """COD/direct flow must still result in SUCCESS payment immediately (unchanged)."""
+def test_cod_checkout_payment_is_pending(client):
+    """COD checkout must leave payment in PENDING state.
+
+    Finalisation happens via an explicit POST /payments/ call — the checkout
+    itself only initiates the deferred flow.  SUCCESS is applied separately.
+    """
     _add_product_to_cart(client)
     response = client.post(CHECKOUT_URL, checkout_payload(payment_method="COD"), format="json")
     order = Order.objects.get(id=response.json()["id"])
     payment = Payment.objects.get(order=order)
-    assert payment.status == Payment.Status.SUCCESS
+    assert payment.status == Payment.Status.PENDING, (
+        "COD payment must stay PENDING after checkout — "
+        "SUCCESS is applied only via the explicit /payments/ endpoint."
+    )
 
 
 @pytest.mark.django_db
-def test_cod_checkout_order_is_paid(client):
-    """COD/direct flow must result in PAID order immediately (unchanged)."""
+def test_cod_checkout_order_is_created(client):
+    """COD checkout must leave the order in CREATED state.
+
+    The order transitions to PAID only after the explicit POST /payments/ call
+    confirms the payment — matching the legacy DEV simulation flow.
+    """
     _add_product_to_cart(client)
     response = client.post(CHECKOUT_URL, checkout_payload(payment_method="COD"), format="json")
     order = Order.objects.get(id=response.json()["id"])
-    assert order.status == Order.Status.PAID
+    assert order.status == Order.Status.CREATED, (
+        "Order must not be PAID after COD checkout — "
+        "PAID is set only after explicit payment confirmation."
+    )

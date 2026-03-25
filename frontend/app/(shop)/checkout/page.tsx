@@ -12,6 +12,7 @@ import {
   getCheckoutPreflight,
   type PriceChangePayload,
 } from "@/lib/api/checkout";
+import { savePaymentReturnContext } from "@/lib/utils/paymentReturn";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useCart } from "@/components/cart/CartProvider";
 import { getPriceChangeMessage } from "@/lib/utils/priceChange";
@@ -92,9 +93,35 @@ export default function CheckoutPage() {
   const onBackToCart = () => router.push("/cart");
 
   const onSubmit = async (values: CheckoutValues) => {
-    const order = await checkoutCart(values);
-    resetCount();
-    router.push(orderTarget(order.id));
+    try {
+      const order = await checkoutCart(values);
+      resetCount();
+
+      if (
+        order.payment_initiation.payment_flow === "REDIRECT" &&
+        order.payment_initiation.redirect_url
+      ) {
+        // Hosted/redirect flow: save context so the return page knows which
+        // order to check, then hand the browser off to the payment provider.
+        savePaymentReturnContext({ orderId: order.id, isGuest: false });
+        window.location.assign(order.payment_initiation.redirect_url);
+      } else {
+        // Direct flow (e.g. COD): payment is applied synchronously at checkout.
+        router.push(orderTarget(order.id));
+      }
+    } catch (err: unknown) {
+      const response = (err as { response?: { status?: number; data?: { code?: string } } })?.response;
+      const status = response?.status;
+      const code = response?.data?.code;
+
+      if (status === 409 && code === "OUT_OF_STOCK") {
+        toast.error("One or more items are out of stock. Please review your cart.");
+      } else if (status === 409) {
+        toast.error("Checkout failed. Please try again.");
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
+    }
   };
 
   return (
