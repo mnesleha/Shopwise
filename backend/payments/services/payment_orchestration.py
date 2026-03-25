@@ -85,11 +85,17 @@ class PaymentOrchestrationService:
                 raise OrderNotPayableException()
 
             # Create the payment record in PENDING state.
+            # Use the stable provider_enum attribute declared on each provider class.
+            provider_enum = provider.provider_enum
             payment = Payment.objects.create(
                 order=locked_order,
                 status=Payment.Status.PENDING,
                 payment_method=payment_method,
-                provider=Payment.Provider.DEV_FAKE,  # updated per-provider in future slices
+                provider=provider_enum,
+                # Snapshot order financials so hosted providers (e.g. AcquireMock)
+                # have the correct amount/currency to include in their API call.
+                amount=getattr(locked_order, "subtotal_gross", None),
+                currency=getattr(locked_order, "currency", None),
             )
 
             context = PaymentStartContext(

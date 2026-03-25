@@ -9,6 +9,7 @@ This provider must never be used in production.  Its purpose is to keep the
 dev/test flow intact while the provider boundary is being established.
 """
 
+from payments.models import Payment
 from payments.providers.base import BasePaymentProvider, PaymentStartContext, ProviderStartResult
 
 _SIMULATED_RESULT_KEY = "simulated_result"
@@ -21,6 +22,9 @@ class DevFakeProvider(BasePaymentProvider):
     Outcome is determined entirely by context.extra['simulated_result'].
     Defaults to success when the key is absent.
     """
+
+    #: Stable provider enum value — used by orchestration to set Payment.provider.
+    provider_enum = Payment.Provider.DEV_FAKE
 
     def start(self, context: PaymentStartContext) -> ProviderStartResult:
         simulated = context.extra.get(_SIMULATED_RESULT_KEY, "success")

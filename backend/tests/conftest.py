@@ -14,9 +14,14 @@ from orderitems.models import OrderItem
 from suppliers.models import Supplier, SupplierAddress, SupplierPaymentDetails
 
 
-def checkout_payload(customer_email: str = "customer@example.com", **overrides) -> dict:
+def checkout_payload(
+    customer_email: str = "customer@example.com",
+    payment_method: str = "COD",
+    **overrides,
+) -> dict:
     data = {
         "customer_email": customer_email,
+        "payment_method": payment_method,
         "shipping_first_name": "E2E",
         "shipping_last_name": "Customer",
         "shipping_address_line1": "E2E Main Street 1",

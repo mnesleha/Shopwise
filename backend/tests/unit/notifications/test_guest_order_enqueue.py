@@ -53,6 +53,7 @@ def test_guest_checkout_enqueues_guest_order_email_on_commit(monkeypatch, client
         "shipping_country": "US",
         "shipping_phone": "+10000000000",
         "billing_same_as_shipping": True,
+        "payment_method": "COD",
     }
 
     rf = APIRequestFactory()
