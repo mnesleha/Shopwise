@@ -16,6 +16,7 @@ CARD tests mock requests.post to avoid a running AcquireMock instance.
 COD tests use DevFakeProvider directly — no HTTP mocking needed.
 """
 
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -344,6 +345,29 @@ def test_checkout_delegates_provider_selection_not_hardcoded(client, settings):
     assert response.status_code == 201
 
 
+@pytest.mark.django_db
+def test_checkout_passes_only_generic_callback_context_to_payments_layer(client):
+    """Checkout must not compose provider-specific callback URLs itself."""
+    _add_product_to_cart(client)
+
+    fake_payment = SimpleNamespace(pk=999, redirect_url="https://gateway.test/pay/999")
+
+    with patch(
+        "api.views.carts.PaymentOrchestrationService.start_payment",
+        return_value=fake_payment,
+    ) as start_payment_mock:
+        response = client.post(
+            CHECKOUT_URL,
+            checkout_payload(payment_method="CARD"),
+            format="json",
+        )
+
+    assert response.status_code == 201
+    kwargs = start_payment_mock.call_args.kwargs
+    assert kwargs["payment_method"] == "CARD"
+    assert kwargs["extra"] == {"callback_base_url": "http://testserver/"}
+
+
 # ---------------------------------------------------------------------------
 # 7. Redirect payment semantics — CARD checkout must NOT finalize payment
 # ---------------------------------------------------------------------------
@@ -451,6 +475,7 @@ def test_card_checkout_sends_acquiremock_contract_body(client, settings):
     assert kwargs["json"]["reference"] == str(response.json()["id"])
     assert kwargs["json"]["redirectUrl"] == settings.FRONTEND_RETURN_URL
     assert kwargs["json"]["webhookUrl"].endswith("/api/v1/webhooks/acquiremock/")
+    assert kwargs["json"]["webhookUrl"] == "http://testserver/api/v1/webhooks/acquiremock/"
 
 
 @pytest.mark.django_db

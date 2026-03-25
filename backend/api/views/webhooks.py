@@ -16,6 +16,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from payments.providers.acquiremock_webhook import (
+    describe_acquiremock_signature_mismatch,
     parse_acquiremock_webhook,
     verify_acquiremock_signature,
 )
@@ -85,10 +86,23 @@ class AcquireMockWebhookView(APIView):
                 status=500,
             )
         if not verify_acquiremock_signature(payload, signature, secret):
+            diagnostics = describe_acquiremock_signature_mismatch(
+                payload=payload,
+                signature=signature,
+                secret=secret,
+                raw_body=request.body,
+            )
             logger.warning(
                 "AcquireMock webhook rejected — signature mismatch "
-                "(payment_id=%s)",
+                "(payment_id=%s signature_len=%s signature_is_hex=%s "
+                "matches_raw_body=%s secret_fp=%s canonical_fp=%s raw_fp=%s)",
                 payload.get("payment_id", "<unknown>"),
+                diagnostics["signature_len"],
+                diagnostics["signature_is_hex"],
+                diagnostics["matches_raw_body"],
+                diagnostics["secret_fingerprint"],
+                diagnostics["canonical_payload_fingerprint"],
+                diagnostics["raw_body_fingerprint"],
             )
             return Response(
                 {"code": "INVALID_SIGNATURE", "message": "Webhook signature verification failed."},

@@ -32,6 +32,53 @@ from typing import Any
 # ---------------------------------------------------------------------------
 
 
+def _compute_hmac_sha256_hex(message: bytes, secret: str) -> str:
+    """Return hex-encoded HMAC-SHA256 for *message* using *secret*."""
+    return hmac.new(
+        key=secret.encode("utf-8"),
+        msg=message,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+
+
+def compute_acquiremock_signature(payload: dict, secret: str) -> str:
+    """Return AcquireMock's documented signature for *payload*."""
+    canonical = json.dumps(payload, sort_keys=True).encode("utf-8")
+    return _compute_hmac_sha256_hex(canonical, secret)
+
+
+def describe_acquiremock_signature_mismatch(
+    payload: dict,
+    signature: str,
+    secret: str,
+    raw_body: bytes,
+) -> dict[str, Any]:
+    """Return safe diagnostics for investigating webhook signature mismatches.
+
+    The returned metadata intentionally excludes the secret itself, the expected
+    signature, and the raw payload contents. It is designed to distinguish the
+    most likely failure modes:
+
+    - stale / wrong secret
+    - malformed signature header
+    - provider signing the raw JSON body instead of canonical sort_keys JSON
+    """
+    signature = signature.strip()
+    canonical_bytes = json.dumps(payload, sort_keys=True).encode("utf-8")
+    raw_body_signature = _compute_hmac_sha256_hex(raw_body, secret)
+
+    return {
+        "signature_len": len(signature),
+        "signature_is_hex": len(signature) == 64 and all(
+            ch in "0123456789abcdefABCDEF" for ch in signature
+        ),
+        "matches_raw_body": hmac.compare_digest(raw_body_signature, signature),
+        "secret_fingerprint": hashlib.sha256(secret.encode("utf-8")).hexdigest()[:12],
+        "canonical_payload_fingerprint": hashlib.sha256(canonical_bytes).hexdigest()[:12],
+        "raw_body_fingerprint": hashlib.sha256(raw_body).hexdigest()[:12],
+    }
+
+
 def verify_acquiremock_signature(payload: dict, signature: str, secret: str) -> bool:
     """Return True if *signature* is the valid HMAC-SHA256 of *payload*.
 
@@ -47,12 +94,7 @@ def verify_acquiremock_signature(payload: dict, signature: str, secret: str) -> 
     Returns:
         ``True`` if the signature is valid, ``False`` otherwise.
     """
-    canonical = json.dumps(payload, sort_keys=True)
-    expected = hmac.new(
-        key=secret.encode("utf-8"),
-        msg=canonical.encode("utf-8"),
-        digestmod=hashlib.sha256,
-    ).hexdigest()
+    expected = compute_acquiremock_signature(payload, secret)
     return hmac.compare_digest(expected, signature)
 
 
@@ -109,7 +151,7 @@ def parse_acquiremock_webhook(data: dict) -> AcquireMockWebhookEvent:
         payment_id=str(data["payment_id"]),
         reference=str(data["reference"]),
         amount=str(data["amount"]),
-        status=str(data["status"]),
+        status=str(data["status"]).strip().upper(),
         timestamp=str(data["timestamp"]),
         raw=data,
     )

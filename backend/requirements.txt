@@ -1,3 +1,4 @@
+aiosmtplib==5.1.0
 asgiref==3.11.0
 attrs==25.4.0
 babel==2.18.0

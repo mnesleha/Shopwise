@@ -13,6 +13,7 @@ No running AcquireMock server is required; signing is done inline.
 import hashlib
 import hmac
 import json
+import logging
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -130,6 +131,27 @@ def test_invalid_signature_is_rejected(anon_client, settings):
 
 
 @pytest.mark.django_db
+def test_invalid_signature_logs_safe_diagnostics(anon_client, settings, caplog):
+    """Mismatch log includes enough metadata to distinguish config vs signing issues."""
+    settings.ACQUIREMOCK_WEBHOOK_SECRET = _TEST_SECRET
+    caplog.set_level(logging.WARNING)
+
+    response = anon_client.post(
+        WEBHOOK_URL,
+        data=json.dumps(SAMPLE_PAYLOAD),
+        content_type="application/json",
+        HTTP_X_SIGNATURE="deadbeef000000000000000000000000000000000000000000000000deadbeef",
+    )
+
+    assert response.status_code == 403
+    assert "AcquireMock webhook rejected — signature mismatch" in caplog.text
+    assert "signature_len=64" in caplog.text
+    assert "signature_is_hex=True" in caplog.text
+    assert "matches_raw_body=False" in caplog.text
+    assert "secret_fp=" in caplog.text
+
+
+@pytest.mark.django_db
 def test_missing_signature_is_rejected(anon_client, settings):
     """A request without the X-Signature header returns 403 Forbidden."""
     settings.ACQUIREMOCK_WEBHOOK_SECRET = _TEST_SECRET
@@ -228,6 +250,24 @@ def test_webhook_with_all_required_fields_is_accepted(anon_client, settings):
         "status": "FAILED",
         "timestamp": "2026-03-25T12:30:00Z",
     }
+    _create_acquiremock_payment(payload["payment_id"])
+    sig = _sign(payload, _TEST_SECRET)
+
+    response = anon_client.post(
+        WEBHOOK_URL,
+        data=json.dumps(payload),
+        content_type="application/json",
+        HTTP_X_SIGNATURE=sig,
+    )
+
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_lowercase_paid_status_is_accepted(anon_client, settings):
+    """AcquireMock's lowercase provider statuses are accepted via normalization."""
+    settings.ACQUIREMOCK_WEBHOOK_SECRET = _TEST_SECRET
+    payload = {**SAMPLE_PAYLOAD, "payment_id": "pay_lower_paid_api", "status": "paid"}
     _create_acquiremock_payment(payload["payment_id"])
     sig = _sign(payload, _TEST_SECRET)
 

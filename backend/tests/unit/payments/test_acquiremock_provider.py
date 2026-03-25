@@ -36,6 +36,7 @@ def _make_context(
     order_id="order-42",
     amount="25.00",
     currency="USD",
+    callback_base_url=None,
     return_url="https://shop.test/return",
     webhook_url="https://api.shop.test/api/v1/webhooks/acquiremock/",
 ):
@@ -50,7 +51,11 @@ def _make_context(
     return PaymentStartContext(
         order=order,
         payment=payment,
-        extra={"return_url": return_url, "webhook_url": webhook_url},
+        extra={
+            "callback_base_url": callback_base_url,
+            "return_url": return_url,
+            "webhook_url": webhook_url,
+        },
     )
 
 
@@ -144,6 +149,30 @@ def test_start_sends_correct_request_body(mock_settings, mock_post):
     assert body["webhookUrl"] == "https://api.shop.test/api/v1/webhooks/acquiremock/"
     assert body["redirectUrl"] == "https://shop.test/ok"
     assert mock_post.call_args.args[0] == "https://acquiremock.test/api/create-invoice"
+
+
+@patch("payments.providers.acquiremock.requests.post")
+@patch("payments.providers.acquiremock.settings")
+def test_start_composes_callback_urls_from_generic_base_context(mock_settings, mock_post):
+    """Hosted callback URL composition belongs to the payments layer, not checkout."""
+    mock_settings.ACQUIREMOCK_BASE_URL = FAKE_BASE_URL
+    mock_settings.ACQUIREMOCK_API_KEY = FAKE_API_KEY
+    mock_settings.PUBLIC_BASE_URL = FAKE_PUBLIC_BASE_URL
+    mock_settings.FRONTEND_RETURN_URL = "https://shop.test/return-from-settings"
+    mock_settings.ACQUIREMOCK_TIMEOUT = 10
+    mock_post.return_value = _ok_response()
+
+    context = _make_context(
+        callback_base_url="https://api.shop.test/",
+        return_url=None,
+        webhook_url=None,
+    )
+    AcquireMockProvider().start(context)
+
+    _, kwargs = mock_post.call_args
+    body = kwargs["json"]
+    assert body["redirectUrl"] == "https://shop.test/return-from-settings"
+    assert body["webhookUrl"] == "https://api.shop.test/api/v1/webhooks/acquiremock/"
 
 
 @patch("payments.providers.acquiremock.requests.post")

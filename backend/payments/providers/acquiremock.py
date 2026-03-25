@@ -35,6 +35,7 @@ from payments.providers.base import BasePaymentProvider, PaymentStartContext, Pr
 logger = logging.getLogger(__name__)
 
 _CREATE_INVOICE_PATH = "/api/create-invoice"
+_WEBHOOK_PATH = "/api/v1/webhooks/acquiremock/"
 
 
 def _to_minor_units(amount: object) -> int:
@@ -57,6 +58,36 @@ def _extract_payment_id_from_page_url(page_url: str) -> str | None:
     return payment_id or None
 
 
+def _join_absolute_url(base_url: str, path: str) -> str:
+    """Join an absolute base URL with an absolute path."""
+    if not base_url:
+        return ""
+    return f"{base_url.rstrip('/')}{path}"
+
+
+def _build_acquiremock_callback_urls(context: PaymentStartContext) -> tuple[str, str]:
+    """Resolve the hosted return/webhook callback URLs for AcquireMock.
+
+    Precedence is intentionally small and explicit:
+    1. Explicit provider extras (legacy / tests)
+    2. Generic callback base URL from the caller for absolute webhook building
+    3. Settings fallbacks
+    """
+    redirect_url = context.extra.get("return_url") or getattr(
+        settings, "FRONTEND_RETURN_URL", ""
+    )
+
+    callback_base_url = context.extra.get("callback_base_url") or getattr(
+        settings, "PUBLIC_BASE_URL", ""
+    )
+    webhook_url = context.extra.get("webhook_url") or _join_absolute_url(
+        callback_base_url,
+        _WEBHOOK_PATH,
+    )
+
+    return redirect_url, webhook_url
+
+
 class AcquireMockProvider(BasePaymentProvider):
     """Hosted-gateway provider backed by the AcquireMock service.
 
@@ -74,8 +105,8 @@ class AcquireMockProvider(BasePaymentProvider):
         """Send an invoice-creation request to AcquireMock.
 
         Args:
-            context: Must include ``context.extra["return_url"]`` — the URL
-                     AcquireMock will redirect the customer to after payment.
+            context: Provider start context. Hosted callback URLs are resolved
+                     inside the payments layer from generic context / settings.
 
         Returns:
             ProviderStartResult:
@@ -86,10 +117,7 @@ class AcquireMockProvider(BasePaymentProvider):
         base_url = settings.ACQUIREMOCK_BASE_URL
         api_key = settings.ACQUIREMOCK_API_KEY
         timeout = getattr(settings, "ACQUIREMOCK_TIMEOUT", 10)
-        webhook_url = context.extra.get("webhook_url") or (
-            f"{getattr(settings, 'PUBLIC_BASE_URL', '').rstrip('/')}/api/v1/webhooks/acquiremock/"
-        )
-        redirect_url = context.extra.get("return_url", "")
+        redirect_url, webhook_url = _build_acquiremock_callback_urls(context)
 
         # --- Fail-closed configuration guards ---
         if not base_url:
