@@ -387,3 +387,23 @@ CHECKOUT_PRICE_CHANGE_INFO_THRESHOLD_PERCENT: int = int(
 CHECKOUT_PRICE_CHANGE_WARNING_THRESHOLD_PERCENT: int = int(
     os.getenv("CHECKOUT_PRICE_CHANGE_WARNING_THRESHOLD_PERCENT", 50) # 5
 )
+
+# ---------------------------------------------------------------------------
+# AcquireMock payment gateway settings
+# ---------------------------------------------------------------------------
+# AcquireMock is a hosted mock payment gateway used during development and
+# architecture preparation for real card PSP integration.
+#
+# ACQUIREMOCK_BASE_URL  — base URL of the AcquireMock server (no trailing slash).
+# ACQUIREMOCK_API_KEY   — authentication token sent as X-Api-Key header.
+# ACQUIREMOCK_TIMEOUT   — HTTP request timeout in seconds (default: 10).
+#
+# These values must be set in the environment (or local.py) before CARD
+# payment can be started.  The provider will fail explicitly when the URL
+# or key is empty.
+ACQUIREMOCK_BASE_URL: str = os.getenv("ACQUIREMOCK_BASE_URL", "")
+ACQUIREMOCK_API_KEY: str = os.getenv("ACQUIREMOCK_API_KEY", "")
+ACQUIREMOCK_TIMEOUT: int = int(os.getenv("ACQUIREMOCK_TIMEOUT", 10))
+# Shared secret used to verify HMAC-SHA256 webhook signatures from AcquireMock.
+# Must match the secret configured in the AcquireMock dashboard/environment.
+ACQUIREMOCK_WEBHOOK_SECRET: str = os.getenv("ACQUIREMOCK_WEBHOOK_SECRET", "")

@@ -30,6 +30,8 @@ class Payment(models.Model):
     class Provider(models.TextChoices):
         # Current development / simulation provider.
         DEV_FAKE = "DEV_FAKE", "Dev Fake (simulation)"
+        # Hosted mock gateway — mirrors the contract of real card PSPs.
+        ACQUIREMOCK = "ACQUIREMOCK", "AcquireMock (hosted gateway)"
         # Future providers will be added here without touching existing data.
 
     order = models.ForeignKey(
@@ -96,6 +98,16 @@ class Payment(models.Model):
     # Human-readable failure reason for operator visibility and retry decisions.
     failure_reason = models.CharField(
         max_length=500,
+        null=True,
+        blank=True,
+    )
+
+    # Hosted-gateway redirect URL returned by the provider when a payment
+    # session is created.  Null for direct (synchronous) providers such as
+    # DEV_FAKE.  Persisted here so the frontend can be re-directed even if the
+    # checkout response is lost or replayed.
+    redirect_url = models.CharField(
+        max_length=2048,
         null=True,
         blank=True,
     )

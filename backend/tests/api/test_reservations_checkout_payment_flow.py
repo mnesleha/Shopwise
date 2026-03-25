@@ -2,9 +2,32 @@ import pytest
 from django.utils import timezone
 
 from orders.models import Order, InventoryReservation
+from orders.services.inventory_reservation_service import reserve_for_checkout
 from products.models import Product
 from payments.models import Payment
-from tests.conftest import checkout_payload, create_order_via_checkout
+from tests.conftest import checkout_payload, create_order_via_checkout, create_valid_order
+
+
+# ---------------------------------------------------------------------------
+# Inline helper: set up an order in CREATED state with an ACTIVE reservation
+# without triggering checkout's auto-payment.  Use this instead of
+# create_order_via_checkout() when the test needs to exercise the payment
+# endpoint directly (e.g. failure + retry scenarios).
+# ---------------------------------------------------------------------------
+
+def _create_order_with_reservation(user, product, quantity: int = 1) -> Order:
+    """Create an order directly (bypassing checkout API) with an ACTIVE reservation.
+
+    This helper lets tests set up the pre-payment state without triggering the
+    checkout payment orchestration, preserving the ability to test the
+    /api/v1/payments/ endpoint in isolation.
+    """
+    order = create_valid_order(user=user, customer_email=user.email)
+    reserve_for_checkout(
+        order=order,
+        items=[{"product_id": product.id, "quantity": quantity}],
+    )
+    return order
 
 
 @pytest.mark.django_db
@@ -24,7 +47,7 @@ def test_checkout_creates_active_inventory_reservations(auth_client, user):
         format="json",
     )
 
-    # checkout -> should create order + ACTIVE reservation(s)
+    # checkout -> COD auto-payment commits reservations immediately
     resp = auth_client.post(
         "/api/v1/cart/checkout/",
         checkout_payload(customer_email=user.email),
@@ -33,15 +56,16 @@ def test_checkout_creates_active_inventory_reservations(auth_client, user):
     assert resp.status_code == 201
     order_id = resp.json()["id"]
 
+    # After checkout with COD, payment is applied synchronously:
+    # reservations transition straight from ACTIVE -> COMMITTED.
     reservations = InventoryReservation.objects.filter(order_id=order_id)
     assert reservations.exists()
     assert all(
-        r.status == InventoryReservation.Status.ACTIVE for r in reservations)
+        r.status == InventoryReservation.Status.COMMITTED for r in reservations)
 
     r = reservations.get(product_id=product.id)
     assert r.quantity == 2
-    assert r.expires_at is not None
-    assert r.expires_at > timezone.now()
+    assert r.committed_at is not None
 
 
 @pytest.mark.django_db
@@ -53,22 +77,12 @@ def test_payment_success_commits_reservations_and_decrements_stock(auth_client, 
         is_active=True,
     )
 
-    # checkout with qty=2 (uses existing helper)
-    auth_client.get("/api/v1/cart/")
-    auth_client.post(
-        "/api/v1/cart/items/",
-        {"product_id": product.id, "quantity": 2},
-        format="json",
-    )
-    checkout_resp = auth_client.post(
-        "/api/v1/cart/checkout/",
-        checkout_payload(customer_email=user.email),
-        format="json",
-    )
-    assert checkout_resp.status_code == 201
-    order_id = checkout_resp.json()["id"]
+    # Create order + reservation directly (bypassing checkout auto-payment)
+    # so we can test the payment endpoint in isolation.
+    order = _create_order_with_reservation(user, product, quantity=2)
+    order_id = order.id
 
-    # pay success
+    # pay success via the manual dev endpoint
     pay_resp = auth_client.post(
         "/api/v1/payments/",
         {"order_id": order_id, "result": "success"},
@@ -106,9 +120,9 @@ def test_payment_fail_marks_order_payment_failed_and_keeps_reservations_active(a
         is_active=True,
     )
 
-    order_data = create_order_via_checkout(
-        auth_client, product, customer_email=user.email)
-    order_id = order_data["id"]
+    # Create order + reservation directly (bypassing checkout auto-payment).
+    order = _create_order_with_reservation(user, product)
+    order_id = order.id
 
     pay_resp = auth_client.post(
         "/api/v1/payments/",
@@ -151,9 +165,9 @@ def test_payment_retry_creates_new_attempt_and_succeeds(auth_client, user):
         is_active=True,
     )
 
-    order_data = create_order_via_checkout(
-        auth_client, product, customer_email=user.email)
-    order_id = order_data["id"]
+    # Create order + reservation directly (bypassing checkout auto-payment).
+    order = _create_order_with_reservation(user, product)
+    order_id = order.id
 
     # attempt 1: fail
     r1 = auth_client.post(
@@ -207,7 +221,8 @@ def test_payment_retry_creates_new_attempt_and_succeeds(auth_client, user):
 def test_checkout_prevents_oversell_via_active_reservation_sum(auth_client, user):
     """
     Availability is physical stock - SUM(ACTIVE reservations).
-    First checkout reserves the last unit, second checkout must fail with OUT_OF_STOCK.
+    First reservation holds the last unit (ACTIVE, no stock decrement).
+    Second checkout must fail with OUT_OF_STOCK at checkout time.
     """
     product = Product.objects.create(
         name="Product",
@@ -216,13 +231,14 @@ def test_checkout_prevents_oversell_via_active_reservation_sum(auth_client, user
         is_active=True,
     )
 
-    # First checkout reserves the last unit
-    o1 = create_order_via_checkout(
-        auth_client, product, customer_email=user.email)
+    # Reserve the last unit directly (no auto-payment, no stock decrement).
+    # ACTIVE reservation ties up the unit for availability purposes.
+    first_order = _create_order_with_reservation(user, product)
     assert InventoryReservation.objects.filter(
-        order_id=o1["id"], status=InventoryReservation.Status.ACTIVE).exists()
+        order_id=first_order.id, status=InventoryReservation.Status.ACTIVE).exists()
 
-    # Second attempt: new cart session -> for simplicity, just add again and checkout
+    # Second attempt: add to cart (physical stock=1 → add succeeds),
+    # but checkout availability = stock - active = 1 - 1 = 0 → OUT_OF_STOCK
     auth_client.get("/api/v1/cart/")
     auth_client.post(
         "/api/v1/cart/items/",
@@ -236,5 +252,4 @@ def test_checkout_prevents_oversell_via_active_reservation_sum(auth_client, user
     )
 
     assert r2.status_code in (400, 409)
-    # Your error contract should expose code OUT_OF_STOCK
     assert r2.json().get("code") == "OUT_OF_STOCK"

@@ -30,6 +30,7 @@ from api.serializers.cart import (
     CartItemUpdateRequestSerializer,
     CartCheckoutRequestSerializer,
     CartCheckoutResponseSerializer,
+    PaymentInitiationSerializer,
 )
 from api.serializers.common import ErrorResponseSerializer
 from carts.services.pricing import get_cart_pricing, get_cart_pricing_with_order_discount
@@ -68,6 +69,7 @@ from api.services.campaign_offer_session import (
     set_campaign_offer_cookie as _set_campaign_offer_cookie,
     clear_campaign_offer_cookie as _clear_campaign_offer_cookie,
 )
+from payments.services.payment_orchestration import PaymentOrchestrationService
 from django_q.tasks import async_task
 from suppliers.services import resolve_order_supplier_snapshot
 
@@ -1271,6 +1273,19 @@ Notes:
             # atomic block guarantees rollback
             raise CheckoutFailedException()
 
+        # ── Payment initiation ───────────────────────────────────────────────
+        # Called AFTER the order creation transaction has committed so that
+        # the DB lock is released before any outbound HTTP calls are made
+        # (e.g. AcquireMock invoice creation for CARD).
+        # If initiation fails for any reason the order remains in CREATED
+        # status and can be retried; it is NOT rolled back because the
+        # transaction has already committed.
+        payment = PaymentOrchestrationService.start_payment(
+            order=order,
+            payment_method=checkout_data["payment_method"],
+            extra={"return_url": getattr(settings, "FRONTEND_RETURN_URL", "")},
+        )
+
         # ── Optional: save checkout addresses to the user's profile ─────────
         if checkout_data.get("save_to_profile") and request.user.is_authenticated:
             try:
@@ -1283,6 +1298,14 @@ Notes:
 
         response_data = dict(CartCheckoutResponseSerializer(order).data)
         response_data["price_change"] = price_change_data
+        # Provider-agnostic payment initiation result for the frontend.
+        # REDIRECT: frontend must redirect the customer to redirect_url.
+        # DIRECT:   checkout is complete; no redirect required (e.g. COD).
+        response_data["payment_initiation"] = PaymentInitiationSerializer({
+            "payment_id": payment.pk,
+            "payment_flow": "REDIRECT" if payment.redirect_url else "DIRECT",
+            "redirect_url": payment.redirect_url,
+        }).data
         # Phase 4 / Slice 5B: clear the campaign offer cookie after a
         # successful checkout so the same offer is not applied again.
         checkout_response = Response(response_data, status=status.HTTP_201_CREATED)
