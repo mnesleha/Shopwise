@@ -32,12 +32,16 @@ export default function GuestCheckoutPage() {
         router.push("/guest/checkout/success");
       }
     } catch (err: unknown) {
-      const response = (err as { response?: { status?: number; data?: { code?: string } } })?.response;
+      const response = (
+        err as { response?: { status?: number; data?: { code?: string } } }
+      )?.response;
       const status = response?.status;
       const code = response?.data?.code;
 
       if (status === 409 && code === "OUT_OF_STOCK") {
-        toast.error("One or more items are out of stock. Please review your cart.");
+        toast.error(
+          "One or more items are out of stock. Please review your cart.",
+        );
       } else if (status === 409) {
         toast.error("Checkout failed. Please try again.");
       } else {
