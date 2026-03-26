@@ -144,7 +144,9 @@ describe("ProductGridClient — routing contracts", () => {
     render(
       <ProductGridClient
         {...buildProps({
-          products: [makeProduct({ id: "7", name: "Travel Mug", stockQuantity: 3 })],
+          products: [
+            makeProduct({ id: "7", name: "Travel Mug", stockQuantity: 3 }),
+          ],
           totalItems: 1,
         })}
       />,
@@ -166,7 +168,9 @@ describe("ProductGridClient — routing contracts", () => {
     render(
       <ProductGridClient
         {...buildProps({
-          products: [makeProduct({ id: "8", name: "Notebook", stockQuantity: 2 })],
+          products: [
+            makeProduct({ id: "8", name: "Notebook", stockQuantity: 2 }),
+          ],
           totalItems: 1,
         })}
       />,
