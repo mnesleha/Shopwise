@@ -14,6 +14,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import * as React from "react";
+import { act } from "react";
 import userEvent from "@testing-library/user-event";
 import CartDetailClient from "@/components/cart/CartDetailClient";
 import { renderWithProviders } from "../helpers/render";
@@ -32,6 +33,7 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/cart",
 }));
 
+const mockAddCartItem = vi.fn().mockResolvedValue(undefined);
 const mockClearCart = vi.fn().mockResolvedValue(undefined);
 const mockDeleteCartItem = vi.fn().mockResolvedValue({});
 const mockUpdateCartItemQuantity = vi.fn().mockResolvedValue({});
@@ -43,6 +45,7 @@ const mockGetCart = vi.fn().mockResolvedValue({
 });
 
 vi.mock("@/lib/api/cart", () => ({
+  addCartItem: (...args: unknown[]) => mockAddCartItem(...args),
   clearCart: (...args: unknown[]) => mockClearCart(...args),
   deleteCartItem: (...args: unknown[]) => mockDeleteCartItem(...args),
   getCart: (...args: unknown[]) => mockGetCart(...args),
@@ -90,10 +93,11 @@ vi.mock("@/components/cart/CartProvider", () => ({
 }));
 
 const mockToastError = vi.fn();
+const mockToastSuccess = vi.fn();
 vi.mock("sonner", () => ({
   toast: {
     error: (...args: unknown[]) => mockToastError(...args),
-    success: vi.fn(),
+    success: (...args: unknown[]) => mockToastSuccess(...args),
     dismiss: vi.fn(),
   },
 }));
@@ -110,6 +114,7 @@ describe("CartDetailClient", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Restore default resolved values after clearAllMocks
+    mockAddCartItem.mockResolvedValue(undefined);
     mockClearCart.mockResolvedValue(undefined);
     mockUpdateCartItemQuantity.mockResolvedValue({});
     mockGetCart.mockResolvedValue({
@@ -154,15 +159,11 @@ describe("CartDetailClient", () => {
   });
 
   describe("onClearCart", () => {
-    it("calls clearCart() once when confirmed", async () => {
+    it("calls clearCart() once when clear cart is clicked", async () => {
       const user = userEvent.setup();
-      // Render with a cart that has items so the clear button is visible
       renderClient(makeCart() as CartVm);
 
-      // First click shows the confirmation UI
       await user.click(screen.getByRole("button", { name: /clear cart/i }));
-      // Second click (Confirm) triggers onClearCart
-      await user.click(screen.getByRole("button", { name: /confirm/i }));
 
       await waitFor(() => {
         expect(mockClearCart).toHaveBeenCalledTimes(1);
@@ -174,7 +175,6 @@ describe("CartDetailClient", () => {
       renderClient(makeCart() as CartVm);
 
       await user.click(screen.getByRole("button", { name: /clear cart/i }));
-      await user.click(screen.getByRole("button", { name: /confirm/i }));
 
       await waitFor(() => {
         expect(mockClearCart).toHaveBeenCalledTimes(1);
@@ -188,10 +188,68 @@ describe("CartDetailClient", () => {
       renderClient(makeCart() as CartVm);
 
       await user.click(screen.getByRole("button", { name: /clear cart/i }));
-      await user.click(screen.getByRole("button", { name: /confirm/i }));
 
       await waitFor(() => {
         expect(mockGetCart).toHaveBeenCalled();
+      });
+    });
+
+    it("shows an undo toast with an extended duration after clearing the cart", async () => {
+      const user = userEvent.setup();
+      renderClient(makeCart() as CartVm);
+
+      await user.click(screen.getByRole("button", { name: /clear cart/i }));
+
+      await waitFor(() => {
+        expect(mockToastSuccess).toHaveBeenCalledWith(
+          "Cart cleared.",
+          expect.objectContaining({
+            duration: 12000,
+            action: expect.objectContaining({ label: "Undo" }),
+          }),
+        );
+      });
+    });
+
+    it("restores cleared items when undo is clicked", async () => {
+      const user = userEvent.setup();
+      renderClient(
+        makeCart({
+          items: [
+            makeCartItem({
+              productId: "7",
+              productName: "Travel Mug",
+              quantity: 2,
+            }),
+          ],
+        }) as CartVm,
+      );
+
+      await user.click(screen.getByRole("button", { name: /clear cart/i }));
+
+      await waitFor(() => {
+        expect(mockToastSuccess).toHaveBeenCalled();
+      });
+
+      const toastOptions = mockToastSuccess.mock.calls.find(
+        ([message]) => message === "Cart cleared.",
+      )?.[1] as { action?: { onClick?: () => void } } | undefined;
+
+      expect(toastOptions?.action?.onClick).toBeTypeOf("function");
+
+      await act(async () => {
+        toastOptions?.action?.onClick?.();
+      });
+
+      await waitFor(() => {
+        expect(mockAddCartItem).toHaveBeenCalledWith({
+          productId: 7,
+          quantity: 2,
+        });
+      });
+
+      await waitFor(() => {
+        expect(mockToastSuccess).toHaveBeenCalledWith("Cart restored.");
       });
     });
   });

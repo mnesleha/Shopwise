@@ -15,6 +15,7 @@ const STORAGE_KEY = "shopwise_payment_return_ctx";
 describe("paymentReturn helpers", () => {
   beforeEach(() => {
     sessionStorage.clear();
+    loadAndClearPaymentReturnContext();
   });
 
   describe("loadAndClearPaymentReturnContext", () => {
@@ -66,12 +67,14 @@ describe("paymentReturn helpers", () => {
       });
     });
 
-    it("clears the context after the first read (read-once)", () => {
+    it("allows one strict-mode replay before clearing the context", () => {
       savePaymentReturnContext({ orderId: 5, isGuest: false });
       const first = loadAndClearPaymentReturnContext();
       const second = loadAndClearPaymentReturnContext();
+      const third = loadAndClearPaymentReturnContext();
       expect(first).not.toBeNull();
-      expect(second).toBeNull();
+      expect(second).toEqual(first);
+      expect(third).toBeNull();
     });
 
     it("does not interfere with other sessionStorage keys", () => {

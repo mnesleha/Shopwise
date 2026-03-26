@@ -26,6 +26,11 @@ vi.mock("@/lib/api/cart", () => ({
   addCartItem: (...args: unknown[]) => mockAddCartItem(...args),
 }));
 
+const mockToastSuccess = vi.fn();
+vi.mock("sonner", () => ({
+  toast: { success: (...args: unknown[]) => mockToastSuccess(...args) },
+}));
+
 vi.mock("@/components/cart/CartProvider", () => ({
   useCart: () => ({
     refreshCart: vi.fn().mockResolvedValue(undefined),
@@ -65,7 +70,7 @@ describe("ProductDetailClient — routing contracts", () => {
     const user = userEvent.setup();
     render(
       <ProductDetailClient
-        product={makeProduct({ id: "10", stockQuantity: 5 })}
+        product={makeProduct({ id: "10", name: "Desk Lamp", stockQuantity: 5 })}
       />,
     );
 
@@ -76,6 +81,7 @@ describe("ProductDetailClient — routing contracts", () => {
       productId: 10,
       quantity: 1,
     });
+    expect(mockToastSuccess).toHaveBeenCalledWith("Desk Lamp added to cart.");
     // User stays on the product page — no redirect to /cart.
     await vi.waitFor(() => {
       expect(mockRouter.push).not.toHaveBeenCalledWith("/cart");

@@ -98,6 +98,10 @@ describe("PaymentReturnPage", () => {
         screen.getByTestId("payment-return-guest-success"),
       ).toBeInTheDocument();
     });
+    expect(screen.getByText("Check your email")).toBeInTheDocument();
+    expect(
+      screen.getByText(/We sent an order access link to your email/i),
+    ).toBeInTheDocument();
     expect(mockGetOrder).not.toHaveBeenCalled();
   });
 

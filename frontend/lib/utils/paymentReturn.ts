@@ -13,6 +13,7 @@
  */
 
 const STORAGE_KEY = "shopwise_payment_return_ctx";
+let replayRawContext: string | null = null;
 
 /**
  * Minimal context stored before a hosted-payment redirect.
@@ -36,9 +37,27 @@ export type PaymentReturnContext = {
  */
 export function savePaymentReturnContext(ctx: PaymentReturnContext): void {
   try {
+    replayRawContext = null;
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(ctx));
   } catch {
     // sessionStorage may be blocked in some environments — acceptable
+  }
+}
+
+function parseStoredContext(raw: string): PaymentReturnContext | null {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      typeof (parsed as Record<string, unknown>).orderId === "number" &&
+      typeof (parsed as Record<string, unknown>).isGuest === "boolean"
+    ) {
+      return parsed as PaymentReturnContext;
+    }
+    return null;
+  } catch {
+    return null;
   }
 }
 
@@ -55,20 +74,21 @@ export function savePaymentReturnContext(ctx: PaymentReturnContext): void {
 export function loadAndClearPaymentReturnContext(): PaymentReturnContext | null {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    sessionStorage.removeItem(STORAGE_KEY);
-
-    const parsed = JSON.parse(raw) as unknown;
-    if (
-      typeof parsed === "object" &&
-      parsed !== null &&
-      typeof (parsed as Record<string, unknown>).orderId === "number" &&
-      typeof (parsed as Record<string, unknown>).isGuest === "boolean"
-    ) {
-      return parsed as PaymentReturnContext;
+    if (raw) {
+      sessionStorage.removeItem(STORAGE_KEY);
+      replayRawContext = raw;
+      return parseStoredContext(raw);
     }
+
+    if (replayRawContext) {
+      const replay = replayRawContext;
+      replayRawContext = null;
+      return parseStoredContext(replay);
+    }
+
     return null;
   } catch {
+    replayRawContext = null;
     return null;
   }
 }

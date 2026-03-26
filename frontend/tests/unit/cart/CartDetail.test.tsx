@@ -10,7 +10,7 @@
  * - Decrease / Increase qty buttons call the correct callbacks
  * - Decrease qty is disabled when quantity is 1
  * - Increase qty is disabled when stock limit is reached
- * - Clear cart shows a confirmation prompt before calling onClearCart
+ * - Clear cart immediately calls onClearCart
  * - Empty cart state is rendered when items array is empty
  * - Subtotal and total are displayed
  */
@@ -197,34 +197,12 @@ describe("CartDetail", () => {
     });
   });
 
-  describe("clear cart confirmation flow", () => {
-    it("shows a confirmation prompt after the first click on clear cart", async () => {
-      const user = userEvent.setup();
-      renderCartDetail();
-      await user.click(screen.getByRole("button", { name: /clear cart/i }));
-      expect(screen.getByText(/clear all\?/i)).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /confirm/i }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /cancel/i }),
-      ).toBeInTheDocument();
-    });
-
-    it("calls onClearCart when the confirm button is clicked", async () => {
+  describe("clear cart", () => {
+    it("calls onClearCart immediately when the clear cart button is clicked", async () => {
       const user = userEvent.setup();
       const { onClearCart } = renderCartDetail();
       await user.click(screen.getByRole("button", { name: /clear cart/i }));
-      await user.click(screen.getByRole("button", { name: /confirm/i }));
       expect(onClearCart).toHaveBeenCalledTimes(1);
-    });
-
-    it("hides the confirmation prompt when cancel is clicked", async () => {
-      const user = userEvent.setup();
-      renderCartDetail();
-      await user.click(screen.getByRole("button", { name: /clear cart/i }));
-      await user.click(screen.getByRole("button", { name: /cancel/i }));
-      expect(screen.queryByText(/clear all\?/i)).toBeNull();
     });
   });
 

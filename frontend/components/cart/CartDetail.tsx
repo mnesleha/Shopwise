@@ -486,23 +486,8 @@ export function CartDetail({
   onApplyDiscountCode,
   adjustedItems,
 }: CartDetailProps) {
-  const [showClearConfirm, setShowClearConfirm] = React.useState(false);
-
   const currency = cart.currency ?? "USD";
   const isEmpty = cart.items.length === 0;
-
-  const handleClearCart = () => {
-    if (showClearConfirm) {
-      onClearCart();
-      setShowClearConfirm(false);
-    } else {
-      setShowClearConfirm(true);
-    }
-  };
-
-  const handleCancelClear = () => {
-    setShowClearConfirm(false);
-  };
 
   // Empty state
   if (isEmpty) {
@@ -544,26 +529,14 @@ export function CartDetail({
             <ArrowLeft className="h-4 w-4" />
             Continue shopping
           </Button>
-          {showClearConfirm ? (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Clear all?</span>
-              <Button variant="destructive" size="sm" onClick={handleClearCart}>
-                Confirm
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleCancelClear}>
-                Cancel
-              </Button>
-            </div>
-          ) : (
-            <Button
-              variant="ghost"
-              onClick={handleClearCart}
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="mr-1 h-4 w-4" />
-              Clear cart
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            onClick={onClearCart}
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
+            <Trash2 className="mr-1 h-4 w-4" />
+            Clear cart
+          </Button>
         </div>
       </div>
 

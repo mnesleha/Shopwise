@@ -17,7 +17,7 @@ import {
 // pending           — order is CREATED (webhook not processed yet)
 // paid              — order is PAID; auto-navigates to order detail
 // failed            — order is PAYMENT_FAILED
-// guest_success     — guest checkout; cannot fetch backend order, show generic
+// guest_success     — guest checkout; direct the user to their email access link
 // no_context        — direct navigation without prior checkout redirect
 
 type ReturnState =
@@ -105,10 +105,13 @@ export default function PaymentReturnPage() {
   if (state === "guest_success") {
     return (
       <div className="space-y-3" data-testid="payment-return-guest-success">
-        <h1 className="text-2xl font-semibold">Order placed</h1>
+        <h1 className="text-2xl font-semibold">Check your email</h1>
         <p className="text-muted-foreground">
-          Thank you for your order. We will email you an order access link once
-          your payment is confirmed.
+          Your guest order was created successfully. We sent an order access
+          link to your email so you can open the order details.
+        </p>
+        <p className="text-muted-foreground">
+          If you do not see it yet, check your spam folder before continuing.
         </p>
         <button
           onClick={() => router.push("/products")}

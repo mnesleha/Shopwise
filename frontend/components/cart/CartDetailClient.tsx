@@ -6,6 +6,7 @@ import { AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { CartDetail } from "@/components/cart/CartDetail";
 import {
+  addCartItem,
   clearCart,
   deleteCartItem,
   getCart,
@@ -138,14 +139,48 @@ export default function CartDetailClient({ initialCartVm }: Props) {
   );
 
   const onClearCart = useCallback(async () => {
+    const snapshot = cart.items.map((item) => ({
+      productId: Number(item.productId),
+      productName: item.productName,
+      quantity: item.quantity,
+    }));
+
+    const restoreClearedCart = async () => {
+      setBusy(true);
+      try {
+        for (const item of snapshot) {
+          await addCartItem({
+            productId: item.productId,
+            quantity: item.quantity,
+          });
+        }
+        await refresh();
+        toast.success("Cart restored.");
+      } catch {
+        toast.error("Could not restore cart. Please try again.");
+        await refresh();
+      } finally {
+        setBusy(false);
+      }
+    };
+
     setBusy(true);
     try {
       await clearCart();
       await refresh();
+      toast.success("Cart cleared.", {
+        duration: 12000,
+        action: {
+          label: "Undo",
+          onClick: () => {
+            void restoreClearedCart();
+          },
+        },
+      });
     } finally {
       setBusy(false);
     }
-  }, [refresh]);
+  }, [cart.items, refresh]);
 
   return (
     <div className={busy ? "opacity-70 pointer-events-none" : ""}>
