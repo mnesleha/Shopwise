@@ -9,7 +9,7 @@
     "test:cov": "vitest run --coverage",
     "test:watch": "vitest watch",
     "test:e2e": "playwright test",
-    "prepare": "husky install"
+    "prepare": "test -n \"$CI\" || husky install"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.3",
