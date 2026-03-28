@@ -11,6 +11,7 @@ from products.models import Product
 from discounts.models import Discount
 from orders.models import Order
 from orderitems.models import OrderItem
+from shipping.services.selection import resolve_shipping_service_selection
 from suppliers.models import Supplier, SupplierAddress, SupplierPaymentDetails
 
 
@@ -22,6 +23,8 @@ def checkout_payload(
     data = {
         "customer_email": customer_email,
         "payment_method": payment_method,
+        "shipping_provider_code": "MOCK",
+        "shipping_service_code": "standard",
         "shipping_first_name": "E2E",
         "shipping_last_name": "Customer",
         "shipping_address_line1": "E2E Main Street 1",
@@ -41,6 +44,14 @@ def create_valid_order(*, user=None, status=None, **overrides) -> Order:
         overrides["customer_email"] = user.email
 
     payload = checkout_payload(**overrides)
+    shipping_method_name = payload.get("shipping_method_name")
+    if not shipping_method_name:
+        shipping_service = resolve_shipping_service_selection(
+            provider_code=payload["shipping_provider_code"],
+            service_code=payload["shipping_service_code"],
+        )
+        shipping_method_name = shipping_service.service_name
+
     order_kwargs = {
         "user": user,
         "status": status or Order.Status.CREATED,
@@ -53,6 +64,9 @@ def create_valid_order(*, user=None, status=None, **overrides) -> Order:
         "shipping_postal_code": payload["shipping_postal_code"],
         "shipping_country": payload["shipping_country"],
         "shipping_phone": payload["shipping_phone"],
+        "shipping_provider_code": payload.get("shipping_provider_code"),
+        "shipping_service_code": payload.get("shipping_service_code"),
+        "shipping_method_name": shipping_method_name,
         "billing_same_as_shipping": payload.get("billing_same_as_shipping", True),
         "billing_first_name": payload.get("billing_first_name") or None,
         "billing_last_name": payload.get("billing_last_name") or None,

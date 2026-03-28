@@ -3,6 +3,10 @@ from rest_framework import serializers
 from carts.models import Cart, CartItem
 from products.models import Product
 from api.serializers.order import OrderResponseSerializer
+from shipping.services.selection import (
+    InvalidShippingServiceSelection,
+    resolve_shipping_service_selection,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -307,6 +311,8 @@ class CartItemUpdateRequestSerializer(serializers.Serializer):
 
 class CartCheckoutRequestSerializer(serializers.Serializer):
     customer_email = serializers.EmailField()
+    shipping_provider_code = serializers.CharField()
+    shipping_service_code = serializers.CharField()
     shipping_first_name = serializers.CharField()
     shipping_last_name = serializers.CharField()
     shipping_address_line1 = serializers.CharField()
@@ -376,6 +382,16 @@ class CartCheckoutRequestSerializer(serializers.Serializer):
     )
 
     def validate(self, attrs):
+        try:
+            service = resolve_shipping_service_selection(
+                provider_code=attrs["shipping_provider_code"],
+                service_code=attrs["shipping_service_code"],
+            )
+        except InvalidShippingServiceSelection as exc:
+            raise serializers.ValidationError({exc.field: [exc.message]})
+
+        attrs["shipping_method_name"] = service.service_name
+
         if attrs.get("billing_same_as_shipping") is False:
             required_fields = [
                 "billing_first_name",

@@ -1,6 +1,8 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 
 from shipping.models import Shipment, ShipmentEvent
+from shipping.services.events import InvalidShipmentSimulation, ShipmentEventService
+from shipping.statuses import ShipmentStatus
 
 
 class ShipmentEventInline(admin.TabularInline):
@@ -23,6 +25,7 @@ class ShipmentEventInline(admin.TabularInline):
 
 @admin.register(Shipment)
 class ShipmentAdmin(admin.ModelAdmin):
+    actions = ("simulate_in_transit", "simulate_delivered")
     list_display = (
         "id",
         "order",
@@ -53,6 +56,35 @@ class ShipmentAdmin(admin.ModelAdmin):
     raw_id_fields = ("order",)
     list_select_related = ("order",)
     inlines = (ShipmentEventInline,)
+
+    @admin.action(description="Simulate shipment in transit")
+    def simulate_in_transit(self, request, queryset):
+        self._simulate_status(request, queryset, ShipmentStatus.IN_TRANSIT)
+
+    @admin.action(description="Simulate shipment delivered")
+    def simulate_delivered(self, request, queryset):
+        self._simulate_status(request, queryset, ShipmentStatus.DELIVERED)
+
+    def _simulate_status(self, request, queryset, normalized_status: str) -> None:
+        processed_count = 0
+        for shipment in queryset:
+            try:
+                ShipmentEventService.simulate_admin_event(
+                    shipment=shipment,
+                    normalized_status=normalized_status,
+                )
+            except InvalidShipmentSimulation as exc:
+                self.message_user(request, f"Shipment #{shipment.pk}: {exc}", level=messages.ERROR)
+                continue
+
+            processed_count += 1
+
+        if processed_count:
+            self.message_user(
+                request,
+                f"Simulated {normalized_status.lower()} for {processed_count} shipment(s).",
+                level=messages.SUCCESS,
+            )
 
 
 @admin.register(ShipmentEvent)

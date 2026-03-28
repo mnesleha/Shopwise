@@ -77,3 +77,6 @@ class BaseShippingProvider(ABC):
     @abstractmethod
     def parse_webhook(self, payload: dict[str, Any]) -> ParsedWebhookEvent:
         ...
+
+    def build_simulated_event(self, *, shipment: Any, normalized_status: str) -> ParsedWebhookEvent:
+        raise NotImplementedError("This provider does not support shipment event simulation.")

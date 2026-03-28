@@ -129,6 +129,7 @@ class OrderResponseSerializer(serializers.Serializer):
     # Both include company / company_id / vat_id when present.
     shipping_address = serializers.SerializerMethodField()
     billing_address = serializers.SerializerMethodField()
+    shipping_method = serializers.SerializerMethodField()
     # Contact email captured at checkout.
     customer_email = serializers.CharField(read_only=True)
     # Supplier snapshot — populated from stored order truth (immutable after order creation).
@@ -358,6 +359,16 @@ class OrderResponseSerializer(serializers.Serializer):
             "company": obj.billing_company or "",
             "company_id": obj.billing_company_id or "",
             "vat_id": obj.billing_vat_id or "",
+        }
+
+    def get_shipping_method(self, obj: Order) -> dict | None:
+        if not obj.shipping_provider_code or not obj.shipping_service_code:
+            return None
+
+        return {
+            "provider_code": obj.shipping_provider_code,
+            "service_code": obj.shipping_service_code,
+            "name": obj.shipping_method_name or "",
         }
 
     def get_supplier(self, obj: Order) -> dict | None:

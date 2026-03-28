@@ -2,6 +2,17 @@ import { api } from "@/lib/api";
 import type { CheckoutValues } from "@/components/checkout/CheckoutForm";
 import type { BaseOrderDto } from "@/lib/api/orders";
 
+const SHIPPING_SELECTION_TO_BACKEND = {
+  STANDARD: {
+    shipping_provider_code: "MOCK",
+    shipping_service_code: "standard",
+  },
+  EXPRESS: {
+    shipping_provider_code: "MOCK",
+    shipping_service_code: "express",
+  },
+} as const;
+
 // ---------------------------------------------------------------------------
 // Price-change payload types (mirrors backend carts/services/price_change.py)
 // ---------------------------------------------------------------------------
@@ -81,8 +92,11 @@ export type CheckoutOrderDto = BaseOrderDto & {
 export async function checkoutCart(
   values: CheckoutValues,
 ): Promise<CheckoutOrderDto> {
+  const shippingSelection = SHIPPING_SELECTION_TO_BACKEND[values.shipping_method];
+
   const payload = {
     customer_email: values.customer_email,
+    ...shippingSelection,
 
     shipping_first_name: values.shipping_first_name,
     shipping_last_name: values.shipping_last_name,

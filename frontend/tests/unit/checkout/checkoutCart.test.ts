@@ -82,6 +82,32 @@ describe("checkoutCart", () => {
   });
 
   describe("request payload", () => {
+    it("maps STANDARD shipping to backend shipping codes", async () => {
+      mockApiPost.mockResolvedValue({ data: makeResponse("DIRECT") });
+
+      await checkoutCart({ ...BASE_VALUES, shipping_method: "STANDARD" });
+
+      const [, payload] = mockApiPost.mock.calls[0] as [
+        string,
+        Record<string, unknown>,
+      ];
+      expect(payload.shipping_provider_code).toBe("MOCK");
+      expect(payload.shipping_service_code).toBe("standard");
+    });
+
+    it("maps EXPRESS shipping to backend shipping codes", async () => {
+      mockApiPost.mockResolvedValue({ data: makeResponse("DIRECT") });
+
+      await checkoutCart({ ...BASE_VALUES, shipping_method: "EXPRESS" });
+
+      const [, payload] = mockApiPost.mock.calls[0] as [
+        string,
+        Record<string, unknown>,
+      ];
+      expect(payload.shipping_provider_code).toBe("MOCK");
+      expect(payload.shipping_service_code).toBe("express");
+    });
+
     it("includes payment_method CARD in the POST body", async () => {
       mockApiPost.mockResolvedValue({ data: makeResponse("DIRECT") });
 

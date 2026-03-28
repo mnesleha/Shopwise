@@ -23,6 +23,7 @@ from payments.providers.base import ProviderStartResult
 from payments.providers.resolver import ProviderNotConfiguredException
 from payments.services.payment_orchestration import PaymentOrchestrationService
 from payments.services.payment_result_applier import apply_provider_result
+from shipping.models import Shipment
 from tests.conftest import create_valid_order
 
 User = get_user_model()
@@ -69,6 +70,42 @@ def test_apply_result_success_sets_order_paid():
 
 
 @pytest.mark.django_db
+def test_apply_result_success_creates_shipment_for_paid_order():
+    user = User.objects.create_user(email="appl_ship_1@example.com", password="pass")
+    order = create_valid_order(
+        user=user,
+        shipping_provider_code="MOCK",
+        shipping_service_code="express",
+    )
+    payment = Payment.objects.create(
+        order=order, status=Payment.Status.PENDING, provider=Payment.Provider.DEV_FAKE
+    )
+
+    result = ProviderStartResult(success=True)
+    apply_provider_result(payment=payment, order=order, provider_result=result)
+
+    shipment = Shipment.objects.get(order=order)
+    assert shipment.service_code == "express"
+    assert shipment.service_name_snapshot == "Express"
+    assert shipment.provider_code == "MOCK"
+
+
+@pytest.mark.django_db
+def test_apply_result_success_is_idempotent_for_shipment_creation():
+    user = User.objects.create_user(email="appl_ship_2@example.com", password="pass")
+    order = create_valid_order(user=user)
+    payment = Payment.objects.create(
+        order=order, status=Payment.Status.PENDING, provider=Payment.Provider.DEV_FAKE
+    )
+
+    result = ProviderStartResult(success=True)
+    apply_provider_result(payment=payment, order=order, provider_result=result)
+    apply_provider_result(payment=payment, order=order, provider_result=result)
+
+    assert Shipment.objects.filter(order=order).count() == 1
+
+
+@pytest.mark.django_db
 def test_apply_result_failure_marks_payment_failed():
     """apply_provider_result(failure) sets payment.status=FAILED, failed_at, failure_reason."""
     user = User.objects.create_user(email="appl3@example.com", password="pass")
@@ -101,6 +138,20 @@ def test_apply_result_failure_sets_order_payment_failed():
     order.refresh_from_db()
 
     assert order.status == Order.Status.PAYMENT_FAILED
+
+
+@pytest.mark.django_db
+def test_apply_result_failure_does_not_create_shipment():
+    user = User.objects.create_user(email="appl_ship_3@example.com", password="pass")
+    order = create_valid_order(user=user)
+    payment = Payment.objects.create(
+        order=order, status=Payment.Status.PENDING, provider=Payment.Provider.DEV_FAKE
+    )
+
+    result = ProviderStartResult(success=False, failure_reason="Declined")
+    apply_provider_result(payment=payment, order=order, provider_result=result)
+
+    assert Shipment.objects.filter(order=order).count() == 0
 
 
 # ---------------------------------------------------------------------------

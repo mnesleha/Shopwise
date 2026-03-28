@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from shipping.providers.base import (
@@ -79,6 +80,23 @@ class MockShippingProvider(BaseShippingProvider):
             external_event_id=str(payload["event_id"]) if payload.get("event_id") is not None else None,
             occurred_at=occurred_at,
             payload=dict(payload),
+        )
+
+    def build_simulated_event(self, *, shipment, normalized_status: str) -> ParsedWebhookEvent:
+        normalized_status = self._normalize_status(normalized_status)
+        event_key = normalized_status.lower()
+        return ParsedWebhookEvent(
+            event_type="admin_simulation",
+            raw_status=normalized_status,
+            normalized_status=normalized_status,
+            external_event_id=f"mock-sim:{shipment.pk}:{event_key}",
+            occurred_at=timezone.now(),
+            payload={
+                "source": "admin_simulation",
+                "shipment_id": shipment.pk,
+                "tracking_number": shipment.tracking_number,
+                "status": normalized_status,
+            },
         )
 
     def _service_name(self, service_code: str) -> str:

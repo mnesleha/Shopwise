@@ -94,3 +94,49 @@ def test_mock_provider_parse_webhook_normalizes_payload():
     assert event.raw_status == "IN_TRANSIT"
     assert event.normalized_status == ShipmentStatus.IN_TRANSIT
     assert event.payload["tracking_number"] == "MOCK-10-STANDARD"
+
+
+@pytest.mark.django_db
+def test_mock_provider_build_simulated_event_returns_normalized_event():
+    user = User.objects.create_user(email="shipping-provider-sim@example.com", password="pass")
+    order = create_valid_order(user=user)
+    provider = MockShippingProvider()
+
+    result = provider.create_shipment(
+        CreateShipmentContext(
+            order=order,
+            service_code="standard",
+            receiver={
+                "first_name": order.shipping_first_name,
+                "last_name": order.shipping_last_name,
+                "address_line1": order.shipping_address_line1,
+                "city": order.shipping_city,
+                "postal_code": order.shipping_postal_code,
+                "country": order.shipping_country,
+                "phone": order.shipping_phone,
+            },
+        )
+    )
+    shipment = order.shipments.create(
+        provider_code=result.provider_code,
+        service_code=result.service_code,
+        carrier_name_snapshot=result.carrier_name,
+        service_name_snapshot=result.service_name,
+        tracking_number=result.tracking_number,
+        carrier_reference=result.carrier_reference,
+        status=result.status,
+        label_url=result.label_url,
+        receiver_snapshot=result.receiver_snapshot,
+        meta=result.meta,
+    )
+
+    event = provider.build_simulated_event(
+        shipment=shipment,
+        normalized_status=ShipmentStatus.DELIVERED,
+    )
+
+    assert event.event_type == "admin_simulation"
+    assert event.external_event_id == f"mock-sim:{shipment.pk}:delivered"
+    assert event.raw_status == ShipmentStatus.DELIVERED
+    assert event.normalized_status == ShipmentStatus.DELIVERED
+    assert event.payload["shipment_id"] == shipment.pk

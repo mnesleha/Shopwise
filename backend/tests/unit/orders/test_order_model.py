@@ -56,3 +56,40 @@ def test_order_invalid_status_is_rejected():
 
     with pytest.raises(ValidationError):
         order.full_clean()
+
+
+@pytest.mark.django_db
+def test_create_valid_order_resolves_shipping_method_name_via_provider_selection():
+    user_model = get_user_model()
+    user = user_model.objects.create_user(
+        email="shipping-resolution@example.com",
+        password="password",
+    )
+
+    order = create_valid_order(
+        user=user,
+        shipping_provider_code="MOCK",
+        shipping_service_code="express",
+    )
+
+    assert order.shipping_provider_code == "MOCK"
+    assert order.shipping_service_code == "express"
+    assert order.shipping_method_name == "Express"
+
+
+@pytest.mark.django_db
+def test_create_valid_order_allows_explicit_shipping_method_name_override():
+    user_model = get_user_model()
+    user = user_model.objects.create_user(
+        email="shipping-override@example.com",
+        password="password",
+    )
+
+    order = create_valid_order(
+        user=user,
+        shipping_provider_code="MOCK",
+        shipping_service_code="express",
+        shipping_method_name="Manual Snapshot",
+    )
+
+    assert order.shipping_method_name == "Manual Snapshot"

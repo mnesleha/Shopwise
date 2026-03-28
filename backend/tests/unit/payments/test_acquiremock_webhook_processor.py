@@ -22,6 +22,7 @@ from payments.services.acquiremock_webhook_processor import (
     AcquireMockPaymentNotFound,
     process_acquiremock_webhook_event,
 )
+from shipping.models import Shipment
 from tests.conftest import create_valid_order
 
 User = get_user_model()
@@ -95,6 +96,16 @@ def test_paid_webhook_marks_order_paid():
 
 
 @pytest.mark.django_db
+def test_paid_webhook_creates_shipment():
+    _, order = _create_pending_acquiremock_payment(provider_payment_id="pay_wh_ship")
+    process_acquiremock_webhook_event(_make_event("PAID", payment_id="pay_wh_ship"))
+
+    shipment = Shipment.objects.get(order=order)
+    assert shipment.provider_code == "MOCK"
+    assert shipment.service_code == order.shipping_service_code
+
+
+@pytest.mark.django_db
 def test_failed_webhook_marks_payment_failed():
     """FAILED event → payment.status == FAILED and failed_at is populated."""
     payment, _ = _create_pending_acquiremock_payment(provider_payment_id="pay_wh_fail")
@@ -156,6 +167,15 @@ def test_duplicate_success_webhook_is_idempotent():
 
     payment.refresh_from_db()
     assert payment.status == Payment.Status.SUCCESS
+
+
+@pytest.mark.django_db
+def test_duplicate_success_webhook_does_not_create_duplicate_shipment():
+    _, order = _create_pending_acquiremock_payment(provider_payment_id="pay_idem_ship")
+    process_acquiremock_webhook_event(_make_event("PAID", payment_id="pay_idem_ship"))
+    process_acquiremock_webhook_event(_make_event("PAID", payment_id="pay_idem_ship"))
+
+    assert Shipment.objects.filter(order=order).count() == 1
 
 
 @pytest.mark.django_db

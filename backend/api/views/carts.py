@@ -999,6 +999,9 @@ Notes:
                 order = Order(
                     user=request.user if request.user.is_authenticated else None,
                     customer_email=checkout_data["customer_email"],
+                    shipping_provider_code=checkout_data["shipping_provider_code"],
+                    shipping_service_code=checkout_data["shipping_service_code"],
+                    shipping_method_name=checkout_data["shipping_method_name"],
                     shipping_first_name=checkout_data["shipping_first_name"],
                     shipping_last_name=checkout_data["shipping_last_name"],
                     shipping_address_line1=checkout_data["shipping_address_line1"],

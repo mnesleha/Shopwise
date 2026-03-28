@@ -39,6 +39,7 @@ from orders.services.inventory_reservation_service import (
 )
 from payments.models import Payment
 from payments.providers.base import ProviderStartResult
+from shipping.services.shipment import ShipmentService
 
 
 def apply_provider_result(
@@ -112,6 +113,8 @@ def apply_provider_result(
             if order.status != Order.Status.PAID:
                 order.status = Order.Status.PAID
                 order.save(update_fields=["status"])
+
+            ShipmentService.create_for_paid_order(order=order)
     else:
         payment.status = Payment.Status.FAILED
         payment.failed_at = timezone.now()

@@ -31,9 +31,11 @@ import { CountryPicker } from "@/components/ui/country-picker";
 import type { PriceChangePayload } from "@/lib/api/checkout";
 
 // Types
+export type ShippingMethod = "STANDARD" | "EXPRESS";
+
 export interface CheckoutValues {
   // Step 1: Shipping & Payment methods (placeholders)
-  shipping_method: string;
+  shipping_method: ShippingMethod;
   payment_method: string;
   // Step 2: Customer info
   customer_email: string;
