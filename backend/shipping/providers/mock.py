@@ -11,6 +11,7 @@ from shipping.providers.base import (
     ShippingServiceOption,
     TrackingStatusResult,
 )
+from shipping.providers.mock_label import build_mock_shipping_label
 from shipping.statuses import ShipmentStatus
 
 
@@ -45,9 +46,20 @@ class MockShippingProvider(BaseShippingProvider):
             status=ShipmentStatus.LABEL_CREATED,
             tracking_number=tracking_number,
             carrier_reference=f"REF-{tracking_number}",
-            label_url=f"https://mock-shipping.local/labels/{tracking_number}",
             receiver_snapshot=dict(context.receiver),
             meta={"mock": True},
+        )
+
+    def build_label_document(self, *, context: CreateShipmentContext, provider_result: ProviderCreateShipmentResult):
+        if not provider_result.tracking_number:
+            return None
+
+        return build_mock_shipping_label(
+            carrier_name=provider_result.carrier_name,
+            service_name=provider_result.service_name,
+            tracking_number=provider_result.tracking_number,
+            order_reference=f"Order #{context.order.pk}",
+            receiver=provider_result.receiver_snapshot or dict(context.receiver),
         )
 
     def get_tracking_status(self, *, tracking_number: str, extra=None) -> TrackingStatusResult:

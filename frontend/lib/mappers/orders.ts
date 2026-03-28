@@ -3,11 +3,13 @@ import type {
   AddressSnapshotDto,
   BaseOrderDto,
   SupplierSnapshotDto,
+  ShipmentTimelineEntryDto,
 } from "@/lib/api/orders";
 import type {
   OrderViewModel,
   OrderItem,
   VatBreakdownLine,
+  ShipmentTimelineEntry,
 } from "@/components/order/OrderDetail";
 
 const DEFAULT_SUPPLIER = {
@@ -151,6 +153,17 @@ function mapItem(dto: OrderItemDto): OrderItem {
   };
 }
 
+export function mapShipmentTimeline(
+  timeline: ShipmentTimelineEntryDto[] | null | undefined,
+): ShipmentTimelineEntry[] {
+  return (timeline ?? []).map((entry) => ({
+    status: entry.status,
+    label: entry.label,
+    occurredAt: entry.occurred_at,
+    isCurrent: entry.is_current,
+  }));
+}
+
 export function mapOrderToVm(dto: BaseOrderDto): OrderViewModel {
   const orderNumber = formatOrderNumber(dto.id);
 
@@ -185,6 +198,7 @@ export function mapOrderToVm(dto: BaseOrderDto): OrderViewModel {
     shipmentStatus: dto.shipment_summary?.status || undefined,
     trackingNumber: dto.shipment_summary?.tracking_number || undefined,
     shippingLabelUrl: dto.shipment_summary?.label_url || undefined,
+    shipmentTimeline: mapShipmentTimeline(dto.shipment_timeline),
     barcodeValue: orderNumber,
 
     items: dto.items.map(mapItem),

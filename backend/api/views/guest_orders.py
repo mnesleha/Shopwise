@@ -79,7 +79,9 @@ class GuestOrderRetrieveView(APIView):
         if order is None:
             raise Http404()
 
-        data = dict(OrderResponseSerializer(order).data)
+        data = dict(
+            OrderResponseSerializer(order, context={"request": request}).data
+        )
         # Indicate whether the order email already has a registered account.
         # Used by the frontend to decide whether to show the create-account CTA
         # or an existing-account prompt.  Not a security risk here because the

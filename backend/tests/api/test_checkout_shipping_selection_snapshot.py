@@ -1,4 +1,6 @@
 import pytest
+from django.core.files.base import ContentFile
+from django.test import override_settings
 
 from orders.models import Order
 from products.models import Product
@@ -125,35 +127,42 @@ def test_order_detail_exposes_shipping_method_summary(auth_client, user):
 
 
 @pytest.mark.django_db
-def test_order_detail_exposes_latest_shipment_summary(auth_client, user):
-    order = Order.objects.create(
-        user=user,
-        status=Order.Status.SHIPPED,
-        customer_email=user.email,
-        shipping_first_name="Test",
-        shipping_last_name="User",
-        shipping_address_line1="Main Street 1",
-        shipping_city="Prague",
-        shipping_postal_code="11000",
-        shipping_country="CZ",
-        shipping_phone="+420123456789",
-        shipping_provider_code="MOCK",
-        shipping_service_code="express",
-        shipping_method_name="Express",
-        billing_same_as_shipping=True,
-    )
-    order.shipments.create(
-        provider_code="MOCK",
-        service_code="express",
-        carrier_name_snapshot="Mock Shipping",
-        service_name_snapshot="Express",
-        tracking_number="MOCK-123-EXPRESS",
-        status=ShipmentStatus.IN_TRANSIT,
-        label_url="https://mock-shipping.local/labels/MOCK-123-EXPRESS",
-        receiver_snapshot={"name": "Test User"},
-    )
+def test_order_detail_exposes_latest_shipment_summary(auth_client, user, tmp_path):
+    with override_settings(MEDIA_ROOT=str(tmp_path)):
+        order = Order.objects.create(
+            user=user,
+            status=Order.Status.SHIPPED,
+            customer_email=user.email,
+            shipping_first_name="Test",
+            shipping_last_name="User",
+            shipping_address_line1="Main Street 1",
+            shipping_city="Prague",
+            shipping_postal_code="11000",
+            shipping_country="CZ",
+            shipping_phone="+420123456789",
+            shipping_provider_code="MOCK",
+            shipping_service_code="express",
+            shipping_method_name="Express",
+            billing_same_as_shipping=True,
+        )
+        shipment = order.shipments.create(
+            provider_code="MOCK",
+            service_code="express",
+            carrier_name_snapshot="Mock Shipping",
+            service_name_snapshot="Express",
+            tracking_number="MOCK-123-EXPRESS",
+            status=ShipmentStatus.IN_TRANSIT,
+            receiver_snapshot={"name": "Test User"},
+        )
+        shipment.label_file.save(
+            "mock-label.svg",
+            ContentFile(b"<svg xmlns='http://www.w3.org/2000/svg'></svg>"),
+            save=False,
+        )
+        shipment.label_url = shipment.get_label_url()
+        shipment.save()
 
-    response = auth_client.get(f"/api/v1/orders/{order.id}/")
+        response = auth_client.get(f"/api/v1/orders/{order.id}/")
 
     assert response.status_code == 200
     assert response.data["shipping_method"] == {
@@ -161,8 +170,12 @@ def test_order_detail_exposes_latest_shipment_summary(auth_client, user):
         "service_code": "express",
         "name": "Express",
     }
-    assert response.data["shipment_summary"] == {
-        "status": ShipmentStatus.IN_TRANSIT,
-        "tracking_number": "MOCK-123-EXPRESS",
-        "label_url": "https://mock-shipping.local/labels/MOCK-123-EXPRESS",
-    }
+    assert response.data["shipment_summary"]["status"] == ShipmentStatus.IN_TRANSIT
+    assert response.data["shipment_summary"]["tracking_number"] == "MOCK-123-EXPRESS"
+    assert response.data["shipment_summary"]["label_url"].startswith("http://testserver/media/shipping/labels/")
+    assert response.data["shipment_summary"]["label_url"].endswith(".svg")
+    assert [entry["status"] for entry in response.data["shipment_timeline"]] == [
+        ShipmentStatus.PENDING,
+        ShipmentStatus.IN_TRANSIT,
+    ]
+    assert response.data["shipment_timeline"][-1]["is_current"] is True

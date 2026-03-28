@@ -1,4 +1,5 @@
 from django.contrib import admin, messages
+from django.utils.html import format_html
 
 from shipping.models import Shipment, ShipmentEvent
 from shipping.services.events import InvalidShipmentSimulation, ShipmentEventService
@@ -52,10 +53,21 @@ class ShipmentAdmin(admin.ModelAdmin):
         "meta",
         "shipped_at",
         "delivered_at",
+        "label_asset_link",
     )
     raw_id_fields = ("order",)
     list_select_related = ("order",)
     inlines = (ShipmentEventInline,)
+
+    @admin.display(description="Label")
+    def label_asset_link(self, obj):
+        label_url = obj.get_label_url()
+        if not label_url:
+            return "-"
+        return format_html(
+            '<a href="{}" target="_blank" rel="noreferrer">Open label</a>',
+            label_url,
+        )
 
     @admin.action(description="Simulate shipment in transit")
     def simulate_in_transit(self, request, queryset):

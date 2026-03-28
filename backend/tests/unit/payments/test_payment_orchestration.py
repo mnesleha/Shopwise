@@ -13,6 +13,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.test import override_settings
 from django.utils import timezone
 
 from api.exceptions.payment import OrderNotPayableException, PaymentAlreadyExistsException
@@ -70,24 +71,27 @@ def test_apply_result_success_sets_order_paid():
 
 
 @pytest.mark.django_db
-def test_apply_result_success_creates_shipment_for_paid_order():
+def test_apply_result_success_creates_shipment_for_paid_order(tmp_path):
     user = User.objects.create_user(email="appl_ship_1@example.com", password="pass")
-    order = create_valid_order(
-        user=user,
-        shipping_provider_code="MOCK",
-        shipping_service_code="express",
-    )
-    payment = Payment.objects.create(
-        order=order, status=Payment.Status.PENDING, provider=Payment.Provider.DEV_FAKE
-    )
+    with override_settings(MEDIA_ROOT=str(tmp_path)):
+        order = create_valid_order(
+            user=user,
+            shipping_provider_code="MOCK",
+            shipping_service_code="express",
+        )
+        payment = Payment.objects.create(
+            order=order, status=Payment.Status.PENDING, provider=Payment.Provider.DEV_FAKE
+        )
 
-    result = ProviderStartResult(success=True)
-    apply_provider_result(payment=payment, order=order, provider_result=result)
+        result = ProviderStartResult(success=True)
+        apply_provider_result(payment=payment, order=order, provider_result=result)
 
-    shipment = Shipment.objects.get(order=order)
-    assert shipment.service_code == "express"
-    assert shipment.service_name_snapshot == "Express"
-    assert shipment.provider_code == "MOCK"
+        shipment = Shipment.objects.get(order=order)
+        assert shipment.service_code == "express"
+        assert shipment.service_name_snapshot == "Express"
+        assert shipment.provider_code == "MOCK"
+        assert shipment.label_file.name.endswith(".svg")
+        assert shipment.label_url.startswith("/media/shipping/labels/")
 
 
 @pytest.mark.django_db

@@ -1,5 +1,6 @@
 import pytest
 from django.contrib.auth import get_user_model
+from django.test import override_settings
 
 from orders.models import Order
 from shipping.models import Shipment
@@ -11,28 +12,39 @@ User = get_user_model()
 
 
 @pytest.mark.django_db
-def test_create_for_paid_order_persists_provider_result():
+def test_create_for_paid_order_persists_provider_result_and_stored_label(tmp_path):
     user = User.objects.create_user(email="shipment-service@example.com", password="pass")
-    order = create_valid_order(
-        user=user,
-        status=Order.Status.PAID,
-        shipping_provider_code="MOCK",
-        shipping_service_code="express",
-    )
+    with override_settings(MEDIA_ROOT=str(tmp_path)):
+        order = create_valid_order(
+            user=user,
+            status=Order.Status.PAID,
+            shipping_provider_code="MOCK",
+            shipping_service_code="express",
+        )
 
-    shipment = ShipmentService.create_for_paid_order(order=order)
+        shipment = ShipmentService.create_for_paid_order(order=order)
 
-    assert shipment.order == order
-    assert shipment.provider_code == "MOCK"
-    assert shipment.service_code == "express"
-    assert shipment.carrier_name_snapshot == "Mock Carrier"
-    assert shipment.service_name_snapshot == "Express"
-    assert shipment.status == ShipmentStatus.LABEL_CREATED
-    assert shipment.tracking_number == f"MOCK-{order.pk}-EXPRESS"
-    assert shipment.carrier_reference == f"REF-MOCK-{order.pk}-EXPRESS"
-    assert shipment.label_url == f"https://mock-shipping.local/labels/MOCK-{order.pk}-EXPRESS"
-    assert shipment.receiver_snapshot["city"] == order.shipping_city
-    assert shipment.meta == {"mock": True}
+        assert shipment.order == order
+        assert shipment.provider_code == "MOCK"
+        assert shipment.service_code == "express"
+        assert shipment.carrier_name_snapshot == "Mock Carrier"
+        assert shipment.service_name_snapshot == "Express"
+        assert shipment.status == ShipmentStatus.LABEL_CREATED
+        assert shipment.tracking_number == f"MOCK-{order.pk}-EXPRESS"
+        assert shipment.carrier_reference == f"REF-MOCK-{order.pk}-EXPRESS"
+        assert shipment.label_file.name.endswith(".svg")
+        assert shipment.label_url == shipment.get_label_url()
+        assert shipment.label_url.startswith("/media/shipping/labels/")
+        assert shipment.receiver_snapshot["city"] == order.shipping_city
+        assert shipment.meta == {"mock": True}
+
+        label_path = shipment.label_file.path
+        with open(label_path, "r", encoding="utf-8") as stored_label:
+            content = stored_label.read()
+
+        assert "Mock Carrier - Express" in content
+        assert f"MOCK-{order.pk}-EXPRESS" in content
+        assert f"Order #{order.pk}" in content
 
 
 @pytest.mark.django_db

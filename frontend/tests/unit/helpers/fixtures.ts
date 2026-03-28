@@ -231,6 +231,12 @@ export interface OrderViewModelFixture {
   shipmentStatus?: string;
   trackingNumber?: string;
   shippingLabelUrl?: string;
+  shipmentTimeline?: Array<{
+    status: string;
+    label: string;
+    occurredAt?: string | null;
+    isCurrent: boolean;
+  }>;
   paymentMethod?: string;
   items: OrderItemFixture[];
   subtotal?: string;

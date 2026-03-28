@@ -1,3 +1,5 @@
+from django.core.files.base import ContentFile
+
 from shipping.models import Shipment
 from shipping.providers.base import CreateShipmentContext
 from shipping.providers.resolver import resolve_provider
@@ -49,7 +51,7 @@ class ShipmentService:
             )
         )
 
-        return Shipment.objects.create(
+        shipment = Shipment(
             order=order,
             provider_code=provider_result.provider_code,
             service_code=provider_result.service_code,
@@ -62,3 +64,34 @@ class ShipmentService:
             receiver_snapshot=provider_result.receiver_snapshot,
             meta=provider_result.meta,
         )
+
+        label_document = provider.build_label_document(
+            context=CreateShipmentContext(
+                order=order,
+                service_code=order.shipping_service_code,
+                receiver={
+                    "first_name": order.shipping_first_name,
+                    "last_name": order.shipping_last_name,
+                    "address_line1": order.shipping_address_line1,
+                    "address_line2": order.shipping_address_line2 or "",
+                    "city": order.shipping_city,
+                    "postal_code": order.shipping_postal_code,
+                    "country": order.shipping_country,
+                    "phone": order.shipping_phone,
+                    "company": order.shipping_company or "",
+                    "company_id": order.shipping_company_id or "",
+                    "vat_id": order.shipping_vat_id or "",
+                },
+            ),
+            provider_result=provider_result,
+        )
+        if label_document is not None:
+            shipment.label_file.save(
+                label_document.filename,
+                ContentFile(label_document.content),
+                save=False,
+            )
+            shipment.label_url = shipment.get_label_url()
+
+        shipment.save()
+        return shipment

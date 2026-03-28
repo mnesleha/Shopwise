@@ -131,6 +131,7 @@ class OrderResponseSerializer(serializers.Serializer):
     billing_address = serializers.SerializerMethodField()
     shipping_method = serializers.SerializerMethodField()
     shipment_summary = serializers.SerializerMethodField()
+    shipment_timeline = serializers.SerializerMethodField()
     # Contact email captured at checkout.
     customer_email = serializers.CharField(read_only=True)
     # Supplier snapshot — populated from stored order truth (immutable after order creation).
@@ -380,8 +381,15 @@ class OrderResponseSerializer(serializers.Serializer):
         return {
             "status": shipment.status,
             "tracking_number": shipment.tracking_number,
-            "label_url": shipment.label_url,
+            "label_url": shipment.get_label_url(request=self.context.get("request")),
         }
+
+    def get_shipment_timeline(self, obj: Order) -> list[dict]:
+        shipment = obj.shipments.first()
+        if shipment is None:
+            return []
+
+        return shipment.get_timeline()
 
     def get_supplier(self, obj: Order) -> dict | None:
         """Return supplier snapshot from stored order truth.

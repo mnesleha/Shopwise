@@ -40,6 +40,13 @@ class ProviderCreateShipmentResult:
 
 
 @dataclass
+class GeneratedShippingLabel:
+    filename: str
+    content: bytes
+    content_type: str
+
+
+@dataclass
 class TrackingStatusResult:
     normalized_status: str
     raw_status: str | None = None
@@ -77,6 +84,14 @@ class BaseShippingProvider(ABC):
     @abstractmethod
     def parse_webhook(self, payload: dict[str, Any]) -> ParsedWebhookEvent:
         ...
+
+    def build_label_document(
+        self,
+        *,
+        context: CreateShipmentContext,
+        provider_result: ProviderCreateShipmentResult,
+    ) -> GeneratedShippingLabel | None:
+        return None
 
     def build_simulated_event(self, *, shipment: Any, normalized_status: str) -> ParsedWebhookEvent:
         raise NotImplementedError("This provider does not support shipment event simulation.")

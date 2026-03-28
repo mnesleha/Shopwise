@@ -343,6 +343,40 @@ describe("mapOrderToVm — shipping summary", () => {
     );
     expect(vm.paymentMethod).toBeUndefined();
   });
+
+  it("maps shipment timeline entries", () => {
+    const dto = makeOrderDto({
+      shipment_timeline: [
+        {
+          status: "PENDING",
+          label: "Pending",
+          occurred_at: "2026-03-28T16:00:00Z",
+          is_current: false,
+        },
+        {
+          status: "IN_TRANSIT",
+          label: "In transit",
+          occurred_at: "2026-03-29T08:15:00Z",
+          is_current: true,
+        },
+      ],
+    });
+
+    expect(mapOrderToVm(dto).shipmentTimeline).toEqual([
+      {
+        status: "PENDING",
+        label: "Pending",
+        occurredAt: "2026-03-28T16:00:00Z",
+        isCurrent: false,
+      },
+      {
+        status: "IN_TRANSIT",
+        label: "In transit",
+        occurredAt: "2026-03-29T08:15:00Z",
+        isCurrent: true,
+      },
+    ]);
+  });
 });
 
 // ── VAT breakdown mapping ─────────────────────────────────────────────────

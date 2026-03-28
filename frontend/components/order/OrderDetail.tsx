@@ -61,6 +61,13 @@ type VatBreakdownLine = {
   totalInclVat: string;
 };
 
+export type ShipmentTimelineEntry = {
+  status: string;
+  label: string;
+  occurredAt?: string | null;
+  isCurrent: boolean;
+};
+
 type OrderItem = {
   id: string;
   productId: string;
@@ -104,6 +111,7 @@ export type OrderViewModel = {
   shipmentStatus?: string;
   trackingNumber?: string;
   shippingLabelUrl?: string;
+  shipmentTimeline?: ShipmentTimelineEntry[];
   paymentMethod?: string;
   barcodeValue?: string;
 
@@ -186,6 +194,57 @@ function getShipmentStatusLabel(status: string): string {
     CANCELLED: "Cancelled",
   };
   return labels[status.toUpperCase()] || status;
+}
+
+function formatShipmentTimelineTime(value?: string | null): string {
+  if (!value) return "Time pending";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "Time pending";
+  }
+
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const hours = String(date.getUTCHours()).padStart(2, "0");
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+
+  return `${year}-${month}-${day} ${hours}:${minutes} UTC`;
+}
+
+function ShipmentTimeline({ items }: { items: ShipmentTimelineEntry[] }) {
+  return (
+    <div className="space-y-0">
+      {items.map((item, index) => {
+        const isLast = index === items.length - 1;
+        return (
+          <div key={`${item.status}-${item.occurredAt ?? index}`} className="flex gap-3">
+            <div className="flex flex-col items-center">
+              <span
+                className={[
+                  "mt-1 h-2.5 w-2.5 rounded-full border",
+                  item.isCurrent
+                    ? "border-foreground bg-foreground"
+                    : "border-border bg-background",
+                ].join(" ")}
+              />
+              {!isLast && <span className="mt-1 h-full w-px bg-border" />}
+            </div>
+            <div className="pb-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-medium text-foreground">{item.label}</p>
+                {item.isCurrent && <Badge variant="secondary">Current</Badge>}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {formatShipmentTimelineTime(item.occurredAt)}
+              </p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -652,6 +711,7 @@ export function OrderDetail({
     !!order.shipmentStatus ||
     !!order.trackingNumber ||
     !!order.shippingLabelUrl;
+  const hasShipmentTimeline = (order.shipmentTimeline?.length ?? 0) > 0;
 
   return (
     <div className="mx-auto max-w-4xl print:max-w-none">
@@ -765,7 +825,7 @@ export function OrderDetail({
 
         {hasShipmentSummary && (
           <div className="mt-4 rounded-lg border bg-muted/30 p-4">
-            <div className="grid gap-3 text-sm md:grid-cols-3">
+            <div className="grid gap-3 text-sm md:grid-cols-4">
               {order.shipmentStatus && (
                 <div className="flex flex-col gap-1">
                   <span className="text-muted-foreground">Shipment status</span>
@@ -801,7 +861,32 @@ export function OrderDetail({
                   </a>
                 </div>
               )}
+              {order.trackingNumber && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground">Public tracking</span>
+                  <a
+                    className="font-medium text-foreground underline underline-offset-4"
+                    href={`/tracking/${encodeURIComponent(order.trackingNumber)}`}
+                  >
+                    Track shipment
+                  </a>
+                </div>
+              )}
             </div>
+          </div>
+        )}
+
+        {hasShipmentTimeline && (
+          <div className="mt-4 rounded-lg border bg-background p-4">
+            <div className="mb-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Shipment timeline
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Provider-agnostic delivery milestones for this shipment.
+              </p>
+            </div>
+            <ShipmentTimeline items={order.shipmentTimeline ?? []} />
           </div>
         )}
 

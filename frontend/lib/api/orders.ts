@@ -83,6 +83,13 @@ export type ShipmentSummaryDto = {
   label_url: string | null;
 };
 
+export type ShipmentTimelineEntryDto = {
+  status: string;
+  label: string;
+  occurred_at: string | null;
+  is_current: boolean;
+};
+
 export type BaseOrderDto = {
   id: number;
   status: string;
@@ -126,6 +133,8 @@ export type BaseOrderDto = {
   shipping_method?: ShippingMethodDto | null;
   /** Latest shipment summary, when a shipment already exists. */
   shipment_summary?: ShipmentSummaryDto | null;
+  /** Provider-agnostic shipment milestone timeline. */
+  shipment_timeline?: ShipmentTimelineEntryDto[] | null;
   /**
    * Supplier snapshot captured at order creation time.
    * Null for pre-supplier orders (created before the supplier feature was deployed).

@@ -25,6 +25,7 @@ from api.views.dev import DevEmailVerificationTokenView
 from api.views.admin_inventory_reservations import InventoryReservationAdminViewSet
 from api.views.admin_orders import AdminOrderViewSet
 from api.views.guest_orders import GuestOrderRetrieveView, GuestOrderBootstrapView
+from api.views.tracking import PublicTrackingRetrieveView
 from api.views import health_check
 from api.views.profile import ProfileView, AddressViewSet
 from api.views.accounts import AccountView, ChangeEmailView, ConfirmEmailChangeView, CancelEmailChangeView, LogoutAllView, ChangePasswordView
@@ -72,6 +73,11 @@ urlpatterns = [
         "guest/orders/<int:order_id>/bootstrap/",
         GuestOrderBootstrapView.as_view(),
         name="guest-order-bootstrap",
+    ),
+    path(
+        "tracking/<str:tracking_number>/",
+        PublicTrackingRetrieveView.as_view(),
+        name="public-tracking-detail",
     ),
     path("cart/", CartView.as_view(), name="cart"),
     path("cart/items/", CartItemCreateView.as_view(), name="cart-item-create"),
