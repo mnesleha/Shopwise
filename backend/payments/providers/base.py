@@ -28,18 +28,25 @@ class ProviderStartResult:
     """Normalized result returned by a provider after start() is called.
 
     Attributes:
-        success:             True if the payment was immediately authorised.
+        success:             True if the payment was immediately authorised **or**
+                             if the payment is deferred (awaiting explicit confirmation).
         provider_payment_id: External reference assigned by the provider.
                              None for direct providers and DEV_FAKE.
         failure_reason:      Human-readable reason when success=False.
         redirect_url:        Non-None for hosted/redirect providers; None for
                              direct (synchronous) providers such as DEV_FAKE.
+        deferred:            True when the provider has acknowledged the payment
+                             but finalisation must happen via a separate explicit
+                             step (e.g. POST /payments/).  The applier leaves the
+                             payment PENDING and the order CREATED.  Only relevant
+                             when success=True and redirect_url is None.
     """
 
     success: bool
     provider_payment_id: Optional[str] = None
     failure_reason: Optional[str] = None
     redirect_url: Optional[str] = None
+    deferred: bool = False
 
 
 class BasePaymentProvider(ABC):

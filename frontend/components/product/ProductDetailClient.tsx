@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { ProductDetail } from "@/components/product/ProductDetail";
 import { api } from "@/lib/api";
 import { addCartItem } from "@/lib/api/cart";
@@ -36,11 +37,12 @@ export default function ProductDetailClient({ product }: Props) {
   const onAddToCart = useCallback(
     async (productId: string) => {
       await addCartItem({ productId: Number(productId), quantity: 1 });
+      toast.success(`${product.name} added to cart.`);
       await refreshCart();
       // No redirect — the user stays on the product page.
-      // The cart badge updates as feedback.
+      // The cart badge updates as additional feedback.
     },
-    [refreshCart],
+    [product.name, refreshCart],
   );
 
   return (

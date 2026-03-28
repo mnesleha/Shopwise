@@ -16,6 +16,7 @@ CARD tests mock requests.post to avoid a running AcquireMock instance.
 COD tests use DevFakeProvider directly — no HTTP mocking needed.
 """
 
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -25,7 +26,7 @@ from payments.models import Payment
 from tests.conftest import checkout_payload
 
 CHECKOUT_URL = "/api/v1/cart/checkout/"
-_ACQUIREMOCK_REDIRECT = "https://acquiremock.test/pay/test_session_001"
+_ACQUIREMOCK_REDIRECT = "https://acquiremock.test/checkout/pay_test_001"
 _ACQUIREMOCK_PAYMENT_ID = "pay_test_001"
 
 
@@ -55,11 +56,10 @@ def _mock_acquiremock_success(payment_id: str = _ACQUIREMOCK_PAYMENT_ID,
                               redirect_url: str = _ACQUIREMOCK_REDIRECT) -> MagicMock:
     """Return a mock requests.Response that simulates successful AcquireMock invoice creation."""
     mock_resp = MagicMock()
-    mock_resp.status_code = 201
+    mock_resp.status_code = 200
     mock_resp.ok = True
     mock_resp.json.return_value = {
-        "id": payment_id,
-        "redirect_url": redirect_url,
+        "pageUrl": redirect_url,
     }
     return mock_resp
 
@@ -345,6 +345,29 @@ def test_checkout_delegates_provider_selection_not_hardcoded(client, settings):
     assert response.status_code == 201
 
 
+@pytest.mark.django_db
+def test_checkout_passes_only_generic_callback_context_to_payments_layer(client):
+    """Checkout must not compose provider-specific callback URLs itself."""
+    _add_product_to_cart(client)
+
+    fake_payment = SimpleNamespace(pk=999, redirect_url="https://gateway.test/pay/999")
+
+    with patch(
+        "api.views.carts.PaymentOrchestrationService.start_payment",
+        return_value=fake_payment,
+    ) as start_payment_mock:
+        response = client.post(
+            CHECKOUT_URL,
+            checkout_payload(payment_method="CARD"),
+            format="json",
+        )
+
+    assert response.status_code == 201
+    kwargs = start_payment_mock.call_args.kwargs
+    assert kwargs["payment_method"] == "CARD"
+    assert kwargs["extra"] == {"callback_base_url": "http://testserver/"}
+
+
 # ---------------------------------------------------------------------------
 # 7. Redirect payment semantics — CARD checkout must NOT finalize payment
 # ---------------------------------------------------------------------------
@@ -425,7 +448,7 @@ def test_card_checkout_provider_payment_id_persisted_on_pending_payment(client, 
     settings.ACQUIREMOCK_API_KEY = "test-key"
     _add_product_to_cart(client)
     with patch("payments.providers.acquiremock.requests.post",
-               return_value=_mock_acquiremock_success(payment_id=_ACQUIREMOCK_PAYMENT_ID)):
+               return_value=_mock_acquiremock_success(redirect_url=_ACQUIREMOCK_REDIRECT)):
         response = client.post(CHECKOUT_URL, checkout_payload(payment_method="CARD"), format="json")
     order = Order.objects.get(id=response.json()["id"])
     payment = Payment.objects.get(order=order)
@@ -434,19 +457,55 @@ def test_card_checkout_provider_payment_id_persisted_on_pending_payment(client, 
 
 
 @pytest.mark.django_db
-def test_cod_checkout_payment_is_success(client):
-    """COD/direct flow must still result in SUCCESS payment immediately (unchanged)."""
+def test_card_checkout_sends_acquiremock_contract_body(client, settings):
+    """CARD checkout sends the current AcquireMock invoice contract."""
+    settings.ACQUIREMOCK_BASE_URL = "https://acquiremock.test"
+    settings.ACQUIREMOCK_API_KEY = "test-key"
+    _add_product_to_cart(client)
+    with patch("payments.providers.acquiremock.requests.post",
+               return_value=_mock_acquiremock_success()) as post_mock:
+        response = client.post(CHECKOUT_URL, checkout_payload(payment_method="CARD"), format="json")
+
+    assert response.status_code == 201
+    _, kwargs = post_mock.call_args
+    order = Order.objects.get(id=response.json()["id"])
+    payment = Payment.objects.get(order=order)
+    assert post_mock.call_args.args[0] == "https://acquiremock.test/api/create-invoice"
+    assert kwargs["json"]["amount"] == int(payment.amount * 100)
+    assert kwargs["json"]["reference"] == str(response.json()["id"])
+    assert kwargs["json"]["redirectUrl"] == settings.FRONTEND_RETURN_URL
+    assert kwargs["json"]["webhookUrl"].endswith("/api/v1/webhooks/acquiremock/")
+    assert kwargs["json"]["webhookUrl"] == "http://testserver/api/v1/webhooks/acquiremock/"
+
+
+@pytest.mark.django_db
+def test_cod_checkout_payment_is_pending(client):
+    """COD checkout must leave payment in PENDING state.
+
+    Finalisation happens via an explicit POST /payments/ call — the checkout
+    itself only initiates the deferred flow.  SUCCESS is applied separately.
+    """
     _add_product_to_cart(client)
     response = client.post(CHECKOUT_URL, checkout_payload(payment_method="COD"), format="json")
     order = Order.objects.get(id=response.json()["id"])
     payment = Payment.objects.get(order=order)
-    assert payment.status == Payment.Status.SUCCESS
+    assert payment.status == Payment.Status.PENDING, (
+        "COD payment must stay PENDING after checkout — "
+        "SUCCESS is applied only via the explicit /payments/ endpoint."
+    )
 
 
 @pytest.mark.django_db
-def test_cod_checkout_order_is_paid(client):
-    """COD/direct flow must result in PAID order immediately (unchanged)."""
+def test_cod_checkout_order_is_created(client):
+    """COD checkout must leave the order in CREATED state.
+
+    The order transitions to PAID only after the explicit POST /payments/ call
+    confirms the payment — matching the legacy DEV simulation flow.
+    """
     _add_product_to_cart(client)
     response = client.post(CHECKOUT_URL, checkout_payload(payment_method="COD"), format="json")
     order = Order.objects.get(id=response.json()["id"])
-    assert order.status == Order.Status.PAID
+    assert order.status == Order.Status.CREATED, (
+        "Order must not be PAID after COD checkout — "
+        "PAID is set only after explicit payment confirmation."
+    )

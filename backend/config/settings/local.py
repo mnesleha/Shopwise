@@ -76,3 +76,9 @@ LOGOUT_ALL_RL_WINDOW_S = 60
 CHANGE_PASSWORD_RL_PER_USER = 1000  # prod: 5 / 600 s per user
 CHANGE_PASSWORD_RL_PER_IP = 1000    # prod: 10 / 600 s per IP
 CHANGE_PASSWORD_RL_WINDOW_S = 600
+
+# AcquireMock — dev defaults so the CARD flow works even when the server is
+# started without going through run-dev.ps1 (which exports .env.dev vars).
+# Override via env vars or .env.dev when needed.
+ACQUIREMOCK_BASE_URL = os.getenv("ACQUIREMOCK_BASE_URL", "http://localhost:9000")
+ACQUIREMOCK_API_KEY = os.getenv("ACQUIREMOCK_API_KEY", "dev-api-key")

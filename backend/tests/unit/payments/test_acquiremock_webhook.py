@@ -12,6 +12,8 @@ import pytest
 
 from payments.providers.acquiremock_webhook import (
     AcquireMockWebhookEvent,
+    compute_acquiremock_signature,
+    describe_acquiremock_signature_mismatch,
     parse_acquiremock_webhook,
     verify_acquiremock_signature,
 )
@@ -46,6 +48,11 @@ def test_signature_helper_accepts_valid_signature():
     """Correct HMAC-SHA256 signature is accepted."""
     sig = _make_sig(SAMPLE, _SECRET)
     assert verify_acquiremock_signature(SAMPLE, sig, _SECRET) is True
+
+
+def test_compute_signature_matches_provider_contract():
+    """Backend helper matches AcquireMock's actual json.dumps(sort_keys=True) scheme."""
+    assert compute_acquiremock_signature(SAMPLE, _SECRET) == _make_sig(SAMPLE, _SECRET)
 
 
 def test_signature_helper_rejects_wrong_signature():
@@ -97,6 +104,45 @@ def test_signature_helper_uses_hmac_compare_digest():
     assert result is False
 
 
+def test_signature_mismatch_diagnostics_detect_raw_body_signing():
+    """Diagnostics distinguish raw-body signing from canonical-json signing."""
+    raw_body = b'{"status":"PAID","payment_id":"pay_abc","reference":"ref_001","amount":"49.95","timestamp":"2026-03-25T09:00:00Z"}'
+    raw_body_sig = hmac.new(
+        key=_SECRET.encode("utf-8"),
+        msg=raw_body,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+
+    diagnostics = describe_acquiremock_signature_mismatch(
+        payload=SAMPLE,
+        signature=raw_body_sig,
+        secret=_SECRET,
+        raw_body=raw_body,
+    )
+
+    assert diagnostics["signature_len"] == 64
+    assert diagnostics["signature_is_hex"] is True
+    assert diagnostics["matches_raw_body"] is True
+
+
+def test_signature_mismatch_diagnostics_fingerprint_wrong_secret_case():
+    """Wrong-secret mismatches are reported without exposing the secret itself."""
+    bad_sig = _make_sig(SAMPLE, "other-secret")
+    raw_body = json.dumps(SAMPLE).encode("utf-8")
+
+    diagnostics = describe_acquiremock_signature_mismatch(
+        payload=SAMPLE,
+        signature=bad_sig,
+        secret=_SECRET,
+        raw_body=raw_body,
+    )
+
+    assert diagnostics["matches_raw_body"] is False
+    assert diagnostics["secret_fingerprint"]
+    assert diagnostics["canonical_payload_fingerprint"]
+    assert diagnostics["raw_body_fingerprint"]
+
+
 # ---------------------------------------------------------------------------
 # parse_acquiremock_webhook
 # ---------------------------------------------------------------------------
@@ -143,3 +189,17 @@ def test_parse_coerces_fields_to_strings():
     data = {**SAMPLE, "amount": 99.5}  # float instead of string
     event = parse_acquiremock_webhook(data)
     assert event.amount == "99.5"
+
+
+def test_parse_normalizes_lowercase_status_to_uppercase():
+    """Provider-specific lowercase statuses are normalized at the boundary."""
+    data = {**SAMPLE, "status": "paid"}
+    event = parse_acquiremock_webhook(data)
+    assert event.status == "PAID"
+
+
+def test_parse_normalizes_status_with_whitespace():
+    """Surrounding whitespace in provider status values is ignored."""
+    data = {**SAMPLE, "status": " failed "}
+    event = parse_acquiremock_webhook(data)
+    assert event.status == "FAILED"

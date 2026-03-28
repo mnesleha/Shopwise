@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   Check,
@@ -67,7 +68,7 @@ export interface CheckoutValues {
 
 interface CheckoutFormProps {
   initialValues?: Partial<CheckoutValues>;
-  onSubmit: (values: CheckoutValues) => void;
+  onSubmit: (values: CheckoutValues) => Promise<void>;
   onBackToCart: () => void;
   onContinueShopping?: () => void;
   /**
@@ -137,7 +138,7 @@ function StepIndicator({ currentStep }: { currentStep: 1 | 2 }) {
             </div>
             <span
               className={cn(
-                "text-sm font-medium hidden sm:inline",
+                "hidden whitespace-nowrap text-sm font-medium sm:inline",
                 currentStep === s.step
                   ? "text-foreground"
                   : "text-muted-foreground",
@@ -169,16 +170,43 @@ function FormField({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id}>
+      <Label htmlFor={id} className={cn(error && "text-destructive")}>
         {label}
         {required && <span className="text-destructive ml-0.5">*</span>}
       </Label>
       {children}
       {error && (
-        <p className="text-sm text-destructive" role="alert">
+        <p className="text-sm font-medium text-destructive" role="alert">
           {error}
         </p>
       )}
+    </div>
+  );
+}
+
+function ValidationSummary({ errors }: { errors: FieldErrors }) {
+  const errorCount = Object.keys(errors).length;
+  if (errorCount === 0) return null;
+
+  return (
+    <div
+      className="rounded-lg border border-destructive/25 bg-destructive/5 px-4 py-3"
+      role="alert"
+      data-testid="checkout-validation-summary"
+    >
+      <div className="flex items-start gap-3">
+        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+        <div className="flex flex-col gap-1">
+          <p className="font-medium text-destructive">
+            {errorCount === 1
+              ? "1 field needs attention before you can place the order."
+              : `${errorCount} fields need attention before you can place the order.`}
+          </p>
+          <p className="text-sm text-destructive/80">
+            Please review the highlighted fields below.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -366,16 +394,18 @@ function DetailsStep({
   onSubmit,
   firstErrorRef,
   isAuthenticated,
+  isSubmitting,
 }: {
   values: CheckoutValues;
   errors: FieldErrors;
   onChange: (field: keyof CheckoutValues, value: string | boolean) => void;
   onBack: () => void;
   onSubmit: () => void;
-  firstErrorRef: React.RefObject<HTMLInputElement | null>;
+  firstErrorRef: React.RefObject<HTMLElement | null>;
   isAuthenticated?: boolean;
+  isSubmitting?: boolean;
 }) {
-  const getInputRef = (field: keyof CheckoutValues) => {
+  const getFieldRef = (field: keyof CheckoutValues) => {
     // Return ref for the first error field
     const errorFields = Object.keys(errors) as (keyof CheckoutValues)[];
     if (errorFields.length > 0 && errorFields[0] === field) {
@@ -386,6 +416,8 @@ function DetailsStep({
 
   return (
     <div className="flex flex-col gap-6">
+      <ValidationSummary errors={errors} />
+
       {/* Customer Email */}
       <Card>
         <CardHeader>
@@ -406,7 +438,11 @@ function DetailsStep({
               defaultValue={values.customer_email}
               onChange={(e) => onChange("customer_email", e.target.value)}
               aria-invalid={!!errors.customer_email}
-              ref={getInputRef("customer_email")}
+              ref={
+                getFieldRef(
+                  "customer_email",
+                ) as React.RefObject<HTMLInputElement>
+              }
             />
           </FormField>
         </CardContent>
@@ -435,7 +471,11 @@ function DetailsStep({
                   onChange("shipping_first_name", e.target.value)
                 }
                 aria-invalid={!!errors.shipping_first_name}
-                ref={getInputRef("shipping_first_name")}
+                ref={
+                  getFieldRef(
+                    "shipping_first_name",
+                  ) as React.RefObject<HTMLInputElement>
+                }
               />
             </FormField>
             <FormField
@@ -452,7 +492,11 @@ function DetailsStep({
                 defaultValue={values.shipping_last_name}
                 onChange={(e) => onChange("shipping_last_name", e.target.value)}
                 aria-invalid={!!errors.shipping_last_name}
-                ref={getInputRef("shipping_last_name")}
+                ref={
+                  getFieldRef(
+                    "shipping_last_name",
+                  ) as React.RefObject<HTMLInputElement>
+                }
               />
             </FormField>
             <div className="sm:col-span-2">
@@ -510,7 +554,11 @@ function DetailsStep({
                     onChange("shipping_address_line1", e.target.value)
                   }
                   aria-invalid={!!errors.shipping_address_line1}
-                  ref={getInputRef("shipping_address_line1")}
+                  ref={
+                    getFieldRef(
+                      "shipping_address_line1",
+                    ) as React.RefObject<HTMLInputElement>
+                  }
                 />
               </FormField>
             </div>
@@ -542,7 +590,11 @@ function DetailsStep({
                 defaultValue={values.shipping_city}
                 onChange={(e) => onChange("shipping_city", e.target.value)}
                 aria-invalid={!!errors.shipping_city}
-                ref={getInputRef("shipping_city")}
+                ref={
+                  getFieldRef(
+                    "shipping_city",
+                  ) as React.RefObject<HTMLInputElement>
+                }
               />
             </FormField>
             <FormField
@@ -561,7 +613,11 @@ function DetailsStep({
                   onChange("shipping_postal_code", e.target.value)
                 }
                 aria-invalid={!!errors.shipping_postal_code}
-                ref={getInputRef("shipping_postal_code")}
+                ref={
+                  getFieldRef(
+                    "shipping_postal_code",
+                  ) as React.RefObject<HTMLInputElement>
+                }
               />
             </FormField>
             <FormField
@@ -571,8 +627,15 @@ function DetailsStep({
               error={errors.shipping_country}
             >
               <CountryPicker
+                id="shipping_country"
                 name="shipping_country"
                 defaultValue={values.shipping_country}
+                ariaInvalid={!!errors.shipping_country}
+                buttonRef={
+                  getFieldRef(
+                    "shipping_country",
+                  ) as React.RefObject<HTMLButtonElement>
+                }
                 onChange={(code) => onChange("shipping_country", code)}
               />
             </FormField>
@@ -590,7 +653,11 @@ function DetailsStep({
                 defaultValue={values.shipping_phone}
                 onChange={(e) => onChange("shipping_phone", e.target.value)}
                 aria-invalid={!!errors.shipping_phone}
-                ref={getInputRef("shipping_phone")}
+                ref={
+                  getFieldRef(
+                    "shipping_phone",
+                  ) as React.RefObject<HTMLInputElement>
+                }
               />
             </FormField>
           </div>
@@ -634,7 +701,11 @@ function DetailsStep({
                     onChange("billing_first_name", e.target.value)
                   }
                   aria-invalid={!!errors.billing_first_name}
-                  ref={getInputRef("billing_first_name")}
+                  ref={
+                    getFieldRef(
+                      "billing_first_name",
+                    ) as React.RefObject<HTMLInputElement>
+                  }
                 />
               </FormField>
               <FormField
@@ -653,7 +724,11 @@ function DetailsStep({
                     onChange("billing_last_name", e.target.value)
                   }
                   aria-invalid={!!errors.billing_last_name}
-                  ref={getInputRef("billing_last_name")}
+                  ref={
+                    getFieldRef(
+                      "billing_last_name",
+                    ) as React.RefObject<HTMLInputElement>
+                  }
                 />
               </FormField>
               <div className="sm:col-span-2">
@@ -716,7 +791,11 @@ function DetailsStep({
                       onChange("billing_address_line1", e.target.value)
                     }
                     aria-invalid={!!errors.billing_address_line1}
-                    ref={getInputRef("billing_address_line1")}
+                    ref={
+                      getFieldRef(
+                        "billing_address_line1",
+                      ) as React.RefObject<HTMLInputElement>
+                    }
                   />
                 </FormField>
               </div>
@@ -748,7 +827,11 @@ function DetailsStep({
                   defaultValue={values.billing_city}
                   onChange={(e) => onChange("billing_city", e.target.value)}
                   aria-invalid={!!errors.billing_city}
-                  ref={getInputRef("billing_city")}
+                  ref={
+                    getFieldRef(
+                      "billing_city",
+                    ) as React.RefObject<HTMLInputElement>
+                  }
                 />
               </FormField>
               <FormField
@@ -767,7 +850,11 @@ function DetailsStep({
                     onChange("billing_postal_code", e.target.value)
                   }
                   aria-invalid={!!errors.billing_postal_code}
-                  ref={getInputRef("billing_postal_code")}
+                  ref={
+                    getFieldRef(
+                      "billing_postal_code",
+                    ) as React.RefObject<HTMLInputElement>
+                  }
                 />
               </FormField>
               <FormField
@@ -777,8 +864,15 @@ function DetailsStep({
                 error={errors.billing_country}
               >
                 <CountryPicker
+                  id="billing_country"
                   name="billing_country"
                   defaultValue={values.billing_country}
+                  ariaInvalid={!!errors.billing_country}
+                  buttonRef={
+                    getFieldRef(
+                      "billing_country",
+                    ) as React.RefObject<HTMLButtonElement>
+                  }
                   onChange={(code) => onChange("billing_country", code)}
                 />
               </FormField>
@@ -796,7 +890,11 @@ function DetailsStep({
                   defaultValue={values.billing_phone}
                   onChange={(e) => onChange("billing_phone", e.target.value)}
                   aria-invalid={!!errors.billing_phone}
-                  ref={getInputRef("billing_phone")}
+                  ref={
+                    getFieldRef(
+                      "billing_phone",
+                    ) as React.RefObject<HTMLInputElement>
+                  }
                 />
               </FormField>
             </div>
@@ -835,8 +933,9 @@ function DetailsStep({
           data-testid="checkout-submit"
           onClick={onSubmit}
           className="gap-2"
+          disabled={isSubmitting}
         >
-          Place order
+          {isSubmitting ? "Placing order…" : "Place order"}
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
@@ -860,7 +959,8 @@ export function CheckoutForm({
     ...initialValues,
   });
   const [errors, setErrors] = React.useState<FieldErrors>({});
-  const firstErrorRef = React.useRef<HTMLInputElement | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const firstErrorRef = React.useRef<HTMLElement | null>(null);
 
   const handleChange = (
     field: keyof CheckoutValues,
@@ -952,9 +1052,14 @@ export function CheckoutForm({
     return true;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validateStep2()) {
-      onSubmit(values);
+      setIsSubmitting(true);
+      try {
+        await onSubmit(values);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -986,6 +1091,7 @@ export function CheckoutForm({
           onSubmit={handleSubmit}
           firstErrorRef={firstErrorRef}
           isAuthenticated={isAuthenticated}
+          isSubmitting={isSubmitting}
         />
       )}
     </div>

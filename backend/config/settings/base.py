@@ -24,6 +24,10 @@ PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "http://127.0.0.1:8000")
 # Frontend base URL — used to build links in emails that must point to the
 # Next.js frontend (e.g. password-reset flow) rather than the API server.
 FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")
+FRONTEND_RETURN_URL = os.getenv(
+    "FRONTEND_RETURN_URL",
+    f"{FRONTEND_BASE_URL.rstrip('/')}/checkout/payment/return",
+)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -46,6 +50,7 @@ INSTALLED_APPS = [
     "orders",
     "orderitems",
     "payments",
+    "shipping",
     "auditlog",
     "carts",
     "notifications",

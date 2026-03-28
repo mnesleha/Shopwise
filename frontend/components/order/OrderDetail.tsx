@@ -731,10 +731,12 @@ export function OrderDetail({
           )}
         </div>
 
-        <Separator className="my-6" />
+        <Separator className="my-6 print:hidden" />
 
         {/* Items table */}
-        <ItemsTable items={order.items} currency={order.currency ?? "EUR"} />
+        <div className="print:break-before-page">
+          <ItemsTable items={order.items} currency={order.currency ?? "EUR"} />
+        </div>
 
         {/* VAT breakdown (only when backend provides it) */}
         {hasVatBreakdown && (

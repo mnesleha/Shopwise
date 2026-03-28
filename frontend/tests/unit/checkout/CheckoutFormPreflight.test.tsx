@@ -66,7 +66,7 @@ function makeNonePayload(): PriceChangePayload {
 // ---------------------------------------------------------------------------
 
 function renderForm(priceChangePayload?: PriceChangePayload | null) {
-  const onSubmit = vi.fn();
+  const onSubmit = vi.fn().mockResolvedValue(undefined);
   const onBackToCart = vi.fn();
   renderWithProviders(
     <CheckoutForm

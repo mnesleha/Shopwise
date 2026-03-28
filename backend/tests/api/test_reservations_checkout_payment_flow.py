@@ -47,7 +47,7 @@ def test_checkout_creates_active_inventory_reservations(auth_client, user):
         format="json",
     )
 
-    # checkout -> COD auto-payment commits reservations immediately
+    # checkout -> COD deferred flow: reservations stay ACTIVE until explicit payment
     resp = auth_client.post(
         "/api/v1/cart/checkout/",
         checkout_payload(customer_email=user.email),
@@ -56,16 +56,16 @@ def test_checkout_creates_active_inventory_reservations(auth_client, user):
     assert resp.status_code == 201
     order_id = resp.json()["id"]
 
-    # After checkout with COD, payment is applied synchronously:
-    # reservations transition straight from ACTIVE -> COMMITTED.
+    # After deferred COD checkout the payment is PENDING and reservations remain ACTIVE.
+    # Commitment happens only after explicit POST /payments/ confirmation.
     reservations = InventoryReservation.objects.filter(order_id=order_id)
     assert reservations.exists()
     assert all(
-        r.status == InventoryReservation.Status.COMMITTED for r in reservations)
+        r.status == InventoryReservation.Status.ACTIVE for r in reservations)
 
     r = reservations.get(product_id=product.id)
     assert r.quantity == 2
-    assert r.committed_at is not None
+    assert r.committed_at is None
 
 
 @pytest.mark.django_db
@@ -106,11 +106,12 @@ def test_payment_success_commits_reservations_and_decrements_stock(auth_client, 
 
 
 @pytest.mark.django_db
-def test_payment_fail_marks_order_payment_failed_and_keeps_reservations_active(auth_client, user):
+def test_payment_fail_marks_order_payment_failed_and_releases_reservations(auth_client, user):
     """
     Expected behaviour:
     - payment fail transitions order to PAYMENT_FAILED (retryable)
-    - reservations stay ACTIVE until TTL expiry (no release on fail)
+    - reservations are RELEASED immediately on failure, freeing stock for
+      new checkout attempts (prevents stale reservations causing 409)
     - physical stock is NOT decremented
     """
     product = Product.objects.create(
@@ -140,9 +141,9 @@ def test_payment_fail_marks_order_payment_failed_and_keeps_reservations_active(a
     assert order.cancel_reason == Order.CancelReason.PAYMENT_FAILED
     assert reservations.exists()
     assert all(
-        r.status == InventoryReservation.Status.ACTIVE for r in reservations)
+        r.status == InventoryReservation.Status.RELEASED for r in reservations)
 
-    # stock not decremented
+    # stock not decremented (reservations released, not committed)
     assert product.stock_quantity == 10
 
     # one failed payment attempt recorded
@@ -155,8 +156,11 @@ def test_payment_fail_marks_order_payment_failed_and_keeps_reservations_active(a
 def test_payment_retry_creates_new_attempt_and_succeeds(auth_client, user):
     """
     Expected behaviour:
-    - first payment attempt fails -> order PAYMENT_FAILED, reservations remain ACTIVE
-    - second attempt succeeds -> new Payment row is created, order PAID, reservations COMMITTED
+    - first payment attempt fails -> order PAYMENT_FAILED, reservations RELEASED
+    - second attempt succeeds -> new Payment row is created, order PAID
+    - stock is NOT decremented on retry because reservations were already
+      released on failure (dev-only DevFake scenario; CARD flow retries
+      go through a fresh checkout with new reservations instead)
     """
     product = Product.objects.create(
         name="Product",
@@ -183,8 +187,10 @@ def test_payment_retry_creates_new_attempt_and_succeeds(auth_client, user):
 
     reservations = InventoryReservation.objects.filter(order_id=order_id)
     assert reservations.exists()
+    # Reservations are released on payment failure to free stock for new
+    # checkout attempts.  The retry path does not re-create reservations.
     assert all(
-        r.status == InventoryReservation.Status.ACTIVE for r in reservations)
+        r.status == InventoryReservation.Status.RELEASED for r in reservations)
 
     assert Payment.objects.filter(order_id=order_id).count() == 1
     assert Payment.objects.filter(
@@ -202,15 +208,15 @@ def test_payment_retry_creates_new_attempt_and_succeeds(auth_client, user):
     product.refresh_from_db()
     order.refresh_from_db()
     reservations = InventoryReservation.objects.filter(order_id=order_id)
-    # Derive expected decrement from actual reserved quantity to keep the test stable
-    # regardless of helper implementation details.
-    reserved_qty = sum(r.quantity for r in reservations)
-    starting_stock = 10
 
     assert order.status == Order.Status.PAID
+    # Reservations remain RELEASED — commit_reservations_for_paid finds no
+    # ACTIVE rows and the fallback order.status = PAID path is used instead.
     assert all(
-        r.status == InventoryReservation.Status.COMMITTED for r in reservations)
-    assert product.stock_quantity == starting_stock - reserved_qty
+        r.status == InventoryReservation.Status.RELEASED for r in reservations)
+    # Stock is NOT decremented because there were no ACTIVE reservations to
+    # commit (they were released on the prior failure).
+    assert product.stock_quantity == 10
 
     assert Payment.objects.filter(order_id=order_id).count() == 2
     assert Payment.objects.filter(

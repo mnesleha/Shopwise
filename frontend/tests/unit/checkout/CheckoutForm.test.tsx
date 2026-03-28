@@ -21,7 +21,7 @@ import { CHECKOUT_CONTINUE, CHECKOUT_SUBMIT } from "../helpers/testIds";
 function renderForm(
   props: Partial<React.ComponentProps<typeof CheckoutForm>> = {},
 ) {
-  const onSubmit = vi.fn();
+  const onSubmit = vi.fn().mockResolvedValue(undefined);
   const onBackToCart = vi.fn();
   renderWithProviders(
     <CheckoutForm onSubmit={onSubmit} onBackToCart={onBackToCart} {...props} />,
@@ -101,7 +101,9 @@ describe("CheckoutForm", () => {
     it("shows 'Email is required' when email is empty on submit", async () => {
       const { user } = await goToStep2();
       await user.click(screen.getByTestId(CHECKOUT_SUBMIT));
-      expect(await screen.findByText(/email is required/i)).toBeInTheDocument();
+      expect(
+        (await screen.findAllByText(/email is required/i)).length,
+      ).toBeGreaterThan(0);
     });
 
     it("shows 'First name is required' when shipping first name is empty on submit", async () => {
@@ -109,21 +111,69 @@ describe("CheckoutForm", () => {
       await user.type(screen.getByLabelText(/email/i), "buyer@example.com");
       await user.click(screen.getByTestId(CHECKOUT_SUBMIT));
       expect(
-        await screen.findByText(/first name is required/i),
-      ).toBeInTheDocument();
+        (await screen.findAllByText(/first name is required/i)).length,
+      ).toBeGreaterThan(0);
     });
 
     it("shows 'valid email' error for malformed email", async () => {
       const { user } = await goToStep2();
       await user.type(screen.getByLabelText(/email/i), "not-an-email");
       await user.click(screen.getByTestId(CHECKOUT_SUBMIT));
-      expect(await screen.findByText(/valid email/i)).toBeInTheDocument();
+      expect(
+        (await screen.findAllByText(/valid email/i)).length,
+      ).toBeGreaterThan(0);
     });
 
     it("does NOT call onSubmit when validation fails", async () => {
       const { user, onSubmit } = await goToStep2();
       await user.click(screen.getByTestId(CHECKOUT_SUBMIT));
       expect(onSubmit).not.toHaveBeenCalled();
+    });
+
+    it("shows a validation summary banner when submit fails", async () => {
+      const { user } = await goToStep2();
+      await user.click(screen.getByTestId(CHECKOUT_SUBMIT));
+
+      expect(
+        await screen.findByTestId("checkout-validation-summary"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /fields need attention before you can place the order/i,
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/please review the highlighted fields below/i),
+      ).toBeInTheDocument();
+    });
+
+    it("focuses the first invalid country picker and marks it invalid", async () => {
+      const user = userEvent.setup();
+      renderForm({
+        initialValues: {
+          customer_email: "buyer@example.com",
+          shipping_first_name: "Jane",
+          shipping_last_name: "Doe",
+          shipping_address_line1: "Test Street 1",
+          shipping_city: "Prague",
+          shipping_postal_code: "11000",
+          shipping_phone: "+420700000000",
+          billing_same_as_shipping: true,
+        },
+      });
+
+      await user.click(screen.getByTestId(CHECKOUT_CONTINUE));
+      await user.click(screen.getByTestId(CHECKOUT_SUBMIT));
+
+      const countryPicker = await screen.findByRole("combobox", {
+        name: /country/i,
+      });
+
+      expect(countryPicker).toHaveFocus();
+      expect(countryPicker).toHaveAttribute("aria-invalid", "true");
+      expect(
+        (await screen.findAllByText(/country is required/i)).length,
+      ).toBeGreaterThan(0);
     });
   });
 

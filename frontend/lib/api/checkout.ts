@@ -32,12 +32,50 @@ export type PriceChangePayload = {
   items: PriceChangeItem[];
 };
 
+// ---------------------------------------------------------------------------
+// Payment initiation types (mirrors backend payment_orchestration / checkout)
+// ---------------------------------------------------------------------------
+
+/** Payment methods supported in the checkout request. */
+export type PaymentMethod = "CARD" | "COD";
+
+/**
+ * Normalized payment flow classification returned by the backend after
+ * provider-agnostic payment initiation:
+ *
+ * - "REDIRECT" — hosted/redirect provider (e.g. card gateway).
+ *   The customer must be sent to `redirect_url` to complete payment.
+ *   The backend will confirm success via webhook; frontend must not assume PAID.
+ *
+ * - "DIRECT" — synchronous provider (e.g. COD).
+ *   Payment is applied immediately; order is PAID after checkout.
+ */
+export type PaymentFlow = "REDIRECT" | "DIRECT";
+
+/**
+ * Provider-agnostic payment initiation result attached to the checkout
+ * response.  Mirrors `PaymentInitiationSerializer` on the backend.
+ */
+export type PaymentInitiation = {
+  /** Database PK of the created Payment record. */
+  payment_id: number;
+  /** Normalized flow type — drives post-checkout navigation. */
+  payment_flow: PaymentFlow;
+  /**
+   * Hosted gateway redirect URL.  Non-null only for REDIRECT flow;
+   * null for DIRECT flow.
+   */
+  redirect_url: string | null;
+};
+
 /**
  * Checkout-specific order response.  Extends the base order DTO with the
- * price-change summary that the backend attaches to POST /cart/checkout/.
+ * price-change summary and payment initiation info returned by
+ * POST /cart/checkout/.
  */
 export type CheckoutOrderDto = BaseOrderDto & {
   price_change: PriceChangePayload;
+  payment_initiation: PaymentInitiation;
 };
 
 export async function checkoutCart(
@@ -77,6 +115,9 @@ export async function checkoutCart(
         }),
 
     save_to_profile: values.save_to_profile,
+    // Forward the payment method selected by the user to the backend.
+    // The backend resolver maps this to the appropriate payment provider.
+    payment_method: values.payment_method,
   };
 
   const res = await api.post<CheckoutOrderDto>("/cart/checkout/", payload);

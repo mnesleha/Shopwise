@@ -385,3 +385,90 @@ def test_apply_result_success_order_paid_is_owned_by_commit_reservations():
     payment.refresh_from_db()
     assert payment.status == Payment.Status.SUCCESS
 
+
+# ---------------------------------------------------------------------------
+# Deferred flow — COD checkout without explicit simulated_result
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_apply_result_deferred_leaves_payment_pending():
+    """apply_provider_result(deferred=True) must leave payment in PENDING state.
+
+    A deferred result means the provider has acknowledged the order but
+    finalisation happens via an explicit POST /payments/ call.  The payment
+    must not be moved to SUCCESS prematurely.
+    """
+    user = User.objects.create_user(email="defer1@example.com", password="pass")
+    order = create_valid_order(user=user)
+    payment = Payment.objects.create(
+        order=order, status=Payment.Status.PENDING, provider=Payment.Provider.DEV_FAKE
+    )
+
+    result = ProviderStartResult(success=True, deferred=True)
+    apply_provider_result(payment=payment, order=order, provider_result=result)
+
+    payment.refresh_from_db()
+    assert payment.status == Payment.Status.PENDING
+
+
+@pytest.mark.django_db
+def test_apply_result_deferred_leaves_order_created():
+    """apply_provider_result(deferred=True) must leave order in CREATED state."""
+    user = User.objects.create_user(email="defer2@example.com", password="pass")
+    order = create_valid_order(user=user)
+    payment = Payment.objects.create(
+        order=order, status=Payment.Status.PENDING, provider=Payment.Provider.DEV_FAKE
+    )
+
+    result = ProviderStartResult(success=True, deferred=True)
+    apply_provider_result(payment=payment, order=order, provider_result=result)
+
+    order.refresh_from_db()
+    assert order.status == Order.Status.CREATED
+
+
+@pytest.mark.django_db
+def test_orchestration_cod_without_simulated_result_creates_pending_payment():
+    """COD checkout with no simulated_result → payment stays PENDING, order stays CREATED.
+
+    This is the deferred DEV flow: checkout only initiates the payment, and
+    the order is finalised via an explicit POST /payments/ call.
+    """
+    user = User.objects.create_user(email="defer3@example.com", password="pass")
+    order = create_valid_order(user=user)
+
+    payment = PaymentOrchestrationService.start_payment(
+        order=order,
+        payment_method=Payment.PaymentMethod.COD,
+        extra={},  # no simulated_result
+    )
+
+    assert payment.status == Payment.Status.PENDING, (
+        "COD checkout without simulated_result must leave payment PENDING."
+    )
+    order.refresh_from_db()
+    assert order.status == Order.Status.CREATED, (
+        "COD checkout without simulated_result must leave order in CREATED state."
+    )
+
+
+@pytest.mark.django_db
+def test_orchestration_cod_with_explicit_success_pays_immediately():
+    """COD with simulated_result='success' (via /payments/) → immediate SUCCESS + PAID.
+
+    Explicit simulated_result bypasses the deferred path and finalises the
+    payment synchronously, matching the legacy POST /payments/ dev flow.
+    """
+    user = User.objects.create_user(email="defer4@example.com", password="pass")
+    order = create_valid_order(user=user)
+
+    payment = PaymentOrchestrationService.start_payment(
+        order=order,
+        payment_method=Payment.PaymentMethod.COD,
+        extra={"simulated_result": "success"},
+    )
+
+    assert payment.status == Payment.Status.SUCCESS
+    order.refresh_from_db()
+    assert order.status == Order.Status.PAID

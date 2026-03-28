@@ -9,7 +9,7 @@ export default function Header() {
   return (
     // relative + z-50 keeps the header above the CategorySidebar backdrop (z-40)
     // so nav actions (logout, cart, etc.) remain tappable when the sidebar is open.
-    <header className="relative z-50 border-b">
+    <header className="relative z-50 border-b print:hidden">
       <div className="mx-auto w-full max-w-6xl px-4 py-4 flex items-center gap-4">
         <div className="flex items-center gap-3 shrink-0">
           <HeaderLeftSlotClient />

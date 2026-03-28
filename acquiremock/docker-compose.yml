@@ -1,0 +1,43 @@
+﻿version: "3.8"
+
+services:
+  app:
+    build: .
+    ports:
+      - "9000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://acquiremock:acquiremock@db:5432/acquiremock_db
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-your_super_secret_string_min_32_chars_change_this_in_production}
+      - BASE_URL=${BASE_URL:-http://localhost:9000}
+      - CURRENCY_CODE=${CURRENCY_CODE:-USD}
+      - CURRENCY_SYMBOL=${CURRENCY_SYMBOL:-$}
+      - SMTP_HOST=${SMTP_HOST:-host.docker.internal}
+      - SMTP_PORT=${SMTP_PORT:-1025}
+      - SMTP_USER=${SMTP_USER:-""}
+      - SMTP_PASS=${SMTP_PASS:-""}
+      - SMTP_TLS=0
+      - SMTP_SSL=0
+      - SMTP_STARTTLS=0
+      - SMTP_USE_TLS=0
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=acquiremock
+      - POSTGRES_PASSWORD=acquiremock
+      - POSTGRES_DB=acquiremock_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U acquiremock -d acquiremock_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

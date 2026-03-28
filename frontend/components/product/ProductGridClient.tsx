@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { addCartItem } from "@/lib/api/cart";
 import { useCart } from "@/components/cart/CartProvider";
@@ -66,12 +67,18 @@ export default function ProductGridClient({
   const onAddToCart = useCallback(
     async (productId: string) => {
       await addCartItem({ productId: Number(productId), quantity: 1 });
+      const addedProduct = products.find((product) => product.id === productId);
+      toast.success(
+        addedProduct
+          ? `${addedProduct.name} added to cart.`
+          : "Product added to cart.",
+      );
       await refreshCart();
       // No redirect — the user stays on the catalogue to continue shopping.
       // The cart badge updates as feedback; the toast hook fires if a new
       // order-level discount was triggered by crossing a spend threshold.
     },
-    [refreshCart],
+    [products, refreshCart],
   );
 
   return (

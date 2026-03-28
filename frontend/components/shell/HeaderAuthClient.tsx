@@ -7,11 +7,13 @@ import { useRouter } from "next/navigation";
 import { logout } from "@/lib/api/auth";
 import { ClipboardList, UserCircle } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useCart } from "@/components/cart/CartProvider";
 
 export default function HeaderAuthClient() {
   const router = useRouter();
   const { isAuthenticated, email, firstName, lastName, setAnonymous } =
     useAuth();
+  const { resetCount } = useCart();
 
   const onLogout = async () => {
     await logout();
@@ -20,12 +22,13 @@ export default function HeaderAuthClient() {
     // batches the setState calls and defers them into the concurrent transition,
     // which means on slow mobile connections the header visibly stays authenticated
     // for the entire duration of the navigation (until the new page settles).
-    flushSync(() => setAnonymous());
-    // Do NOT call refreshCart() here: it fires an authenticated request which
-    // gets 401 after logout, triggers the interceptor retry → window.location.assign
-    // which conflicts with router.push on slow mobile connections.
-    // The ShopLayout SSR re-fetches the cart on the next navigation and
-    // reinitialises CartProvider with count=0 automatically.
+    flushSync(() => {
+      setAnonymous();
+      resetCount();
+    });
+    // Do NOT call refreshCart() here: it fires a follow-up request after logout,
+    // which can 401 and race with router.push. We only need to synchronously clear
+    // the client-side badge; the next navigation re-hydrates fresh cart state.
     router.push("/products");
   };
 

@@ -23,6 +23,8 @@ belongs exclusively to the payment result applier.
 from __future__ import annotations
 
 import logging
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from urllib.parse import urlparse
 
 import requests
 from django.conf import settings
@@ -32,7 +34,58 @@ from payments.providers.base import BasePaymentProvider, PaymentStartContext, Pr
 
 logger = logging.getLogger(__name__)
 
-_CREATE_INVOICE_PATH = "/api/invoices"
+_CREATE_INVOICE_PATH = "/api/create-invoice"
+_WEBHOOK_PATH = "/api/v1/webhooks/acquiremock/"
+
+
+def _to_minor_units(amount: object) -> int:
+    """Convert a decimal major-unit amount into integer minor units."""
+    decimal_amount = Decimal(str(amount))
+    return int((decimal_amount * Decimal("100")).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+
+def _extract_payment_id_from_page_url(page_url: str) -> str | None:
+    """Extract the AcquireMock payment id from a hosted checkout URL."""
+    path = urlparse(page_url).path.rstrip("/")
+    if not path:
+        return None
+
+    segments = [segment for segment in path.split("/") if segment]
+    if len(segments) < 2:
+        return None
+
+    payment_id = segments[-1]
+    return payment_id or None
+
+
+def _join_absolute_url(base_url: str, path: str) -> str:
+    """Join an absolute base URL with an absolute path."""
+    if not base_url:
+        return ""
+    return f"{base_url.rstrip('/')}{path}"
+
+
+def _build_acquiremock_callback_urls(context: PaymentStartContext) -> tuple[str, str]:
+    """Resolve the hosted return/webhook callback URLs for AcquireMock.
+
+    Precedence is intentionally small and explicit:
+    1. Explicit provider extras (legacy / tests)
+    2. Generic callback base URL from the caller for absolute webhook building
+    3. Settings fallbacks
+    """
+    redirect_url = context.extra.get("return_url") or getattr(
+        settings, "FRONTEND_RETURN_URL", ""
+    )
+
+    callback_base_url = context.extra.get("callback_base_url") or getattr(
+        settings, "PUBLIC_BASE_URL", ""
+    )
+    webhook_url = context.extra.get("webhook_url") or _join_absolute_url(
+        callback_base_url,
+        _WEBHOOK_PATH,
+    )
+
+    return redirect_url, webhook_url
 
 
 class AcquireMockProvider(BasePaymentProvider):
@@ -52,8 +105,8 @@ class AcquireMockProvider(BasePaymentProvider):
         """Send an invoice-creation request to AcquireMock.
 
         Args:
-            context: Must include ``context.extra["return_url"]`` — the URL
-                     AcquireMock will redirect the customer to after payment.
+            context: Provider start context. Hosted callback URLs are resolved
+                     inside the payments layer from generic context / settings.
 
         Returns:
             ProviderStartResult:
@@ -64,6 +117,7 @@ class AcquireMockProvider(BasePaymentProvider):
         base_url = settings.ACQUIREMOCK_BASE_URL
         api_key = settings.ACQUIREMOCK_API_KEY
         timeout = getattr(settings, "ACQUIREMOCK_TIMEOUT", 10)
+        redirect_url, webhook_url = _build_acquiremock_callback_urls(context)
 
         # --- Fail-closed configuration guards ---
         if not base_url:
@@ -76,15 +130,36 @@ class AcquireMockProvider(BasePaymentProvider):
             logger.error("AcquireMock start failed — %s", reason)
             return ProviderStartResult(success=False, failure_reason=reason)
 
+        if not webhook_url:
+            reason = "AcquireMock webhook URL is not configured — cannot receive payment result callbacks."
+            logger.error("AcquireMock start failed — %s", reason)
+            return ProviderStartResult(success=False, failure_reason=reason)
+
+        if not redirect_url:
+            reason = "AcquireMock return URL is not configured — cannot redirect the customer back to the shop."
+            logger.error("AcquireMock start failed — %s", reason)
+            return ProviderStartResult(success=False, failure_reason=reason)
+
         # --- Financial snapshot validation ---
-        if context.payment.amount is None or context.payment.currency is None:
+        if context.payment.amount is None:
             reason = (
-                "Payment amount or currency is missing from the payment snapshot. "
+                "Payment amount is missing from the payment snapshot. "
                 "Cannot create an AcquireMock session without a financial amount."
             )
             logger.error(
-                "AcquireMock start failed — missing amount/currency for order %s",
+                "AcquireMock start failed — missing amount for order %s",
                 context.order.id,
+            )
+            return ProviderStartResult(success=False, failure_reason=reason)
+
+        try:
+            amount_minor_units = _to_minor_units(context.payment.amount)
+        except (InvalidOperation, TypeError, ValueError) as exc:
+            reason = f"Payment amount is invalid for AcquireMock: {exc}"
+            logger.error(
+                "AcquireMock start failed — invalid amount for order %s: %s",
+                context.order.id,
+                exc,
             )
             return ProviderStartResult(success=False, failure_reason=reason)
 
@@ -94,10 +169,10 @@ class AcquireMockProvider(BasePaymentProvider):
             "Content-Type": "application/json",
         }
         body = {
-            "order_id": str(context.order.id),
-            "amount": str(context.payment.amount),
-            "currency": str(context.payment.currency),
-            "return_url": context.extra.get("return_url", ""),
+            "amount": amount_minor_units,
+            "reference": str(context.order.id),
+            "webhookUrl": webhook_url,
+            "redirectUrl": redirect_url,
         }
 
         try:
@@ -118,8 +193,10 @@ class AcquireMockProvider(BasePaymentProvider):
 
         try:
             data = response.json()
-            payment_id = data["id"]
-            redirect_url = data["redirect_url"]
+            redirect_url = data["pageUrl"]
+            payment_id = _extract_payment_id_from_page_url(str(redirect_url))
+            if not payment_id:
+                raise KeyError("pageUrl does not contain a payment id")
         except (KeyError, ValueError) as exc:
             reason = f"AcquireMock response missing required fields: {exc}"
             logger.warning(

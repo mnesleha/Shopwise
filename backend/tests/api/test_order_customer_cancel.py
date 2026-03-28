@@ -65,7 +65,7 @@ def test_customer_cannot_cancel_paid_order(auth_client, user):
         is_active=True,
     )
 
-    # checkout with COD -> auto-payment marks order as PAID immediately
+    # COD checkout leaves the order in CREATED state (deferred payment flow).
     auth_client.get("/api/v1/cart/")
     auth_client.post(
         "/api/v1/cart/items/",
@@ -80,7 +80,15 @@ def test_customer_cannot_cancel_paid_order(auth_client, user):
     assert checkout_resp.status_code == 201
     order_id = checkout_resp.json()["id"]
 
-    # order is already PAID via COD; attempting cancel must fail
+    # Confirm payment via /payments/ to transition order -> PAID.
+    pay_resp = auth_client.post(
+        "/api/v1/payments/",
+        {"order_id": order_id, "result": "success"},
+        format="json",
+    )
+    assert pay_resp.status_code == 201
+
+    # order is now PAID; attempting cancel must fail
     cancel_resp = auth_client.post(
         f"/api/v1/orders/{order_id}/cancel/",
         format="json",

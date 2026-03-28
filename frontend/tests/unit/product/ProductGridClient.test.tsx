@@ -144,7 +144,9 @@ describe("ProductGridClient — routing contracts", () => {
     render(
       <ProductGridClient
         {...buildProps({
-          products: [makeProduct({ id: "7", stockQuantity: 3 })],
+          products: [
+            makeProduct({ id: "7", name: "Travel Mug", stockQuantity: 3 }),
+          ],
           totalItems: 1,
         })}
       />,
@@ -154,18 +156,21 @@ describe("ProductGridClient — routing contracts", () => {
 
     expect(mockAddCartItem).toHaveBeenCalledOnce();
     expect(mockAddCartItem).toHaveBeenCalledWith({ productId: 7, quantity: 1 });
+    expect(mockToastSuccess).toHaveBeenCalledWith("Travel Mug added to cart.");
     // User stays on the catalogue — no redirect to /cart.
     await vi.waitFor(() => {
       expect(mockRouter.push).not.toHaveBeenCalledWith("/cart");
     });
   });
 
-  it("does not show an order discount toast when no discount is applied", async () => {
+  it("does not show an extra order discount toast when no discount is applied", async () => {
     const user = userEvent.setup();
     render(
       <ProductGridClient
         {...buildProps({
-          products: [makeProduct({ id: "8", stockQuantity: 2 })],
+          products: [
+            makeProduct({ id: "8", name: "Notebook", stockQuantity: 2 }),
+          ],
           totalItems: 1,
         })}
       />,
@@ -173,9 +178,10 @@ describe("ProductGridClient — routing contracts", () => {
 
     await user.click(screen.getByTestId(addToCartTestId("8")));
 
-    // orderDiscountApplied stays false in the mock — no toast expected.
+    // orderDiscountApplied stays false in the mock — only the add-to-cart toast is expected.
     await vi.waitFor(() => {
-      expect(mockToastSuccess).not.toHaveBeenCalled();
+      expect(mockToastSuccess).toHaveBeenCalledTimes(1);
+      expect(mockToastSuccess).toHaveBeenCalledWith("Notebook added to cart.");
     });
   });
 });

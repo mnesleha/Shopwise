@@ -40,6 +40,9 @@ describe("OrderDetailClient", () => {
     renderWithProviders(<OrderDetailClient order={makeOrderViewModel()} />);
     await user.click(screen.getByRole("button", { name: /print/i }));
     expect(printSpy).toHaveBeenCalledTimes(1);
+    expect(document.body).toHaveClass("print-order-detail");
+    window.dispatchEvent(new Event("afterprint"));
+    expect(document.body).not.toHaveClass("print-order-detail");
     printSpy.mockRestore();
   });
 });
