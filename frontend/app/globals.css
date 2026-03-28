@@ -237,3 +237,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  body.print-order-detail header,
+  body.print-order-detail footer {
+    display: none !important;
+  }
+
+  body.print-order-detail main {
+    padding: 0 !important;
+  }
+
+  body.print-order-detail main > div {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+}

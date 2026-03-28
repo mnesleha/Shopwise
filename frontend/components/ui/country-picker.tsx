@@ -27,9 +27,12 @@ export function getCountryName(code: string): string {
 }
 
 interface CountryPickerProps {
+  id?: string;
   /** Hidden input name — used by FormData on submit. */
   name: string;
   defaultValue?: string;
+  ariaInvalid?: boolean;
+  buttonRef?: React.Ref<HTMLButtonElement>;
   /**
    * Called with the ISO 3166-1 alpha-2 code whenever the selection changes.
    * Use this for controlled-state forms (e.g. CheckoutForm) where the parent
@@ -44,8 +47,11 @@ interface CountryPickerProps {
  * the parent — consistent with the ADR-034 pattern used across all address forms.
  */
 export function CountryPicker({
+  id,
   name,
   defaultValue = "",
+  ariaInvalid = false,
+  buttonRef,
   onChange,
 }: CountryPickerProps) {
   const [open, setOpen] = React.useState(false);
@@ -65,10 +71,17 @@ export function CountryPicker({
       <Popover open={open} onOpenChange={setOpen} modal={true}>
         <PopoverTrigger asChild>
           <Button
+            ref={buttonRef}
+            id={id}
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-full justify-between"
+            aria-invalid={ariaInvalid}
+            className={cn(
+              "w-full justify-between",
+              ariaInvalid &&
+                "border-destructive bg-destructive/5 text-foreground focus-visible:border-destructive focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
+            )}
           >
             {value
               ? OPTIONS.find((opt) => opt.value === value)?.label

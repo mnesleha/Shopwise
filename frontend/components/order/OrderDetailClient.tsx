@@ -58,6 +58,18 @@ export default function OrderDetailClient({
 
   type ApiErrorDto = { code?: string; message?: string };
 
+  function handlePrint() {
+    document.body.classList.add("print-order-detail");
+
+    const cleanup = () => {
+      document.body.classList.remove("print-order-detail");
+      window.removeEventListener("afterprint", cleanup);
+    };
+
+    window.addEventListener("afterprint", cleanup);
+    window.print();
+  }
+
   async function confirmCancel() {
     if (!canCancel) return;
 
@@ -101,7 +113,7 @@ export default function OrderDetailClient({
     <OrderDetail
       order={orderVm}
       onBackToShop={() => router.push("/products")}
-      onPrint={() => window.print()}
+      onPrint={handlePrint}
       onDownloadPdf={undefined}
       headerActions={
         canCancel ? (

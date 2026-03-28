@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "orders",
     "orderitems",
     "payments",
+    "shipping",
     "auditlog",
     "carts",
     "notifications",
