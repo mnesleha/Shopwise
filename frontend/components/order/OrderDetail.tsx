@@ -649,7 +649,9 @@ export function OrderDetail({
     order.vatBreakdown !== undefined &&
     order.vatBreakdown.length > 0;
   const hasShipmentSummary =
-    !!order.shipmentStatus || !!order.trackingNumber || !!order.shippingLabelUrl;
+    !!order.shipmentStatus ||
+    !!order.trackingNumber ||
+    !!order.shippingLabelUrl;
 
   return (
     <div className="mx-auto max-w-4xl print:max-w-none">
@@ -768,7 +770,11 @@ export function OrderDetail({
                 <div className="flex flex-col gap-1">
                   <span className="text-muted-foreground">Shipment status</span>
                   <div>
-                    <Badge variant={getShipmentStatusBadgeVariant(order.shipmentStatus)}>
+                    <Badge
+                      variant={getShipmentStatusBadgeVariant(
+                        order.shipmentStatus,
+                      )}
+                    >
                       {getShipmentStatusLabel(order.shipmentStatus)}
                     </Badge>
                   </div>
