@@ -43,7 +43,8 @@ export default async function PublicTrackingPage({
       <div className="space-y-2">
         <h1 className="text-3xl font-semibold">Track shipment</h1>
         <p className="text-muted-foreground">
-          Public shipment milestones for tracking number {tracking.trackingNumber}.
+          Public shipment milestones for tracking number{" "}
+          {tracking.trackingNumber}.
         </p>
       </div>
       <PublicTrackingView tracking={tracking} />

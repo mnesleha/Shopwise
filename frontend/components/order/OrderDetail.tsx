@@ -219,7 +219,10 @@ function ShipmentTimeline({ items }: { items: ShipmentTimelineEntry[] }) {
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
         return (
-          <div key={`${item.status}-${item.occurredAt ?? index}`} className="flex gap-3">
+          <div
+            key={`${item.status}-${item.occurredAt ?? index}`}
+            className="flex gap-3"
+          >
             <div className="flex flex-col items-center">
               <span
                 className={[

@@ -101,7 +101,10 @@ export default function PublicTrackingView({
             {tracking.shipmentTimeline.map((item, index) => {
               const isLast = index === tracking.shipmentTimeline.length - 1;
               return (
-                <div key={`${item.status}-${item.occurredAt ?? index}`} className="flex gap-3">
+                <div
+                  key={`${item.status}-${item.occurredAt ?? index}`}
+                  className="flex gap-3"
+                >
                   <div className="flex flex-col items-center">
                     <span
                       className={[
@@ -115,8 +118,12 @@ export default function PublicTrackingView({
                   </div>
                   <div className="pb-4">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-medium text-foreground">{item.label}</p>
-                      {item.isCurrent && <Badge variant="secondary">Current</Badge>}
+                      <p className="font-medium text-foreground">
+                        {item.label}
+                      </p>
+                      {item.isCurrent && (
+                        <Badge variant="secondary">Current</Badge>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {formatShipmentTimelineTime(item.occurredAt)}
