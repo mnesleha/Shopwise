@@ -92,7 +92,8 @@ export type CheckoutOrderDto = BaseOrderDto & {
 export async function checkoutCart(
   values: CheckoutValues,
 ): Promise<CheckoutOrderDto> {
-  const shippingSelection = SHIPPING_SELECTION_TO_BACKEND[values.shipping_method];
+  const shippingSelection =
+    SHIPPING_SELECTION_TO_BACKEND[values.shipping_method];
 
   const payload = {
     customer_email: values.customer_email,

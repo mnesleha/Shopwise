@@ -92,7 +92,7 @@ type OrderItem = {
   } | null;
 };
 
-type OrderViewModel = {
+export type OrderViewModel = {
   id: string;
   orderNumber: string; // e.g. "OBJ25284904"
   status: "CREATED" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED" | string;
@@ -100,9 +100,11 @@ type OrderViewModel = {
   supplier: SupplierInfo;
   customer: CustomerInfo;
 
-  // Shipping & payment placeholders (may be mocked today)
   shippingMethod?: string; // e.g. "PPL"
-  paymentMethod?: string; // e.g. "Bank transfer (simulated)"
+  shipmentStatus?: string;
+  trackingNumber?: string;
+  shippingLabelUrl?: string;
+  paymentMethod?: string;
   barcodeValue?: string;
 
   items: OrderItem[];
@@ -155,6 +157,32 @@ function getStatusLabel(status: string): string {
     PAID: "Paid",
     SHIPPED: "Shipped",
     DELIVERED: "Delivered",
+    CANCELLED: "Cancelled",
+  };
+  return labels[status.toUpperCase()] || status;
+}
+
+function getShipmentStatusBadgeVariant(
+  status: string,
+): "default" | "secondary" | "destructive" | "outline" {
+  const normalized = status.toUpperCase();
+  if (normalized === "DELIVERED") return "default";
+  if (normalized === "IN_TRANSIT" || normalized === "LABEL_CREATED") {
+    return "secondary";
+  }
+  if (normalized === "FAILED_DELIVERY" || normalized === "CANCELLED") {
+    return "destructive";
+  }
+  return "outline";
+}
+
+function getShipmentStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    PENDING: "Pending",
+    LABEL_CREATED: "Label created",
+    IN_TRANSIT: "In transit",
+    DELIVERED: "Delivered",
+    FAILED_DELIVERY: "Failed delivery",
     CANCELLED: "Cancelled",
   };
   return labels[status.toUpperCase()] || status;
@@ -620,6 +648,8 @@ export function OrderDetail({
     order.vatBreakdown !== null &&
     order.vatBreakdown !== undefined &&
     order.vatBreakdown.length > 0;
+  const hasShipmentSummary =
+    !!order.shipmentStatus || !!order.trackingNumber || !!order.shippingLabelUrl;
 
   return (
     <div className="mx-auto max-w-4xl print:max-w-none">
@@ -730,6 +760,44 @@ export function OrderDetail({
             </div>
           )}
         </div>
+
+        {hasShipmentSummary && (
+          <div className="mt-4 rounded-lg border bg-muted/30 p-4">
+            <div className="grid gap-3 text-sm md:grid-cols-3">
+              {order.shipmentStatus && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground">Shipment status</span>
+                  <div>
+                    <Badge variant={getShipmentStatusBadgeVariant(order.shipmentStatus)}>
+                      {getShipmentStatusLabel(order.shipmentStatus)}
+                    </Badge>
+                  </div>
+                </div>
+              )}
+              {order.trackingNumber && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground">Tracking number</span>
+                  <span className="font-medium text-foreground">
+                    {order.trackingNumber}
+                  </span>
+                </div>
+              )}
+              {order.shippingLabelUrl && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground">Shipping label</span>
+                  <a
+                    className="font-medium text-foreground underline underline-offset-4"
+                    href={order.shippingLabelUrl}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    Open label
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <Separator className="my-6 print:hidden" />
 

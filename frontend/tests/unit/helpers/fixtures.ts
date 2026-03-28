@@ -228,6 +228,9 @@ export interface OrderViewModelFixture {
     email?: string;
   };
   shippingMethod?: string;
+  shipmentStatus?: string;
+  trackingNumber?: string;
+  shippingLabelUrl?: string;
   paymentMethod?: string;
   items: OrderItemFixture[];
   subtotal?: string;

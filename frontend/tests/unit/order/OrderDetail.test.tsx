@@ -136,6 +136,21 @@ describe("OrderDetail", () => {
       expect(screen.getByText("PPL Express")).toBeInTheDocument();
     });
 
+    it("renders shipment summary when provided", () => {
+      const order = makeOrderViewModel({
+        shipmentStatus: "IN_TRANSIT",
+        trackingNumber: "MOCK-123-EXPRESS",
+        shippingLabelUrl: "https://mock-shipping.local/labels/MOCK-123-EXPRESS",
+      });
+      renderOrderDetail({ order });
+      expect(screen.getByText("In transit")).toBeInTheDocument();
+      expect(screen.getByText("MOCK-123-EXPRESS")).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /open label/i })).toHaveAttribute(
+        "href",
+        "https://mock-shipping.local/labels/MOCK-123-EXPRESS",
+      );
+    });
+
     it("does NOT render shipping method section when not provided", () => {
       renderOrderDetail({
         order: makeOrderViewModel({ shippingMethod: undefined }),

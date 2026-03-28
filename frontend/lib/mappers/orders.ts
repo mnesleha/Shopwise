@@ -181,8 +181,10 @@ export function mapOrderToVm(dto: BaseOrderDto): OrderViewModel {
         ? mapAddressToCustomer(dto.shipping_address, dto.customer_email)
         : DEFAULT_CUSTOMER,
 
-    shippingMethod: "Standard (simulated)",
-    paymentMethod: "Card (simulated)",
+    shippingMethod: dto.shipping_method?.name || undefined,
+    shipmentStatus: dto.shipment_summary?.status || undefined,
+    trackingNumber: dto.shipment_summary?.tracking_number || undefined,
+    shippingLabelUrl: dto.shipment_summary?.label_url || undefined,
     barcodeValue: orderNumber,
 
     items: dto.items.map(mapItem),

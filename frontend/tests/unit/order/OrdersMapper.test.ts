@@ -318,6 +318,33 @@ describe("mapOrderToVm — order-level totals", () => {
   });
 });
 
+describe("mapOrderToVm — shipping summary", () => {
+  it("maps shipping method and shipment summary from backend data", () => {
+    const dto = makeOrderDto({
+      shipping_method: {
+        provider_code: "MOCK",
+        service_code: "express",
+        name: "Express",
+      },
+      shipment_summary: {
+        status: "IN_TRANSIT",
+        tracking_number: "MOCK-123-EXPRESS",
+        label_url: "https://mock-shipping.local/labels/MOCK-123-EXPRESS",
+      },
+    });
+
+    const vm = mapOrderToVm(dto);
+
+    expect(vm.shippingMethod).toBe("Express");
+    expect(vm.shipmentStatus).toBe("IN_TRANSIT");
+    expect(vm.trackingNumber).toBe("MOCK-123-EXPRESS");
+    expect(vm.shippingLabelUrl).toBe(
+      "https://mock-shipping.local/labels/MOCK-123-EXPRESS",
+    );
+    expect(vm.paymentMethod).toBeUndefined();
+  });
+});
+
 // ── VAT breakdown mapping ─────────────────────────────────────────────────
 
 describe("mapOrderToVm — vat_breakdown", () => {

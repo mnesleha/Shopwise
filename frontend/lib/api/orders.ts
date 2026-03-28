@@ -71,6 +71,18 @@ export type AddressSnapshotDto = {
   vat_id: string;
 };
 
+export type ShippingMethodDto = {
+  provider_code: string;
+  service_code: string;
+  name: string;
+};
+
+export type ShipmentSummaryDto = {
+  status: string;
+  tracking_number: string | null;
+  label_url: string | null;
+};
+
 export type BaseOrderDto = {
   id: number;
   status: string;
@@ -110,6 +122,10 @@ export type BaseOrderDto = {
   billing_address?: AddressSnapshotDto | null;
   /** Contact email captured at checkout. */
   customer_email?: string | null;
+  /** Checkout shipping selection snapshot. */
+  shipping_method?: ShippingMethodDto | null;
+  /** Latest shipment summary, when a shipment already exists. */
+  shipment_summary?: ShipmentSummaryDto | null;
   /**
    * Supplier snapshot captured at order creation time.
    * Null for pre-supplier orders (created before the supplier feature was deployed).
