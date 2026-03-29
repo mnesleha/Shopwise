@@ -113,9 +113,42 @@ def test_shipment_get_timeline_returns_canonical_milestones():
     timeline = shipment.get_timeline()
 
     assert [entry["status"] for entry in timeline] == [
-        ShipmentStatus.PENDING,
         ShipmentStatus.LABEL_CREATED,
         ShipmentStatus.IN_TRANSIT,
+        ShipmentStatus.DELIVERED,
     ]
-    assert timeline[-1]["is_current"] is True
-    assert timeline[-1]["label"] == "In transit"
+    assert timeline[1]["is_current"] is True
+    assert timeline[1]["label"] == "In transit"
+    assert timeline[2]["occurred_at"] is None
+
+
+def test_shipment_get_timeline_keeps_main_progress_for_failed_delivery():
+    user = User.objects.create_user(email="shipping-timeline-failed@example.com", password="pass")
+    order = create_valid_order(user=user)
+    shipment = Shipment.objects.create(
+        order=order,
+        provider_code="MOCK",
+        service_code="express",
+        carrier_name_snapshot="Mock Carrier",
+        service_name_snapshot="Express",
+        tracking_number="MOCK-2-EXPRESS",
+        status=ShipmentStatus.FAILED_DELIVERY,
+    )
+
+    ShipmentEvent.objects.create(
+        shipment=shipment,
+        event_type="status_update",
+        raw_status="IN_TRANSIT",
+        normalized_status=ShipmentStatus.IN_TRANSIT,
+        payload={"status": "IN_TRANSIT"},
+        occurred_at=now(),
+    )
+
+    timeline = shipment.get_timeline()
+
+    assert [entry["status"] for entry in timeline] == [
+        ShipmentStatus.LABEL_CREATED,
+        ShipmentStatus.IN_TRANSIT,
+        ShipmentStatus.DELIVERED,
+    ]
+    assert [entry["is_current"] for entry in timeline] == [False, True, False]

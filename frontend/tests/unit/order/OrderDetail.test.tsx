@@ -156,8 +156,8 @@ describe("OrderDetail", () => {
         trackingNumber: "MOCK-123-EXPRESS",
         shipmentTimeline: [
           {
-            status: "PENDING",
-            label: "Pending",
+            status: "LABEL_CREATED",
+            label: "Label created",
             occurredAt: "2026-03-28T16:00:00Z",
             isCurrent: false,
           },
@@ -167,18 +167,77 @@ describe("OrderDetail", () => {
             occurredAt: "2026-03-29T08:15:00Z",
             isCurrent: true,
           },
+          {
+            status: "DELIVERED",
+            label: "Delivered",
+            occurredAt: null,
+            isCurrent: false,
+          },
         ],
       });
       renderOrderDetail({ order });
 
-      expect(screen.getByText("Shipment timeline")).toBeInTheDocument();
-      expect(screen.getByText("Pending")).toBeInTheDocument();
+      expect(screen.getByText("Shipping progress")).toBeInTheDocument();
+      expect(screen.queryByText("Shipment timeline")).toBeNull();
+      expect(
+        screen.queryByText(
+          "Provider-agnostic delivery milestones for this shipment.",
+        ),
+      ).toBeNull();
+      expect(screen.getByText("Label created")).toBeInTheDocument();
       expect(screen.getByText("In transit")).toBeInTheDocument();
+      expect(screen.getByText("Delivered")).toBeInTheDocument();
       expect(screen.getByText("2026-03-29 08:15 UTC")).toBeInTheDocument();
+      expect(screen.getByText("Current")).toBeInTheDocument();
       expect(screen.getByRole("link", { name: /track shipment/i })).toHaveAttribute(
         "href",
         "/tracking/MOCK-123-EXPRESS",
       );
+      expect(screen.getByTestId("shipping-summary-section")).toHaveClass(
+        "print:hidden",
+      );
+      expect(screen.getByTestId("shipping-progress-section")).toHaveClass(
+        "print:hidden",
+      );
+    });
+
+    it("renders delayed customer-facing copy for delivery issues", () => {
+      const order = makeOrderViewModel({
+        status: "DELIVERY_FAILED",
+        shipmentStatus: "FAILED_DELIVERY",
+        trackingNumber: "MOCK-FAILED-123",
+        shipmentTimeline: [
+          {
+            status: "LABEL_CREATED",
+            label: "Label created",
+            occurredAt: "2026-03-28T16:00:00Z",
+            isCurrent: false,
+          },
+          {
+            status: "IN_TRANSIT",
+            label: "In transit",
+            occurredAt: "2026-03-29T08:15:00Z",
+            isCurrent: true,
+          },
+          {
+            status: "DELIVERED",
+            label: "Delivered",
+            occurredAt: null,
+            isCurrent: false,
+          },
+        ],
+      });
+
+      renderOrderDetail({ order });
+
+      expect(screen.getAllByText("Delayed").length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByText("We're arranging a new delivery attempt.")).toBeInTheDocument();
+      expect(screen.queryByText("Failed delivery")).toBeNull();
+      expect(screen.getByText("Label created")).toBeInTheDocument();
+      expect(screen.getByText("In transit")).toBeInTheDocument();
+      expect(screen.getByText("Delivered")).toBeInTheDocument();
+      const summarySection = screen.getByTestId("shipping-summary-section");
+      expect(within(summarySection).queryByText("We're arranging a new delivery attempt.")).toBeNull();
     });
 
     it("does NOT render shipping method section when not provided", () => {

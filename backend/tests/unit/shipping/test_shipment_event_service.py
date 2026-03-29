@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.utils.timezone import make_aware
 
 from orders.models import Order
-from shipping.models import ShipmentEvent
+from shipping.models import Shipment, ShipmentEvent
 from shipping.providers.base import ParsedWebhookEvent
 from shipping.services.events import ShipmentEventService
 from shipping.services.shipment import ShipmentService
@@ -70,6 +70,40 @@ def test_process_delivered_event_updates_shipment_and_order():
     assert shipment.shipped_at == occurred_at
     assert shipment.delivered_at == occurred_at
     assert order.status == Order.Status.DELIVERED
+
+
+@pytest.mark.django_db
+def test_process_failed_delivery_event_updates_shipment_and_order():
+    user = User.objects.create_user(email="ship-event-failed@example.com", password="pass")
+    order = create_valid_order(user=user, status=Order.Status.SHIPPED)
+    shipment = Shipment.objects.create(
+        order=order,
+        provider_code="MOCK",
+        service_code="express",
+        carrier_name_snapshot="Mock Shipping",
+        service_name_snapshot="Express",
+        tracking_number="MOCK-FAILED-1",
+        status=ShipmentStatus.IN_TRANSIT,
+    )
+    occurred_at = make_aware(datetime(2026, 3, 28, 18, 45, 0))
+
+    ShipmentEventService.process_event(
+        shipment=shipment,
+        event=ParsedWebhookEvent(
+            event_type="tracking_updated",
+            normalized_status=ShipmentStatus.FAILED_DELIVERY,
+            raw_status="FAILED_DELIVERY",
+            external_event_id="evt-failed-delivery-1",
+            occurred_at=occurred_at,
+            payload={"status": "FAILED_DELIVERY"},
+        ),
+    )
+
+    shipment.refresh_from_db()
+    order.refresh_from_db()
+
+    assert shipment.status == ShipmentStatus.FAILED_DELIVERY
+    assert order.status == Order.Status.DELIVERY_FAILED
 
 
 @pytest.mark.django_db

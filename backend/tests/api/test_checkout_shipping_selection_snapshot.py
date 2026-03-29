@@ -175,7 +175,8 @@ def test_order_detail_exposes_latest_shipment_summary(auth_client, user, tmp_pat
     assert response.data["shipment_summary"]["label_url"].startswith("http://testserver/media/shipping/labels/")
     assert response.data["shipment_summary"]["label_url"].endswith(".svg")
     assert [entry["status"] for entry in response.data["shipment_timeline"]] == [
-        ShipmentStatus.PENDING,
+        ShipmentStatus.LABEL_CREATED,
         ShipmentStatus.IN_TRANSIT,
+        ShipmentStatus.DELIVERED,
     ]
-    assert response.data["shipment_timeline"][-1]["is_current"] is True
+    assert response.data["shipment_timeline"][1]["is_current"] is True

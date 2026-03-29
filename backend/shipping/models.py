@@ -24,6 +24,12 @@ SHIPMENT_STATUS_SORT_ORDER = {
     ShipmentStatus.CANCELLED: 60,
 }
 
+CUSTOMER_TIMELINE_STATUSES = (
+    ShipmentStatus.LABEL_CREATED,
+    ShipmentStatus.IN_TRANSIT,
+    ShipmentStatus.DELIVERED,
+)
+
 
 def shipment_label_upload_to(instance, filename: str) -> str:
     extension = os.path.splitext(filename)[1] or ".svg"
@@ -99,7 +105,9 @@ class Shipment(models.Model):
 
     def get_timeline(self) -> list[dict]:
         timeline_points: dict[str, object] = {
-            ShipmentStatus.PENDING: self.created_at,
+            ShipmentStatus.LABEL_CREATED: self._timeline_status_time(ShipmentStatus.LABEL_CREATED),
+            ShipmentStatus.IN_TRANSIT: self._timeline_status_time(ShipmentStatus.IN_TRANSIT),
+            ShipmentStatus.DELIVERED: self._timeline_status_time(ShipmentStatus.DELIVERED),
         }
 
         for event in sorted(
@@ -109,7 +117,7 @@ class Shipment(models.Model):
                 item.pk,
             ),
         ):
-            if not event.normalized_status:
+            if event.normalized_status not in CUSTOMER_TIMELINE_STATUSES:
                 continue
 
             event_time = event.occurred_at or event.processed_at or event.created_at
@@ -119,31 +127,42 @@ class Shipment(models.Model):
             ):
                 timeline_points[event.normalized_status] = event_time
 
-        current_status_time = self._timeline_status_time(self.status)
-        if self.status not in timeline_points or timeline_points[self.status] is None:
-            timeline_points[self.status] = current_status_time
+        current_status = self._current_customer_timeline_status()
+        current_status_time = self._timeline_status_time(current_status)
+        if timeline_points[current_status] is None:
+            timeline_points[current_status] = current_status_time
 
         return [
             {
                 "status": status,
                 "label": SHIPMENT_STATUS_LABELS.get(status, status),
                 "occurred_at": occurred_at.isoformat() if occurred_at else None,
-                "is_current": status == self.status,
+                "is_current": status == current_status,
             }
-            for status, occurred_at in sorted(
-                timeline_points.items(),
-                key=lambda item: (
-                    item[1] is None,
-                    item[1],
-                    SHIPMENT_STATUS_SORT_ORDER.get(item[0], 999),
-                    item[0],
-                ),
+            for status, occurred_at in (
+                (status, timeline_points.get(status))
+                for status in CUSTOMER_TIMELINE_STATUSES
             )
         ]
 
+    def _current_customer_timeline_status(self) -> str:
+        if self.status == ShipmentStatus.DELIVERED:
+            return ShipmentStatus.DELIVERED
+        if self.status in (ShipmentStatus.IN_TRANSIT, ShipmentStatus.FAILED_DELIVERY):
+            return ShipmentStatus.IN_TRANSIT
+        if self.delivered_at:
+            return ShipmentStatus.DELIVERED
+        if self.shipped_at:
+            return ShipmentStatus.IN_TRANSIT
+        return ShipmentStatus.LABEL_CREATED
+
     def _timeline_status_time(self, status: str):
         if status == ShipmentStatus.DELIVERED:
-            return self.delivered_at or self.shipped_at or self.updated_at or self.created_at
+            if self.delivered_at:
+                return self.delivered_at
+            if self.status == ShipmentStatus.DELIVERED:
+                return self.updated_at or self.shipped_at or self.created_at
+            return None
         if status == ShipmentStatus.IN_TRANSIT:
             return self.shipped_at or self.updated_at or self.created_at
         if status == ShipmentStatus.LABEL_CREATED:

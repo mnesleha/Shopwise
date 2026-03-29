@@ -6,6 +6,7 @@ import {
 import { ChevronDown } from "lucide-react";
 import { redirect } from "next/navigation";
 import ResendVerificationButton from "@/components/auth/ResendVerificationButton";
+import { splitOrdersByCompletion } from "./grouping";
 
 type OrderItemDto = {
   id: number;
@@ -28,8 +29,6 @@ type MeDto = {
   email?: string;
   email_verified?: boolean;
 };
-
-const COMPLETED_STATUSES = new Set(["DELIVERED", "CANCELLED"]);
 
 function toRowVm(o: OrderDto): OrderRowVm {
   return {
@@ -93,9 +92,7 @@ export default async function OrdersPage() {
   });
 
   const rows = (orders ?? []).map(toRowVm);
-
-  const active = rows.filter((o) => !COMPLETED_STATUSES.has(o.status));
-  const completed = rows.filter((o) => COMPLETED_STATUSES.has(o.status));
+  const { active, completed } = splitOrdersByCompletion(rows);
 
   return (
     <div className="space-y-6">

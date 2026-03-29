@@ -36,8 +36,9 @@ def test_public_tracking_returns_safe_shipment_summary(client):
         "shipment_timeline": response.data["shipment_timeline"],
     }
     assert [entry["status"] for entry in response.data["shipment_timeline"]] == [
-        ShipmentStatus.PENDING,
+        ShipmentStatus.LABEL_CREATED,
         ShipmentStatus.IN_TRANSIT,
+        ShipmentStatus.DELIVERED,
     ]
     assert "customer_email" not in response.data
     assert "payload" not in str(response.data)

@@ -6,6 +6,7 @@ const STATUS_CONFIG: Record<
 > = {
   CREATED: { label: "Created", variant: "outline" },
   PAID: { label: "Paid", variant: "default" },
+  DELIVERY_FAILED: { label: "Delayed", variant: "secondary" },
   SHIPPED: { label: "Shipped", variant: "secondary" },
   DELIVERED: { label: "Delivered", variant: "default" },
   CANCELLED: { label: "Cancelled", variant: "destructive" },

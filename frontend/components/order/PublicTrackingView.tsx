@@ -7,10 +7,14 @@ function getShipmentStatusBadgeVariant(
 ): "default" | "secondary" | "destructive" | "outline" {
   const normalized = status.toUpperCase();
   if (normalized === "DELIVERED") return "default";
-  if (normalized === "IN_TRANSIT" || normalized === "LABEL_CREATED") {
+  if (
+    normalized === "IN_TRANSIT" ||
+    normalized === "LABEL_CREATED" ||
+    normalized === "FAILED_DELIVERY"
+  ) {
     return "secondary";
   }
-  if (normalized === "FAILED_DELIVERY" || normalized === "CANCELLED") {
+  if (normalized === "CANCELLED") {
     return "destructive";
   }
   return "outline";
@@ -22,10 +26,14 @@ function getShipmentStatusLabel(status: string): string {
     LABEL_CREATED: "Label created",
     IN_TRANSIT: "In transit",
     DELIVERED: "Delivered",
-    FAILED_DELIVERY: "Failed delivery",
+    FAILED_DELIVERY: "Delayed",
     CANCELLED: "Cancelled",
   };
   return labels[status.toUpperCase()] || status;
+}
+
+function hasDeliveryIssue(status: string): boolean {
+  return status.toUpperCase() === "FAILED_DELIVERY";
 }
 
 function formatShipmentTimelineTime(value?: string | null): string {
@@ -117,6 +125,16 @@ export default function PublicTrackingView({
                     {!isLast && <span className="mt-1 h-full w-px bg-border" />}
                   </div>
                   <div className="pb-4">
+                    {hasDeliveryIssue(tracking.status) && item.isCurrent && item.status.toUpperCase() === "IN_TRANSIT" && (
+                      <div className="mb-2 inline-flex flex-col gap-1 rounded-lg border border-amber-300/80 bg-amber-50 px-3 py-2 text-left">
+                        <Badge className="w-fit bg-amber-100 text-amber-900 hover:bg-amber-100">
+                          Delayed
+                        </Badge>
+                        <p className="text-[11px] leading-tight text-amber-950">
+                          We're arranging a new delivery attempt.
+                        </p>
+                      </div>
+                    )}
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-medium text-foreground">
                         {item.label}

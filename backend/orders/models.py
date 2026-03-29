@@ -9,6 +9,8 @@ from products.models import CURRENCY_CHOICES
 
 
 class Order(models.Model):
+    TERMINAL_SHIPMENT_STATUSES = ("DELIVERED", "FAILED_DELIVERY", "CANCELLED")
+
     def _normalize_customer_email(self) -> None:
         """
         Keep customer_email_normalized consistent and non-empty whenever possible.
@@ -32,6 +34,7 @@ class Order(models.Model):
         CREATED = "CREATED", "Created"
         PAID = "PAID", "Paid"
         PAYMENT_FAILED = "PAYMENT_FAILED"
+        DELIVERY_FAILED = "DELIVERY_FAILED", "Delivery failed"
         SHIPPED = "SHIPPED", "Shipped"
         DELIVERED = "DELIVERED", "Delivered"
         CANCELLED = "CANCELLED", "Cancelled"
@@ -311,6 +314,36 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order #{self.pk} ({self.status})"
+
+    def get_shipments_for_summary(self):
+        shipments = getattr(self, "_shipment_summary_shipments_cache", None)
+        if shipments is None:
+            shipments = list(self.shipments.all())
+            self._shipment_summary_shipments_cache = shipments
+        return shipments
+
+    def get_current_shipment(self):
+        current_shipment = getattr(self, "_current_shipment_cache", None)
+        if current_shipment is not None:
+            return current_shipment
+
+        shipments = self.get_shipments_for_summary()
+        current_shipment = next(
+            (
+                shipment
+                for shipment in shipments
+                if shipment.status not in self.TERMINAL_SHIPMENT_STATUSES
+            ),
+            None,
+        )
+        if current_shipment is None and shipments:
+            current_shipment = shipments[0]
+
+        self._current_shipment_cache = current_shipment
+        return current_shipment
+
+    def get_shipment_count(self) -> int:
+        return len(self.get_shipments_for_summary())
 
     def clean_fields(self, exclude=None):
         # Normalize BEFORE Django runs field-level validation (EmailField, required fields).

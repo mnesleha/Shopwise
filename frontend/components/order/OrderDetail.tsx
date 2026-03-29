@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ArrowLeft, Printer, Download } from "lucide-react";
+import { ArrowLeft, ArrowRight, Printer, Download } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -102,7 +102,14 @@ type OrderItem = {
 export type OrderViewModel = {
   id: string;
   orderNumber: string; // e.g. "OBJ25284904"
-  status: "CREATED" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED" | string;
+  status:
+    | "CREATED"
+    | "PAID"
+    | "DELIVERY_FAILED"
+    | "SHIPPED"
+    | "DELIVERED"
+    | "CANCELLED"
+    | string;
   createdAt?: string; // display string
   supplier: SupplierInfo;
   customer: CustomerInfo;
@@ -154,7 +161,7 @@ function getStatusBadgeVariant(
 ): "default" | "secondary" | "destructive" | "outline" {
   const s = status.toUpperCase();
   if (s === "PAID" || s === "DELIVERED") return "default";
-  if (s === "SHIPPED") return "secondary";
+  if (s === "SHIPPED" || s === "DELIVERY_FAILED") return "secondary";
   if (s === "CANCELLED") return "destructive";
   return "outline";
 }
@@ -163,6 +170,7 @@ function getStatusLabel(status: string): string {
   const labels: Record<string, string> = {
     CREATED: "Created",
     PAID: "Paid",
+    DELIVERY_FAILED: "Delayed",
     SHIPPED: "Shipped",
     DELIVERED: "Delivered",
     CANCELLED: "Cancelled",
@@ -170,15 +178,27 @@ function getStatusLabel(status: string): string {
   return labels[status.toUpperCase()] || status;
 }
 
+function hasDeliveryIssue(status?: string | null): boolean {
+  if (!status) {
+    return false;
+  }
+
+  return status.toUpperCase() === "FAILED_DELIVERY" || status.toUpperCase() === "DELIVERY_FAILED";
+}
+
 function getShipmentStatusBadgeVariant(
   status: string,
 ): "default" | "secondary" | "destructive" | "outline" {
   const normalized = status.toUpperCase();
   if (normalized === "DELIVERED") return "default";
-  if (normalized === "IN_TRANSIT" || normalized === "LABEL_CREATED") {
+  if (
+    normalized === "IN_TRANSIT" ||
+    normalized === "LABEL_CREATED" ||
+    normalized === "FAILED_DELIVERY"
+  ) {
     return "secondary";
   }
-  if (normalized === "FAILED_DELIVERY" || normalized === "CANCELLED") {
+  if (normalized === "CANCELLED") {
     return "destructive";
   }
   return "outline";
@@ -190,7 +210,7 @@ function getShipmentStatusLabel(status: string): string {
     LABEL_CREATED: "Label created",
     IN_TRANSIT: "In transit",
     DELIVERED: "Delivered",
-    FAILED_DELIVERY: "Failed delivery",
+    FAILED_DELIVERY: "Delayed",
     CANCELLED: "Cancelled",
   };
   return labels[status.toUpperCase()] || status;
@@ -213,39 +233,86 @@ function formatShipmentTimelineTime(value?: string | null): string {
   return `${year}-${month}-${day} ${hours}:${minutes} UTC`;
 }
 
-function ShipmentTimeline({ items }: { items: ShipmentTimelineEntry[] }) {
+function ShipmentTimeline({
+  items,
+  hasDeliveryIssue = false,
+}: {
+  items: ShipmentTimelineEntry[];
+  hasDeliveryIssue?: boolean;
+}) {
+  const currentIndex = items.findIndex((item) => item.isCurrent);
+
   return (
-    <div className="space-y-0">
-      {items.map((item, index) => {
-        const isLast = index === items.length - 1;
-        return (
-          <div
-            key={`${item.status}-${item.occurredAt ?? index}`}
-            className="flex gap-3"
-          >
-            <div className="flex flex-col items-center">
-              <span
-                className={[
-                  "mt-1 h-2.5 w-2.5 rounded-full border",
-                  item.isCurrent
-                    ? "border-foreground bg-foreground"
-                    : "border-border bg-background",
-                ].join(" ")}
-              />
-              {!isLast && <span className="mt-1 h-full w-px bg-border" />}
-            </div>
-            <div className="pb-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-medium text-foreground">{item.label}</p>
-                {item.isCurrent && <Badge variant="secondary">Current</Badge>}
+    <div className="overflow-x-auto pb-1">
+      <div className="flex min-w-max items-start gap-2 sm:gap-3">
+        {items.map((item, index) => {
+          const isLast = index === items.length - 1;
+          const isCurrent = item.isCurrent || index === currentIndex;
+          const isCompleted = currentIndex !== -1 && index < currentIndex;
+          const chipClassName = isCurrent
+            ? "border-primary/30 bg-accent text-foreground shadow-sm"
+            : isCompleted
+              ? "border-border bg-muted/70 text-foreground"
+              : "border-border/70 bg-background text-muted-foreground";
+          const dotClassName = isCurrent
+            ? "border-primary bg-primary"
+            : isCompleted
+              ? "border-secondary-foreground/30 bg-secondary"
+              : "border-border bg-background";
+          const arrowClassName = isCompleted
+            ? "text-secondary-foreground/70"
+            : isCurrent
+              ? "text-primary/60"
+              : "text-border";
+
+          return (
+            <React.Fragment key={`${item.status}-${item.occurredAt ?? index}`}>
+              <div className="min-w-30 sm:min-w-34">
+                {hasDeliveryIssue && isCurrent && item.status.toUpperCase() === "IN_TRANSIT" && (
+                  <div className="mb-2 px-3">
+                    <div className="inline-flex flex-col gap-1 rounded-lg border border-amber-300/80 bg-amber-50 px-3 py-2 text-left">
+                      <Badge className="w-fit bg-amber-100 text-amber-900 hover:bg-amber-100">
+                        Delayed
+                      </Badge>
+                      <p className="text-[11px] leading-tight text-amber-950">
+                        We're arranging a new delivery attempt.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <div
+                  aria-current={isCurrent ? "step" : undefined}
+                  className={[
+                    "flex min-h-10 items-center gap-2 rounded-full border px-3 py-2",
+                    chipClassName,
+                  ].join(" ")}
+                >
+                  <span
+                    className={[
+                      "h-2.5 w-2.5 shrink-0 rounded-full border",
+                      dotClassName,
+                    ].join(" ")}
+                  />
+                  <span className="truncate text-sm font-medium">{item.label}</span>
+                  {isCurrent && <Badge variant="secondary">Current</Badge>}
+                </div>
+                <p className="px-3 pt-1 text-[11px] leading-tight text-muted-foreground">
+                  {formatShipmentTimelineTime(item.occurredAt)}
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                {formatShipmentTimelineTime(item.occurredAt)}
-              </p>
-            </div>
-          </div>
-        );
-      })}
+
+              {!isLast && (
+                <div className="flex min-h-10 items-center pt-0.5" aria-hidden="true">
+                  <ArrowRight className={[
+                    "h-4 w-4 shrink-0",
+                    arrowClassName,
+                  ].join(" ")} />
+                </div>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -715,6 +782,7 @@ export function OrderDetail({
     !!order.trackingNumber ||
     !!order.shippingLabelUrl;
   const hasShipmentTimeline = (order.shipmentTimeline?.length ?? 0) > 0;
+  const showDeliveryIssue = hasDeliveryIssue(order.status) || hasDeliveryIssue(order.shipmentStatus);
 
   return (
     <div className="mx-auto max-w-4xl print:max-w-none">
@@ -827,7 +895,10 @@ export function OrderDetail({
         </div>
 
         {hasShipmentSummary && (
-          <div className="mt-4 rounded-lg border bg-muted/30 p-4">
+          <div
+            data-testid="shipping-summary-section"
+            className="mt-4 rounded-lg border bg-muted/30 p-4 print:hidden"
+          >
             <div className="grid gap-3 text-sm md:grid-cols-4">
               {order.shipmentStatus && (
                 <div className="flex flex-col gap-1">
@@ -880,16 +951,19 @@ export function OrderDetail({
         )}
 
         {hasShipmentTimeline && (
-          <div className="mt-4 rounded-lg border bg-background p-4">
-            <div className="mb-4">
+          <div
+            data-testid="shipping-progress-section"
+            className="mt-4 rounded-lg border bg-background p-4 print:hidden"
+          >
+            <div className="mb-3">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                Shipment timeline
+                Shipping progress
               </h2>
-              <p className="text-sm text-muted-foreground">
-                Provider-agnostic delivery milestones for this shipment.
-              </p>
             </div>
-            <ShipmentTimeline items={order.shipmentTimeline ?? []} />
+            <ShipmentTimeline
+              items={order.shipmentTimeline ?? []}
+              hasDeliveryIssue={showDeliveryIssue}
+            />
           </div>
         )}
 
