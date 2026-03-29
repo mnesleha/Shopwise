@@ -183,7 +183,10 @@ function hasDeliveryIssue(status?: string | null): boolean {
     return false;
   }
 
-  return status.toUpperCase() === "FAILED_DELIVERY" || status.toUpperCase() === "DELIVERY_FAILED";
+  return (
+    status.toUpperCase() === "FAILED_DELIVERY" ||
+    status.toUpperCase() === "DELIVERY_FAILED"
+  );
 }
 
 function getShipmentStatusBadgeVariant(
@@ -268,18 +271,20 @@ function ShipmentTimeline({
           return (
             <React.Fragment key={`${item.status}-${item.occurredAt ?? index}`}>
               <div className="min-w-30 sm:min-w-34">
-                {hasDeliveryIssue && isCurrent && item.status.toUpperCase() === "IN_TRANSIT" && (
-                  <div className="mb-2 px-3">
-                    <div className="inline-flex flex-col gap-1 rounded-lg border border-amber-300/80 bg-amber-50 px-3 py-2 text-left">
-                      <Badge className="w-fit bg-amber-100 text-amber-900 hover:bg-amber-100">
-                        Delayed
-                      </Badge>
-                      <p className="text-[11px] leading-tight text-amber-950">
-                        We're arranging a new delivery attempt.
-                      </p>
+                {hasDeliveryIssue &&
+                  isCurrent &&
+                  item.status.toUpperCase() === "IN_TRANSIT" && (
+                    <div className="mb-2 px-3">
+                      <div className="inline-flex flex-col gap-1 rounded-lg border border-amber-300/80 bg-amber-50 px-3 py-2 text-left">
+                        <Badge className="w-fit bg-amber-100 text-amber-900 hover:bg-amber-100">
+                          Delayed
+                        </Badge>
+                        <p className="text-[11px] leading-tight text-amber-950">
+                          We're arranging a new delivery attempt.
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
                 <div
                   aria-current={isCurrent ? "step" : undefined}
                   className={[
@@ -293,7 +298,9 @@ function ShipmentTimeline({
                       dotClassName,
                     ].join(" ")}
                   />
-                  <span className="truncate text-sm font-medium">{item.label}</span>
+                  <span className="truncate text-sm font-medium">
+                    {item.label}
+                  </span>
                   {isCurrent && <Badge variant="secondary">Current</Badge>}
                 </div>
                 <p className="px-3 pt-1 text-[11px] leading-tight text-muted-foreground">
@@ -302,11 +309,13 @@ function ShipmentTimeline({
               </div>
 
               {!isLast && (
-                <div className="flex min-h-10 items-center pt-0.5" aria-hidden="true">
-                  <ArrowRight className={[
-                    "h-4 w-4 shrink-0",
-                    arrowClassName,
-                  ].join(" ")} />
+                <div
+                  className="flex min-h-10 items-center pt-0.5"
+                  aria-hidden="true"
+                >
+                  <ArrowRight
+                    className={["h-4 w-4 shrink-0", arrowClassName].join(" ")}
+                  />
                 </div>
               )}
             </React.Fragment>
@@ -782,7 +791,8 @@ export function OrderDetail({
     !!order.trackingNumber ||
     !!order.shippingLabelUrl;
   const hasShipmentTimeline = (order.shipmentTimeline?.length ?? 0) > 0;
-  const showDeliveryIssue = hasDeliveryIssue(order.status) || hasDeliveryIssue(order.shipmentStatus);
+  const showDeliveryIssue =
+    hasDeliveryIssue(order.status) || hasDeliveryIssue(order.shipmentStatus);
 
   return (
     <div className="mx-auto max-w-4xl print:max-w-none">

@@ -125,16 +125,18 @@ export default function PublicTrackingView({
                     {!isLast && <span className="mt-1 h-full w-px bg-border" />}
                   </div>
                   <div className="pb-4">
-                    {hasDeliveryIssue(tracking.status) && item.isCurrent && item.status.toUpperCase() === "IN_TRANSIT" && (
-                      <div className="mb-2 inline-flex flex-col gap-1 rounded-lg border border-amber-300/80 bg-amber-50 px-3 py-2 text-left">
-                        <Badge className="w-fit bg-amber-100 text-amber-900 hover:bg-amber-100">
-                          Delayed
-                        </Badge>
-                        <p className="text-[11px] leading-tight text-amber-950">
-                          We're arranging a new delivery attempt.
-                        </p>
-                      </div>
-                    )}
+                    {hasDeliveryIssue(tracking.status) &&
+                      item.isCurrent &&
+                      item.status.toUpperCase() === "IN_TRANSIT" && (
+                        <div className="mb-2 inline-flex flex-col gap-1 rounded-lg border border-amber-300/80 bg-amber-50 px-3 py-2 text-left">
+                          <Badge className="w-fit bg-amber-100 text-amber-900 hover:bg-amber-100">
+                            Delayed
+                          </Badge>
+                          <p className="text-[11px] leading-tight text-amber-950">
+                            We're arranging a new delivery attempt.
+                          </p>
+                        </div>
+                      )}
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-medium text-foreground">
                         {item.label}

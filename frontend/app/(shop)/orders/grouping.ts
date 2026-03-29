@@ -1,9 +1,6 @@
 import type { OrderRowVm } from "@/components/orders/OrderHistoryTable";
 
-export const COMPLETED_STATUSES = new Set([
-  "DELIVERED",
-  "CANCELLED",
-]);
+export const COMPLETED_STATUSES = new Set(["DELIVERED", "CANCELLED"]);
 
 export function splitOrdersByCompletion(rows: OrderRowVm[]): {
   active: OrderRowVm[];

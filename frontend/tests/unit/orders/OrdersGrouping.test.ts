@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import { splitOrdersByCompletion } from "@/app/(shop)/orders/grouping";
 
-
 describe("splitOrdersByCompletion", () => {
   it("keeps delivery failure orders outside completed outcomes", () => {
     const rows = [

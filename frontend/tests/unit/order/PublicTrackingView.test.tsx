@@ -79,7 +79,9 @@ describe("PublicTrackingView", () => {
     );
 
     expect(screen.getAllByText("Delayed").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByText("We're arranging a new delivery attempt.")).toBeInTheDocument();
+    expect(
+      screen.getByText("We're arranging a new delivery attempt."),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Failed delivery")).toBeNull();
     expect(screen.getByText("Label created")).toBeInTheDocument();
     expect(screen.getByText("In transit")).toBeInTheDocument();
