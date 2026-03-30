@@ -259,24 +259,24 @@ function ShipmentTimeline({
           const chipClassName = isDelayedCurrentStep
             ? "border-amber-300/80 bg-amber-50 text-amber-950 shadow-sm"
             : isCurrent
-            ? "border-primary/30 bg-accent text-foreground shadow-sm"
-            : isCompleted
-              ? "border-border bg-muted/70 text-foreground"
-              : "border-border/70 bg-background text-muted-foreground";
+              ? "border-primary/30 bg-accent text-foreground shadow-sm"
+              : isCompleted
+                ? "border-border bg-muted/70 text-foreground"
+                : "border-border/70 bg-background text-muted-foreground";
           const dotClassName = isDelayedCurrentStep
             ? "border-amber-500 bg-amber-500"
             : isCurrent
-            ? "border-primary bg-primary"
-            : isCompleted
-              ? "border-secondary-foreground/30 bg-secondary"
-              : "border-border bg-background";
+              ? "border-primary bg-primary"
+              : isCompleted
+                ? "border-secondary-foreground/30 bg-secondary"
+                : "border-border bg-background";
           const arrowClassName = isCompleted
             ? "text-secondary-foreground/70"
             : isDelayedCurrentStep
               ? "text-amber-500/80"
-            : isCurrent
-              ? "text-primary/60"
-              : "text-border";
+              : isCurrent
+                ? "text-primary/60"
+                : "text-border";
           const visibleLabel = isDelayedCurrentStep
             ? "Delayed (In transit)"
             : item.label;
