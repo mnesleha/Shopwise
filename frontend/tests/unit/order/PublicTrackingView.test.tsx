@@ -78,13 +78,15 @@ describe("PublicTrackingView", () => {
       />,
     );
 
-    expect(screen.getAllByText("Delayed").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("Delayed")).toBeInTheDocument();
+    expect(screen.getByText("Delayed (In transit)")).toBeInTheDocument();
     expect(
       screen.getByText("We're arranging a new delivery attempt."),
     ).toBeInTheDocument();
     expect(screen.queryByText("Failed delivery")).toBeNull();
     expect(screen.getByText("Label created")).toBeInTheDocument();
-    expect(screen.getByText("In transit")).toBeInTheDocument();
+    expect(screen.queryByText("In transit")).toBeNull();
     expect(screen.getByText("Delivered")).toBeInTheDocument();
+    expect(screen.queryByText("Current")).toBeNull();
   });
 });

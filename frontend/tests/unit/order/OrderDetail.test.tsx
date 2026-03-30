@@ -230,14 +230,16 @@ describe("OrderDetail", () => {
 
       renderOrderDetail({ order });
 
-      expect(screen.getAllByText("Delayed").length).toBeGreaterThanOrEqual(2);
+      expect(screen.getAllByText("Delayed").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText("Delayed (In transit)")).toBeInTheDocument();
       expect(screen.getByText("We're arranging a new delivery attempt.")).toBeInTheDocument();
       expect(screen.queryByText("Failed delivery")).toBeNull();
       expect(screen.getByText("Label created")).toBeInTheDocument();
-      expect(screen.getByText("In transit")).toBeInTheDocument();
+      expect(screen.queryByText("In transit")).toBeNull();
       expect(screen.getByText("Delivered")).toBeInTheDocument();
       const summarySection = screen.getByTestId("shipping-summary-section");
       expect(within(summarySection).queryByText("We're arranging a new delivery attempt.")).toBeNull();
+      expect(screen.queryByText("Current")).toBeNull();
     });
 
     it("does NOT render shipping method section when not provided", () => {

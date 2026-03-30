@@ -53,13 +53,15 @@ def test_mock_provider_create_shipment_returns_normalized_result():
                 "country": order.shipping_country,
                 "phone": order.shipping_phone,
             },
+            extra={"shipment_attempt": 1},
         )
     )
 
     assert result.provider_code == "MOCK"
     assert result.service_code == "express"
     assert result.status == ShipmentStatus.LABEL_CREATED
-    assert result.tracking_number == f"MOCK-{order.pk}-EXPRESS"
+    assert result.tracking_number == f"MOCK-{order.pk}-EXPRESS-A1"
+    assert result.carrier_reference == f"REF-MOCK-{order.pk}-EXPRESS-A1"
     assert result.receiver_snapshot["city"] == order.shipping_city
 
 
@@ -82,6 +84,7 @@ def test_mock_provider_build_label_document_returns_svg_asset(tmp_path):
                 "country": order.shipping_country,
                 "phone": order.shipping_phone,
             },
+            extra={"shipment_attempt": 1},
         )
     )
 
@@ -164,6 +167,7 @@ def test_mock_provider_build_simulated_event_returns_normalized_event():
                 "country": order.shipping_country,
                 "phone": order.shipping_phone,
             },
+            extra={"shipment_attempt": 1},
         )
     )
     shipment = order.shipments.create(

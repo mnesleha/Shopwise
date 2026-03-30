@@ -1,9 +1,10 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.urls import reverse
 from django.utils.html import format_html
 
 from .models import OrderItem
 from orders.models import Order
+from shipping.services.fulfillment import OrderFulfillmentService
 
 
 class OrderItemInline(admin.TabularInline):
@@ -220,6 +221,13 @@ class ShippingExceptionFilter(admin.SimpleListFilter):
 @admin.register(Order)
 class OrderWithItemsAdmin(admin.ModelAdmin):
     inlines = [OrderItemInline]
+    actions = (
+        "create_missing_shipment",
+        "move_current_shipment_to_in_transit",
+        "move_current_shipment_to_delivered",
+        "move_current_shipment_to_failed_delivery",
+        "retry_failed_delivery",
+    )
     list_display = (
         "id",
         "status",
@@ -262,6 +270,87 @@ class OrderWithItemsAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("user").prefetch_related("shipments")
+
+    @admin.action(description="Create missing shipment")
+    def create_missing_shipment(self, request, queryset):
+        self._run_bulk_action(
+            request,
+            queryset,
+            action_name="Create missing shipment",
+            handler=OrderFulfillmentService.bulk_create_missing_shipments,
+            reason_labels={
+                "invalid_order_status": "order is not PAID",
+                "shipment_already_exists": "shipment already exists",
+                "invalid_shipping_snapshot": "shipping snapshot is incomplete",
+                "provider_not_configured": "shipping provider is not configured",
+            },
+        )
+
+    @admin.action(description="Move current shipment to In transit")
+    def move_current_shipment_to_in_transit(self, request, queryset):
+        self._run_bulk_action(
+            request,
+            queryset,
+            action_name="Move current shipment to In transit",
+            handler=OrderFulfillmentService.bulk_move_current_shipment_to_in_transit,
+            reason_labels={
+                "no_current_shipment": "no current shipment exists",
+                "invalid_shipment_status": "current shipment is not LABEL_CREATED",
+                "simulation_unavailable": "shipment provider does not support admin event simulation",
+            },
+        )
+
+    @admin.action(description="Move current shipment to Delivered")
+    def move_current_shipment_to_delivered(self, request, queryset):
+        self._run_bulk_action(
+            request,
+            queryset,
+            action_name="Move current shipment to Delivered",
+            handler=OrderFulfillmentService.bulk_move_current_shipment_to_delivered,
+            reason_labels={
+                "no_current_shipment": "no current shipment exists",
+                "invalid_shipment_status": "current shipment is not IN_TRANSIT",
+                "simulation_unavailable": "shipment provider does not support admin event simulation",
+            },
+        )
+
+    @admin.action(description="Move current shipment to Failed delivery")
+    def move_current_shipment_to_failed_delivery(self, request, queryset):
+        self._run_bulk_action(
+            request,
+            queryset,
+            action_name="Move current shipment to Failed delivery",
+            handler=OrderFulfillmentService.bulk_move_current_shipment_to_failed_delivery,
+            reason_labels={
+                "no_current_shipment": "no current shipment exists",
+                "invalid_shipment_status": "current shipment is not IN_TRANSIT",
+                "simulation_unavailable": "shipment provider does not support admin event simulation",
+            },
+        )
+
+    @admin.action(description="Retry failed delivery")
+    def retry_failed_delivery(self, request, queryset):
+        self._run_bulk_action(
+            request,
+            queryset,
+            action_name="Retry failed delivery",
+            handler=OrderFulfillmentService.bulk_retry_failed_delivery,
+            reason_labels={
+                "no_current_shipment": "no current shipment exists",
+                "invalid_shipment_status": "current shipment is not FAILED_DELIVERY",
+                "invalid_shipping_snapshot": "shipping snapshot is incomplete",
+                "provider_not_configured": "shipping provider is not configured",
+            },
+        )
+
+    def _run_bulk_action(self, request, queryset, *, action_name, handler, reason_labels):
+        result = handler(orders=queryset)
+        level = messages.SUCCESS if result.updated_count else messages.WARNING
+        self.message_user(
+            request,
+            result.build_message(action_name=action_name, reason_labels=reason_labels),
+            level=level,
+        )
 
     def get_fieldsets(self, request, obj=None):
         editable_model_fields = [

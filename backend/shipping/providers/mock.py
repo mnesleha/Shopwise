@@ -37,7 +37,10 @@ class MockShippingProvider(BaseShippingProvider):
 
     def create_shipment(self, context: CreateShipmentContext) -> ProviderCreateShipmentResult:
         service_name = self._service_name(context.service_code)
-        tracking_number = f"MOCK-{context.order.pk}-{context.service_code.upper()}"
+        shipment_attempt = int((context.extra or {}).get("shipment_attempt", 1))
+        tracking_number = (
+            f"MOCK-{context.order.pk}-{context.service_code.upper()}-A{shipment_attempt}"
+        )
         return ProviderCreateShipmentResult(
             provider_code=self.provider_code,
             service_code=context.service_code,

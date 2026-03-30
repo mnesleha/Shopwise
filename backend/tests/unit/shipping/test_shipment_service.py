@@ -30,8 +30,8 @@ def test_create_for_paid_order_persists_provider_result_and_stored_label(tmp_pat
         assert shipment.carrier_name_snapshot == "Mock Carrier"
         assert shipment.service_name_snapshot == "Express"
         assert shipment.status == ShipmentStatus.LABEL_CREATED
-        assert shipment.tracking_number == f"MOCK-{order.pk}-EXPRESS"
-        assert shipment.carrier_reference == f"REF-MOCK-{order.pk}-EXPRESS"
+        assert shipment.tracking_number == f"MOCK-{order.pk}-EXPRESS-A1"
+        assert shipment.carrier_reference == f"REF-MOCK-{order.pk}-EXPRESS-A1"
         assert shipment.label_file.name.endswith(".svg")
         assert shipment.label_url == shipment.get_label_url()
         assert shipment.label_url.startswith("/media/shipping/labels/")
@@ -43,7 +43,7 @@ def test_create_for_paid_order_persists_provider_result_and_stored_label(tmp_pat
             content = stored_label.read()
 
         assert "Mock Carrier - Express" in content
-        assert f"MOCK-{order.pk}-EXPRESS" in content
+        assert f"MOCK-{order.pk}-EXPRESS-A1" in content
         assert f"Order #{order.pk}" in content
 
 

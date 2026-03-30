@@ -1,6 +1,8 @@
 import pytest
+from django.contrib import messages
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
+from django.contrib.messages.storage.fallback import FallbackStorage
 from django.test import RequestFactory
 
 from orderitems.admin import (
@@ -14,6 +16,9 @@ from orderitems.admin import (
     ShippingProviderFilter,
 )
 from orders.models import Order
+from shipping.models import Shipment
+from shipping.services.fulfillment import BulkOrderFulfillmentResult, OrderFulfillmentService
+from shipping.services.shipment import ShipmentService
 from shipping.statuses import ShipmentStatus
 from tests.conftest import create_valid_order
 
@@ -41,6 +46,14 @@ def _filter_queryset(filter_class, value, queryset, order_admin):
     )
     filtered = admin_filter.queryset(request, queryset)
     return filtered if filtered is not None else queryset
+
+
+def _request_with_messages():
+    request = RequestFactory().post("/admin/orders/order/")
+    request.session = {}
+    request.user = User()
+    request._messages = FallbackStorage(request)
+    return request
 
 
 def test_order_current_shipment_prefers_latest_non_terminal_shipment():
@@ -298,3 +311,86 @@ def test_shipment_presence_and_exception_filters(order_admin):
     assert list(shipment_without_label_result) == [missing_label]
     assert list(shipment_without_tracking_result) == [missing_tracking]
     assert list(multiple_shipments_result) == [multiple_shipments]
+
+
+def test_order_admin_create_missing_shipment_action_reports_meaningful_counts(order_admin):
+    user = User.objects.create_user(email="order-admin-action-create@example.com", password="pass")
+    paid_without_shipment = create_valid_order(user=user, status=Order.Status.PAID)
+    not_paid_order = create_valid_order(user=user, status=Order.Status.CREATED)
+    existing_shipment_order = create_valid_order(user=user, status=Order.Status.PAID)
+    ShipmentService.create_for_paid_order(order=existing_shipment_order)
+    request = _request_with_messages()
+
+    order_admin.create_missing_shipment(
+        request,
+        Order.objects.filter(
+            pk__in=[paid_without_shipment.pk, not_paid_order.pk, existing_shipment_order.pk],
+        ).order_by("pk"),
+    )
+
+    paid_without_shipment.refresh_from_db()
+    not_paid_order.refresh_from_db()
+    existing_shipment_order.refresh_from_db()
+
+    assert Shipment.objects.filter(order=paid_without_shipment).count() == 1
+    assert paid_without_shipment.get_current_shipment() is not None
+    assert Shipment.objects.filter(order=not_paid_order).count() == 0
+    assert Shipment.objects.filter(order=existing_shipment_order).count() == 1
+
+    stored = list(messages.get_messages(request))
+    assert len(stored) == 1
+    assert str(stored[0]) == (
+        "Create missing shipment: 1 orders updated; "
+        "1 skipped because order is not PAID; "
+        "1 skipped because shipment already exists."
+    )
+
+
+def test_order_admin_retry_failed_delivery_action_creates_new_current_shipment(order_admin):
+    user = User.objects.create_user(email="order-admin-action-retry@example.com", password="pass")
+    order = create_valid_order(user=user, status=Order.Status.PAID)
+    original_shipment = ShipmentService.create_for_paid_order(order=order)
+    OrderFulfillmentService.move_current_shipment_to_in_transit(order=order)
+    OrderFulfillmentService.move_current_shipment_to_failed_delivery(order=order)
+    request = _request_with_messages()
+
+    order_admin.retry_failed_delivery(request, Order.objects.filter(pk=order.pk))
+
+    order.refresh_from_db()
+    original_shipment.refresh_from_db()
+    current_shipment = order.get_current_shipment()
+    stored = list(messages.get_messages(request))
+
+    assert Shipment.objects.filter(order=order).count() == 2
+    assert original_shipment.status == ShipmentStatus.FAILED_DELIVERY
+    assert current_shipment is not None
+    assert current_shipment.pk != original_shipment.pk
+    assert current_shipment.status == ShipmentStatus.LABEL_CREATED
+    assert order.status == Order.Status.PAID
+    assert len(stored) == 1
+    assert str(stored[0]) == "Retry failed delivery: 1 orders updated."
+
+
+def test_order_admin_bulk_action_delegates_to_fulfillment_service(monkeypatch, order_admin):
+    user = User.objects.create_user(email="order-admin-action-service@example.com", password="pass")
+    order = create_valid_order(user=user, status=Order.Status.PAID)
+    request = _request_with_messages()
+    captured_ids = []
+
+    def fake_bulk_move_current_shipment_to_delivered(*, orders):
+        captured_ids.extend(item.pk for item in orders)
+        return BulkOrderFulfillmentResult(updated_count=1)
+
+    monkeypatch.setattr(
+        OrderFulfillmentService,
+        "bulk_move_current_shipment_to_delivered",
+        fake_bulk_move_current_shipment_to_delivered,
+    )
+
+    order_admin.move_current_shipment_to_delivered(request, Order.objects.filter(pk=order.pk))
+
+    stored = list(messages.get_messages(request))
+
+    assert captured_ids == [order.pk]
+    assert len(stored) == 1
+    assert str(stored[0]) == "Move current shipment to Delivered: 1 orders updated."
