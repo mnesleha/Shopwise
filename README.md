@@ -8,6 +8,10 @@ and QA processes can work together as equal partners.
 
 The project focuses not only on _what_ is built, but also on _how_ and _why_ it is built.
 
+
+https://github.com/user-attachments/assets/fd44ec2c-c5c0-4a16-9e2f-85a494b223ad
+
+
 ## Project Purpose
 
 Shopwise was created as a portfolio and learning project with a clear focus on:
