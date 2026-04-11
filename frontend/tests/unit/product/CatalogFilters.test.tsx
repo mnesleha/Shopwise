@@ -252,6 +252,23 @@ describe("CatalogFilterPanel", () => {
     expect(screen.getByTestId("in-stock-checkbox")).toBeInTheDocument();
   });
 
+  it("uses higher-contrast control styling inside the sidebar panel", () => {
+    render(<CatalogFilterPanel {...defaultProps} />);
+
+    expect(screen.getByTestId("category-checkbox-1")).toHaveClass(
+      "border-foreground/20",
+      "bg-background",
+    );
+    expect(screen.getByTestId("price-min-input")).toHaveClass(
+      "border-foreground/20",
+      "bg-background",
+    );
+    expect(screen.getByTestId("in-stock-checkbox")).toHaveClass(
+      "border-foreground/20",
+      "bg-background",
+    );
+  });
+
   it("shows checked state for already-selected category", () => {
     setParams("category=2");
     render(<CatalogFilterPanel {...defaultProps} />);

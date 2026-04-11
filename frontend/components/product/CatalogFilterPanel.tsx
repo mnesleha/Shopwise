@@ -130,7 +130,7 @@ export default function CatalogFilterPanel({
 
   return (
     <aside
-      className="flex flex-col gap-6 w-full"
+      className="flex w-full flex-col gap-6"
       data-testid="catalog-filter-panel"
     >
       {/* ── Categories ─────────────────────────────────────────── */}
@@ -149,6 +149,7 @@ export default function CatalogFilterPanel({
                   data-testid={`category-checkbox-${cat.id}`}
                   checked={selectedIds.has(String(cat.id))}
                   onCheckedChange={() => toggleCategory(cat.id)}
+                  className="border-foreground/20 bg-background shadow-none data-[state=checked]:border-primary focus-visible:ring-sidebar-ring/35"
                 />
                 <Label
                   htmlFor={`cat-${cat.id}`}
@@ -184,7 +185,7 @@ export default function CatalogFilterPanel({
             placeholder={String(boundsMin)}
             value={localMin}
             onChange={handleMinInput}
-            className="h-8 text-sm"
+            className="h-8 border-foreground/20 bg-background text-sm shadow-none"
             aria-label="Minimum price"
           />
           <span className="text-muted-foreground text-xs shrink-0">–</span>
@@ -195,7 +196,7 @@ export default function CatalogFilterPanel({
             placeholder={String(boundsMax)}
             value={localMax}
             onChange={handleMaxInput}
-            className="h-8 text-sm"
+            className="h-8 border-foreground/20 bg-background text-sm shadow-none"
             aria-label="Maximum price"
           />
         </div>
@@ -212,6 +213,7 @@ export default function CatalogFilterPanel({
             data-testid="in-stock-checkbox"
             checked={inStockOnly}
             onCheckedChange={toggleInStock}
+            className="border-foreground/20 bg-background shadow-none data-[state=checked]:border-primary focus-visible:ring-sidebar-ring/35"
           />
           <Label
             htmlFor="in-stock-only"
