@@ -89,3 +89,8 @@ STORAGES["default"] = {
         "file_overwrite": False,
     },
 }
+
+Q_CLUSTER["workers"] = int(os.getenv("Q_CLUSTER_WORKERS", "1"))
+Q_CLUSTER["queue_limit"] = int(os.getenv("Q_CLUSTER_QUEUE_LIMIT", "20"))
+Q_CLUSTER["timeout"] = int(os.getenv("Q_CLUSTER_TIMEOUT", "60"))
+Q_CLUSTER["retry"] = int(os.getenv("Q_CLUSTER_RETRY", "120"))
