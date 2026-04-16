@@ -90,3 +90,6 @@ BOOTSTRAP_RL_TOKEN_WINDOW_S = 60
 # but remember value is strictly larger than standard to validate the feature.
 AUTH_REFRESH_TTL_SECONDS = 3600          # 1 hour (standard, test)
 AUTH_REFRESH_TTL_REMEMBER_SECONDS = 7200  # 2 hours (remember-me, test)
+
+ENABLE_DEBUG_TOOLBAR = os.getenv("ENABLE_DEBUG_TOOLBAR", "false").lower() == "true"
+configure_debug_toolbar()

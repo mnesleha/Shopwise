@@ -16,6 +16,8 @@ GUEST_ACCESS_TOKEN_PEPPER = os.getenv("GUEST_ACCESS_TOKEN_PEPPER", "")
 
 DEBUG = True
 
+ENABLE_DEBUG_TOOLBAR = os.getenv("ENABLE_DEBUG_TOOLBAR", "false").lower() == "true"
+
 APPEND_SLASH = False  # Pure API backend — trailing slash handled by clients
 
 ALLOWED_HOSTS = []
@@ -60,7 +62,6 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'drf_spectacular_sidecar',
     'django_prices',
-    "debug_toolbar",
     "django_countries",
 ]
 
@@ -68,8 +69,8 @@ AUTH_USER_MODEL = "accounts.User"
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -77,6 +78,26 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+
+def configure_debug_toolbar():
+    toolbar_app = "debug_toolbar"
+    toolbar_middleware = "debug_toolbar.middleware.DebugToolbarMiddleware"
+
+    if ENABLE_DEBUG_TOOLBAR:
+        if toolbar_app not in INSTALLED_APPS:
+            INSTALLED_APPS.append(toolbar_app)
+        if toolbar_middleware not in MIDDLEWARE:
+            security_middleware = "django.middleware.security.SecurityMiddleware"
+            insert_at = MIDDLEWARE.index(security_middleware) + 1 if security_middleware in MIDDLEWARE else 0
+            MIDDLEWARE.insert(insert_at, toolbar_middleware)
+        return
+
+    INSTALLED_APPS[:] = [app for app in INSTALLED_APPS if app != toolbar_app]
+    MIDDLEWARE[:] = [middleware for middleware in MIDDLEWARE if middleware != toolbar_middleware]
+
+
+configure_debug_toolbar()
 
 ROOT_URLCONF = "config.urls"
 
@@ -180,12 +201,14 @@ RESERVATION_TTL_GUEST_SECONDS = int(
 RESERVATION_TTL_AUTH_SECONDS = int(
     os.getenv("RESERVATION_TTL_AUTH_SECONDS", 2 * 60 * 60))
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+SERVE_MEDIA = os.getenv("SERVE_MEDIA", "false").lower() == "true"
 
 # Django 4.2+ unified storage configuration.
 # Swap "default" backend to a cloud storage (e.g. django-storages S3Backend)
@@ -195,7 +218,7 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
 

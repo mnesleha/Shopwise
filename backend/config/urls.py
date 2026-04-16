@@ -25,7 +25,6 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
-from debug_toolbar.toolbar import debug_toolbar_urls
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -42,9 +41,15 @@ urlpatterns = [
         SpectacularRedocView.as_view(url_name='schema'),
         name='redoc',
     ),
-] + debug_toolbar_urls()
+]
+
+if getattr(settings, "ENABLE_DEBUG_TOOLBAR", False):
+    from debug_toolbar.toolbar import debug_toolbar_urls
+    urlpatterns += debug_toolbar_urls()
+
+
 
 # Serve uploaded media files during local development.
 # In production, media should be served by the web server or a cloud storage backend.
-if settings.DEBUG:
+if settings.DEBUG or getattr(settings, "SERVE_MEDIA", False):
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

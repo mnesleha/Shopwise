@@ -24,6 +24,10 @@ INTERNAL_IPS = [
     "127.0.0.1",
 ]
 
+ENABLE_DEBUG_TOOLBAR = os.getenv("ENABLE_DEBUG_TOOLBAR", "true").lower() == "true"
+configure_debug_toolbar()
+SERVE_MEDIA = True
+
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST", "127.0.0.1")  # Mailpit runs locally
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "1025"))
