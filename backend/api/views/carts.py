@@ -71,7 +71,7 @@ from api.services.campaign_offer_session import (
 )
 from payments.services.payment_orchestration import PaymentOrchestrationService
 from django_q.tasks import async_task
-from suppliers.services import resolve_order_supplier_snapshot
+from suppliers.services import SupplierConfigurationError, resolve_order_supplier_snapshot
 
 from notifications.enqueue import enqueue_best_effort
 
@@ -994,7 +994,15 @@ Notes:
                 # This raises SupplierConfigurationError (HTTP 503) when the
                 # required supplier setup is missing or ambiguous, preventing
                 # order creation with incomplete supplier truth.
-                supplier_snap = resolve_order_supplier_snapshot()
+                try:
+                    supplier_snap = resolve_order_supplier_snapshot()
+                except SupplierConfigurationError:
+                    logger.error(
+                        "Checkout blocked by supplier configuration: cart_id=%s user_id=%s",
+                        getattr(cart, "id", None),
+                        request.user.pk if request.user.is_authenticated else None,
+                    )
+                    raise
 
                 order = Order(
                     user=request.user if request.user.is_authenticated else None,
@@ -1283,11 +1291,23 @@ Notes:
         # If initiation fails for any reason the order remains in CREATED
         # status and can be retried; it is NOT rolled back because the
         # transaction has already committed.
-        payment = PaymentOrchestrationService.start_payment(
-            order=order,
-            payment_method=checkout_data["payment_method"],
-            extra={"callback_base_url": request.build_absolute_uri("/")},
-        )
+        callback_base_url = request.build_absolute_uri("/")
+        try:
+            payment = PaymentOrchestrationService.start_payment(
+                order=order,
+                payment_method=checkout_data["payment_method"],
+                extra={"callback_base_url": callback_base_url},
+            )
+        except Exception:
+            logger.exception(
+                "Checkout payment initiation crashed: order_id=%s cart_id=%s user_id=%s payment_method=%s callback_base_url=%s",
+                getattr(order, "id", None),
+                getattr(cart, "id", None),
+                request.user.pk if request.user.is_authenticated else None,
+                checkout_data.get("payment_method"),
+                callback_base_url,
+            )
+            raise
 
         # ── Optional: save checkout addresses to the user's profile ─────────
         if checkout_data.get("save_to_profile") and request.user.is_authenticated:
