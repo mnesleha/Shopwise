@@ -96,3 +96,7 @@ Q_CLUSTER["timeout"] = int(os.getenv("Q_CLUSTER_TIMEOUT", "120"))
 Q_CLUSTER["retry"] = int(os.getenv("Q_CLUSTER_RETRY", "150"))
 
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "70"))
+
+ACQUIREMOCK_BASE_URL = os.getenv("ACQUIREMOCK_BASE_URL", "")
+ACQUIREMOCK_API_KEY = os.getenv("ACQUIREMOCK_API_KEY", "")
+ACQUIREMOCK_WEBHOOK_SECRET = os.getenv("ACQUIREMOCK_WEBHOOK_SECRET", "")
