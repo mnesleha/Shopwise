@@ -1048,7 +1048,6 @@ export function OrderDetail({
 }
 
 export type {
-  OrderViewModel,
   SupplierInfo,
   CustomerInfo,
   OrderItem,
