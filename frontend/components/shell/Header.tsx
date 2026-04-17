@@ -23,9 +23,7 @@ export default function Header() {
 
         {/* Global product search — centered, grows to fill available space */}
         <div className="flex-1 flex justify-center">
-          <Suspense
-            fallback={<div className="w-full max-w-xs sm:max-w-sm" />}
-          >
+          <Suspense fallback={<div className="w-full max-w-xs sm:max-w-sm" />}>
             <HeaderSearchInput />
           </Suspense>
         </div>

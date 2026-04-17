@@ -83,15 +83,7 @@ export default function ActiveFilterChips({
           {categoryMap.get(id) ?? `Category ${id}`}
           <button
             aria-label={`Remove category filter`}
-            onClick={() =>
-              navigate(
-                removeParam(
-                  searchParams,
-                  "category",
-                  id,
-                ),
-              )
-            }
+            onClick={() => navigate(removeParam(searchParams, "category", id))}
             className="ml-0.5 rounded-full hover:bg-accent"
           >
             <X className="h-3 w-3" />
@@ -108,11 +100,7 @@ export default function ActiveFilterChips({
           From ${minPrice}
           <button
             aria-label="Remove min price filter"
-            onClick={() =>
-              navigate(
-                removeParam(searchParams, "min_price"),
-              )
-            }
+            onClick={() => navigate(removeParam(searchParams, "min_price"))}
             className="ml-0.5 rounded-full hover:bg-accent"
           >
             <X className="h-3 w-3" />
@@ -129,11 +117,7 @@ export default function ActiveFilterChips({
           To ${maxPrice}
           <button
             aria-label="Remove max price filter"
-            onClick={() =>
-              navigate(
-                removeParam(searchParams, "max_price"),
-              )
-            }
+            onClick={() => navigate(removeParam(searchParams, "max_price"))}
             className="ml-0.5 rounded-full hover:bg-accent"
           >
             <X className="h-3 w-3" />
@@ -150,11 +134,7 @@ export default function ActiveFilterChips({
           In stock
           <button
             aria-label="Remove in-stock filter"
-            onClick={() =>
-              navigate(
-                removeParam(searchParams, "in_stock_only"),
-              )
-            }
+            onClick={() => navigate(removeParam(searchParams, "in_stock_only"))}
             className="ml-0.5 rounded-full hover:bg-accent"
           >
             <X className="h-3 w-3" />
