@@ -82,6 +82,10 @@ const CATEGORIES = [
   { id: 3, name: "Books" },
 ];
 
+function currentSearchParamsString() {
+  return mockParams.toString();
+}
+
 function setParams(init: string | Record<string, string> | [string, string][]) {
   mockParams = new URLSearchParams(
     init as ConstructorParameters<typeof URLSearchParams>[0],
@@ -99,7 +103,7 @@ beforeEach(() => {
 
 describe("SortDropdown", () => {
   it("renders the sort select with correct options", () => {
-    render(<SortDropdown />);
+    render(<SortDropdown searchParamsString={currentSearchParamsString()} />);
     const select = screen.getByTestId("sort-select") as HTMLSelectElement;
     expect(select).toBeInTheDocument();
     // All option labels present
@@ -110,7 +114,7 @@ describe("SortDropdown", () => {
   });
 
   it("calls router.replace with sort param when an option is selected", () => {
-    render(<SortDropdown />);
+    render(<SortDropdown searchParamsString={currentSearchParamsString()} />);
     const select = screen.getByTestId("sort-select");
     fireEvent.change(select, { target: { value: "price_asc" } });
 
@@ -121,7 +125,7 @@ describe("SortDropdown", () => {
 
   it("removes sort param and resets page when Default (__none__) is selected", () => {
     setParams("sort=price_desc&page=3");
-    render(<SortDropdown />);
+    render(<SortDropdown searchParamsString={currentSearchParamsString()} />);
     const select = screen.getByTestId("sort-select");
     fireEvent.change(select, { target: { value: "__none__" } });
 
@@ -133,7 +137,7 @@ describe("SortDropdown", () => {
 
   it("resets page param when sort changes", () => {
     setParams("sort=price_asc&page=2");
-    render(<SortDropdown />);
+    render(<SortDropdown searchParamsString={currentSearchParamsString()} />);
     const select = screen.getByTestId("sort-select");
     fireEvent.change(select, { target: { value: "price_desc" } });
 
@@ -147,13 +151,23 @@ describe("SortDropdown", () => {
 
 describe("ActiveFilterChips", () => {
   it("renders nothing when no filters are active", () => {
-    const { container } = render(<ActiveFilterChips categories={CATEGORIES} />);
+    const { container } = render(
+      <ActiveFilterChips
+        categories={CATEGORIES}
+        searchParamsString={currentSearchParamsString()}
+      />,
+    );
     expect(container).toBeEmptyDOMElement();
   });
 
   it("renders a chip per active category", () => {
     setParams("category=1&category=2");
-    render(<ActiveFilterChips categories={CATEGORIES} />);
+    render(
+      <ActiveFilterChips
+        categories={CATEGORIES}
+        searchParamsString={currentSearchParamsString()}
+      />,
+    );
 
     expect(screen.getByTestId("chip-category-1")).toBeInTheDocument();
     expect(screen.getByTestId("chip-category-2")).toBeInTheDocument();
@@ -162,7 +176,12 @@ describe("ActiveFilterChips", () => {
 
   it("shows category name in the chip", () => {
     setParams("category=1");
-    render(<ActiveFilterChips categories={CATEGORIES} />);
+    render(
+      <ActiveFilterChips
+        categories={CATEGORIES}
+        searchParamsString={currentSearchParamsString()}
+      />,
+    );
     expect(screen.getByTestId("chip-category-1")).toHaveTextContent(
       "Electronics",
     );
@@ -170,21 +189,36 @@ describe("ActiveFilterChips", () => {
 
   it("renders price chips when min/max are set", () => {
     setParams("min_price=10&max_price=99");
-    render(<ActiveFilterChips categories={CATEGORIES} />);
+    render(
+      <ActiveFilterChips
+        categories={CATEGORIES}
+        searchParamsString={currentSearchParamsString()}
+      />,
+    );
     expect(screen.getByTestId("chip-min-price")).toBeInTheDocument();
     expect(screen.getByTestId("chip-max-price")).toBeInTheDocument();
   });
 
   it("renders in-stock chip when in_stock_only=true", () => {
     setParams("in_stock_only=true");
-    render(<ActiveFilterChips categories={CATEGORIES} />);
+    render(
+      <ActiveFilterChips
+        categories={CATEGORIES}
+        searchParamsString={currentSearchParamsString()}
+      />,
+    );
     expect(screen.getByTestId("chip-in-stock")).toBeInTheDocument();
   });
 
   it("removes only the clicked category chip", async () => {
     setParams("category=1&category=2");
     const user = userEvent.setup();
-    render(<ActiveFilterChips categories={CATEGORIES} />);
+    render(
+      <ActiveFilterChips
+        categories={CATEGORIES}
+        searchParamsString={currentSearchParamsString()}
+      />,
+    );
 
     // Click ×  on category-1 chip
     const chip1 = screen.getByTestId("chip-category-1");
@@ -200,7 +234,12 @@ describe("ActiveFilterChips", () => {
   it("clears all filters when 'Clear all' is clicked", async () => {
     setParams("category=1&min_price=10&max_price=99&in_stock_only=true&page=3");
     const user = userEvent.setup();
-    render(<ActiveFilterChips categories={CATEGORIES} />);
+    render(
+      <ActiveFilterChips
+        categories={CATEGORIES}
+        searchParamsString={currentSearchParamsString()}
+      />,
+    );
 
     await user.click(screen.getByTestId("clear-all-filters"));
 
@@ -211,7 +250,12 @@ describe("ActiveFilterChips", () => {
   it("removes min_price chip without affecting other params", async () => {
     setParams("min_price=10&sort=price_asc");
     const user = userEvent.setup();
-    render(<ActiveFilterChips categories={CATEGORIES} />);
+    render(
+      <ActiveFilterChips
+        categories={CATEGORIES}
+        searchParamsString={currentSearchParamsString()}
+      />,
+    );
 
     const chip = screen.getByTestId("chip-min-price");
     await user.click(chip.querySelector("button")!);
@@ -225,14 +269,17 @@ describe("ActiveFilterChips", () => {
 // ── CatalogFilterPanel ────────────────────────────────────────────────────────
 
 describe("CatalogFilterPanel", () => {
-  const defaultProps = {
-    categories: CATEGORIES,
-    priceBoundsMin: "10.00",
-    priceBoundsMax: "500.00",
-  };
+  function buildDefaultProps() {
+    return {
+      categories: CATEGORIES,
+      priceBoundsMin: "10.00",
+      priceBoundsMax: "500.00",
+      searchParamsString: currentSearchParamsString(),
+    };
+  }
 
   it("renders all category checkboxes", () => {
-    render(<CatalogFilterPanel {...defaultProps} />);
+    render(<CatalogFilterPanel {...buildDefaultProps()} />);
     CATEGORIES.forEach((cat) => {
       expect(
         screen.getByTestId(`category-checkbox-${cat.id}`),
@@ -242,18 +289,18 @@ describe("CatalogFilterPanel", () => {
   });
 
   it("renders price inputs", () => {
-    render(<CatalogFilterPanel {...defaultProps} />);
+    render(<CatalogFilterPanel {...buildDefaultProps()} />);
     expect(screen.getByTestId("price-min-input")).toBeInTheDocument();
     expect(screen.getByTestId("price-max-input")).toBeInTheDocument();
   });
 
   it("renders in-stock checkbox", () => {
-    render(<CatalogFilterPanel {...defaultProps} />);
+    render(<CatalogFilterPanel {...buildDefaultProps()} />);
     expect(screen.getByTestId("in-stock-checkbox")).toBeInTheDocument();
   });
 
   it("uses higher-contrast control styling inside the sidebar panel", () => {
-    render(<CatalogFilterPanel {...defaultProps} />);
+    render(<CatalogFilterPanel {...buildDefaultProps()} />);
 
     expect(screen.getByTestId("category-checkbox-1")).toHaveClass(
       "border-foreground/20",
@@ -271,14 +318,14 @@ describe("CatalogFilterPanel", () => {
 
   it("shows checked state for already-selected category", () => {
     setParams("category=2");
-    render(<CatalogFilterPanel {...defaultProps} />);
+    render(<CatalogFilterPanel {...buildDefaultProps()} />);
     const clothingCheckbox = screen.getByTestId("category-checkbox-2");
     expect(clothingCheckbox).toHaveAttribute("data-state", "checked");
   });
 
   it("selecting a category calls router.replace with category param", async () => {
     const user = userEvent.setup();
-    render(<CatalogFilterPanel {...defaultProps} />);
+    render(<CatalogFilterPanel {...buildDefaultProps()} />);
 
     await user.click(screen.getByTestId("category-checkbox-1"));
 
@@ -291,7 +338,7 @@ describe("CatalogFilterPanel", () => {
     // Start with category=1 already in URL
     setParams("category=1");
     const user = userEvent.setup();
-    render(<CatalogFilterPanel {...defaultProps} />);
+    render(<CatalogFilterPanel {...buildDefaultProps()} />);
 
     // Click category-2; with category=1 already in params it should add category=2
     await user.click(screen.getByTestId("category-checkbox-2"));
@@ -304,7 +351,7 @@ describe("CatalogFilterPanel", () => {
   it("deselecting a category removes it from URL", async () => {
     setParams("category=1&category=2");
     const user = userEvent.setup();
-    render(<CatalogFilterPanel {...defaultProps} />);
+    render(<CatalogFilterPanel {...buildDefaultProps()} />);
 
     await user.click(screen.getByTestId("category-checkbox-1"));
 
@@ -315,7 +362,7 @@ describe("CatalogFilterPanel", () => {
 
   it("toggling in-stock adds in_stock_only=true param", async () => {
     const user = userEvent.setup();
-    render(<CatalogFilterPanel {...defaultProps} />);
+    render(<CatalogFilterPanel {...buildDefaultProps()} />);
 
     await user.click(screen.getByTestId("in-stock-checkbox"));
 
@@ -327,7 +374,7 @@ describe("CatalogFilterPanel", () => {
   it("toggling in-stock off removes the param", async () => {
     setParams("in_stock_only=true");
     const user = userEvent.setup();
-    render(<CatalogFilterPanel {...defaultProps} />);
+    render(<CatalogFilterPanel {...buildDefaultProps()} />);
 
     await user.click(screen.getByTestId("in-stock-checkbox"));
 
@@ -341,6 +388,7 @@ describe("CatalogFilterPanel", () => {
         categories={[]}
         priceBoundsMin={null}
         priceBoundsMax={null}
+        searchParamsString={currentSearchParamsString()}
       />,
     );
     expect(screen.getByText("No categories available.")).toBeInTheDocument();
@@ -356,6 +404,7 @@ describe("CatalogFilterPanel", () => {
         categories={manyCategories}
         priceBoundsMin="0.00"
         priceBoundsMax="1000.00"
+        searchParamsString={currentSearchParamsString()}
       />,
     );
     // All checkboxes rendered inside scrollable container

@@ -1,7 +1,6 @@
 "use client";
 
-import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ interface Category {
 
 interface ActiveFilterChipsProps {
   categories: Category[];
+  searchParamsString: string;
 }
 
 /** Returns a copy of URLSearchParams with the supplied key removed (first occurrence). */
@@ -36,14 +36,15 @@ function removeParam(
 
 export default function ActiveFilterChips({
   categories,
+  searchParamsString,
 }: ActiveFilterChipsProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = new URLSearchParams(searchParamsString);
 
-  const selectedCategoryIds = searchParams?.getAll("category") ?? [];
-  const minPrice = searchParams?.get("min_price") ?? "";
-  const maxPrice = searchParams?.get("max_price") ?? "";
-  const inStockOnly = searchParams?.get("in_stock_only") === "true";
+  const selectedCategoryIds = searchParams.getAll("category");
+  const minPrice = searchParams.get("min_price") ?? "";
+  const maxPrice = searchParams.get("max_price") ?? "";
+  const inStockOnly = searchParams.get("in_stock_only") === "true";
 
   const hasActiveFilters =
     selectedCategoryIds.length > 0 || minPrice || maxPrice || inStockOnly;
@@ -56,7 +57,7 @@ export default function ActiveFilterChips({
   };
 
   const clearAll = () => {
-    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    const params = new URLSearchParams(searchParamsString);
     params.delete("category");
     params.delete("min_price");
     params.delete("max_price");
@@ -85,7 +86,7 @@ export default function ActiveFilterChips({
             onClick={() =>
               navigate(
                 removeParam(
-                  searchParams ?? new URLSearchParams(),
+                  searchParams,
                   "category",
                   id,
                 ),
@@ -109,7 +110,7 @@ export default function ActiveFilterChips({
             aria-label="Remove min price filter"
             onClick={() =>
               navigate(
-                removeParam(searchParams ?? new URLSearchParams(), "min_price"),
+                removeParam(searchParams, "min_price"),
               )
             }
             className="ml-0.5 rounded-full hover:bg-accent"
@@ -130,7 +131,7 @@ export default function ActiveFilterChips({
             aria-label="Remove max price filter"
             onClick={() =>
               navigate(
-                removeParam(searchParams ?? new URLSearchParams(), "max_price"),
+                removeParam(searchParams, "max_price"),
               )
             }
             className="ml-0.5 rounded-full hover:bg-accent"
@@ -151,10 +152,7 @@ export default function ActiveFilterChips({
             aria-label="Remove in-stock filter"
             onClick={() =>
               navigate(
-                removeParam(
-                  searchParams ?? new URLSearchParams(),
-                  "in_stock_only",
-                ),
+                removeParam(searchParams, "in_stock_only"),
               )
             }
             className="ml-0.5 rounded-full hover:bg-accent"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { addCartItem } from "@/lib/api/cart";
@@ -23,6 +23,7 @@ type Props = {
   page: number;
   pageSize: number;
   totalItems: number;
+  searchParamsString: string;
 };
 
 export default function ProductGridClient({
@@ -30,19 +31,19 @@ export default function ProductGridClient({
   page,
   pageSize,
   totalItems,
+  searchParamsString,
 }: Props) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const setQuery = useCallback(
     (next: { page?: number; pageSize?: number }) => {
-      const sp = new URLSearchParams(searchParams?.toString() ?? "");
+      const sp = new URLSearchParams(searchParamsString);
       if (next.page !== undefined) sp.set("page", String(next.page));
       if (next.pageSize !== undefined)
         sp.set("pageSize", String(next.pageSize));
       router.push(`/products?${sp.toString()}`);
     },
-    [router, searchParams],
+    [router, searchParamsString],
   );
 
   const onPageChange = useCallback(

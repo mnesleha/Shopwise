@@ -17,11 +17,8 @@ import { addToCart as addToCartTestId } from "../helpers/testIds";
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
 const mockRouter = createRouterMock();
-const mockSearchParams = { toString: () => "" };
-
 vi.mock("next/navigation", () => ({
   useRouter: () => mockRouter,
-  useSearchParams: () => mockSearchParams,
   usePathname: () => "/products",
 }));
 
@@ -59,6 +56,7 @@ function buildProps(
     page: 1,
     pageSize: 10,
     totalItems: 1,
+    searchParamsString: "",
     ...overrides,
   };
 }

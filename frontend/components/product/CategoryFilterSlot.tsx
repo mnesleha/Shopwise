@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { CategorySidebar } from "@/components/product/CategorySidebar";
 import { FilterToggleButton } from "@/components/product/FilterToggleButton";
@@ -14,6 +15,7 @@ type ProductsMeta = {
 };
 
 export default function CategoryFilterSlot() {
+  const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = React.useState(false);
   const [categories, setCategories] = React.useState<Category[]>([]);
   const [priceBoundsMin, setPriceBoundsMin] = React.useState<string | null>(
@@ -59,6 +61,7 @@ export default function CategoryFilterSlot() {
         categories={categories}
         priceBoundsMin={priceBoundsMin}
         priceBoundsMax={priceBoundsMax}
+        searchParamsString={searchParams?.toString() ?? ""}
         onClose={() => setIsOpen(false)}
         onOpen={() => setIsOpen(true)}
       />

@@ -19,7 +19,6 @@ const mockRouter = createRouterMock();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => mockRouter,
-  useSearchParams: () => new URLSearchParams(),
   usePathname: () => "/profile",
 }));
 
@@ -110,6 +109,8 @@ describe("ProfilePageClient", () => {
         emailVerified={true}
         profile={makeProfile()}
         addresses={addresses}
+        initialTab="account"
+        showEmailChangeCancelledToast={false}
       />,
     );
 
@@ -133,6 +134,8 @@ describe("ProfilePageClient", () => {
         emailVerified={true}
         profile={makeProfile()}
         addresses={[]}
+        initialTab="account"
+        showEmailChangeCancelledToast={false}
       />,
     );
 

@@ -17,6 +17,7 @@ interface CategorySidebarProps {
   categories: Category[];
   priceBoundsMin: string | null;
   priceBoundsMax: string | null;
+  searchParamsString: string;
   onClose: () => void;
   onOpen: () => void;
 }
@@ -26,6 +27,7 @@ export function CategorySidebar({
   categories,
   priceBoundsMin,
   priceBoundsMax,
+  searchParamsString,
   onClose,
   onOpen,
 }: CategorySidebarProps) {
@@ -72,6 +74,7 @@ export function CategorySidebar({
             categories={categories}
             priceBoundsMin={priceBoundsMin}
             priceBoundsMax={priceBoundsMax}
+            searchParamsString={searchParamsString}
           />
         </div>
       </aside>

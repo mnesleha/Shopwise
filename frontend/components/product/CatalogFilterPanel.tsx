@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ interface CatalogFilterPanelProps {
   categories: Category[];
   priceBoundsMin: string | null;
   priceBoundsMax: string | null;
+  searchParamsString: string;
 }
 
 const DEBOUNCE_MS = 300;
@@ -25,15 +26,16 @@ export default function CatalogFilterPanel({
   categories,
   priceBoundsMin,
   priceBoundsMax,
+  searchParamsString,
 }: CatalogFilterPanelProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = new URLSearchParams(searchParamsString);
 
   // ─── Category state ───────────────────────────────────────────────────────
-  const selectedIds = new Set(searchParams?.getAll("category") ?? []);
+  const selectedIds = new Set(searchParams.getAll("category"));
 
   const toggleCategory = (id: number) => {
-    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    const params = new URLSearchParams(searchParamsString);
     params.delete("page"); // reset pagination
     const key = String(id);
     const existing = params.getAll("category").filter((v) => v !== key);
@@ -55,8 +57,8 @@ export default function CatalogFilterPanel({
   const boundsMax =
     priceBoundsMax !== null ? Math.ceil(parseFloat(priceBoundsMax)) : 100000;
 
-  const urlMin = searchParams?.get("min_price") ?? "";
-  const urlMax = searchParams?.get("max_price") ?? "";
+  const urlMin = searchParams.get("min_price") ?? "";
+  const urlMax = searchParams.get("max_price") ?? "";
 
   const [localMin, setLocalMin] = React.useState<string>(urlMin);
   const [localMax, setLocalMax] = React.useState<string>(urlMax);
@@ -74,7 +76,7 @@ export default function CatalogFilterPanel({
   const commitPrice = (min: string, max: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      const params = new URLSearchParams(searchParams?.toString() ?? "");
+      const params = new URLSearchParams(searchParamsString);
       params.delete("page");
       if (min) params.set("min_price", min);
       else params.delete("min_price");
@@ -114,10 +116,10 @@ export default function CatalogFilterPanel({
     : boundsMax;
 
   // ─── In-stock ─────────────────────────────────────────────────────────────
-  const inStockOnly = searchParams?.get("in_stock_only") === "true";
+  const inStockOnly = searchParams.get("in_stock_only") === "true";
 
   const toggleInStock = () => {
-    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    const params = new URLSearchParams(searchParamsString);
     params.delete("page");
     if (inStockOnly) {
       params.delete("in_stock_only");

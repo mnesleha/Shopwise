@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import type { AccountDto, AddressDto, ProfileDto } from "@/lib/api/profile";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,11 +8,16 @@ import { AccountTab } from "./AccountTab";
 import { DefaultAddressesCard } from "./DefaultAddressesCard";
 import { AddressesCard } from "./AddressesCard";
 
+const VALID_TABS = ["account", "addresses"] as const;
+type Tab = (typeof VALID_TABS)[number];
+
 type Props = {
   account: AccountDto;
   emailVerified: boolean;
   profile: ProfileDto | null;
   addresses: AddressDto[] | null;
+  initialTab: Tab;
+  showEmailChangeCancelledToast: boolean;
 };
 
 /**
@@ -26,6 +30,8 @@ export default function ProfilePageClient({
   emailVerified,
   profile,
   addresses,
+  initialTab,
+  showEmailChangeCancelledToast,
 }: Props) {
   const safeProfile: ProfileDto = profile ?? {
     id: 0,
@@ -33,17 +39,6 @@ export default function ProfilePageClient({
     default_billing_address: null,
   };
   const safeAddresses: AddressDto[] = addresses ?? [];
-
-  // Show a one-time toast when the user is redirected here after cancelling
-  // an email change via the security notification link (ADR-035).
-  const searchParams = useSearchParams();
-
-  const VALID_TABS = ["account", "addresses"] as const;
-  type Tab = (typeof VALID_TABS)[number];
-  const rawTab = searchParams.get("tab");
-  const initialTab: Tab = VALID_TABS.includes(rawTab as Tab)
-    ? (rawTab as Tab)
-    : "account";
 
   const [activeTab, setActiveTab] = React.useState<Tab>(initialTab);
 
@@ -67,14 +62,11 @@ export default function ProfilePageClient({
 
   const cancelToastShown = React.useRef(false);
   React.useEffect(() => {
-    if (
-      searchParams.get("emailChange") === "cancelled" &&
-      !cancelToastShown.current
-    ) {
+    if (showEmailChangeCancelledToast && !cancelToastShown.current) {
       cancelToastShown.current = true;
       toast.info("Email change cancelled successfully.");
     }
-  }, [searchParams]);
+  }, [showEmailChangeCancelledToast]);
 
   return (
     <div

@@ -1,11 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { claimCampaignOffer } from "@/lib/api/cart";
 import { useCart } from "@/components/cart/CartProvider";
 
 type ClaimStatus = "idle" | "claiming" | "success" | "error";
+type ClaimOfferClientProps = {
+  token: string | null;
+};
 
 /**
  * Phase 4 / Slice 5B — Campaign offer claim client component.
@@ -14,12 +17,9 @@ type ClaimStatus = "idle" | "claiming" | "success" | "error";
  * refreshes the cart, and presents the result.  The token is removed from
  * the URL after processing so it does not linger in browser history.
  */
-export default function ClaimOfferClient() {
+export default function ClaimOfferClient({ token }: ClaimOfferClientProps) {
   const router = useRouter();
-  const params = useSearchParams();
   const { refreshCart } = useCart();
-
-  const token = params.get("token") ?? "";
 
   const [claimStatus, setClaimStatus] = React.useState<ClaimStatus>("idle");
   const [promotionName, setPromotionName] = React.useState<string | null>(null);

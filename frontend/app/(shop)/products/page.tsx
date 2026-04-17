@@ -45,6 +45,28 @@ function buildProductsQs(sp: SearchParams): string {
   return params.toString();
 }
 
+function buildRouteSearchParams(sp: SearchParams): string {
+  const params = new URLSearchParams();
+
+  if (sp.page) params.set("page", sp.page);
+  if (sp.pageSize) params.set("pageSize", sp.pageSize);
+
+  const cats = Array.isArray(sp.category)
+    ? sp.category
+    : sp.category
+      ? [sp.category]
+      : [];
+  cats.forEach((c) => params.append("category", c));
+
+  if (sp.min_price) params.set("min_price", sp.min_price);
+  if (sp.max_price) params.set("max_price", sp.max_price);
+  if (sp.in_stock_only === "true") params.set("in_stock_only", "true");
+  if (sp.sort) params.set("sort", sp.sort);
+  if (sp.search) params.set("search", sp.search);
+
+  return params.toString();
+}
+
 export default async function ProductsPage({
   searchParams,
 }: {
@@ -55,6 +77,7 @@ export default async function ProductsPage({
   const pageSize = Math.min(50, Math.max(5, Number(sp.pageSize ?? "12") || 12));
 
   const qs = buildProductsQs(sp);
+  const routeSearchParams = buildRouteSearchParams(sp);
 
   const [catalogueDto, categories] = await Promise.all([
     apiFetch<CatalogueResponseDto>(
@@ -75,9 +98,12 @@ export default async function ProductsPage({
 
       {/* ── Toolbar: chips (left) + sort (pinned right) ─────── */}
       <div className="flex items-center gap-3 flex-wrap">
-        <ActiveFilterChips categories={categories} />
+        <ActiveFilterChips
+          categories={categories}
+          searchParamsString={routeSearchParams}
+        />
         <div className="ml-auto shrink-0">
-          <SortDropdown />
+          <SortDropdown searchParamsString={routeSearchParams} />
         </div>
       </div>
 
@@ -86,6 +112,7 @@ export default async function ProductsPage({
         page={page}
         pageSize={pageSize}
         totalItems={totalItems}
+        searchParamsString={routeSearchParams}
       />
     </div>
   );

@@ -15,7 +15,6 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
-import * as React from "react";
 import userEvent from "@testing-library/user-event";
 import ClaimOfferClient from "@/app/(shop)/claim-offer/ClaimOfferClient";
 import { renderWithProviders } from "../helpers/render";
@@ -25,15 +24,8 @@ import { createRouterMock } from "../helpers/nextNavigation";
 
 const mockRouter = createRouterMock();
 
-/**
- * Per-test control of the `token` query parameter.
- * Default (set in beforeEach): returns TEST_TOKEN for "token", null otherwise.
- */
-const mockGetParam = vi.fn<(key: string) => string | null>();
-
 vi.mock("next/navigation", () => ({
   useRouter: () => mockRouter,
-  useSearchParams: () => ({ get: mockGetParam }),
   usePathname: () => "/claim-offer",
 }));
 
@@ -60,8 +52,8 @@ const SUCCESS_RESPONSE = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function renderClient() {
-  return renderWithProviders(<ClaimOfferClient />);
+function renderClient(token: string | null = TEST_TOKEN) {
+  return renderWithProviders(<ClaimOfferClient token={token} />);
 }
 
 // ── Test suite ────────────────────────────────────────────────────────────────
@@ -69,11 +61,6 @@ function renderClient() {
 describe("ClaimOfferClient", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    // Default: token is present in the URL.
-    mockGetParam.mockImplementation((key) =>
-      key === "token" ? TEST_TOKEN : null,
-    );
 
     // Default: claim API succeeds.
     mockClaimCampaignOffer.mockResolvedValue(SUCCESS_RESPONSE);
@@ -162,9 +149,7 @@ describe("ClaimOfferClient", () => {
   // ── Error path: missing token ─────────────────────────────────────────────
 
   it("shows an error when no token is present in the URL", async () => {
-    mockGetParam.mockReturnValue(null);
-
-    renderClient();
+    renderClient(null);
 
     await waitFor(() => {
       expect(screen.getByTestId("claim-offer-error")).toBeInTheDocument();
@@ -176,9 +161,7 @@ describe("ClaimOfferClient", () => {
   });
 
   it("does not call the claim API when no token is present", async () => {
-    mockGetParam.mockReturnValue(null);
-
-    renderClient();
+    renderClient(null);
 
     await waitFor(() => {
       expect(screen.getByTestId("claim-offer-error")).toBeInTheDocument();

@@ -1,7 +1,6 @@
 "use client";
 
-import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Select,
   SelectContent,
@@ -22,14 +21,20 @@ const SORT_OPTIONS = [
   { value: "name_desc", label: "Name: Z to A" },
 ] as const;
 
-export default function SortDropdown() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+type SortDropdownProps = {
+  searchParamsString: string;
+};
 
-  const currentSort = searchParams?.get("sort") ?? SORT_NONE;
+export default function SortDropdown({
+  searchParamsString,
+}: SortDropdownProps) {
+  const router = useRouter();
+  const searchParams = new URLSearchParams(searchParamsString);
+
+  const currentSort = searchParams.get("sort") ?? SORT_NONE;
 
   const handleChange = (value: string) => {
-    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    const params = new URLSearchParams(searchParamsString);
     params.delete("page"); // reset pagination on sort change
 
     if (value && value !== SORT_NONE) {

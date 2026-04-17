@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import HeaderAuthClient from "@/components/shell/HeaderAuthClient";
@@ -12,7 +13,9 @@ export default function Header() {
     <header className="relative z-50 border-b print:hidden">
       <div className="mx-auto w-full max-w-6xl px-4 py-4 flex items-center gap-4">
         <div className="flex items-center gap-3 shrink-0">
-          <HeaderLeftSlotClient />
+          <Suspense fallback={null}>
+            <HeaderLeftSlotClient />
+          </Suspense>
           <Link href="/products" className="font-semibold tracking-tight">
             Shopwise
           </Link>
@@ -20,7 +23,11 @@ export default function Header() {
 
         {/* Global product search — centered, grows to fill available space */}
         <div className="flex-1 flex justify-center">
-          <HeaderSearchInput />
+          <Suspense
+            fallback={<div className="w-full max-w-xs sm:max-w-sm" />}
+          >
+            <HeaderSearchInput />
+          </Suspense>
         </div>
 
         <nav className="flex items-center gap-4 text-sm shrink-0">

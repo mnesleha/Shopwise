@@ -11,7 +11,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../helpers/render";
 import { createRouterMock } from "../helpers/nextNavigation";
-import LoginPage from "@/app/(shop)/login/page";
+import LoginPageClient from "@/app/(shop)/login/LoginPageClient";
 import { LOGIN_SUBMIT } from "../helpers/testIds";
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
@@ -20,7 +20,6 @@ const mockRouter = createRouterMock();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => mockRouter,
-  useSearchParams: () => new URLSearchParams(),
 }));
 
 const mockLogin = vi.fn();
@@ -83,6 +82,17 @@ async function fillAndSubmit() {
   await user.click(screen.getByTestId(LOGIN_SUBMIT));
 }
 
+function renderPage() {
+  return renderWithProviders(
+    <LoginPageClient
+      showVerifiedToast={false}
+      showEmailChangedToast={false}
+      showPasswordChangedToast={false}
+      showPasswordResetToast={false}
+    />,
+  );
+}
+
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 describe("LoginPage — post-login toasts", () => {
@@ -106,7 +116,7 @@ describe("LoginPage — post-login toasts", () => {
       warnings: [],
     });
 
-    renderWithProviders(<LoginPage />);
+    renderPage();
     await fillAndSubmit();
 
     await waitFor(() => {
@@ -126,7 +136,7 @@ describe("LoginPage — post-login toasts", () => {
       warnings: [],
     });
 
-    renderWithProviders(<LoginPage />);
+    renderPage();
     await fillAndSubmit();
 
     await waitFor(() => {
@@ -150,7 +160,7 @@ describe("LoginPage — post-login toasts", () => {
       warnings,
     });
 
-    renderWithProviders(<LoginPage />);
+    renderPage();
     await fillAndSubmit();
 
     await waitFor(() => {
@@ -178,7 +188,7 @@ describe("LoginPage — post-login toasts", () => {
       warnings,
     });
 
-    renderWithProviders(<LoginPage />);
+    renderPage();
     await fillAndSubmit();
 
     await waitFor(() => {
@@ -190,7 +200,7 @@ describe("LoginPage — post-login toasts", () => {
 
   it("does not write to sessionStorage when there are no warnings", async () => {
     // defaults: NOOP merge, 0 claimed_orders
-    renderWithProviders(<LoginPage />);
+    renderPage();
     await fillAndSubmit();
 
     await waitFor(() => {
@@ -202,7 +212,7 @@ describe("LoginPage — post-login toasts", () => {
   it("shows a claimed-orders success toast when claimed_orders > 0", async () => {
     mockClaimOrders.mockResolvedValue({ claimed_orders: 3 });
 
-    renderWithProviders(<LoginPage />);
+    renderPage();
     await fillAndSubmit();
 
     await waitFor(() => {
@@ -214,7 +224,7 @@ describe("LoginPage — post-login toasts", () => {
 
   it("shows no toast when result is NOOP and no warnings", async () => {
     // defaults: NOOP merge, 0 claimed_orders
-    renderWithProviders(<LoginPage />);
+    renderPage();
     await fillAndSubmit();
 
     await waitFor(() => {

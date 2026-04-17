@@ -4,7 +4,18 @@ import ProfilePageClient from "@/components/profile/ProfilePageClient";
 import type { ProfileDto, AddressDto, AccountDto } from "@/lib/api/profile";
 import type { MeResponse } from "@/lib/api/auth";
 
-export default async function ProfilePage() {
+type ProfilePageSearchParams = {
+  tab?: string;
+  emailChange?: string;
+};
+
+type Props = {
+  searchParams: Promise<ProfilePageSearchParams>;
+};
+
+export default async function ProfilePage({ searchParams }: Props) {
+  const params = await searchParams;
+
   // Auth guard — same pattern as /orders
   let me: MeResponse | null = null;
   try {
@@ -18,6 +29,11 @@ export default async function ProfilePage() {
   if (!me?.is_authenticated) {
     redirect("/login");
   }
+
+  const initialTab =
+    params.tab === "addresses" || params.tab === "account"
+      ? params.tab
+      : "account";
 
   // Fetch account, profile and addresses in parallel
   const [account, profile, addresses] = await Promise.all([
@@ -34,6 +50,8 @@ export default async function ProfilePage() {
       emailVerified={me?.email_verified ?? false}
       profile={profile}
       addresses={addresses}
+      initialTab={initialTab}
+      showEmailChangeCancelledToast={params.emailChange === "cancelled"}
     />
   );
 }
