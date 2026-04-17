@@ -3,6 +3,9 @@ const { withSentryConfig } = require("@sentry/nextjs");
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   skipTrailingSlashRedirect: true,
+  typescript: {
+    tsconfigPath: "./tsconfig.build.json",
+  },
 
   // Allow next/image to load images served by the Django backend.
   // BACKEND_ORIGIN defaults to http://127.0.0.1:8000 for local development;
