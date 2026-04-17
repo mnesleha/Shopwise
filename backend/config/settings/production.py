@@ -92,5 +92,7 @@ STORAGES["default"] = {
 
 Q_CLUSTER["workers"] = int(os.getenv("Q_CLUSTER_WORKERS", "1"))
 Q_CLUSTER["queue_limit"] = int(os.getenv("Q_CLUSTER_QUEUE_LIMIT", "20"))
-Q_CLUSTER["timeout"] = int(os.getenv("Q_CLUSTER_TIMEOUT", "60"))
-Q_CLUSTER["retry"] = int(os.getenv("Q_CLUSTER_RETRY", "120"))
+Q_CLUSTER["timeout"] = int(os.getenv("Q_CLUSTER_TIMEOUT", "120"))
+Q_CLUSTER["retry"] = int(os.getenv("Q_CLUSTER_RETRY", "150"))
+
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "70"))
