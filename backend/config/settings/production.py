@@ -87,6 +87,7 @@ STORAGES["default"] = {
         "default_acl": None,
         "querystring_auth": False,
         "file_overwrite": False,
+        "custom_domain": AWS_MEDIA_CUSTOM_DOMAIN or None,
     },
 }
 
