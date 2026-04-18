@@ -104,6 +104,15 @@
         const currencySymbol = "{{ currency_symbol }}";
         let currentAuthEmail = "";
 
+        async function extractErrorMessage(response, fallbackMessage) {
+            try {
+                const data = await response.json();
+                return data.message || data.detail || fallbackMessage;
+            } catch (error) {
+                return fallbackMessage;
+            }
+        }
+
         function setCookie(name, value, days) {
             let expires = "";
             if (days) {
@@ -161,7 +170,9 @@
                     currentAuthEmail = email;
                     document.getElementById('displayEmail').innerText = email;
                     showStep(2);
-                } else alert('Error sending code');
+                } else {
+                    alert(await extractErrorMessage(res, 'Error sending code'));
+                }
             } catch(e) { alert('Network Error'); }
             finally { btn.disabled = false; }
         }
@@ -180,7 +191,10 @@
                 if(res.ok) {
                     setCookie('user_email', currentAuthEmail, 30);
                     initializeUser(currentAuthEmail);
-                } else { alert('Invalid Code'); btn.disabled = false; }
+                } else {
+                    alert(await extractErrorMessage(res, 'Invalid code'));
+                    btn.disabled = false;
+                }
             } catch(e) { alert('Network Error'); btn.disabled = false; }
         }
 

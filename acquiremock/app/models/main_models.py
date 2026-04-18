@@ -60,6 +60,15 @@ class SavedCard(SQLModel, table=True):
     psp_provider: str = Field(default="mock")
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
+class LoginOTP(SQLModel, table=True):
+    __tablename__ = "login_otps"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    email: str = Field(index=True)
+    code: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: datetime = Field(default_factory=lambda: datetime.utcnow() + timedelta(minutes=5))
+
 class WebhookLog(SQLModel, table=True):
     __tablename__ = "webhook_logs"
 

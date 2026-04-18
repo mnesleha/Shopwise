@@ -1,5 +1,8 @@
 ﻿import pytest
 from httpx import AsyncClient
+from sqlmodel import select
+
+from app.models.main_models import LoginOTP
 
 pytestmark = pytest.mark.asyncio
 
@@ -58,3 +61,68 @@ async def test_checkout_page_load(client: AsyncClient):
 
     assert checkout_resp.status_code == 200
     assert "TEST-CHECKOUT-FLOW" in checkout_resp.text
+
+
+async def test_auth_code_persisted_and_verified(client: AsyncClient, db_session):
+    email = "user@example.com"
+
+    send_response = await client.post("/api/auth/send-code", json={"email": email})
+
+    assert send_response.status_code == 200
+
+    result = await db_session.execute(
+        select(LoginOTP).where(LoginOTP.email == email).order_by(LoginOTP.created_at.desc())
+    )
+    stored_code = result.scalars().first()
+
+    assert stored_code is not None
+    assert len(stored_code.code) == 4
+
+    verify_response = await client.post(
+        "/api/auth/verify-code",
+        json={"email": email, "code": stored_code.code}
+    )
+
+    assert verify_response.status_code == 200
+    assert verify_response.json()["status"] == "ok"
+
+    remaining = await db_session.execute(select(LoginOTP).where(LoginOTP.email == email))
+    assert remaining.scalars().first() is None
+
+
+async def test_auth_resend_invalidates_previous_code(client: AsyncClient, db_session):
+    email = "resend@example.com"
+
+    first_response = await client.post("/api/auth/send-code", json={"email": email})
+    assert first_response.status_code == 200
+
+    first_query = await db_session.execute(
+        select(LoginOTP).where(LoginOTP.email == email).order_by(LoginOTP.created_at.desc())
+    )
+    first_code = first_query.scalars().first()
+    assert first_code is not None
+
+    second_response = await client.post("/api/auth/send-code", json={"email": email})
+    assert second_response.status_code == 200
+
+    second_query = await db_session.execute(
+        select(LoginOTP).where(LoginOTP.email == email).order_by(LoginOTP.created_at.desc())
+    )
+    second_code = second_query.scalars().first()
+    assert second_code is not None
+    assert second_code.code != first_code.code
+
+    invalid_response = await client.post(
+        "/api/auth/verify-code",
+        json={"email": email, "code": first_code.code}
+    )
+
+    assert invalid_response.status_code == 400
+    assert invalid_response.json()["detail"] == "Invalid code"
+
+    valid_response = await client.post(
+        "/api/auth/verify-code",
+        json={"email": email, "code": second_code.code}
+    )
+
+    assert valid_response.status_code == 200
