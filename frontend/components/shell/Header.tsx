@@ -12,12 +12,15 @@ export default function Header() {
     // so nav actions (logout, cart, etc.) remain tappable when the sidebar is open.
     <header className="relative z-50 border-b print:hidden">
       <div className="mx-auto w-full max-w-6xl px-4 py-4 flex items-center gap-4">
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-baseline gap-3 shrink-0">
           <Suspense fallback={null}>
             <HeaderLeftSlotClient />
           </Suspense>
           <Link href="/products" className="font-semibold tracking-tight">
             Shopwise
+          </Link>
+          <Link href="/" className="text-sm">
+            About
           </Link>
         </div>
 
@@ -28,7 +31,7 @@ export default function Header() {
           </Suspense>
         </div>
 
-        <nav className="flex items-center gap-4 text-sm shrink-0">
+        <nav className="flex items-center gap-4 text-sm shrink-0 translate-y-1">
           <HeaderAuthClient />
 
           <Link
