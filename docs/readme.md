@@ -1,79 +1,170 @@
-# Project Documentation
+# Shopwise Documentation
 
-This directory contains the structured documentation for the Shopwise project.
+This directory contains the living documentation for the **Shopwise** project.
 
-The documentation is organized by topic and audience and is intended to support:
+Shopwise is a QA/SDET-focused showcase project evolving toward a **marketable e-commerce starter kit**.  
+The documentation is intentionally split into:
 
-- onboarding of new contributors
-- understanding of system architecture and domain concepts
-- insight into testing and quality practices
-- documentation-driven development and refinement
+- **current-state documents** — what is true now
+- **decision records** — why the system was shaped this way
+- **deep-dive architecture and testing documents** — how specific areas work
+- **process and delivery documents** — how the project is developed
 
-## Architecture
+---
 
+## Start Here
+
+### 1. [Onboarding](./Onboarding.md)
+
+The best starting point for understanding the project context, workflow, quality strategy, and how to navigate the documentation.
+
+### 2. [Current Architecture Baseline](./architecture/Current%20Architecture%20Baseline.md)
+
+The authoritative snapshot of the current system architecture.  
+Read this first if you want to understand how Shopwise works **today**.
+
+### 3. [ADR Index](./decisions/readme.md)
+
+Architecture and process decision log.  
+Read this to understand **why** the system looks the way it does.
+
+---
+
+## Documentation Structure
+
+### Architecture
+
+Architecture documents describe the current system design, domain boundaries, runtime flows, and implementation guardrails.
+
+- [Current Architecture Baseline](./architecture/Current%20Architecture%20Baseline.md)
+- [System Architecture Overview](./architecture/System%20Architecture%20Overview.md)
 - [Domain Model](./architecture/Domain%20Model.md)
+- [ER Diagram](./architecture/ER%20diagram.md)
+- [Architecture & Quality Guard Rules](./architecture/Architecture%20%26%20Quality%20Guard%20Rules.md)
 
-  Describes core business concepts and their responsibilities.
+#### Core domain flow documents
 
 - [Cart–Order Lifecycle](./architecture/Cart-Order%20Lifecycle.md)
+- [Inventory Reservation Lifecycle](./architecture/Inventory%20Reservation%20Lifecycle.md)
 
-  Explains how user intent is converted into orders and how state transitions are enforced.
+#### Testing / integration architecture
 
-- [Design Decisions](./architecture/Design%20Decisions.md)
+- [Postman CLI in CI](./architecture/Postman%20CLI%20in%20CI.md)
+- [Postman Anonymous Cart Testing](./architecture/Postman%20Anonymous%20Cart%20Testing.md)
 
-  Records key architectural and process decisions, including context and rationale.
+---
 
-- [System Overview](./architecture/System%20Architecture%20Overview.md)
+### Decisions
 
-  Provides a high-level view of system components and their interactions.
+Decision records capture significant architectural and process choices.
 
-- [ER Diagram](./architecture/ER%20diagram.md)
+- [ADR Index](./decisions/readme.md)
 
-  Visual representation of domain relationships.
+Use ADRs to understand:
 
-## Process
+- API contract decisions
+- identity and authentication strategy
+- cart / checkout / order model evolution
+- inventory and fulfillment model
+- payments and shipping provider abstractions
+- testing strategy and delivery process
+- deployment/runtime trade-offs
 
+---
+
+### Testing & Quality
+
+Testing documents describe the quality strategy, test pyramid, CI validation, and E2E boundaries.
+
+- [Test Strategy](./testing/Test%20Strategy.md)
+- [Test Pyramid](./testing/Test%20Pyramid.md)
+- [Coverage vs Risk](./testing/Coverage%20vs%20Risk.md)
+- [E2E Postman](./testing/E2E%20Postman.md)
+- [Quality Discovery](./testing/Quality%20Discovery.md)
+
+---
+
+### Process
+
+Process documents describe how the project is delivered and how quality is enforced in day-to-day development.
+
+- [Working Agreement](./process/Working%20Agreement.md)
+- [Sprint Process](./process/Sprint%20Process.md)
+- [Workflow](./process/Workflow.md)
 - [Definition of Done](./process/Definition%20of%20Done.md)
+- [QA in Development](./process/QA%20in%20Development.md)
 
-  Defines when work is considered complete from a quality perspective.
+---
 
-- [Scrum & Workflow](./process/QA%20in%20Development.md)  
-  Describes the development workflow and iteration process.
+### CI / CD
 
-- [QA in Development](./process/QA%20in%20Development.md)  
-  Explains the role of QA throughout the development lifecycle.
-
-## Vision
-
-- [Product Vision](./vision/Product%20Vision.md)
-
-  High-level goals and purpose of the project.
-
-- [Business Goals](./vision/Business%20Goals.md)
-
-  Business-oriented objectives and scope.
-
-- [Quality Goals](./vision/Quality%20Goals.md)
-
-## CI / CD
+CI/CD documentation explains pipeline structure, quality gates, and deployment validation.
 
 - [Pipeline Overview](./ci-cd/Pipeline%20Overview.md)
-
-  Overview of CI pipeline structure and quality gates.
-
 - [Quality Gates](./ci-cd/Quality%20Gates.md)
 
-  Defines checks that must pass before changes are accepted.
+---
 
-## Onboarding
+### Vision / Product
 
-- [Onboarding Document](./Onboarding.md)
+Vision documents explain the product intent, business direction, and quality goals.
 
-  Single entry point for understanding the project, workflows and development practices.
+- [Product Vision](./vision/Product%20Vision.md)
+- [Business Goals](./vision/Business%20Goals.md)
+- [Quality Goals](./vision/Quality%20Goals.md)
+- [Requirements](./vision/Requirements.md)
 
-## How to Use This Documentation
+---
 
-- Start with the Onboarding Document for project context
-- Use Architecture documents to understand system structure
-- Use API and Testing documents during development and QA
-- Refer to Process documents for workflow and quality expectations
+## Recommended Reading Paths
+
+### New contributor / reviewer
+
+1. [Onboarding](./Onboarding.md)
+2. [Current Architecture Baseline](./architecture/Current%20Architecture%20Baseline.md)
+3. [ADR Index](./decisions/readme.md)
+4. [Cart–Order Lifecycle](./architecture/Cart-Order%20Lifecycle.md)
+5. [Test Strategy](./testing/Test%20Strategy.md)
+
+### Backend / API work
+
+1. [Current Architecture Baseline](./architecture/Current%20Architecture%20Baseline.md)
+2. Relevant ADRs from the [ADR Index](./decisions/readme.md)
+3. Domain flow documents
+4. Testing and CI documents
+
+### Frontend integration work
+
+1. [Current Architecture Baseline](./architecture/Current%20Architecture%20Baseline.md)
+2. Relevant auth / SSR / API contract ADRs
+3. Domain flow documents
+4. E2E and testing architecture documents
+
+### Architecture review
+
+1. [Current Architecture Baseline](./architecture/Current%20Architecture%20Baseline.md)
+2. [ADR Index](./decisions/readme.md)
+3. [System Architecture Overview](./architecture/System%20Architecture%20Overview.md)
+4. Domain flow documents
+
+---
+
+## Documentation Rules
+
+- **Current Architecture Baseline** describes what is true now.
+- **ADRs** explain why important decisions were made.
+- If an accepted ADR changes system behavior, the baseline should be updated accordingly.
+- Deep-dive documents should describe one topic well instead of duplicating the baseline.
+
+---
+
+## Project Documentation Philosophy
+
+The documentation is intentionally treated as part of the system design.
+
+It aims to be:
+
+- **practical** — useful during implementation and review
+- **traceable** — linked to decisions and code behavior
+- **test-aware** — aligned with the project’s QA/SDET focus
+- **presentable** — suitable for portfolio / CV showcase use
