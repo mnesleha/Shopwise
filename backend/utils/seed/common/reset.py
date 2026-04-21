@@ -31,6 +31,11 @@ def reset_demo_seed_data(write_line: WriteLine | None = None) -> None:
     safe_delete_all("carts", "Cart")
 
     safe_delete_all("discounts", "Discount")
+    safe_delete_all("discounts", "Offer")
+    safe_delete_all("discounts", "OrderPromotion")
+    safe_delete_all("discounts", "PromotionCategory")
+    safe_delete_all("discounts", "PromotionProduct")
+    safe_delete_all("discounts", "Promotion")
     safe_delete_all("products", "Product")
     safe_delete_all("categories", "Category")
     safe_delete_all("suppliers", "SupplierPaymentDetails")

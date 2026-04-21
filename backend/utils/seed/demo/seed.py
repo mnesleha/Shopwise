@@ -19,6 +19,7 @@ from utils.seed.common.media import (
     sync_product_media,
 )
 from utils.seed.common.reset import reset_demo_seed_data
+from utils.seed.demo.commercial import seed_demo_commercial_layer
 from utils.seed.demo.config import (
     DEMO_CATEGORIES,
     DEMO_PRODUCTS,
@@ -54,6 +55,7 @@ def run_demo_seed(
             "supplier": _seed_supplier(write),
             "categories": _seed_categories(write),
             "products": _seed_products(write),
+            "commercial": seed_demo_commercial_layer(write),
             "media": _seed_product_media(write, asset_root=asset_root),
         }
 
@@ -235,8 +237,8 @@ def _seed_products(write: WriteLine) -> dict[str, dict[str, Any]]:
                 "stock_quantity": product_data["stock_quantity"],
                 "is_active": True,
                 "category": category,
-                "short_description": "",
-                "full_description": "",
+                "short_description": product_data["short_description"],
+                "full_description": product_data["full_description"],
             },
         )
 

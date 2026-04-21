@@ -10,6 +10,9 @@ from django.core.management import call_command
 from django.test import override_settings
 
 from categories.models import Category
+from discounts.models import AcquisitionMode, Offer, OfferStatus, OrderPromotion, Promotion
+from discounts.services.auto_apply_resolver import resolve_auto_apply_order_promotion
+from discounts.services.line_promotion import resolve_line_promotion
 from products.models import Product, ProductImage, TaxClass
 from products.services.pricing import get_product_pricing
 from suppliers.models import Supplier, SupplierAddress, SupplierPaymentDetails
@@ -76,11 +79,22 @@ def test_seed_data_demo_creates_phase_1_reference_data():
     assert headphones.stock_quantity == 50
     assert headphones.is_active is True
     assert headphones.price == Decimal("2490.00")
+    assert headphones.short_description.startswith("Over-ear wireless headphones")
+    assert headphones.full_description.startswith("## Wireless Headphones")
 
     headphones_pricing = get_product_pricing(headphones)
     assert headphones_pricing is not None
     assert headphones_pricing.undiscounted.gross.amount == Decimal("2490.00")
     assert headphones_pricing.undiscounted.net.amount == Decimal("2057.85")
+
+    selected_result = resolve_line_promotion(
+        product=headphones,
+        net_amount=headphones.price_net_amount,
+        currency=headphones.currency,
+        tax_rate=headphones.tax_class.rate,
+    )
+    assert selected_result.promotion is not None
+    assert selected_result.promotion.name == "Selected Products 15% Off"
 
     rope = Product.objects.select_related("category", "tax_class").get(
         slug="chew-toy-rope"
@@ -90,6 +104,38 @@ def test_seed_data_demo_creates_phase_1_reference_data():
     rope_pricing = get_product_pricing(rope)
     assert rope_pricing.undiscounted.gross.amount == Decimal("119.00")
     assert rope_pricing.undiscounted.net.amount == Decimal("119.00")
+
+    keyboard = Product.objects.select_related("category", "tax_class").get(
+        slug="mechanical-keyboard"
+    )
+    category_result = resolve_line_promotion(
+        product=keyboard,
+        net_amount=keyboard.price_net_amount,
+        currency=keyboard.currency,
+        tax_rate=keyboard.tax_class.rate,
+    )
+    assert category_result.promotion is not None
+    assert category_result.promotion.name == "Electronics Discount"
+
+    assert Promotion.objects.filter(code="demo-electronics-discount").count() == 1
+    assert Promotion.objects.filter(code="demo-selected-products-15-off").count() == 1
+
+    order_promotion = resolve_auto_apply_order_promotion(
+        cart_gross=Decimal("4000.00"),
+        currency="EUR",
+    )
+    assert order_promotion is not None
+    assert order_promotion.name == "Demo Order Discount"
+    assert order_promotion.acquisition_mode == AcquisitionMode.AUTO_APPLY
+
+    campaign_promotion = OrderPromotion.objects.get(code="campaign-welcome-offer")
+    assert campaign_promotion.name == "Campaign Welcome Offer"
+    assert campaign_promotion.acquisition_mode == AcquisitionMode.CAMPAIGN_APPLY
+
+    offer = Offer.objects.get(token="DEMO-WELCOME-2025")
+    assert offer.promotion_id == campaign_promotion.id
+    assert offer.status == OfferStatus.DELIVERED
+    assert offer.is_currently_active() is True
 
 
 def test_seed_data_demo_is_repeatable_and_normalizes_active_supplier():
@@ -118,10 +164,53 @@ def test_seed_data_demo_is_repeatable_and_normalizes_active_supplier():
     assert Category.objects.filter(name="Electronics").count() == 1
     assert Product.objects.filter(slug="wireless-headphones").count() == 1
     assert Product.objects.count() == 15
+    assert Promotion.objects.filter(code="demo-electronics-discount").count() == 1
+    assert Promotion.objects.filter(code="demo-selected-products-15-off").count() == 1
+    assert OrderPromotion.objects.filter(code="demo-order-discount").count() == 1
+    assert OrderPromotion.objects.filter(code="campaign-welcome-offer").count() == 1
+    assert Offer.objects.filter(token="DEMO-WELCOME-2025").count() == 1
+
+    electronics_discount = Promotion.objects.get(code="demo-electronics-discount")
+    selected_discount = Promotion.objects.get(code="demo-selected-products-15-off")
+    assert electronics_discount.category_targets.count() == 1
+    assert electronics_discount.product_targets.count() == 0
+    assert selected_discount.category_targets.count() == 0
+    assert selected_discount.product_targets.count() == 3
 
     active_suppliers = Supplier.objects.filter(is_active=True)
     assert active_suppliers.count() == 1
     assert active_suppliers.get().company_id == "SHOPWISE-DEMO-001"
+
+
+def test_seed_data_demo_reset_replaces_existing_commercial_rows():
+    Promotion.objects.create(
+        name="Legacy Promo",
+        code="legacy-promo",
+        type="PERCENT",
+        value=Decimal("5.00"),
+        is_active=True,
+    )
+    legacy_order_promotion = OrderPromotion.objects.create(
+        name="Legacy Order Promo",
+        code="legacy-order-promo",
+        type="FIXED",
+        value=Decimal("100.00"),
+        acquisition_mode=AcquisitionMode.AUTO_APPLY,
+        is_active=True,
+    )
+    Offer.objects.create(
+        token="LEGACY-TOKEN",
+        promotion=legacy_order_promotion,
+        status=OfferStatus.CREATED,
+        is_active=True,
+    )
+
+    call_command("seed_data", profile="demo", reset=True)
+
+    assert Promotion.objects.filter(code="legacy-promo").exists() is False
+    assert OrderPromotion.objects.filter(code="legacy-order-promo").exists() is False
+    assert Offer.objects.filter(token="LEGACY-TOKEN").exists() is False
+    assert Offer.objects.filter(token="DEMO-WELCOME-2025").count() == 1
 
 
 def test_seed_data_dev_delegates_to_legacy_seed_command(monkeypatch):
