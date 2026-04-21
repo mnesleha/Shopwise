@@ -18,24 +18,10 @@ def safe_delete_all(app_label: str, model_name: str) -> int:
     return deleted
 
 
-def purge_file_field_for_all(app_label: str, model_name: str, field_name: str) -> None:
-    try:
-        model = apps.get_model(app_label, model_name)
-    except LookupError:
-        return
-
-    for instance in model.objects.all().iterator():
-        file_field = getattr(instance, field_name, None)
-        if file_field:
-            file_field.delete(save=False)
-
-
 def reset_demo_seed_data(write_line: WriteLine | None = None) -> None:
     write = write_line or (lambda message: None)
 
     write("Resetting demo seed data...")
-
-    purge_file_field_for_all("products", "ProductImage", "image")
 
     safe_delete_all("payments", "Payment")
     safe_delete_all("orderitems", "OrderItem")

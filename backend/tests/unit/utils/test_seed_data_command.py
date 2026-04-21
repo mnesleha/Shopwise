@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.core.files.base import ContentFile
 from django.core.management import call_command
 from django.test import override_settings
 
@@ -13,6 +14,8 @@ from products.models import Product, ProductImage, TaxClass
 from products.services.pricing import get_product_pricing
 from suppliers.models import Supplier, SupplierAddress, SupplierPaymentDetails
 from suppliers.services import resolve_order_supplier_snapshot
+from utils.seed.common.media import cleanup_demo_product_media
+from utils.seed.demo.config import DEMO_PRODUCT_SLUGS
 from utils.seed.demo.seed import run_demo_seed
 
 
@@ -210,3 +213,98 @@ def _write_asset(asset_root: Path, slug: str, filename: str) -> None:
     product_dir = asset_root / slug
     product_dir.mkdir(parents=True, exist_ok=True)
     (product_dir / filename).write_bytes(TINY_JPEG)
+
+
+@override_settings(MEDIA_ROOT="test-media-root")
+def test_cleanup_demo_product_media_deletes_only_demo_linked_media(tmp_path, settings):
+    settings.MEDIA_ROOT = tmp_path / "media"
+
+    demo_product = Product.objects.create(
+        name="Demo Product",
+        slug="wireless-headphones",
+        price=Decimal("10.00"),
+        stock_quantity=10,
+        is_active=True,
+    )
+    demo_image = _create_product_image(demo_product, "demo-image.jpg")
+    demo_product.primary_image = demo_image
+    demo_product.save(update_fields=["primary_image"])
+
+    other_product = Product.objects.create(
+        name="Other Product",
+        slug="non-demo-product",
+        price=Decimal("11.00"),
+        stock_quantity=10,
+        is_active=True,
+    )
+    other_image = _create_product_image(other_product, "other-image.jpg")
+    other_product.primary_image = other_image
+    other_product.save(update_fields=["primary_image"])
+
+    demo_file_name = demo_image.image.name
+    other_file_name = other_image.image.name
+
+    cleanup_demo_product_media(product_slugs=DEMO_PRODUCT_SLUGS)
+
+    demo_product.refresh_from_db()
+    other_product.refresh_from_db()
+
+    assert demo_product.primary_image_id is None
+    assert demo_product.images.count() == 0
+    assert demo_image.image.storage.exists(demo_file_name) is False
+
+    assert other_product.primary_image_id == other_image.id
+    assert other_product.images.count() == 1
+    assert other_image.image.storage.exists(other_file_name) is True
+
+
+@override_settings(MEDIA_ROOT="test-media-root")
+def test_cleanup_demo_product_media_removes_empty_local_directory(tmp_path, settings):
+    settings.MEDIA_ROOT = tmp_path / "media"
+
+    demo_product = Product.objects.create(
+        name="Demo Product",
+        slug="wireless-headphones",
+        price=Decimal("10.00"),
+        stock_quantity=10,
+        is_active=True,
+    )
+    demo_image = _create_product_image(demo_product, "demo-image.jpg")
+    image_directory = Path(demo_image.image.storage.path(demo_image.image.name)).parent
+
+    assert image_directory.exists() is True
+
+    cleanup_demo_product_media(product_slugs=DEMO_PRODUCT_SLUGS)
+
+    assert image_directory.exists() is False
+
+
+@override_settings(MEDIA_ROOT="test-media-root")
+def test_cleanup_demo_product_media_tolerates_missing_files_and_dirs(tmp_path, settings):
+    settings.MEDIA_ROOT = tmp_path / "media"
+
+    demo_product = Product.objects.create(
+        name="Demo Product",
+        slug="wireless-headphones",
+        price=Decimal("10.00"),
+        stock_quantity=10,
+        is_active=True,
+    )
+    demo_image = _create_product_image(demo_product, "demo-image.jpg")
+    image_path = Path(demo_image.image.storage.path(demo_image.image.name))
+    image_directory = image_path.parent
+    image_path.unlink()
+    image_directory.rmdir()
+
+    cleanup_demo_product_media(product_slugs=DEMO_PRODUCT_SLUGS)
+
+    demo_product.refresh_from_db()
+    assert demo_product.primary_image_id is None
+    assert demo_product.images.count() == 0
+
+
+def _create_product_image(product: Product, filename: str) -> ProductImage:
+    image = ProductImage(product=product, alt_text=product.name, sort_order=0)
+    image.image.save(filename, ContentFile(TINY_JPEG), save=False)
+    image.save()
+    return image

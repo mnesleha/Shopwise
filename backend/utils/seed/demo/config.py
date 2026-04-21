@@ -261,3 +261,6 @@ DEMO_PRODUCTS = [
         "stock_quantity": 50,
     },
 ]
+
+
+DEMO_PRODUCT_SLUGS = [product["slug"] for product in DEMO_PRODUCTS]

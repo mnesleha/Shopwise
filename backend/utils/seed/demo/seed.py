@@ -13,11 +13,16 @@ from products.models import Product, TaxClass
 from suppliers.models import Supplier, SupplierAddress, SupplierPaymentDetails
 
 from utils.seed.common.export import write_fixture_export
-from utils.seed.common.media import get_demo_product_asset_files, sync_product_media
+from utils.seed.common.media import (
+    cleanup_demo_product_media,
+    get_demo_product_asset_files,
+    sync_product_media,
+)
 from utils.seed.common.reset import reset_demo_seed_data
 from utils.seed.demo.config import (
     DEMO_CATEGORIES,
     DEMO_PRODUCTS,
+    DEMO_PRODUCT_SLUGS,
     DEMO_SUPPLIER,
     DEMO_TAX_CLASSES,
     DEMO_USERS,
@@ -39,6 +44,7 @@ def run_demo_seed(
     write = write_line or (lambda message: None)
 
     if reset:
+        cleanup_demo_product_media(product_slugs=DEMO_PRODUCT_SLUGS, write_line=write)
         reset_demo_seed_data(write)
 
     with transaction.atomic():
