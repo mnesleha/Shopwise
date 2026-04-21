@@ -20,10 +20,10 @@ It intentionally does not seed order history, fulfillment scenarios, or narrativ
 
 ## Seeded Users
 
-| Role | Email | Password |
-| --- | --- | --- |
-| Admin | `admin@shopwise.test` | `DemoAdmin123!` |
-| Staff | `staff@shopwise.test` | `DemoStaff123!` |
+| Role     | Email                        | Password           |
+| -------- | ---------------------------- | ------------------ |
+| Admin    | `admin@shopwise.test`        | `DemoAdmin123!`    |
+| Staff    | `staff@shopwise.test`        | `DemoStaff123!`    |
 | Customer | `alice.walker@shopwise.test` | `DemoCustomer123!` |
 | Customer | `martin.novak@shopwise.test` | `DemoCustomer123!` |
 
