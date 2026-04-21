@@ -13,12 +13,16 @@ from categories.models import Category
 from discounts.models import AcquisitionMode, Offer, OfferStatus, OrderPromotion, Promotion
 from discounts.services.auto_apply_resolver import resolve_auto_apply_order_promotion
 from discounts.services.line_promotion import resolve_line_promotion
+from orders.models import InventoryReservation, Order
+from payments.models import Payment
 from products.models import Product, ProductImage, TaxClass
 from products.services.pricing import get_product_pricing
+from shipping.models import ShipmentEvent
+from shipping.statuses import ShipmentStatus
 from suppliers.models import Supplier, SupplierAddress, SupplierPaymentDetails
 from suppliers.services import resolve_order_supplier_snapshot
 from utils.seed.common.media import cleanup_demo_product_media
-from utils.seed.demo.config import DEMO_PRODUCT_SLUGS
+from utils.seed.demo.config import DEMO_HISTORY_CUSTOMER_EMAIL, DEMO_PRODUCT_SLUGS
 from utils.seed.demo.seed import run_demo_seed
 
 
@@ -76,7 +80,7 @@ def test_seed_data_demo_creates_phase_1_reference_data():
     assert headphones.name == "Wireless Headphones"
     assert headphones.category.name == "Electronics"
     assert headphones.tax_class.name == "VAT 21%"
-    assert headphones.stock_quantity == 50
+    assert headphones.stock_quantity == 49
     assert headphones.is_active is True
     assert headphones.price == Decimal("2490.00")
     assert headphones.short_description.startswith("Over-ear wireless headphones")
@@ -137,6 +141,50 @@ def test_seed_data_demo_creates_phase_1_reference_data():
     assert offer.status == OfferStatus.DELIVERED
     assert offer.is_currently_active() is True
 
+    history_customer = user_model.objects.get(email=DEMO_HISTORY_CUSTOMER_EMAIL)
+    history_orders = Order.objects.filter(user=history_customer).order_by("id")
+    assert history_orders.count() == 3
+
+    active_order = history_orders.get(status=Order.Status.PAID)
+    delivered_order = history_orders.get(status=Order.Status.DELIVERED)
+    cancelled_order = history_orders.get(status=Order.Status.CANCELLED)
+
+    assert _order_product_slugs(active_order) == ["green-tea", "wireless-headphones"]
+    assert _order_product_slugs(delivered_order) == ["dog-food-premium", "organic-pasta"]
+    assert _order_product_slugs(cancelled_order) == ["mechanical-keyboard"]
+
+    active_payment = active_order.payments.get()
+    assert active_payment.payment_method == Payment.PaymentMethod.CARD
+    assert active_payment.provider == Payment.Provider.ACQUIREMOCK
+    assert active_payment.status == Payment.Status.SUCCESS
+    assert active_order.shipments.count() == 1
+    assert active_order.shipments.get().status == ShipmentStatus.LABEL_CREATED
+
+    delivered_payment = delivered_order.payments.get()
+    assert delivered_payment.payment_method == Payment.PaymentMethod.CARD
+    assert delivered_payment.provider == Payment.Provider.ACQUIREMOCK
+    assert delivered_payment.status == Payment.Status.SUCCESS
+    delivered_shipment = delivered_order.shipments.get()
+    assert delivered_shipment.status == ShipmentStatus.DELIVERED
+    assert ShipmentEvent.objects.filter(
+        shipment=delivered_shipment,
+        normalized_status=ShipmentStatus.IN_TRANSIT,
+    ).count() == 1
+    assert ShipmentEvent.objects.filter(
+        shipment=delivered_shipment,
+        normalized_status=ShipmentStatus.DELIVERED,
+    ).count() == 1
+
+    assert cancelled_order.payments.count() == 0
+    assert cancelled_order.shipments.count() == 0
+    assert cancelled_order.cancelled_by == Order.CancelledBy.ADMIN
+    assert cancelled_order.cancel_reason == Order.CancelReason.ADMIN_CANCELLED
+    assert cancelled_order.inventory_reservations.count() == 1
+    assert all(
+        reservation.status == InventoryReservation.Status.RELEASED
+        for reservation in cancelled_order.inventory_reservations.all()
+    )
+
 
 def test_seed_data_demo_is_repeatable_and_normalizes_active_supplier():
     other_supplier = Supplier.objects.create(name="Legacy Supplier", company_id="LEGACY-1", is_active=True)
@@ -169,6 +217,8 @@ def test_seed_data_demo_is_repeatable_and_normalizes_active_supplier():
     assert OrderPromotion.objects.filter(code="demo-order-discount").count() == 1
     assert OrderPromotion.objects.filter(code="campaign-welcome-offer").count() == 1
     assert Offer.objects.filter(token="DEMO-WELCOME-2025").count() == 1
+    history_customer = get_user_model().objects.get(email=DEMO_HISTORY_CUSTOMER_EMAIL)
+    assert Order.objects.filter(user=history_customer).count() == 3
 
     electronics_discount = Promotion.objects.get(code="demo-electronics-discount")
     selected_discount = Promotion.objects.get(code="demo-selected-products-15-off")
@@ -397,3 +447,7 @@ def _create_product_image(product: Product, filename: str) -> ProductImage:
     image.image.save(filename, ContentFile(TINY_JPEG), save=False)
     image.save()
     return image
+
+
+def _order_product_slugs(order: Order) -> list[str]:
+    return sorted(order.items.values_list("product__slug", flat=True))

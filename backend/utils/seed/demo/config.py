@@ -514,4 +514,56 @@ DEMO_OFFERS = [
 ]
 
 
+DEMO_HISTORY_CUSTOMER_EMAIL = "alice.walker@shopwise.test"
+
+
+DEMO_ORDER_HISTORY = [
+    {
+        "key": "active_order",
+        "reference": "demo-history-active-order",
+        "products": [
+            {"slug": "wireless-headphones", "quantity": 1},
+            {"slug": "green-tea", "quantity": 1},
+        ],
+        "payment_method": "CARD",
+        "provider_payment_id": "demo-active-card-payment",
+        "payment_redirect_url": "https://acquiremock.test/checkout/demo-active-card-payment",
+        "webhook_statuses": ["PAID"],
+        "cancel": None,
+        "description": "Active paid order with an existing shipment label, still in the current orders bucket.",
+    },
+    {
+        "key": "delivered_order",
+        "reference": "demo-history-delivered-order",
+        "products": [
+            {"slug": "dog-food-premium", "quantity": 1},
+            {"slug": "organic-pasta", "quantity": 1},
+        ],
+        "payment_method": "CARD",
+        "provider_payment_id": "demo-delivered-card-payment",
+        "payment_redirect_url": "https://acquiremock.test/checkout/demo-delivered-card-payment",
+        "webhook_statuses": ["PAID", "IN_TRANSIT", "DELIVERED"],
+        "cancel": None,
+        "description": "Completed delivered order with a paid card payment and shipment timeline events.",
+    },
+    {
+        "key": "cancelled_order",
+        "reference": "demo-history-cancelled-order",
+        "products": [
+            {"slug": "mechanical-keyboard", "quantity": 1},
+        ],
+        "payment_method": None,
+        "provider_payment_id": None,
+        "payment_redirect_url": None,
+        "webhook_statuses": [],
+        "cancel": {
+            "release_reason": "ADMIN_CANCEL",
+            "cancelled_by": "ADMIN",
+            "cancel_reason": "ADMIN_CANCELLED",
+        },
+        "description": "Cancelled pre-payment order with released reservations and no shipment.",
+    },
+]
+
+
 DEMO_PRODUCT_SLUGS = [product["slug"] for product in DEMO_PRODUCTS]

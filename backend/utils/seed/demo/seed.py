@@ -28,6 +28,7 @@ from utils.seed.demo.config import (
     DEMO_TAX_CLASSES,
     DEMO_USERS,
 )
+from utils.seed.demo.history import seed_demo_order_history
 
 
 WriteLine = Callable[[str], None]
@@ -57,6 +58,7 @@ def run_demo_seed(
             "products": _seed_products(write),
             "commercial": seed_demo_commercial_layer(write),
             "media": _seed_product_media(write, asset_root=asset_root),
+            "history": seed_demo_order_history(write),
         }
 
     if export_path:
