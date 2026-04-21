@@ -59,6 +59,13 @@ class TaxClass(models.Model):
 
 class Product(models.Model):
     name = models.CharField(max_length=255)
+    slug = models.SlugField(
+        max_length=255,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text="Stable product identifier for seed data, tests, and storefront URLs.",
+    )
 
     # ------------------------------------------------------------------
     # Legacy pricing field (TRANSITIONAL)

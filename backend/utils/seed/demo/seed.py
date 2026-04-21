@@ -1,20 +1,23 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
+from pathlib import Path
 from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from categories.models import Category
-from products.models import TaxClass
+from products.models import Product, TaxClass
 from suppliers.models import Supplier, SupplierAddress, SupplierPaymentDetails
 
 from utils.seed.common.export import write_fixture_export
+from utils.seed.common.media import get_demo_product_asset_files, sync_product_media
 from utils.seed.common.reset import reset_demo_seed_data
 from utils.seed.demo.config import (
     DEMO_CATEGORIES,
+    DEMO_PRODUCTS,
     DEMO_SUPPLIER,
     DEMO_TAX_CLASSES,
     DEMO_USERS,
@@ -22,12 +25,15 @@ from utils.seed.demo.config import (
 
 
 WriteLine = Callable[[str], None]
+MONEY_QUANTIZE = Decimal("0.01")
+HUNDRED = Decimal("100")
 
 
 def run_demo_seed(
     *,
     reset: bool = False,
     export_path: str | None = None,
+    asset_root: str | Path | None = None,
     write_line: WriteLine | None = None,
 ) -> None:
     write = write_line or (lambda message: None)
@@ -41,6 +47,8 @@ def run_demo_seed(
             "tax_classes": _seed_tax_classes(write),
             "supplier": _seed_supplier(write),
             "categories": _seed_categories(write),
+            "products": _seed_products(write),
+            "media": _seed_product_media(write, asset_root=asset_root),
         }
 
     if export_path:
@@ -197,3 +205,74 @@ def _seed_categories(write: WriteLine) -> dict[str, dict[str, Any]]:
         write(f"{'Created' if created else 'Updated'} category: {category.name}")
 
     return fixtures
+
+
+def _seed_products(write: WriteLine) -> dict[str, dict[str, Any]]:
+    category_map = {category.name: category for category in Category.objects.all()}
+    tax_class_map = {tax_class.name: tax_class for tax_class in TaxClass.objects.all()}
+    fixtures: dict[str, dict[str, Any]] = {}
+
+    for product_data in DEMO_PRODUCTS:
+        category = category_map[product_data["category_name"]]
+        tax_class = tax_class_map[product_data["tax_class_name"]]
+        gross_price = Decimal(product_data["price"])
+        net_price = _net_amount_from_gross(gross_price, tax_class.rate)
+
+        product, created = Product.objects.update_or_create(
+            slug=product_data["slug"],
+            defaults={
+                "name": product_data["name"],
+                "price": gross_price,
+                "price_net_amount": net_price,
+                "currency": "EUR",
+                "tax_class": tax_class,
+                "stock_quantity": product_data["stock_quantity"],
+                "is_active": True,
+                "category": category,
+                "short_description": "",
+                "full_description": "",
+            },
+        )
+
+        fixtures[product_data["key"]] = {
+            "id": product.id,
+            "slug": product.slug,
+            "price": str(product.price),
+        }
+        write(f"{'Created' if created else 'Updated'} product: {product.name}")
+
+    return fixtures
+
+
+def _seed_product_media(
+    write: WriteLine,
+    *,
+    asset_root: str | Path | None = None,
+) -> dict[str, dict[str, Any]]:
+    fixtures: dict[str, dict[str, Any]] = {}
+    products = Product.objects.all().order_by("name")
+
+    for product in products:
+        asset_files = get_demo_product_asset_files(
+            slug=product.slug,
+            assets_root=asset_root,
+        )
+        synced_images = sync_product_media(
+            product=product,
+            asset_files=asset_files,
+            write_line=write,
+        )
+        fixtures[product.slug] = {
+            "count": len(synced_images),
+            "primary_image_id": product.primary_image_id,
+        }
+
+    return fixtures
+
+
+def _net_amount_from_gross(gross_amount: Decimal, tax_rate: Decimal | None) -> Decimal:
+    if tax_rate is None or tax_rate == 0:
+        return gross_amount.quantize(MONEY_QUANTIZE, rounding=ROUND_HALF_UP)
+
+    divisor = Decimal("1") + (tax_rate / HUNDRED)
+    return (gross_amount / divisor).quantize(MONEY_QUANTIZE, rounding=ROUND_HALF_UP)

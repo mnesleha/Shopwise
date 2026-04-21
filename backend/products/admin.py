@@ -40,12 +40,13 @@ class ProductImageInline(admin.TabularInline):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "price", "price_net_amount", "price_gross_amount", "currency", "stock_quantity", "is_active")
+    list_display = ("id", "name", "slug", "price", "price_net_amount", "price_gross_amount", "currency", "stock_quantity", "is_active")
     list_filter = ("is_active", "currency", "tax_class")
-    search_fields = ("name",)
+    search_fields = ("name", "slug")
     readonly_fields = ("price_gross_amount",)
     fields = (
         "name",
+        "slug",
         # --- Pricing ---
         "price",
         "price_net_amount",
