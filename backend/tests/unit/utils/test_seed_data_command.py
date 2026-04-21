@@ -348,6 +348,34 @@ def test_demo_seed_media_rerun_replaces_gallery_deterministically(tmp_path, sett
     assert ProductImage.objects.filter(product=product).count() == 3
 
 
+@override_settings(MEDIA_ROOT="test-media-root")
+def test_demo_seed_media_sync_ignores_non_demo_products(tmp_path, settings):
+    settings.MEDIA_ROOT = tmp_path / "media"
+    asset_root = tmp_path / "assets" / "products"
+    _write_asset(asset_root, "wireless-headphones", "wireless-headphones-1.jpg")
+
+    run_demo_seed(asset_root=asset_root)
+
+    other_product = Product.objects.create(
+        name="Other Product",
+        slug="non-demo-product",
+        price=Decimal("11.00"),
+        stock_quantity=10,
+        is_active=True,
+    )
+    other_image = _create_product_image(other_product, "other-image.jpg")
+    other_product.primary_image = other_image
+    other_product.save(update_fields=["primary_image"])
+    other_file_name = other_image.image.name
+
+    run_demo_seed(asset_root=asset_root)
+
+    other_product.refresh_from_db()
+    assert other_product.primary_image_id == other_image.id
+    assert other_product.images.count() == 1
+    assert other_image.image.storage.exists(other_file_name) is True
+
+
 def _write_asset(asset_root: Path, slug: str, filename: str) -> None:
     product_dir = asset_root / slug
     product_dir.mkdir(parents=True, exist_ok=True)

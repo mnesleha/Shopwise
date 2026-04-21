@@ -49,6 +49,7 @@ def run_demo_seed(
         cleanup_demo_product_media(product_slugs=DEMO_PRODUCT_SLUGS, write_line=write)
         reset_demo_seed_data(write)
 
+    fixtures: dict[str, Any]
     with transaction.atomic():
         fixtures = {
             "users": _seed_users(write),
@@ -57,9 +58,10 @@ def run_demo_seed(
             "categories": _seed_categories(write),
             "products": _seed_products(write),
             "commercial": seed_demo_commercial_layer(write),
-            "media": _seed_product_media(write, asset_root=asset_root),
             "history": seed_demo_order_history(write),
         }
+
+    fixtures["media"] = _seed_product_media(write, asset_root=asset_root)
 
     if export_path:
         output_path = write_fixture_export(export_path, fixtures)
@@ -260,11 +262,15 @@ def _seed_product_media(
     asset_root: str | Path | None = None,
 ) -> dict[str, dict[str, Any]]:
     fixtures: dict[str, dict[str, Any]] = {}
-    products = Product.objects.all().order_by("name")
+    products_by_slug = Product.objects.in_bulk(DEMO_PRODUCT_SLUGS, field_name="slug")
 
-    for product in products:
+    for product_slug in DEMO_PRODUCT_SLUGS:
+        product = products_by_slug.get(product_slug)
+        if product is None:
+            continue
+
         asset_files = get_demo_product_asset_files(
-            slug=product.slug,
+            slug=product_slug,
             assets_root=asset_root,
         )
         synced_images = sync_product_media(
@@ -272,7 +278,7 @@ def _seed_product_media(
             asset_files=asset_files,
             write_line=write,
         )
-        fixtures[product.slug] = {
+        fixtures[product_slug] = {
             "count": len(synced_images),
             "primary_image_id": product.primary_image_id,
         }
