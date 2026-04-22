@@ -1,0 +1,18 @@
+site_name: Shopwise Showcase Project Documentation
+site_url: https://github.io
+
+theme:
+  name: material # theme
+  palette:
+    primary: indigo # colors
+    accent: indigo
+  features:
+    - navigation.sections # menu sections
+    - navigation.expand # automatic menu expansion
+
+nav: # define the left panel
+  - Index: index.md
+  - API: OpenAPI.md
+  - Architecture:
+      - System Architecture Overview: architecture/System Architecture Overview.md
+      - Current Architecture Baseline: architecture/Current Architecture Baseline.md
