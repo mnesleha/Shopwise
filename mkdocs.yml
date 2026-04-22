@@ -14,7 +14,8 @@ markdown_extensions: # mermaid support
   - pymdownx.superfences
 
 extra_javascript:
-  - https://unpkg.com
+  - https://unpkg.com/mermaid@10/dist/mermaid.min.js
+  - js/mermaid-init.js
 
 nav: # define the left panel
   - Index: index.md
