@@ -12,7 +12,17 @@ theme:
 
 nav: # define the left panel
   - Index: index.md
-  - API: OpenAPI.md
+  - API:
+      - OpenAPI: api/OpenAPI.md
   - Architecture:
       - System Architecture Overview: architecture/System Architecture Overview.md
       - Current Architecture Baseline: architecture/Current Architecture Baseline.md
+      - Domain Model: architecture/Domain Model.md
+      - ER Diagram: architecture/ER Diagram.md
+      - Cart-Order Lifecycle: architecture/Cart-Order Lifecycle.md
+      - Inventory Reservation Lifecycle: architecture/Inventory Reservation Lifecycle.md
+      - Postman Anonymous Cart Testing: architecture/Postman Anonymous Cart Testing.md
+  - CI-CD:
+      - Pipeline Overview: ci-cd/Pipeline Overview.md
+      - Postman CLI in CI: ci-cd/Postman CLI in CI.md
+  - Architectural Decisions Index: decisions/readme.md
