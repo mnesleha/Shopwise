@@ -11,11 +11,10 @@ theme:
     - navigation.expand # automatic menu expansion
 
 markdown_extensions: # mermaid support
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.mermaid_format
+  - pymdownx.superfences
+
+extra_javascript:
+  - https://unpkg.com
 
 nav: # define the left panel
   - Index: index.md
