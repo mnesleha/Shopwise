@@ -10,6 +10,13 @@ theme:
     - navigation.sections # menu sections
     - navigation.expand # automatic menu expansion
 
+markdown_extensions: # mermaid support
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.mermaid_format
+
 nav: # define the left panel
   - Index: index.md
   - API:
