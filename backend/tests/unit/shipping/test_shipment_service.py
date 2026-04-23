@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.test import override_settings
 
 from orders.models import Order
+from payments.models import Payment
 from shipping.models import Shipment
 from shipping.services.shipment import InvalidShipmentSnapshot, ShipmentService
 from shipping.statuses import ShipmentStatus
@@ -64,8 +65,72 @@ def test_create_for_paid_order_rejects_non_paid_order():
     user = User.objects.create_user(email="shipment-nonpaid@example.com", password="pass")
     order = create_valid_order(user=user, status=Order.Status.CREATED)
 
-    with pytest.raises(ValueError, match="PAID"):
-        ShipmentService.create_for_paid_order(order=order)
+    with pytest.raises(ValueError, match="fulfillment-eligible"):
+        ShipmentService.create_for_order(order=order)
+
+
+@pytest.mark.django_db
+def test_create_for_order_allows_created_cod_order_with_pending_payment():
+    user = User.objects.create_user(email="shipment-cod@example.com", password="pass")
+    order = create_valid_order(user=user, status=Order.Status.CREATED)
+    Payment.objects.create(
+        order=order,
+        status=Payment.Status.PENDING,
+        payment_method=Payment.PaymentMethod.COD,
+        provider=Payment.Provider.DEV_FAKE,
+    )
+
+    shipment = ShipmentService.create_for_order(order=order)
+
+    order.refresh_from_db()
+
+    assert shipment.status == ShipmentStatus.LABEL_CREATED
+    assert order.status == Order.Status.CREATED
+
+
+@pytest.mark.django_db
+def test_create_for_order_rejects_created_card_order_before_payment():
+    user = User.objects.create_user(email="shipment-card@example.com", password="pass")
+    order = create_valid_order(user=user, status=Order.Status.CREATED)
+    Payment.objects.create(
+        order=order,
+        status=Payment.Status.PENDING,
+        payment_method=Payment.PaymentMethod.CARD,
+        provider=Payment.Provider.ACQUIREMOCK,
+    )
+
+    with pytest.raises(ValueError, match="fulfillment-eligible"):
+        ShipmentService.create_for_order(order=order)
+
+
+@pytest.mark.django_db
+def test_create_for_order_rejects_payment_failed_cod_order():
+    user = User.objects.create_user(email="shipment-payment-failed@example.com", password="pass")
+    order = create_valid_order(user=user, status=Order.Status.PAYMENT_FAILED)
+    Payment.objects.create(
+        order=order,
+        status=Payment.Status.FAILED,
+        payment_method=Payment.PaymentMethod.COD,
+        provider=Payment.Provider.DEV_FAKE,
+    )
+
+    with pytest.raises(ValueError, match="fulfillment-eligible"):
+        ShipmentService.create_for_order(order=order)
+
+
+@pytest.mark.django_db
+def test_create_for_order_rejects_cancelled_cod_order():
+    user = User.objects.create_user(email="shipment-cancelled@example.com", password="pass")
+    order = create_valid_order(user=user, status=Order.Status.CANCELLED)
+    Payment.objects.create(
+        order=order,
+        status=Payment.Status.PENDING,
+        payment_method=Payment.PaymentMethod.COD,
+        provider=Payment.Provider.DEV_FAKE,
+    )
+
+    with pytest.raises(ValueError, match="fulfillment-eligible"):
+        ShipmentService.create_for_order(order=order)
 
 
 @pytest.mark.django_db
@@ -82,4 +147,4 @@ def test_create_for_paid_order_rejects_missing_shipping_snapshot(monkeypatch):
     monkeypatch.setattr("shipping.services.shipment.resolve_provider", fail_if_resolver_called)
 
     with pytest.raises(InvalidShipmentSnapshot, match="shipping_provider_code, shipping_service_code"):
-        ShipmentService.create_for_paid_order(order=order)
+        ShipmentService.create_for_order(order=order)

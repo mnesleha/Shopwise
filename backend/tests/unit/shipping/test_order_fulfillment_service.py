@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.test import override_settings
 
 from orders.models import Order
+from payments.models import Payment
 from shipping.models import Shipment, ShipmentEvent
 from shipping.services.fulfillment import OrderFulfillmentService
 from shipping.services.shipment import ShipmentService
@@ -52,6 +53,28 @@ def test_bulk_create_missing_shipments_skips_invalid_orders():
     assert Shipment.objects.filter(order=valid_order).count() == 1
     assert Shipment.objects.filter(order=non_paid_order).count() == 0
     assert Shipment.objects.filter(order=existing_shipment_order).count() == 1
+
+
+@pytest.mark.django_db
+def test_create_missing_shipment_for_created_cod_order_creates_shipment_without_marking_paid():
+    user = User.objects.create_user(email="fulfillment-create-cod@example.com", password="pass")
+    order = create_valid_order(user=user, status=Order.Status.CREATED)
+    Payment.objects.create(
+        order=order,
+        status=Payment.Status.PENDING,
+        payment_method=Payment.PaymentMethod.COD,
+        provider=Payment.Provider.DEV_FAKE,
+    )
+
+    outcome = OrderFulfillmentService.create_missing_shipment_for_order(order=order)
+
+    order.refresh_from_db()
+    shipment = order.get_current_shipment()
+
+    assert outcome == "updated"
+    assert shipment is not None
+    assert shipment.status == ShipmentStatus.LABEL_CREATED
+    assert order.status == Order.Status.CREATED
 
 
 @pytest.mark.django_db

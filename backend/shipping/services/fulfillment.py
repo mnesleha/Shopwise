@@ -8,6 +8,7 @@ from django.db import transaction
 from orders.models import Order
 from shipping.models import Shipment
 from shipping.providers.resolver import ProviderNotConfiguredException
+from shipping.services.eligibility import ShipmentEligibilityService
 from shipping.services.events import InvalidShipmentSimulation, ShipmentEventService
 from shipping.services.shipment import InvalidShipmentSnapshot, ShipmentService
 from shipping.statuses import ShipmentStatus
@@ -58,14 +59,14 @@ class OrderFulfillmentService:
     def create_missing_shipment_for_order(cls, *, order) -> str:
         with transaction.atomic():
             locked_order = cls._lock_order(order_id=order.pk)
-            if locked_order.status != Order.Status.PAID:
+            if not ShipmentEligibilityService.can_create_shipment(order=locked_order):
                 return "invalid_order_status"
 
             if locked_order.get_shipment_count() > 0:
                 return "shipment_already_exists"
 
             try:
-                ShipmentService.create_for_paid_order(order=locked_order)
+                ShipmentService.create_for_order(order=locked_order)
             except InvalidShipmentSnapshot:
                 return "invalid_shipping_snapshot"
             except ProviderNotConfiguredException:

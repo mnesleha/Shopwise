@@ -25,6 +25,7 @@ from payments.providers.resolver import ProviderNotConfiguredException
 from payments.services.payment_orchestration import PaymentOrchestrationService
 from payments.services.payment_result_applier import apply_provider_result
 from shipping.models import Shipment
+from shipping.statuses import ShipmentStatus
 from tests.conftest import create_valid_order
 
 User = get_user_model()
@@ -484,6 +485,44 @@ def test_apply_result_deferred_leaves_order_created():
 
 
 @pytest.mark.django_db
+def test_apply_result_deferred_creates_shipment_for_cod_order():
+    user = User.objects.create_user(email="defer2-shipment@example.com", password="pass")
+    order = create_valid_order(user=user)
+    payment = Payment.objects.create(
+        order=order,
+        status=Payment.Status.PENDING,
+        payment_method=Payment.PaymentMethod.COD,
+        provider=Payment.Provider.DEV_FAKE,
+    )
+
+    result = ProviderStartResult(success=True, deferred=True)
+    apply_provider_result(payment=payment, order=order, provider_result=result)
+
+    order.refresh_from_db()
+    shipment = Shipment.objects.get(order=order)
+
+    assert shipment.status == ShipmentStatus.LABEL_CREATED
+    assert order.status == Order.Status.CREATED
+
+
+@pytest.mark.django_db
+def test_apply_result_deferred_does_not_create_shipment_for_card_order():
+    user = User.objects.create_user(email="defer2-card@example.com", password="pass")
+    order = create_valid_order(user=user)
+    payment = Payment.objects.create(
+        order=order,
+        status=Payment.Status.PENDING,
+        payment_method=Payment.PaymentMethod.CARD,
+        provider=Payment.Provider.ACQUIREMOCK,
+    )
+
+    result = ProviderStartResult(success=True, deferred=True)
+    apply_provider_result(payment=payment, order=order, provider_result=result)
+
+    assert Shipment.objects.filter(order=order).count() == 0
+
+
+@pytest.mark.django_db
 def test_orchestration_cod_without_simulated_result_creates_pending_payment():
     """COD checkout with no simulated_result → payment stays PENDING, order stays CREATED.
 
@@ -506,6 +545,7 @@ def test_orchestration_cod_without_simulated_result_creates_pending_payment():
     assert order.status == Order.Status.CREATED, (
         "COD checkout without simulated_result must leave order in CREATED state."
     )
+    assert Shipment.objects.filter(order=order).count() == 1
 
 
 @pytest.mark.django_db

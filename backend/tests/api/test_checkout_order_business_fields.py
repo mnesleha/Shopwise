@@ -216,3 +216,19 @@ def test_order_response_billing_address_includes_business_fields(auth_client, us
     assert billing["company"] == "BigCo"
     assert billing["company_id"] == "CRN-BILL"
     assert billing["vat_id"] == "EU-BILL"
+
+
+@pytest.mark.django_db
+def test_order_response_includes_payment_method(auth_client, user):
+    _add_product_to_cart(auth_client)
+
+    checkout_resp = auth_client.post(
+        "/api/v1/cart/checkout/",
+        checkout_payload(customer_email=user.email, payment_method="COD"),
+        format="json",
+    )
+    assert checkout_resp.status_code == 201
+
+    resp = auth_client.get(f"/api/v1/orders/{checkout_resp.data['id']}/")
+    assert resp.status_code == 200
+    assert resp.data["payment_method"] == "COD"

@@ -39,6 +39,7 @@ from orders.services.inventory_reservation_service import (
 )
 from payments.models import Payment
 from payments.providers.base import ProviderStartResult
+from shipping.services.eligibility import ShipmentEligibilityService
 from shipping.services.shipment import ShipmentService
 
 
@@ -86,8 +87,11 @@ def apply_provider_result(
             # simulated_result).  The provider has acknowledged the order but
             # finalisation happens via a separate explicit step: POST /payments/.
             # Leave payment PENDING, leave order CREATED, leave inventory ACTIVE.
+            # Shipment creation uses explicit fulfillment eligibility, so COD
+            # orders can still get tracking/labels without being marked paid.
             # ----------------------------------------------------------------
-            pass  # nothing to save — payment already PENDING, order already CREATED
+            if ShipmentEligibilityService.can_create_shipment(order=order):
+                ShipmentService.create_for_order(order=order)
         else:
             # ----------------------------------------------------------------
             # Direct/synchronous payment completed (e.g. COD/DevFake with an
@@ -114,7 +118,7 @@ def apply_provider_result(
                 order.status = Order.Status.PAID
                 order.save(update_fields=["status"])
 
-            ShipmentService.create_for_paid_order(order=order)
+            ShipmentService.create_for_order(order=order)
     else:
         payment.status = Payment.Status.FAILED
         payment.failed_at = timezone.now()

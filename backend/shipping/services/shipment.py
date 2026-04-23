@@ -3,6 +3,7 @@ from django.core.files.base import ContentFile
 from shipping.models import Shipment
 from shipping.providers.base import CreateShipmentContext
 from shipping.providers.resolver import resolve_provider
+from shipping.services.eligibility import ShipmentEligibilityService
 
 
 class InvalidShipmentSnapshot(ValueError):
@@ -11,9 +12,9 @@ class InvalidShipmentSnapshot(ValueError):
 
 class ShipmentService:
     @staticmethod
-    def create_for_paid_order(*, order):
-        if order.status != order.Status.PAID:
-            raise ValueError("Shipment can only be created for PAID orders.")
+    def create_for_order(*, order):
+        if not ShipmentEligibilityService.can_create_shipment(order=order):
+            raise ValueError("Shipment can only be created for fulfillment-eligible orders.")
 
         missing_fields = []
         if not order.shipping_provider_code:
@@ -35,6 +36,10 @@ class ShipmentService:
             provider_code=order.shipping_provider_code,
             service_code=order.shipping_service_code,
         )
+
+    @staticmethod
+    def create_for_paid_order(*, order):
+        return ShipmentService.create_for_order(order=order)
 
     @staticmethod
     def create_retry_for_order(*, order, provider_code: str | None = None, service_code: str | None = None):

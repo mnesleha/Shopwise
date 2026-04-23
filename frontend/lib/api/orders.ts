@@ -129,6 +129,8 @@ export type BaseOrderDto = {
   billing_address?: AddressSnapshotDto | null;
   /** Contact email captured at checkout. */
   customer_email?: string | null;
+  /** Payment method selected for the order. */
+  payment_method?: "CARD" | "COD" | null;
   /** Checkout shipping selection snapshot. */
   shipping_method?: ShippingMethodDto | null;
   /** Latest shipment summary, when a shipment already exists. */

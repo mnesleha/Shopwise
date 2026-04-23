@@ -321,6 +321,7 @@ describe("mapOrderToVm — order-level totals", () => {
 describe("mapOrderToVm — shipping summary", () => {
   it("maps shipping method and shipment summary from backend data", () => {
     const dto = makeOrderDto({
+      payment_method: "COD",
       shipping_method: {
         provider_code: "MOCK",
         service_code: "express",
@@ -341,7 +342,13 @@ describe("mapOrderToVm — shipping summary", () => {
     expect(vm.shippingLabelUrl).toBe(
       "https://mock-shipping.local/labels/MOCK-123-EXPRESS",
     );
-    expect(vm.paymentMethod).toBeUndefined();
+    expect(vm.paymentMethod).toBe("Cash on delivery");
+  });
+
+  it("maps CARD payment method into a readable label", () => {
+    const dto = makeOrderDto({ payment_method: "CARD" });
+
+    expect(mapOrderToVm(dto).paymentMethod).toBe("Card");
   });
 
   it("maps shipment timeline entries", () => {

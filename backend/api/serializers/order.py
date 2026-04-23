@@ -11,6 +11,7 @@ from discounts.services.order_discount_allocation import (
 )
 from orders.models import Order
 from orderitems.models import OrderItem
+from payments.models import Payment
 
 
 def _format_decimal(value: Decimal) -> str:
@@ -132,6 +133,7 @@ class OrderResponseSerializer(serializers.Serializer):
     shipping_method = serializers.SerializerMethodField()
     shipment_summary = serializers.SerializerMethodField()
     shipment_timeline = serializers.SerializerMethodField()
+    payment_method = serializers.SerializerMethodField()
     # Contact email captured at checkout.
     customer_email = serializers.CharField(read_only=True)
     # Supplier snapshot — populated from stored order truth (immutable after order creation).
@@ -390,6 +392,16 @@ class OrderResponseSerializer(serializers.Serializer):
             return []
 
         return shipment.get_timeline()
+
+    def get_payment_method(self, obj: Order) -> str | None:
+        payment_method = (
+            obj.payments.order_by("-created_at", "-pk")
+            .values_list("payment_method", flat=True)
+            .first()
+        )
+        if payment_method not in {choice.value for choice in Payment.PaymentMethod}:
+            return None
+        return payment_method
 
     def get_supplier(self, obj: Order) -> dict | None:
         """Return supplier snapshot from stored order truth.

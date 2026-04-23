@@ -131,10 +131,7 @@ class ShipmentEventService:
     def _sync_order_projection(*, order: Order, shipment: Shipment) -> None:
         next_status = None
 
-        if shipment.status == ShipmentStatus.LABEL_CREATED and order.status in (
-            Order.Status.CREATED,
-            Order.Status.DELIVERY_FAILED,
-        ):
+        if shipment.status == ShipmentStatus.LABEL_CREATED and order.status == Order.Status.DELIVERY_FAILED:
             next_status = Order.Status.PAID
         elif shipment.status == ShipmentStatus.IN_TRANSIT and order.status in (
             Order.Status.PAID,

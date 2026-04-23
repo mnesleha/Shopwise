@@ -74,6 +74,16 @@ function formatOrderNumber(orderId: number): string {
   return `OBJ${year}${String(orderId).padStart(6, "0")}`;
 }
 
+function mapPaymentMethod(paymentMethod?: string | null): string | undefined {
+  if (paymentMethod === "CARD") {
+    return "Card";
+  }
+  if (paymentMethod === "COD") {
+    return "Cash on delivery";
+  }
+  return undefined;
+}
+
 /**
  * Derive a customer-facing discount note for invoice display.
  *
@@ -195,6 +205,7 @@ export function mapOrderToVm(dto: BaseOrderDto): OrderViewModel {
         : DEFAULT_CUSTOMER,
 
     shippingMethod: dto.shipping_method?.name || undefined,
+    paymentMethod: mapPaymentMethod(dto.payment_method),
     shipmentStatus: dto.shipment_summary?.status || undefined,
     trackingNumber: dto.shipment_summary?.tracking_number || undefined,
     shippingLabelUrl: dto.shipment_summary?.label_url || undefined,

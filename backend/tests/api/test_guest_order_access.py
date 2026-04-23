@@ -1,6 +1,7 @@
 import pytest
 
 from orders.models import Order
+from payments.models import Payment
 from tests.conftest import create_valid_order
 
 from orders.services.guest_order_access_service import GuestOrderAccessService
@@ -13,6 +14,12 @@ def test_guest_order_access_valid_token_returns_200(client):
     # guest order (user=None)
     order = create_valid_order(
         user=None, status=Order.Status.CREATED, customer_email="guest@example.com")
+    Payment.objects.create(
+        order=order,
+        status=Payment.Status.PENDING,
+        payment_method=Payment.PaymentMethod.COD,
+        provider=Payment.Provider.DEV_FAKE,
+    )
 
     # issue token via service (implemented in PR)
 
@@ -21,6 +28,7 @@ def test_guest_order_access_valid_token_returns_200(client):
     resp = client.get(f"/api/v1/guest/orders/{order.id}/", {"token": token})
     assert resp.status_code == 200, resp.content
     assert resp.json()["id"] == order.id
+    assert resp.json()["payment_method"] == "COD"
 
 
 def test_guest_order_access_invalid_token_returns_404(client):
