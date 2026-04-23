@@ -184,7 +184,7 @@ DEMO_PRODUCTS = [
         "category_name": "Electronics",
         "tax_class_name": "VAT 21%",
         "price": "1890.00",
-        "stock_quantity": 50,
+        "stock_quantity": 0,
         "short_description": "Desk dock that turns one USB-C cable into display, power, and peripheral connectivity.",
         "full_description": _md(
             "USB-C Dock",
@@ -204,7 +204,7 @@ DEMO_PRODUCTS = [
         "category_name": "Electronics",
         "tax_class_name": "VAT 21%",
         "price": "1590.00",
-        "stock_quantity": 50,
+        "stock_quantity": 0,
         "short_description": "Voice-enabled smart speaker with room-friendly design and quick setup for connected homes.",
         "full_description": _md(
             "Smart Speaker",
@@ -224,7 +224,7 @@ DEMO_PRODUCTS = [
         "category_name": "Electronics",
         "tax_class_name": "VAT 21%",
         "price": "2190.00",
-        "stock_quantity": 50,
+        "stock_quantity": 4,
         "short_description": "Pocket-size portable SSD for fast backups, field work, and content handoff between devices.",
         "full_description": _md(
             "Portable SSD",
@@ -284,7 +284,7 @@ DEMO_PRODUCTS = [
         "category_name": "Grocery",
         "tax_class_name": "VAT 12%",
         "price": "129.00",
-        "stock_quantity": 50,
+        "stock_quantity": 0,
         "short_description": "Crunchy granola blend for breakfast and snack merchandising on grocery landing pages.",
         "full_description": _md(
             "Granola Mix",
@@ -304,7 +304,7 @@ DEMO_PRODUCTS = [
         "category_name": "Grocery",
         "tax_class_name": "VAT 12%",
         "price": "99.00",
-        "stock_quantity": 50,
+        "stock_quantity": 0,
         "short_description": "Everyday green tea that adds a low-ticket beverage SKU to the grocery assortment.",
         "full_description": _md(
             "Green Tea",
@@ -324,7 +324,7 @@ DEMO_PRODUCTS = [
         "category_name": "Grocery",
         "tax_class_name": "VAT 12%",
         "price": "69.00",
-        "stock_quantity": 50,
+        "stock_quantity": 4,
         "short_description": "Small premium chocolate bar that rounds out the grocery range with an impulse purchase item.",
         "full_description": _md(
             "Dark Chocolate",
@@ -384,7 +384,7 @@ DEMO_PRODUCTS = [
         "category_name": "Pets",
         "tax_class_name": "VAT 21%",
         "price": "159.00",
-        "stock_quantity": 50,
+        "stock_quantity": 0,
         "short_description": "Gentle pet shampoo for grooming demos and cross-category tax-rate coverage.",
         "full_description": _md(
             "Pet Shampoo",
@@ -404,7 +404,7 @@ DEMO_PRODUCTS = [
         "category_name": "Pets",
         "tax_class_name": "VAT 0%",
         "price": "119.00",
-        "stock_quantity": 50,
+        "stock_quantity": 4,
         "short_description": "Durable rope toy that provides a clear zero-rate tax example in the pet accessories range.",
         "full_description": _md(
             "Chew Toy Rope",
@@ -424,7 +424,7 @@ DEMO_PRODUCTS = [
         "category_name": "Pets",
         "tax_class_name": "VAT 0%",
         "price": "299.00",
-        "stock_quantity": 50,
+        "stock_quantity": 0,
         "short_description": "Two-piece bowl set for feeding stations, gifting, and zero-rate catalogue coverage.",
         "full_description": _md(
             "Pet Bowl Set",
