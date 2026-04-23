@@ -21,8 +21,11 @@ It is designed to show how an anonymous customer can browse the storefront, add 
 
 ## Video preview
 
-> Video preview placeholder  
-> Add the scenario video link or embedded preview here once the media hosting approach is finalized.
+
+
+https://github.com/user-attachments/assets/16b08932-c63b-4cad-8292-f4630ee88a62
+
+
 
 ---
 
