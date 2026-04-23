@@ -23,6 +23,9 @@ extra_javascript:
 
 nav: # define the left panel
   - Index: index.md
+  - Demo scenarios:
+      - Demos scenarios index: demo/readme.md
+      - Guest user flow: demo/scenarios/Guest order flow.md
   - API:
       - OpenAPI: api/OpenAPI.md
   - Architecture:
