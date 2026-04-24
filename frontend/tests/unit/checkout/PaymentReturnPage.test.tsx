@@ -27,7 +27,8 @@ vi.mock("@/lib/api/orders", () => ({
 }));
 
 const mockLoadAndClear = vi.fn<() => PaymentReturnContext | null>();
-const mockLoadFromSearchParams = vi.fn<(searchParams: URLSearchParams) => PaymentReturnContext | null>();
+const mockLoadFromSearchParams =
+  vi.fn<(searchParams: URLSearchParams) => PaymentReturnContext | null>();
 
 vi.mock("@/lib/utils/paymentReturn", () => ({
   loadAndClearPaymentReturnContext: () => mockLoadAndClear(),

@@ -29,9 +29,7 @@ export type PaymentReturnContext = {
   isGuest: boolean;
 };
 
-function isPaymentReturnContext(
-  value: unknown,
-): value is PaymentReturnContext {
+function isPaymentReturnContext(value: unknown): value is PaymentReturnContext {
   return (
     typeof value === "object" &&
     value !== null &&
