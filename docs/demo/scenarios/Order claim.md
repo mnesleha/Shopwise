@@ -21,8 +21,7 @@ It is designed to show how an anonymous customer can place a guest order, open t
 
 ## Video preview
 
-> Video preview placeholder  
-> Add the scenario video link or embedded preview here once the media hosting approach is finalized.
+<video src="https://github.com/user-attachments/assets/ac50e3e0-8370-4e4c-af45-8f364b8da689" controls width="100%"></video>
 
 ---
 
