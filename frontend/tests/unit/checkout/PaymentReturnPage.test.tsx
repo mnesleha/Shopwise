@@ -12,7 +12,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import PaymentReturnPage from "@/app/(shop)/checkout/payment/return/page";
+import PaymentReturnPageClient from "@/components/checkout/PaymentReturnPageClient";
 import type { BaseOrderDto } from "@/lib/api/orders";
 import type { PaymentReturnContext } from "@/lib/utils/paymentReturn";
 
@@ -46,11 +46,8 @@ const mockRouter = {
   prefetch: vi.fn(),
 };
 
-const mockSearchParams = new URLSearchParams();
-
 vi.mock("next/navigation", () => ({
   useRouter: () => mockRouter,
-  useSearchParams: () => mockSearchParams,
 }));
 
 // ---------------------------------------------------------------------------
@@ -95,7 +92,7 @@ describe("PaymentReturnPage", () => {
   it("shows no-context state when sessionStorage has no payment context", async () => {
     mockLoadAndClear.mockReturnValue(null);
 
-    render(<PaymentReturnPage />);
+    render(<PaymentReturnPageClient />);
 
     await waitFor(() => {
       expect(
@@ -110,7 +107,7 @@ describe("PaymentReturnPage", () => {
     mockLoadFromSearchParams.mockReturnValue({ orderId: 42, isGuest: false });
     mockGetOrder.mockResolvedValue(makeOrderDto("PAID"));
 
-    render(<PaymentReturnPage />);
+    render(<PaymentReturnPageClient initialOrderId="42" initialGuest="false" />);
 
     await waitFor(() => {
       expect(screen.getByTestId("payment-return-paid")).toBeInTheDocument();
@@ -123,7 +120,7 @@ describe("PaymentReturnPage", () => {
   it("shows guest success state for a guest checkout context", async () => {
     mockLoadAndClear.mockReturnValue({ orderId: 7, isGuest: true });
 
-    render(<PaymentReturnPage />);
+    render(<PaymentReturnPageClient />);
 
     await waitFor(() => {
       expect(
@@ -141,7 +138,7 @@ describe("PaymentReturnPage", () => {
     mockLoadAndClear.mockReturnValue({ orderId: 42, isGuest: false });
     mockGetOrder.mockResolvedValue(makeOrderDto("CREATED"));
 
-    render(<PaymentReturnPage />);
+    render(<PaymentReturnPageClient />);
 
     await waitFor(() => {
       expect(screen.getByTestId("payment-return-pending")).toBeInTheDocument();
@@ -153,7 +150,7 @@ describe("PaymentReturnPage", () => {
     mockLoadAndClear.mockReturnValue({ orderId: 42, isGuest: false });
     mockGetOrder.mockResolvedValue(makeOrderDto("PAID"));
 
-    render(<PaymentReturnPage />);
+    render(<PaymentReturnPageClient />);
 
     await waitFor(() => {
       expect(screen.getByTestId("payment-return-paid")).toBeInTheDocument();
@@ -167,7 +164,7 @@ describe("PaymentReturnPage", () => {
     mockLoadAndClear.mockReturnValue({ orderId: 42, isGuest: false });
     mockGetOrder.mockResolvedValue(makeOrderDto("PAYMENT_FAILED"));
 
-    render(<PaymentReturnPage />);
+    render(<PaymentReturnPageClient />);
 
     await waitFor(() => {
       expect(screen.getByTestId("payment-return-failed")).toBeInTheDocument();
@@ -179,7 +176,7 @@ describe("PaymentReturnPage", () => {
     mockLoadAndClear.mockReturnValue({ orderId: 42, isGuest: false });
     mockGetOrder.mockRejectedValue(new Error("network error"));
 
-    render(<PaymentReturnPage />);
+    render(<PaymentReturnPageClient />);
 
     await waitFor(() => {
       expect(screen.getByTestId("payment-return-pending")).toBeInTheDocument();
@@ -190,7 +187,7 @@ describe("PaymentReturnPage", () => {
     mockLoadAndClear.mockReturnValue({ orderId: 42, isGuest: false });
     mockGetOrder.mockResolvedValue(makeOrderDto("PAYMENT_FAILED"));
 
-    render(<PaymentReturnPage />);
+    render(<PaymentReturnPageClient />);
 
     await waitFor(() => {
       expect(screen.getByTestId("payment-return-failed")).toBeInTheDocument();
@@ -203,7 +200,7 @@ describe("PaymentReturnPage", () => {
     mockLoadAndClear.mockReturnValue({ orderId: 42, isGuest: false });
     mockGetOrder.mockResolvedValue(makeOrderDto("PAYMENT_FAILED"));
 
-    render(<PaymentReturnPage />);
+    render(<PaymentReturnPageClient />);
 
     await waitFor(() => {
       expect(screen.getByTestId("payment-return-failed")).toBeInTheDocument();
@@ -220,7 +217,7 @@ describe("PaymentReturnPage", () => {
       .mockResolvedValueOnce(makeOrderDto("CREATED"))
       .mockResolvedValueOnce(makeOrderDto("PAID"));
 
-    render(<PaymentReturnPage />);
+    render(<PaymentReturnPageClient />);
 
     await waitFor(() => {
       expect(screen.getByTestId("payment-return-pending")).toBeInTheDocument();
