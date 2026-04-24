@@ -37,3 +37,15 @@ This scenario demonstrates:
 - card payment through **AcquireMock**,
 - final order detail,
 - and customer order history containing both seeded and newly created orders.
+
+### [Cart Merge](scenarios/Cart%20merge.md)
+
+A focused scenario showing how authenticated and anonymous cart states are merged after login.
+
+This scenario demonstrates:
+
+- authenticated cart creation,
+- guest cart creation after logout,
+- restoration of customer context after login,
+- cart merge feedback,
+- and final merged cart state.
