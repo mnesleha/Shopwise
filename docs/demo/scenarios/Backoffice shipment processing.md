@@ -22,8 +22,7 @@ It is designed to show how a normal authenticated checkout leads to shipment cre
 
 ## Video preview
 
-> Video preview placeholder  
-> Add the scenario video link or embedded preview here once the media hosting approach is finalized.
+<video src="https://github.com/user-attachments/assets/70aaad7e-c46d-4291-9936-895faa9b4b4f" controls width="100%"></video>
 
 ---
 
