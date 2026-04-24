@@ -22,8 +22,7 @@ It is designed to show how an existing customer can log in, manage saved address
 
 ## Video preview
 
-> Video preview placeholder  
-> Add the scenario video link or embedded preview here once the media hosting approach is finalized.
+<video src="https://github.com/user-attachments/assets/d1811237-6481-4efa-b346-eca0bddc8e09" controls width="100%"></video>
 
 ---
 
