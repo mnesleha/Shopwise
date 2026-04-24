@@ -20,8 +20,7 @@ It is designed to show that an authenticated customer cart and a guest cart can 
 
 ## Video preview
 
-> Video preview placeholder  
-> Add the scenario video link or embedded preview here once the media hosting approach is finalized.
+<video src="https://github.com/user-attachments/assets/6e756c52-2248-4e5c-9392-27bb81a92ea2" controls width="100%"></video>
 
 ---
 
