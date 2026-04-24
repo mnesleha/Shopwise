@@ -61,3 +61,15 @@ This scenario demonstrates:
 - account-aware order detail behavior,
 - sign-in-based order claiming,
 - and claimed order visibility in customer order history.
+
+### [Registration and Email Verification](scenarios/Registration%20and%20email%20verification.md)
+
+A short authentication scenario showing self-service account creation and email verification.
+
+This scenario demonstrates:
+
+- transition from sign-in to registration,
+- new customer account creation,
+- verification flow through **Mailpit**,
+- redirect into the authenticated customer area,
+- and visible authenticated identity in the profile and header.
