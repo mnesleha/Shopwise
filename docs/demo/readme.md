@@ -49,3 +49,15 @@ This scenario demonstrates:
 - restoration of customer context after login,
 - cart merge feedback,
 - and final merged cart state.
+
+### [Order Claim](scenarios/Order%20claim.md)
+
+A guest-to-account scenario showing how a guest order can be assigned to an existing customer account after sign-in.
+
+This scenario demonstrates:
+
+- guest cart and guest checkout flow,
+- guest order access through **Mailpit**,
+- account-aware order detail behavior,
+- sign-in-based order claiming,
+- and claimed order visibility in customer order history.
