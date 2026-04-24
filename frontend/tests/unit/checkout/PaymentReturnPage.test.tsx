@@ -107,7 +107,9 @@ describe("PaymentReturnPage", () => {
     mockLoadFromSearchParams.mockReturnValue({ orderId: 42, isGuest: false });
     mockGetOrder.mockResolvedValue(makeOrderDto("PAID"));
 
-    render(<PaymentReturnPageClient initialOrderId="42" initialGuest="false" />);
+    render(
+      <PaymentReturnPageClient initialOrderId="42" initialGuest="false" />,
+    );
 
     await waitFor(() => {
       expect(screen.getByTestId("payment-return-paid")).toBeInTheDocument();
