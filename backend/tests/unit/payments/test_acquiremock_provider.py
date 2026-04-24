@@ -36,6 +36,7 @@ def _make_context(
     order_id="order-42",
     amount="25.00",
     currency="USD",
+    is_guest=False,
     callback_base_url=None,
     return_url="https://shop.test/return",
     webhook_url="https://api.shop.test/api/v1/webhooks/acquiremock/",
@@ -52,6 +53,7 @@ def _make_context(
         order=order,
         payment=payment,
         extra={
+            "is_guest": is_guest,
             "callback_base_url": callback_base_url,
             "return_url": return_url,
             "webhook_url": webhook_url,
@@ -147,7 +149,7 @@ def test_start_sends_correct_request_body(mock_settings, mock_post):
     assert body["reference"] == "order-77"
     assert body["amount"] == 5000
     assert body["webhookUrl"] == "https://api.shop.test/api/v1/webhooks/acquiremock/"
-    assert body["redirectUrl"] == "https://shop.test/ok"
+    assert body["redirectUrl"] == "https://shop.test/ok?orderId=order-77&guest=0"
     assert mock_post.call_args.args[0] == "https://acquiremock.test/api/create-invoice"
 
 
@@ -171,8 +173,44 @@ def test_start_composes_callback_urls_from_generic_base_context(mock_settings, m
 
     _, kwargs = mock_post.call_args
     body = kwargs["json"]
-    assert body["redirectUrl"] == "https://shop.test/return-from-settings"
+    assert body["redirectUrl"] == "https://shop.test/return-from-settings?orderId=order-42&guest=0"
     assert body["webhookUrl"] == "https://api.shop.test/api/v1/webhooks/acquiremock/"
+
+
+@patch("payments.providers.acquiremock.requests.post")
+@patch("payments.providers.acquiremock.settings")
+def test_start_preserves_existing_return_query_params(mock_settings, mock_post):
+    """Return URL context is appended without dropping existing query params."""
+    mock_settings.ACQUIREMOCK_BASE_URL = FAKE_BASE_URL
+    mock_settings.ACQUIREMOCK_API_KEY = FAKE_API_KEY
+    mock_settings.PUBLIC_BASE_URL = FAKE_PUBLIC_BASE_URL
+    mock_settings.ACQUIREMOCK_TIMEOUT = 10
+    mock_post.return_value = _ok_response()
+
+    context = _make_context(return_url="https://shop.test/return?source=acquiremock")
+    AcquireMockProvider().start(context)
+
+    _, kwargs = mock_post.call_args
+    body = kwargs["json"]
+    assert body["redirectUrl"] == "https://shop.test/return?source=acquiremock&orderId=order-42&guest=0"
+
+
+@patch("payments.providers.acquiremock.requests.post")
+@patch("payments.providers.acquiremock.settings")
+def test_start_marks_guest_checkout_in_return_url(mock_settings, mock_post):
+    """Guest checkout return URLs carry guest=1 for frontend fallback routing."""
+    mock_settings.ACQUIREMOCK_BASE_URL = FAKE_BASE_URL
+    mock_settings.ACQUIREMOCK_API_KEY = FAKE_API_KEY
+    mock_settings.PUBLIC_BASE_URL = FAKE_PUBLIC_BASE_URL
+    mock_settings.ACQUIREMOCK_TIMEOUT = 10
+    mock_post.return_value = _ok_response()
+
+    context = _make_context(order_id="order-88", is_guest=True)
+    AcquireMockProvider().start(context)
+
+    _, kwargs = mock_post.call_args
+    body = kwargs["json"]
+    assert body["redirectUrl"] == "https://shop.test/return?orderId=order-88&guest=1"
 
 
 @patch("payments.providers.acquiremock.requests.post")

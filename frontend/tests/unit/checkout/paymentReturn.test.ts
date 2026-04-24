@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   savePaymentReturnContext,
   loadAndClearPaymentReturnContext,
+  loadPaymentReturnContextFromSearchParams,
 } from "@/lib/utils/paymentReturn";
 
 // ---------------------------------------------------------------------------
@@ -56,6 +57,29 @@ describe("paymentReturn helpers", () => {
       expect(loadAndClearPaymentReturnContext()).toEqual({
         orderId: 42,
         isGuest: false,
+      });
+    });
+
+    describe("loadPaymentReturnContextFromSearchParams", () => {
+      it("parses authenticated fallback context from URL params", () => {
+        const params = new URLSearchParams("orderId=42&guest=0");
+        expect(loadPaymentReturnContextFromSearchParams(params)).toEqual({
+          orderId: 42,
+          isGuest: false,
+        });
+      });
+
+      it("parses guest fallback context from URL params", () => {
+        const params = new URLSearchParams("orderId=7&guest=1");
+        expect(loadPaymentReturnContextFromSearchParams(params)).toEqual({
+          orderId: 7,
+          isGuest: true,
+        });
+      });
+
+      it("returns null for invalid URL param values", () => {
+        const params = new URLSearchParams("orderId=abc&guest=maybe");
+        expect(loadPaymentReturnContextFromSearchParams(params)).toBeNull();
       });
     });
 

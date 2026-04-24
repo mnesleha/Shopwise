@@ -29,6 +29,17 @@ export type PaymentReturnContext = {
   isGuest: boolean;
 };
 
+function isPaymentReturnContext(
+  value: unknown,
+): value is PaymentReturnContext {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as Record<string, unknown>).orderId === "number" &&
+    typeof (value as Record<string, unknown>).isGuest === "boolean"
+  );
+}
+
 /**
  * Persist payment return context before the browser redirect.
  *
@@ -47,18 +58,46 @@ export function savePaymentReturnContext(ctx: PaymentReturnContext): void {
 function parseStoredContext(raw: string): PaymentReturnContext | null {
   try {
     const parsed = JSON.parse(raw) as unknown;
-    if (
-      typeof parsed === "object" &&
-      parsed !== null &&
-      typeof (parsed as Record<string, unknown>).orderId === "number" &&
-      typeof (parsed as Record<string, unknown>).isGuest === "boolean"
-    ) {
+    if (isPaymentReturnContext(parsed)) {
       return parsed as PaymentReturnContext;
     }
     return null;
   } catch {
     return null;
   }
+}
+
+/**
+ * Build return context from URL query parameters when storage state is absent.
+ *
+ * Expected params:
+ * - orderId=<numeric id>
+ * - guest=1|0|true|false
+ */
+export function loadPaymentReturnContextFromSearchParams(
+  searchParams: URLSearchParams,
+): PaymentReturnContext | null {
+  const rawOrderId = searchParams.get("orderId");
+  const rawGuest = searchParams.get("guest");
+
+  if (!rawOrderId || !rawGuest) {
+    return null;
+  }
+
+  const orderId = Number(rawOrderId);
+  if (!Number.isInteger(orderId) || orderId <= 0) {
+    return null;
+  }
+
+  if (rawGuest === "1" || rawGuest.toLowerCase() === "true") {
+    return { orderId, isGuest: true };
+  }
+
+  if (rawGuest === "0" || rawGuest.toLowerCase() === "false") {
+    return { orderId, isGuest: false };
+  }
+
+  return null;
 }
 
 /**

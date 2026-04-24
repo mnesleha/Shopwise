@@ -1296,7 +1296,10 @@ Notes:
             payment = PaymentOrchestrationService.start_payment(
                 order=order,
                 payment_method=checkout_data["payment_method"],
-                extra={"callback_base_url": callback_base_url},
+                extra={
+                    "callback_base_url": callback_base_url,
+                    "is_guest": not request.user.is_authenticated,
+                },
             )
         except Exception:
             logger.exception(

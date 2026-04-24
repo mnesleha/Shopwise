@@ -27,9 +27,12 @@ vi.mock("@/lib/api/orders", () => ({
 }));
 
 const mockLoadAndClear = vi.fn<() => PaymentReturnContext | null>();
+const mockLoadFromSearchParams = vi.fn<(searchParams: URLSearchParams) => PaymentReturnContext | null>();
 
 vi.mock("@/lib/utils/paymentReturn", () => ({
   loadAndClearPaymentReturnContext: () => mockLoadAndClear(),
+  loadPaymentReturnContextFromSearchParams: (...args: [URLSearchParams]) =>
+    mockLoadFromSearchParams(...args),
   savePaymentReturnContext: vi.fn(),
 }));
 
@@ -42,8 +45,11 @@ const mockRouter = {
   prefetch: vi.fn(),
 };
 
+const mockSearchParams = new URLSearchParams();
+
 vi.mock("next/navigation", () => ({
   useRouter: () => mockRouter,
+  useSearchParams: () => mockSearchParams,
 }));
 
 // ---------------------------------------------------------------------------
@@ -73,6 +79,16 @@ function makeOrderDto(status: string): BaseOrderDto {
 describe("PaymentReturnPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetOrder.mockReset();
+    mockLoadAndClear.mockReset();
+    mockLoadFromSearchParams.mockReset();
+    mockRouter.push.mockReset();
+    mockRouter.replace.mockReset();
+    mockRouter.back.mockReset();
+    mockRouter.forward.mockReset();
+    mockRouter.refresh.mockReset();
+    mockRouter.prefetch.mockReset();
+    mockLoadFromSearchParams.mockReturnValue(null);
   });
 
   it("shows no-context state when sessionStorage has no payment context", async () => {
@@ -86,6 +102,21 @@ describe("PaymentReturnPage", () => {
       ).toBeInTheDocument();
     });
     expect(mockGetOrder).not.toHaveBeenCalled();
+  });
+
+  it("falls back to URL params when storage context is missing", async () => {
+    mockLoadAndClear.mockReturnValue(null);
+    mockLoadFromSearchParams.mockReturnValue({ orderId: 42, isGuest: false });
+    mockGetOrder.mockResolvedValue(makeOrderDto("PAID"));
+
+    render(<PaymentReturnPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("payment-return-paid")).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(mockRouter.push).toHaveBeenCalledWith("/orders/42");
+    });
   });
 
   it("shows guest success state for a guest checkout context", async () => {
@@ -197,8 +228,10 @@ describe("PaymentReturnPage", () => {
     await user.click(screen.getByTestId("payment-return-check-again"));
 
     await waitFor(() => {
-      expect(screen.getByTestId("payment-return-paid")).toBeInTheDocument();
+      expect(mockGetOrder).toHaveBeenCalledTimes(2);
     });
-    expect(mockGetOrder).toHaveBeenCalledTimes(2);
+    await waitFor(() => {
+      expect(mockRouter.push).toHaveBeenCalledWith("/orders/42");
+    });
   });
 });

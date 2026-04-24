@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import logging
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import requests
 from django.conf import settings
@@ -65,6 +65,18 @@ def _join_absolute_url(base_url: str, path: str) -> str:
     return f"{base_url.rstrip('/')}{path}"
 
 
+def _append_return_context(redirect_url: str, *, order_id: object, is_guest: bool) -> str:
+    """Append stable order context to the frontend return URL."""
+    if not redirect_url:
+        return ""
+
+    parsed = urlparse(redirect_url)
+    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    query["orderId"] = str(order_id)
+    query["guest"] = "1" if is_guest else "0"
+    return urlunparse(parsed._replace(query=urlencode(query)))
+
+
 def _build_acquiremock_callback_urls(context: PaymentStartContext) -> tuple[str, str]:
     """Resolve the hosted return/webhook callback URLs for AcquireMock.
 
@@ -75,6 +87,11 @@ def _build_acquiremock_callback_urls(context: PaymentStartContext) -> tuple[str,
     """
     redirect_url = context.extra.get("return_url") or getattr(
         settings, "FRONTEND_RETURN_URL", ""
+    )
+    redirect_url = _append_return_context(
+        redirect_url,
+        order_id=context.order.id,
+        is_guest=bool(context.extra.get("is_guest", False)),
     )
 
     callback_base_url = context.extra.get("callback_base_url") or getattr(

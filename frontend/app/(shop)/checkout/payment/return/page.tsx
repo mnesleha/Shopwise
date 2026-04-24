@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getOrder } from "@/lib/api/orders";
 import {
   loadAndClearPaymentReturnContext,
+  loadPaymentReturnContextFromSearchParams,
   type PaymentReturnContext,
 } from "@/lib/utils/paymentReturn";
 
@@ -30,6 +31,7 @@ type ReturnState =
 
 export default function PaymentReturnPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [state, setState] = useState<ReturnState>("loading");
   const [ctx, setCtx] = useState<PaymentReturnContext | null>(null);
 
@@ -52,7 +54,9 @@ export default function PaymentReturnPage() {
   }, []);
 
   useEffect(() => {
-    const context = loadAndClearPaymentReturnContext();
+    const context =
+      loadAndClearPaymentReturnContext() ??
+      loadPaymentReturnContextFromSearchParams(searchParams);
     if (!context) {
       setState("no_context");
       return;
@@ -66,7 +70,7 @@ export default function PaymentReturnPage() {
 
     // Authenticated: fetch backend truth
     fetchOrderState(context);
-  }, [fetchOrderState]);
+  }, [fetchOrderState, searchParams]);
 
   // Navigate to the order detail page once payment is confirmed
   useEffect(() => {
