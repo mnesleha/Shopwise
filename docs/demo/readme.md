@@ -24,3 +24,16 @@ This scenario demonstrates:
 - checkout with **Cash on Delivery**,
 - guest order access through **Mailpit**,
 - and final guest order detail with discounts and VAT breakdown.
+
+### [Auth Order Flow with Order History](scenarios/Auth%20order%20flow%20with%20order%20history.md)
+
+An authenticated customer scenario focused on saved account data and post-order visibility.
+
+This scenario demonstrates:
+
+- login with an existing seeded customer account,
+- profile and saved address management,
+- cart and checkout flow with reused address data,
+- card payment through **AcquireMock**,
+- final order detail,
+- and customer order history containing both seeded and newly created orders.
