@@ -94,6 +94,12 @@ export default function ShopwiseShowcaseHomepage() {
               >
                 Explore the Project
               </a>
+              <a
+                href="https://mnesleha.github.io/Shopwise/demo/readme/"
+                className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100"
+              >
+                See demo scenarios
+              </a>
             </div>
           </div>
 
@@ -159,6 +165,14 @@ export default function ShopwiseShowcaseHomepage() {
                   className="rounded-full border border-slate-700 px-3 py-1 hover:bg-slate-700 hover:text-white transition-colors"
                 >
                   GitHub Repository
+                </a>
+                <a
+                  href="https://mnesleha.github.io/Shopwise/demo/readme/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-full border border-slate-700 px-3 py-1 hover:bg-slate-700 hover:text-white transition-colors"
+                >
+                  Demo scenarios
                 </a>
                 <a
                   href="https://shopwise-backend-ljqn.onrender.com/api/docs/swagger/"
