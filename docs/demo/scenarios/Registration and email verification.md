@@ -21,8 +21,7 @@ It is designed to show how a new customer can create an account, verify the emai
 
 ## Video preview
 
-> Video preview placeholder  
-> Add the scenario video link or embedded preview here once the media hosting approach is finalized.
+<video src="https://github.com/user-attachments/assets/0aa8daf4-0c96-4d7b-bfb3-99e21acd0cfb" controls width="100%"></video>
 
 ---
 
