@@ -73,3 +73,15 @@ This scenario demonstrates:
 - verification flow through **Mailpit**,
 - redirect into the authenticated customer area,
 - and visible authenticated identity in the profile and header.
+
+### [Backoffice Shipment Processing](scenarios/Backoffice%20shipment%20processing.md)
+
+A cross-role scenario showing how shipment lifecycle changes made in admin are reflected in the customer-facing order experience.
+
+This scenario demonstrates:
+
+- authenticated checkout and payment,
+- automatic shipment creation after successful order flow,
+- shipment visibility in customer order detail,
+- backoffice shipment status updates in Django admin,
+- and customer-facing tracking/history updates after shipment progress.
