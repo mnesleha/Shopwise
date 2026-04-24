@@ -16,7 +16,8 @@ from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from config.settings.base import auth_cookie_kwargs
-from accounts.services.session import issue_refresh_token
+from accounts.services.session import issue_refresh_token, logout_all_devices
+from api.authentication import CookieJWTAuthentication
 
 
 class SessionRevoked(APIException):
@@ -310,6 +311,50 @@ class LogoutView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
 
+    def _get_authenticated_user_for_logout(self, request):
+        """
+        Best-effort JWT resolution for logout.
+
+        Logout must stay idempotent even when cookies are already missing,
+        expired, or malformed, so this helper never raises authentication
+        errors. When a valid access or refresh token is present we resolve the
+        user and let the logout endpoint revoke the session server-side.
+        """
+        authenticator = CookieJWTAuthentication()
+
+        try:
+            header = authenticator.get_header(request)
+            if header is not None:
+                raw_token = authenticator.get_raw_token(header)
+                if raw_token is not None:
+                    validated_token = authenticator.get_validated_token(raw_token)
+                    return authenticator.get_user(validated_token)
+        except Exception:
+            pass
+
+        refresh_cookie_name = getattr(settings, "AUTH_COOKIE_REFRESH", "refresh_token")
+        refresh_str = request.COOKIES.get(refresh_cookie_name) or request.data.get("refresh")
+        if not refresh_str:
+            return None
+
+        try:
+            refresh_token = RefreshToken(refresh_str)
+            user_id = refresh_token.get("user_id")
+            if not user_id:
+                return None
+
+            user = User.objects.filter(pk=user_id).first()
+            if user is None:
+                return None
+
+            tv_claim = refresh_token.get("tv")
+            if tv_claim is not None and user.token_version != tv_claim:
+                return None
+
+            return user
+        except Exception:
+            return None
+
     def post(self, request):
         _rl_disabled = getattr(settings, "DISABLE_RATE_LIMITING_FOR_TESTS", False)
         ip = (
@@ -327,6 +372,14 @@ class LogoutView(APIView):
                     {"detail": "Too many requests. Please try again later."},
                     status=status.HTTP_429_TOO_MANY_REQUESTS,
                 )
+
+        logout_user = self._get_authenticated_user_for_logout(request)
+        if logout_user is not None:
+            # The current JWT/session revocation primitive is token_version.
+            # When a valid token is present, logout immediately invalidates any
+            # stale access/refresh tokens that may still be replayed after the
+            # browser cookie cleanup.
+            logout_all_devices(logout_user)
 
         resp = Response({"ok": True}, status=200)
 

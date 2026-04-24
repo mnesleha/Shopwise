@@ -4,6 +4,7 @@ from rest_framework.test import APIClient, settings
 
 REGISTER_URL = "/api/v1/auth/register/"
 LOGIN_URL = "/api/v1/auth/login/"
+LOGOUT_URL = "/api/v1/auth/logout/"
 ME_URL = "/api/v1/auth/me/"
 REFRESH_URL = "/api/v1/auth/refresh/"
 
@@ -205,3 +206,78 @@ def test_refresh_rotates_refresh_and_old_refresh_is_rejected():
     assert body["code"] in (
         "VALIDATION_ERROR", "TOKEN_INVALID", "INVALID_TOKEN", "NOT_AUTHENTICATED")
     assert "message" in body
+
+
+@pytest.mark.django_db
+def test_logout_revokes_old_refresh_token_when_auth_cookie_is_present():
+    client = APIClient()
+
+    client.post(
+        REGISTER_URL,
+        {
+            "email": "logout_refresh@example.com",
+            "password": "Passw0rd!123",
+            "first_name": "Log",
+            "last_name": "Out",
+        },
+        format="json",
+    )
+
+    login = client.post(
+        LOGIN_URL,
+        {"email": "logout_refresh@example.com", "password": "Passw0rd!123"},
+        format="json",
+    )
+    assert login.status_code == 200
+    old_refresh = login.json()["refresh"]
+
+    logout = client.post(LOGOUT_URL, format="json")
+    assert logout.status_code == 200
+
+    other_client = APIClient()
+    refresh_resp = other_client.post(
+        REFRESH_URL,
+        {"refresh": old_refresh},
+        format="json",
+    )
+
+    assert refresh_resp.status_code in (400, 401), (
+        f"Expected stale refresh token to fail after logout, got {refresh_resp.status_code}: "
+        f"{refresh_resp.json()}"
+    )
+
+
+@pytest.mark.django_db
+def test_logout_revokes_old_access_token_immediately():
+    client = APIClient()
+
+    client.post(
+        REGISTER_URL,
+        {
+            "email": "logout_access@example.com",
+            "password": "Passw0rd!123",
+            "first_name": "Log",
+            "last_name": "Out",
+        },
+        format="json",
+    )
+
+    login = client.post(
+        LOGIN_URL,
+        {"email": "logout_access@example.com", "password": "Passw0rd!123"},
+        format="json",
+    )
+    assert login.status_code == 200
+    old_access = login.json()["access"]
+
+    logout = client.post(LOGOUT_URL, format="json")
+    assert logout.status_code == 200
+
+    other_client = APIClient()
+    other_client.credentials(HTTP_AUTHORIZATION=f"Bearer {old_access}")
+    me_resp = other_client.get("/api/v1/account/")
+
+    assert me_resp.status_code == 401, (
+        f"Expected stale access token to be rejected after logout, got {me_resp.status_code}: "
+        f"{me_resp.json()}"
+    )
