@@ -24,8 +24,14 @@ extra_javascript:
 nav: # define the left panel
   - Index: index.md
   - Demo scenarios:
-      - Demos scenarios index: demo/readme.md
+      - Demo scenarios index: demo/readme.md
       - Guest user flow: demo/scenarios/Guest order flow.md
+      - Auth Order Flow with Order History: demo/scenarios/Auth order flow with order history.md
+      - Cart merge: demo/scenarios/Cart merge.md
+      - Order claim: demo/scenarios/Order claim.md
+      - Registration and Email Verification: demo/scenarios/Registration and email verification.md
+      - Backoffice Shipment Processing: demo/scenarios/Backoffice shipment processing.md
+      - Backoffice Promotion and Offer: demo/scenarios/Backoffice promotion and offer.md
   - API:
       - OpenAPI: api/OpenAPI.md
   - Architecture:

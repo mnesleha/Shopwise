@@ -76,6 +76,7 @@ def _resolve_winning_offer_for_merge(
             return None
         if (
             not offer.is_currently_active()
+            or not offer.promotion.is_currently_active()
             or offer.promotion.acquisition_mode != AcquisitionMode.CAMPAIGN_APPLY
         ):
             return None

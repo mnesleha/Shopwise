@@ -72,6 +72,7 @@ def get_claimed_campaign_offer(request) -> "Offer | None":
 
     if (
         not offer.is_currently_active()
+        or not offer.promotion.is_currently_active()
         or offer.promotion.acquisition_mode != AcquisitionMode.CAMPAIGN_APPLY
     ):
         return None

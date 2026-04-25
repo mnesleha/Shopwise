@@ -81,6 +81,7 @@ def _campaign_promotion(
     name: str = "Summer Campaign",
     value: Decimal = Decimal("20"),
     promo_type: str = PromotionType.FIXED,
+    is_active: bool = True,
     **kwargs,
 ) -> OrderPromotion:
     return OrderPromotion.objects.create(
@@ -91,7 +92,7 @@ def _campaign_promotion(
         acquisition_mode=AcquisitionMode.CAMPAIGN_APPLY,
         stacking_policy=StackingPolicy.EXCLUSIVE,
         priority=5,
-        is_active=True,
+        is_active=is_active,
         minimum_order_value=None,
         active_from=None,
         active_to=None,
@@ -189,6 +190,18 @@ def test_claim_inactive_offer_returns_400():
 
 
 @pytest.mark.django_db
+def test_claim_inactive_promotion_returns_400():
+    promo = _campaign_promotion(is_active=False)
+    offer = _offer(promo)
+    client = APIClient()
+
+    resp = client.post(CLAIM_URL, {"token": offer.token}, format="json")
+
+    assert resp.status_code == 400
+    assert resp.json()["code"] == "OFFER_INACTIVE"
+
+
+@pytest.mark.django_db
 def test_claim_expired_offer_returns_400():
     """An offer whose active_to is in the past is rejected."""
     today = now().date()
@@ -252,6 +265,29 @@ def test_cart_reflects_claimed_campaign_offer():
 
     assert totals["order_discount_applied"] is True
     assert Decimal(totals["order_discount_amount"]) == Decimal("20.00")
+
+
+@pytest.mark.django_db
+def test_cart_ignores_claimed_offer_when_promotion_is_deactivated_after_claim():
+    promo = _campaign_promotion(value=Decimal("20"), promo_type=PromotionType.FIXED)
+    offer = _offer(promo, token="SUMMER20-INACTIVE")
+    product = _product(price_net=Decimal("100.00"))
+    client = APIClient()
+
+    _add_item(client, product, qty=1)
+
+    claim_resp = client.post(CLAIM_URL, {"token": offer.token}, format="json")
+    assert claim_resp.status_code == 200
+
+    promo.is_active = False
+    promo.save(update_fields=["is_active"])
+
+    cart_resp = client.get(CART_URL)
+    assert cart_resp.status_code == 200
+    totals = cart_resp.json()["totals"]
+
+    assert totals["order_discount_applied"] is False
+    assert totals["order_discount_amount"] is None
 
 
 @pytest.mark.django_db

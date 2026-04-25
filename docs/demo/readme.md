@@ -85,3 +85,16 @@ This scenario demonstrates:
 - shipment visibility in customer order detail,
 - backoffice shipment status updates in Django admin,
 - and customer-facing tracking/history updates after shipment progress.
+
+### [Backoffice Promotion and Offer](scenarios/Backoffice%20promotion%20and%20offer.md)
+
+A cross-role scenario showing how a backoffice campaign action leads to a customer-facing offer flow and visible cart discount.
+
+This scenario demonstrates:
+
+- authenticated storefront context,
+- campaign creation and sending through the admin promotions workflow,
+- offer delivery through **Mailpit**,
+- customer-side promotion claim flow,
+- visible discount application in cart,
+- and resulting offer state visible in admin.

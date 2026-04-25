@@ -248,7 +248,7 @@ Error codes:
                 {"code": "OFFER_NOT_FOUND", "message": "Offer not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        if not offer.is_currently_active():
+        if not offer.is_currently_active() or not offer.promotion.is_currently_active():
             return Response(
                 {
                     "code": "OFFER_INACTIVE",
