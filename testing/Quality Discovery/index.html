@@ -1,0 +1,1724 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://github.io/testing/Quality%20Discovery/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Quality Discovery – OpenAPI Integration - Shopwise Showcase Project Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#quality-discovery-openapi-integration" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-header__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Shopwise Showcase Project Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Quality Discovery – OpenAPI Integration
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-nav__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Shopwise Showcase Project Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Demo scenarios
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Guest%20order%20flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guest user flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Auth%20order%20flow%20with%20order%20history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auth Order Flow with Order History
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Cart%20merge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart merge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Order%20claim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Order claim
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Registration%20and%20email%20verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registration and Email Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20shipment%20processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Shipment Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20promotion%20and%20offer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Promotion and Offer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/OpenAPI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAPI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/System%20Architecture%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Current%20Architecture%20Baseline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Current Architecture Baseline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Domain%20Model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ER Diagram.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ER Diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Cart-Order%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart-Order Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Inventory%20Reservation%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory Reservation Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Postman%20Anonymous%20Cart%20Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman Anonymous Cart Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI-CD
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CI-CD
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Pipeline%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Postman%20CLI%20in%20CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman CLI in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural Decisions Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#initial-findings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Initial Findings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Initial Findings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cart-domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cart Domain
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cart Domain">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#post-cartitems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /cart/items/
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="POST /cart/items/">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-missing-error-handling-for-non-existing-product" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Missing error handling for non-existing product
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-undefined-business-conflict-scenarios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Undefined business conflict scenarios
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-implicit-cart-lifecycle-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Implicit cart lifecycle rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-cartcheckout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /cart/checkout/
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="POST /cart/checkout/">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-no-double-checkout-protection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. No double checkout protection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-error-404-vs-400-not-aligned-with-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Error 404 vs 400 not aligned with implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-unresolved-rollback-on-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Unresolved rollback on error
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-cart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /cart/
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GET /cart/">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-get-endpoint-has-side-effect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. GET endpoint has side-effect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-http-status-code-does-not-match-domain-reality" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. HTTP status code does not match domain reality
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-idempotence-is-not-obvious" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Idempotence is not obvious
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orders-domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Orders Domain
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Orders Domain">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-orders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /orders/
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#payments-domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Payments Domain
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Payments Domain">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#post-payments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /payments/
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#products-domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Products Domain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#categories-domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Categories Domain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#discounts-domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discounts Domain
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openapi-implementation-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenAPI Implementation Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#impact-of-openapi-adoption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Impact of OpenAPI Adoption
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Impact of OpenAPI Adoption">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#contract-changes-identified-and-introduced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contract Changes Identified and Introduced
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contract Changes Identified and Introduced">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-cart_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /cart
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-cartitems_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /cart/items
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-cartcheckout_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /cart/checkout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#payments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Payments
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#refactoring-triggered-by-openapi-findings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Refactoring Triggered by OpenAPI Findings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#business-value-achieved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Business Value Achieved
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#technical-value-achieved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Technical Value Achieved
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-takeaway" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Takeaway
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="quality-discovery-openapi-integration">Quality Discovery – OpenAPI Integration</h1>
+<h2 id="purpose">Purpose</h2>
+<p>This document captures quality-related findings discovered
+during OpenAPI documentation of the backend API.</p>
+<p>The goal is to identify:</p>
+<ul>
+<li>ambiguous behavior</li>
+<li>missing validations</li>
+<li>undocumented business rules</li>
+<li>misalignment between implementation and intended API contract</li>
+</ul>
+<h2 id="initial-findings">Initial Findings</h2>
+<h3 id="cart-domain">Cart Domain</h3>
+<h4 id="post-cartitems">POST /cart/items/</h4>
+<h5 id="1-missing-error-handling-for-non-existing-product">1. Missing error handling for non-existing product</h5>
+<ul>
+<li>Endpoint: POST /cart/items/</li>
+<li>Current behavior: unhandled exception (500)</li>
+<li>Expected behavior: 404 Not Found</li>
+<li>Impact: frontend integration, unclear API contract</li>
+</ul>
+<p>Status: Identified</p>
+<p>Proposed action: Add explicit product existence validation</p>
+<p>JIRA: SHOP-111</p>
+<h5 id="2-undefined-business-conflict-scenarios">2. Undefined business conflict scenarios</h5>
+<ul>
+<li>Scenario: product exists but is unavailable</li>
+<li>Expected behavior: 409 Conflict</li>
+<li>Current behavior: not implemented</li>
+<li>Impact: race conditions under load</li>
+</ul>
+<p>Status: Identified</p>
+<p>JIRA: SHOP-114</p>
+<h5 id="3-implicit-cart-lifecycle-rules">3. Implicit cart lifecycle rules</h5>
+<ul>
+<li>Rule: user can have only one ACTIVE cart</li>
+<li>Rule: checkout converts cart to CONVERTED</li>
+<li>Current state: enforced in code, not documented</li>
+<li>Impact: unclear expected behavior</li>
+</ul>
+<p>Status: Documented via OpenAPI</p>
+<h4 id="post-cartcheckout">POST /cart/checkout/</h4>
+<h5 id="1-no-double-checkout-protection">1. No double checkout protection</h5>
+<ul>
+<li>race condition risk</li>
+<li>suitable for 409</li>
+</ul>
+<p>JIRA: SHOP-123</p>
+<h5 id="2-error-404-vs-400-not-aligned-with-implementation">2. Error 404 vs 400 not aligned with implementation</h5>
+<ul>
+<li>today returns 400</li>
+<li>contract says 404</li>
+</ul>
+<p>JIRA: SHOP-124</p>
+<h5 id="3-unresolved-rollback-on-error">3. Unresolved rollback on error</h5>
+<ul>
+<li>what if OrderItem fails?</li>
+<li>cart can already be CONVERTED</li>
+</ul>
+<h4 id="get-cart">GET /cart/</h4>
+<h5 id="1-get-endpoint-has-side-effect">1. GET endpoint has side-effect</h5>
+<ul>
+<li>is not purely read-only</li>
+<li>must be explicitly described</li>
+</ul>
+<p>STATUS: Properly documented via OpenAPI</p>
+<h5 id="2-http-status-code-does-not-match-domain-reality">2. HTTP status code does not match domain reality</h5>
+<ul>
+<li>always 200</li>
+<li>even on create</li>
+</ul>
+<h5 id="3-idempotence-is-not-obvious">3. Idempotence is not obvious</h5>
+<p>Repeated call:</p>
+<ul>
+<li>does not change state (mostly)</li>
+<li>but first call may create resource</li>
+</ul>
+<p>STATUS: Properly documented via OpenAPI</p>
+<h3 id="orders-domain">Orders Domain</h3>
+<h4 id="get-orders">GET /orders/</h4>
+<ul>
+<li>Orders are immutable, read-only resources.</li>
+<li>Orders are created exclusively via cart checkout.</li>
+<li>No explicit order state transition rules are documented yet.</li>
+<li>Order status lifecycle exists but is not formalized.</li>
+<li>Access control is correctly enforced at query level.</li>
+</ul>
+<h3 id="payments-domain">Payments Domain</h3>
+<h4 id="post-payments">POST /payments/</h4>
+<ul>
+<li>Payments are synchronous and simulated (fake gateway).</li>
+<li>Payment creation has immediate side effects on order status.</li>
+<li>No idempotency or retry mechanism is implemented.</li>
+<li>Only one payment per order is allowed.</li>
+<li>Payment lifecycle is minimal and not extensible.</li>
+</ul>
+<h3 id="products-domain">Products Domain</h3>
+<ul>
+<li>Products are exposed as read-only resources.</li>
+<li>Only active and in-stock products are visible via API.</li>
+<li>Product availability filtering is enforced at query level.</li>
+<li>Stock quantity is informational and does not imply reservation.</li>
+</ul>
+<h3 id="categories-domain">Categories Domain</h3>
+<ul>
+<li>Categories are hierarchical with a fixed two-level structure.</li>
+<li>Only parent categories are exposed as top-level resources.</li>
+<li>Child categories are embedded and read-only.</li>
+<li>Category tree depth is enforced by model validation.</li>
+</ul>
+<h3 id="discounts-domain">Discounts Domain</h3>
+<ul>
+<li>Discounts are exposed as read-only resources.</li>
+<li>Only active discounts within validity period are returned.</li>
+<li>Discounts target either a product or a leaf category.</li>
+<li>Category-targeted discounts are not explicitly represented in API payload.</li>
+<li>Discount application logic is intentionally out of API scope.</li>
+</ul>
+<h2 id="openapi-implementation-summary">OpenAPI Implementation Summary</h2>
+<p>OpenAPI was used not only as documentation, but also as:</p>
+<ul>
+<li>quality inspection tool</li>
+<li>technical debt detection tool</li>
+<li>design validation tool</li>
+</ul>
+<p>Areas identified:</p>
+<ul>
+<li>missing / implicit error scenarios (400 / 404 / 409)</li>
+<li>inconsistencies between business decisions and the model</li>
+<li>implicit state transitions</li>
+<li>missing explicit contracts</li>
+</ul>
+<p><strong>Findings were documented and transferred to the backlog</strong></p>
+<h2 id="impact-of-openapi-adoption">Impact of OpenAPI Adoption</h2>
+<h3 id="contract-changes-identified-and-introduced">Contract Changes Identified and Introduced</h3>
+<h4 id="get-cart_1">GET /cart</h4>
+<ul>
+<li>Explicitly documented dual behavior:</li>
+<li>200 OK when an active cart already exists</li>
+<li>201 Created when a new active cart is created</li>
+<li>Clarified authentication behavior (401 Unauthorized vs implicit 403 behavior before)</li>
+</ul>
+<h4 id="post-cartitems_1">POST /cart/items</h4>
+<ul>
+<li>Introduced explicit error contracts:</li>
+<li>404 Not Found – product does not exist</li>
+<li>409 Conflict – product exists but is unavailable (inactive or out of stock)</li>
+<li>400 Bad Request – invalid input (e.g. quantity ≤ 0)</li>
+<li>Aligned API behavior with documented OpenAPI responses</li>
+</ul>
+<h4 id="post-cartcheckout_1">POST /cart/checkout</h4>
+<ul>
+<li>Standardized response contract:</li>
+<li>Checkout returns an explicit order object instead of implicit root-level fields</li>
+<li>Clarified error scenarios:</li>
+<li>No active cart</li>
+<li>Empty cart</li>
+<li>Repeated checkout attempt (treated as business invalid state, not technical error)</li>
+<li>Explicitly documented error response structure</li>
+</ul>
+<h4 id="payments">Payments</h4>
+<ul>
+<li>Checkout response change (order.id nesting) propagated to payment creation flow</li>
+<li>Payment endpoints now rely on a clearly defined order contract</li>
+</ul>
+<h3 id="refactoring-triggered-by-openapi-findings">Refactoring Triggered by OpenAPI Findings</h3>
+<ul>
+<li>Introduced explicit response serializers (e.g. Checkout response) instead of ad-hoc dictionaries</li>
+<li>Unified and centralized error response structure across Cart, Checkout and Payments</li>
+<li>Fixed multiple implicit assumptions uncovered by OpenAPI:</li>
+<li>Serializer fields returning inconsistent shapes</li>
+<li>Incorrect HTTP status codes (e.g. 400 vs 409)</li>
+<li>Missing edge-case handling leading to 500 errors</li>
+<li>Refactored cart and checkout logic to better separate:</li>
+<li>Validation</li>
+<li>Business rules</li>
+<li>Response serialization</li>
+<li>Aligned pytest and Postman tests with the same API contract, eliminating hidden divergences</li>
+</ul>
+<h3 id="business-value-achieved">Business Value Achieved</h3>
+<ul>
+<li>API behavior is now predictable and explicit, reducing ambiguity for frontend integration</li>
+<li>Business error states (out-of-stock, invalid checkout, inactive products) are now first-class citizens, not runtime accidents</li>
+<li>Checkout flow is clearly defined and resilient against invalid states</li>
+<li>The API now represents a realistic e-commerce backend, not a happy-path prototype</li>
+</ul>
+<h3 id="technical-value-achieved">Technical Value Achieved</h3>
+<ul>
+<li>OpenAPI became a source of truth, not a passive documentation artifact</li>
+<li>Significant reduction of:</li>
+<li>Implicit behavior</li>
+<li>Undocumented assumptions</li>
+<li>Accidental 500 errors</li>
+<li>Tests (Postman + pytest) now:</li>
+<li>Validate behavior, not implementation</li>
+<li>Enforce contract stability during refactoring</li>
+<li>Improved readiness for:</li>
+<li>CI/CD automation</li>
+<li>Contract testing</li>
+<li>Future domain iterations without fear of regression</li>
+</ul>
+<h3 id="key-takeaway">Key Takeaway</h3>
+<p>OpenAPI did not just document the system —
+it <strong>exposed structural weaknesses, forced hard decisions</strong>, and <strong>drove meaningful refactoring</strong> that improved both business correctness and technical quality.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10/dist/mermaid.min.js"></script>
+      
+        <script src="../../js/mermaid-init.js"></script>
+      
+    
+  </body>
+</html>

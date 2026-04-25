@@ -1,0 +1,2171 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://github.io/ci-cd/Postman%20CLI%20in%20CI/">
+      
+      
+        <link rel="prev" href="../Pipeline%20Overview/">
+      
+      
+        <link rel="next" href="../../decisions/readme/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Postman CLI in CI - Shopwise Showcase Project Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#postman-cli-in-ci-current-pipeline-setup-snapshot" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-header__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Shopwise Showcase Project Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Postman CLI in CI
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-nav__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Shopwise Showcase Project Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Demo scenarios
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Guest%20order%20flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guest user flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Auth%20order%20flow%20with%20order%20history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auth Order Flow with Order History
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Cart%20merge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart merge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Order%20claim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Order claim
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Registration%20and%20email%20verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registration and Email Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20shipment%20processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Shipment Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20promotion%20and%20offer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Promotion and Offer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/OpenAPI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAPI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/System%20Architecture%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Current%20Architecture%20Baseline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Current Architecture Baseline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Domain%20Model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ER Diagram.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ER Diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Cart-Order%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart-Order Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Inventory%20Reservation%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory Reservation Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Postman%20Anonymous%20Cart%20Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman Anonymous Cart Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI-CD
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CI-CD
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Pipeline%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman CLI in CI
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman CLI in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#high-level-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High-Level Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture at a Glance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#postman-cli-execution-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Postman CLI Execution Model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Postman CLI Execution Model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is used
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ci-job-responsibilities-clear-separation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI Job Responsibilities (Clear Separation)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CI Job Responsibilities (Clear Separation)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ci-responsibilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI responsibilities
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#postman-responsibilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Postman responsibilities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#database-setup-in-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database Setup in CI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Database Setup in CI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#database-type" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database Type
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#important-characteristics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Important characteristics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implication
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#django-backend-preparation-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Django Backend Preparation Steps
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Django Backend Preparation Steps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-this-order-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why this order matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-data-seeding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Data Seeding
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Data Seeding">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#seed-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Seed command
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Seed command">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#purpose-of-the-seed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose of the seed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seed-location-in-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Seed location in pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backend-runtime-in-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend Runtime in CI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Backend Runtime in CI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#server-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-localhost-is-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why localhost is used
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#healthcheck-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Healthcheck Strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#postman-cli-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Postman CLI Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Postman CLI Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#execution-method" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execution method
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reporters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reporters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#postman-environments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Postman Environments
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Postman Environments">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#environment-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment source
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best practices
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authentication-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication Strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debugging-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debugging Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-setup-guarantees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What This Setup Guarantees
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-takeaway" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Takeaway
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural Decisions Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#high-level-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High-Level Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture at a Glance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#postman-cli-execution-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Postman CLI Execution Model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Postman CLI Execution Model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is used
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ci-job-responsibilities-clear-separation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI Job Responsibilities (Clear Separation)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CI Job Responsibilities (Clear Separation)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ci-responsibilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI responsibilities
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#postman-responsibilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Postman responsibilities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#database-setup-in-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database Setup in CI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Database Setup in CI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#database-type" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database Type
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#important-characteristics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Important characteristics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implication
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#django-backend-preparation-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Django Backend Preparation Steps
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Django Backend Preparation Steps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-this-order-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why this order matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-data-seeding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Data Seeding
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Data Seeding">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#seed-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Seed command
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Seed command">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#purpose-of-the-seed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose of the seed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seed-location-in-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Seed location in pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backend-runtime-in-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend Runtime in CI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Backend Runtime in CI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#server-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-localhost-is-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why localhost is used
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#healthcheck-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Healthcheck Strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#postman-cli-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Postman CLI Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Postman CLI Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#execution-method" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execution method
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reporters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reporters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#postman-environments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Postman Environments
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Postman Environments">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#environment-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment source
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best practices
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authentication-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication Strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debugging-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debugging Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-setup-guarantees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What This Setup Guarantees
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-takeaway" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Takeaway
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="postman-cli-in-ci-current-pipeline-setup-snapshot">Postman CLI in CI – Current Pipeline Setup (Snapshot)</h1>
+<p>This document describes the <strong>current, working setup</strong> of Postman CLI execution in CI.<br />
+It is intended as a <strong>snapshot of the architecture</strong>, understandable by <strong>testers and project managers</strong>, not only developers.</p>
+<p>The goal of this setup is to:</p>
+<ul>
+<li>run Postman API tests automatically in CI</li>
+<li>test a real running backend</li>
+<li>use a real database (MySQL)</li>
+<li>fail fast and visibly when API behavior breaks</li>
+</ul>
+<hr />
+<h2 id="high-level-overview">High-Level Overview</h2>
+<p><strong>What we are testing</strong></p>
+<ul>
+<li>Backend API built with <strong>Django / Django REST Framework</strong></li>
+<li>Authentication and business endpoints via <strong>Postman collections</strong></li>
+</ul>
+<p><strong>How tests are executed</strong></p>
+<ul>
+<li>CI platform: <strong>GitHub Actions</strong></li>
+<li>API tests runner: <strong>Postman CLI</strong></li>
+<li>Collections &amp; environments: <strong>Postman Cloud (by ID, not JSON files)</strong></li>
+<li>Database: <strong>MySQL (service container, ephemeral)</strong></li>
+</ul>
+<hr />
+<h2 id="architecture-at-a-glance">Architecture at a Glance</h2>
+<p>GitHub Actions Job</p>
+<p>│</p>
+<p>├── MySQL service (clean DB per run)</p>
+<p>│</p>
+<p>├── Django backend</p>
+<p>│ ├── migrate database</p>
+<p>│ ├── seed test data (users, etc.)</p>
+<p>│ └── runserver (localhost:8000)</p>
+<p>│</p>
+<p>└── Postman CLI</p>
+<p>└── runs cloud collection against local backend</p>
+<p>Key principle:</p>
+<ul>
+<li><strong>Postman CLI does not start the backend or prepare data</strong>.</li>
+<li><strong>CI must prepare everything explicitly before running tests.</strong></li>
+</ul>
+<h2 id="postman-cli-execution-model">Postman CLI Execution Model</h2>
+<h3 id="what-is-used">What is used</h3>
+<ul>
+<li>
+<p><strong>Postman CLI GitHub Action</strong></p>
+</li>
+<li>
+<p>postmanlabs/postman-cli-action@v1</p>
+</li>
+<li>
+<p>Collections are referenced by <strong>Postman Cloud collection ID</strong></p>
+</li>
+<li>Environments are referenced by <strong>Postman Cloud environment ID</strong></li>
+</ul>
+<p>This means:</p>
+<ul>
+<li>No <code>.json</code> collections committed to the repo</li>
+<li>CI always runs the <strong>latest saved version</strong> from Postman Cloud</li>
+</ul>
+<h2 id="ci-job-responsibilities-clear-separation">CI Job Responsibilities (Clear Separation)</h2>
+<h3 id="ci-responsibilities">CI responsibilities</h3>
+<ul>
+<li>provisioning database</li>
+<li>migrating schema</li>
+<li>seeding test data</li>
+<li>starting backend server</li>
+<li>running Postman CLI</li>
+<li>collecting reports</li>
+</ul>
+<h3 id="postman-responsibilities">Postman responsibilities</h3>
+<ul>
+<li>defining API requests</li>
+<li>assertions / tests</li>
+<li>request chaining and variable handling</li>
+<li>validating API behavior</li>
+</ul>
+<h2 id="database-setup-in-ci">Database Setup in CI</h2>
+<h3 id="database-type">Database Type</h3>
+<ul>
+<li><strong>MySQL 8</strong> via GitHub Actions service container</li>
+</ul>
+<h3 id="important-characteristics">Important characteristics</h3>
+<ul>
+<li>Database starts <strong>empty on every run</strong></li>
+<li>Data exists <strong>only for the duration of the job</strong></li>
+<li>Database is destroyed after the job finishes</li>
+</ul>
+<h3 id="implication">Implication</h3>
+<blockquote>
+<p><strong>Any data required by Postman tests (e.g. users) must be seeded explicitly.</strong></p>
+</blockquote>
+<h2 id="django-backend-preparation-steps">Django Backend Preparation Steps</h2>
+<p>The CI job prepares the backend in the following order:</p>
+<ol>
+<li><strong>Install dependencies</strong></li>
+<li><strong>Wait for MySQL service to be ready</strong></li>
+<li><strong>Run database migrations</strong></li>
+<li><strong>Seed test data</strong></li>
+<li><strong>Start Django development server</strong></li>
+<li><strong>Verify backend health</strong></li>
+<li><strong>Run Postman CLI tests</strong></li>
+</ol>
+<h3 id="why-this-order-matters">Why this order matters</h3>
+<ul>
+<li>Seeding before migrations → fails</li>
+<li>Running Postman before seeding → login fails</li>
+<li>Running Postman before server is ready → connection errors</li>
+</ul>
+<h2 id="test-data-seeding">Test Data Seeding</h2>
+<h3 id="seed-command">Seed command</h3>
+<p>A custom Django management command is used:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>manage.py<span class="w"> </span>seed_test_data
+</code></pre></div>
+<h4 id="purpose-of-the-seed">Purpose of the seed</h4>
+<ul>
+<li>create required test users (e.g. customer_2)</li>
+<li>set passwords correctly using Django hashing</li>
+<li>prepare minimal data needed for API flows</li>
+</ul>
+<h4 id="seed-location-in-pipeline">Seed location in pipeline</h4>
+<ul>
+<li>Runs <strong>after migrations</strong></li>
+<li>Runs <strong>before starting the server</strong></li>
+</ul>
+<p>This ensures:</p>
+<ul>
+<li>backend and Postman CLI see the <strong>same database state</strong></li>
+</ul>
+<h2 id="backend-runtime-in-ci">Backend Runtime in CI</h2>
+<h3 id="server-mode">Server mode</h3>
+<ul>
+<li>Django <code>runserver</code></li>
+<li>Runs in background</li>
+<li>Bound to <code>127.0.0.1:8000</code></li>
+</ul>
+<h3 id="why-localhost-is-used">Why localhost is used</h3>
+<ul>
+<li>Postman CLI runs in the same CI runner</li>
+<li>No external networking needed</li>
+<li>Faster and simpler setup</li>
+</ul>
+<h2 id="healthcheck-strategy">Healthcheck Strategy</h2>
+<p>Before running Postman CLI:</p>
+<ul>
+<li>CI performs a simple HTTP healthcheck
+  = Confirms backend is reachable</li>
+</ul>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code><span class="err">GET /api/v1/health/</span>
+</code></pre></div>
+<p>If healthcheck fails:</p>
+<ul>
+<li>Postman tests are not meaningful</li>
+<li>CI should fail early</li>
+</ul>
+<h2 id="postman-cli-configuration">Postman CLI Configuration</h2>
+<h3 id="execution-method">Execution method</h3>
+<p>Postman CLI is executed using cloud IDs:</p>
+<div class="highlight"><pre><span></span><code>collection run &lt;COLLECTION_ID&gt;
+--environment &lt;ENVIRONMENT_ID&gt;
+</code></pre></div>
+<h3 id="reporters">Reporters</h3>
+<ul>
+<li><code>cli</code> – human-readable output in CI logs</li>
+<li><code>junit</code> – machine-readable test results</li>
+</ul>
+<p>JUnit report is stored as a CI artifact.</p>
+<h2 id="postman-environments">Postman Environments</h2>
+<h3 id="environment-source">Environment source</h3>
+<ul>
+<li>Stored and managed in <strong>Postman Cloud</strong></li>
+<li>Referenced in CI by <strong>environment ID</strong></li>
+</ul>
+<h3 id="best-practices">Best practices</h3>
+<ul>
+<li>Use consistent variable names (e.g. <code>base_url</code>)</li>
+<li>Avoid mixing <code>baseUrl</code> / <code>base_url</code></li>
+<li>Store secrets securely (Postman + GitHub Secrets)</li>
+<li>Assume CI always runs with <strong>clean state</strong></li>
+</ul>
+<h2 id="authentication-strategy">Authentication Strategy</h2>
+<p>Login request uses:</p>
+<div class="highlight"><pre><span></span><code>Content-Type: application/json
+</code></pre></div>
+<ul>
+<li>No Postman-level authentication is enabled</li>
+<li>Tokens (if any) are handled explicitly in requests/scripts</li>
+</ul>
+<p>This keeps authentication logic transparent and debuggable.</p>
+<h2 id="debugging-philosophy">Debugging Philosophy</h2>
+<p>When tests fail:</p>
+<ol>
+<li>
+<p><strong>Test with curl inside CI</strong></p>
+</li>
+<li>
+<p>confirms backend vs Postman responsibility</p>
+</li>
+<li>
+<p><strong>Verify DB contents</strong></p>
+</li>
+<li>user existence</li>
+<li>password correctness</li>
+<li><strong>Only then debug Postman scripts</strong></li>
+</ol>
+<p>This avoids wasting time debugging the wrong layer.</p>
+<h2 id="what-this-setup-guarantees">What This Setup Guarantees</h2>
+<ul>
+<li>✅ Reproducible test runs</li>
+<li>✅ No dependency on local developer data</li>
+<li>✅ Clear separation of concerns</li>
+<li>✅ Failures point to real issues (API, data, or logic)</li>
+<li>✅ Easy onboarding for testers and PMs</li>
+</ul>
+<h2 id="key-takeaway">Key Takeaway</h2>
+<blockquote>
+<p><strong>Postman CLI in CI is only as reliable as the environment you prepare for it.
+CI must create the world that Postman tests expect.</strong></p>
+</blockquote>
+<p>This document represents the current, working baseline and should be updated whenever:</p>
+<ul>
+<li>database type changes</li>
+<li>seed logic changes</li>
+<li>Postman execution model changes</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10/dist/mermaid.min.js"></script>
+      
+        <script src="../../js/mermaid-init.js"></script>
+      
+    
+  </body>
+</html>

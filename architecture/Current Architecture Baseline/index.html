@@ -1,0 +1,2506 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://github.io/architecture/Current%20Architecture%20Baseline/">
+      
+      
+        <link rel="prev" href="../System%20Architecture%20Overview/">
+      
+      
+        <link rel="next" href="../Domain%20Model/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Current Architecture Baseline - Shopwise Showcase Project Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#current-architecture-baseline" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-header__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Shopwise Showcase Project Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Current Architecture Baseline
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-nav__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Shopwise Showcase Project Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Demo scenarios
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Guest%20order%20flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guest user flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Auth%20order%20flow%20with%20order%20history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auth Order Flow with Order History
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Cart%20merge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart merge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Order%20claim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Order claim
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Registration%20and%20email%20verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registration and Email Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20shipment%20processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Shipment Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20promotion%20and%20offer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Promotion and Offer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/OpenAPI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAPI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../System%20Architecture%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Current Architecture Baseline
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Current Architecture Baseline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#system-snapshot-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Snapshot (Current)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-principles-active" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture Principles (Active)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture Principles (Active)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#contract-first-api-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contract-first API behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unified-error-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unified error contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deterministic-pricing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deterministic pricing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atomic-checkout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Atomic checkout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#double-checkout-protection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Double-checkout protection
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#domain-boundaries-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain Boundaries (Current)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Domain Boundaries (Current)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#product-catalog-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Product Catalog: Categories
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-persistence-guarantees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data &amp; Persistence Guarantees
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data &amp; Persistence Guarantees">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#database-strategy-by-environment-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database strategy by environment (Current)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transactional-guarantees-checkout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transactional guarantees (Checkout)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-contract-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Contract (Current)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API Contract (Current)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#error-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#contract-governance-current-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contract governance (Current process)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unified-order-checkout-response-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unified Order + Checkout response shape
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#categories-response-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Categories response shape
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pricing-policy-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pricing Policy (Current)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authentication-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication (Current)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#identity-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity (Current)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Identity (Current)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#account-email-change-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Account Email Change (Current)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#anonymous-cart-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anonymous Cart (Current)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#active-cart-resolution-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Active Cart Resolution (Current)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#order-lifecycle-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order Lifecycle (Current)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#guest-checkout-and-order-claiming-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Guest Checkout and Order Claiming (Current)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Guest Checkout and Order Claiming (Current)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#verified-claim-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verified claim policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cart-order-inventory-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cart → Order → Inventory (Current)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cart → Order → Inventory (Current)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inventory-reservation-model-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inventory Reservation Model (Current)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#order-lifecycle-current_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order Lifecycle (Current)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-based-expiration-ttl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time-Based Expiration (TTL)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#architectural-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architectural Notes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-strategy-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Strategy (Current)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing Strategy (Current)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-pyramid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test pyramid
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#critical-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Critical paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dual-database-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dual database approach
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mysql-parity-note" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MySQL parity note
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-contract-e2e-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Contract &amp; E2E Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-policy-pre-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration Policy (Pre-1.0)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#known-limitations-planned-improvements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known Limitations &amp; Planned Improvements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#traceability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Traceability
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Domain%20Model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ER Diagram.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ER Diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Cart-Order%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart-Order Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Inventory%20Reservation%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory Reservation Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Postman%20Anonymous%20Cart%20Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman Anonymous Cart Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI-CD
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CI-CD
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Pipeline%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Postman%20CLI%20in%20CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman CLI in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural Decisions Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#system-snapshot-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Snapshot (Current)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-principles-active" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture Principles (Active)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture Principles (Active)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#contract-first-api-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contract-first API behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unified-error-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unified error contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deterministic-pricing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deterministic pricing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atomic-checkout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Atomic checkout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#double-checkout-protection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Double-checkout protection
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#domain-boundaries-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain Boundaries (Current)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Domain Boundaries (Current)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#product-catalog-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Product Catalog: Categories
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-persistence-guarantees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data &amp; Persistence Guarantees
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data &amp; Persistence Guarantees">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#database-strategy-by-environment-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database strategy by environment (Current)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transactional-guarantees-checkout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transactional guarantees (Checkout)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-contract-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Contract (Current)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API Contract (Current)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#error-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#contract-governance-current-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contract governance (Current process)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unified-order-checkout-response-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unified Order + Checkout response shape
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#categories-response-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Categories response shape
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pricing-policy-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pricing Policy (Current)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authentication-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication (Current)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#identity-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity (Current)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Identity (Current)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#account-email-change-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Account Email Change (Current)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#anonymous-cart-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anonymous Cart (Current)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#active-cart-resolution-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Active Cart Resolution (Current)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#order-lifecycle-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order Lifecycle (Current)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#guest-checkout-and-order-claiming-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Guest Checkout and Order Claiming (Current)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Guest Checkout and Order Claiming (Current)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#verified-claim-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verified claim policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cart-order-inventory-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cart → Order → Inventory (Current)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cart → Order → Inventory (Current)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inventory-reservation-model-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inventory Reservation Model (Current)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#order-lifecycle-current_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order Lifecycle (Current)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-based-expiration-ttl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time-Based Expiration (TTL)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#architectural-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architectural Notes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-strategy-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Strategy (Current)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing Strategy (Current)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-pyramid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test pyramid
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#critical-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Critical paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dual-database-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dual database approach
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mysql-parity-note" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MySQL parity note
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-contract-e2e-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Contract &amp; E2E Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-policy-pre-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration Policy (Pre-1.0)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#known-limitations-planned-improvements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known Limitations &amp; Planned Improvements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#traceability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Traceability
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="current-architecture-baseline">Current Architecture Baseline</h1>
+<p><strong>Purpose:</strong> This document describes the <strong>current, authoritative state</strong> of the Shopwise system.
+It is a <strong>living document</strong> and should be updated whenever an accepted ADR changes system behavior,
+API contracts, data guarantees, or testing strategy.</p>
+<blockquote>
+<p>ADRs explain <strong>why</strong> decisions were made.<br />
+This baseline explains <strong>what is true now</strong>.</p>
+</blockquote>
+<hr />
+<h2 id="system-snapshot-current">System Snapshot (Current)</h2>
+<ul>
+<li><strong>Backend:</strong> Django + Django REST Framework</li>
+<li><strong>API Contract:</strong> OpenAPI is the canonical specification (generated from code and treated as source of truth). (ADR-004)</li>
+<li><strong>Frontend:</strong> Planned (React + Vite). Language choice (JS vs TS) TBD.</li>
+<li><strong>Databases:</strong></li>
+<li>SQLite for fast unit tests</li>
+<li>MySQL for production-like behavior (dev/prod and DB-critical integration tests). (ADR-003)</li>
+<li><strong>Testing Tooling:</strong></li>
+<li>Backend: pytest</li>
+<li>E2E/Contract smoke: Postman collections (until automated contract testing is added)</li>
+</ul>
+<hr />
+<h2 id="architecture-principles-active">Architecture Principles (Active)</h2>
+<p>These principles are currently enforced across the codebase (or within the hardened domains if scope-limited).</p>
+<h3 id="contract-first-api-behavior">Contract-first API behavior</h3>
+<ul>
+<li>OpenAPI is the canonical contract for endpoints, status codes and error payloads. (ADR-004)</li>
+</ul>
+<h3 id="unified-error-contract">Unified error contract</h3>
+<ul>
+<li>All API errors use a consistent payload shape:
+  <code>{ "code": "&lt;string&gt;", "message": "&lt;human readable&gt;" }</code></li>
+<li>Domain-specific exceptions are mapped through a single handler. (ADR-009)</li>
+</ul>
+<h3 id="deterministic-pricing">Deterministic pricing</h3>
+<ul>
+<li>Orders store pricing snapshots (unit price, discounts, line totals) to guarantee determinism after checkout. (ADR-006)</li>
+</ul>
+<h3 id="atomic-checkout">Atomic checkout</h3>
+<ul>
+<li>Checkout is executed atomically; partial state is not allowed.</li>
+<li>Explicit rollback behavior is applied where needed. (ADR-007)</li>
+</ul>
+<h3 id="double-checkout-protection">Double-checkout protection</h3>
+<ul>
+<li>The system prevents converting the same cart multiple times; conflicts return a deterministic error (e.g., 409). (ADR-008)</li>
+</ul>
+<hr />
+<h2 id="domain-boundaries-current">Domain Boundaries (Current)</h2>
+<p>This section describes the active bounded contexts / domains and their responsibilities.</p>
+<ul>
+<li><strong>Cart</strong>: mutable state while ACTIVE; responsible for pricing preview and item management.</li>
+<li><strong>Order</strong>: immutable snapshot created from a cart during checkout.</li>
+<li><strong>Payment</strong>: mocked/fake provider integration; separate step from checkout flow.</li>
+</ul>
+<blockquote>
+<p>Details: see <code>architecture/Domain Model.md</code> and <code>architecture/Cart-Order Lifecycle.md</code>.</p>
+</blockquote>
+<h3 id="product-catalog-categories">Product Catalog: Categories</h3>
+<p>Categories are modeled as a <strong>flat list</strong> with no hierarchy. (ADR-015)</p>
+<ul>
+<li>No <code>parent</code> relationship, no <code>children</code> nesting, no <code>is_parent</code> semantics.</li>
+<li>Categories act as read-only classification labels for products.</li>
+<li>Any grouping or applicability logic for promotions/discounts is handled via explicit targeting (e.g., campaigns selecting specific products), not by traversing a category tree.</li>
+</ul>
+<p>Source: <a href="../../decisions/ADR-015-Category_Model_Is_Flat/">ADR-015</a>.</p>
+<hr />
+<h2 id="data-persistence-guarantees">Data &amp; Persistence Guarantees</h2>
+<h3 id="database-strategy-by-environment-current">Database strategy by environment (Current)</h3>
+<ul>
+<li>Unit tests: SQLite (fast feedback loop). (ADR-003)</li>
+<li>Production-like behavior: MySQL (integration confidence). (ADR-003)</li>
+</ul>
+<h3 id="transactional-guarantees-checkout">Transactional guarantees (Checkout)</h3>
+<ul>
+<li>Checkout changes are atomic.</li>
+<li>Data invariants are protected at the domain/service layer and (where applicable) reinforced by DB constraints/indexes.</li>
+</ul>
+<hr />
+<h2 id="api-contract-current">API Contract (Current)</h2>
+<h3 id="error-model">Error model</h3>
+<ul>
+<li>Error payload shape is standardized. (ADR-009)</li>
+<li>Error codes are stable identifiers used by clients and tests.</li>
+</ul>
+<h3 id="contract-governance-current-process">Contract governance (Current process)</h3>
+<ul>
+<li>API changes must update the OpenAPI schema and add/adjust tests.</li>
+<li>Breaking changes require an ADR or explicit decision record.</li>
+<li>Postman CLI tests serve as an executable verification of the OpenAPI contract and expected API behavior. (<a href="../../decisions/ADR-016-Postman-CLI-for-API-Contract-and-E2E-Testing-in-CI/">ADR-016</a>)</li>
+</ul>
+<h3 id="unified-order-checkout-response-shape">Unified Order + Checkout response shape</h3>
+<p>Checkout and Orders expose a single, consistent public contract. (<a href="../../decisions/ADR-012-Unified-Order-and-Checkout-API-Contract/">ADR-012</a>)</p>
+<ul>
+<li><code>id</code> is used consistently (no <code>order_id</code>)</li>
+<li><code>total</code> is used consistently (no <code>total_price</code>)</li>
+<li>Order items expose explicit pricing semantics:</li>
+<li><code>unit_price</code></li>
+<li><code>line_total</code></li>
+<li><code>discount: { type, value } | null</code></li>
+<li>Internal persistence fields (e.g., legacy snapshot columns) are never leaked into the public API.</li>
+</ul>
+<p>Source: <a href="../../decisions/ADR-012-Unified-Order-and-Checkout-API-Contract/">ADR-012</a>.</p>
+<h3 id="categories-response-shape">Categories response shape</h3>
+<p>Category endpoints return flat category representations only. (ADR-015)</p>
+<ul>
+<li>Nested structures (<code>children</code>) and hierarchy-related fields (<code>parent</code>, <code>is_parent</code>) are not part of the public API contract.</li>
+<li>OpenAPI examples and contract tests must reflect the flat model.</li>
+</ul>
+<p>Source: <a href="../../decisions/ADR-015-Category_Model_Is_Flat/">ADR-015</a>.</p>
+<hr />
+<h2 id="pricing-policy-current">Pricing Policy (Current)</h2>
+<p>Pricing is deterministic, audit-friendly, and fully server-calculated. (ADR-013)</p>
+<p>Rules:</p>
+<ol>
+<li>Discounts apply per unit.</li>
+<li>FIXED wins: if any valid FIXED discount exists, PERCENT discounts are ignored.</li>
+<li>Discounted unit price is clamped to &gt;= 0.00.</li>
+<li>Rounding uses ROUND_HALF_UP to 2 decimals:</li>
+<li>compute discounted unit price → round to 2 decimals</li>
+<li>line total = rounded_unit_price × quantity → round again to 2 decimals</li>
+</ol>
+<p>Checkout snapshots pricing into OrderItem:</p>
+<ul>
+<li>unit_price_at_order_time</li>
+<li>line_total_at_order_time</li>
+<li>applied_discount_type_at_order_time</li>
+<li>applied_discount_value_at_order_time</li>
+</ul>
+<p>Legacy field <code>price_at_order_time</code> is retained temporarily for backward compatibility and stores the line total, but is not part of the public API.</p>
+<p>Source: <a href="../../decisions/ADR-013-Pricing-and-Rounding-Policy/">ADR-013</a>.</p>
+<hr />
+<h2 id="authentication-current">Authentication (Current)</h2>
+<p>The API uses JWT Bearer authentication. (ADR-019)
+Clients send <code>Authorization: Bearer &lt;access_token&gt;</code>. Roles/permissions are enforced server-side.</p>
+<p>JWT-related errors follow the unified error payload conventions.</p>
+<hr />
+<h2 id="identity-current">Identity (Current)</h2>
+<p>The project uses a custom Django user model (<code>accounts.User</code>) with email-based authentication.
+Email is required, normalized and unique at the database level. (ADR-020)
+All domain relations reference <code>settings.AUTH_USER_MODEL</code>.</p>
+<h3 id="account-email-change-current">Account Email Change (Current)</h3>
+<p>Email changes are handled via a dedicated pending-request flow. (ADR-035)</p>
+<ul>
+<li>Initiation requires the user’s current password and double entry of the new email.</li>
+<li><code>User.email</code> is updated only after the new email is confirmed via a time-limited, single-use token.</li>
+<li>The old email receives a security notification with a one-click cancel/block action.</li>
+<li>After successful confirmation, all active sessions are terminated (logout-all) and the user must log in again.</li>
+</ul>
+<hr />
+<h2 id="anonymous-cart-current">Anonymous Cart (Current)</h2>
+<p>Anonymous carts are supported via an opaque guest cart token. (ADR-022)</p>
+<p>Token transport:</p>
+<ul>
+<li>Primary: HttpOnly cookie <code>cart_token</code></li>
+<li>Secondary: <code>X-Cart-Token</code> header (takes precedence over cookie)</li>
+</ul>
+<p>The database stores only a SHA-256 hash of the token (<code>anonymous_token_hash</code>).</p>
+<p>Cart resolution:</p>
+<ul>
+<li>Authenticated requests resolve the user’s ACTIVE cart (created lazily if missing).</li>
+<li>Anonymous requests resolve an ACTIVE anonymous cart by token hash; if missing/invalid, a new anonymous cart is created and a cookie is set.</li>
+</ul>
+<p>Login behavior:</p>
+<ul>
+<li>On successful login, the system adopts or merges the guest cart according to ADR-018.</li>
+<li>After adopt/merge, the token is invalidated and the cookie is cleared.</li>
+<li>Merge conflicts return HTTP 409 <code>CART_MERGE_STOCK_CONFLICT</code>.</li>
+</ul>
+<p>Cart status model includes terminal <code>MERGED</code> for merged anonymous carts.</p>
+<hr />
+<h2 id="active-cart-resolution-current">Active Cart Resolution (Current)</h2>
+<p>For authenticated users, the system no longer derives the “active cart” by querying <code>Cart</code> rows by status.
+Instead, it uses a dedicated <strong>ActiveCart pointer</strong> persisted in the database. (ADR-026)</p>
+<ul>
+<li><code>ActiveCart</code> enforces a cross-database invariant: <strong>exactly one active cart reference per user</strong> (unique on <code>ActiveCart.user</code>).</li>
+<li><code>Cart</code> rows represent cart history (multiple rows per user may exist over time with lifecycle statuses such as ACTIVE/CONVERTED/MERGED).</li>
+<li>All authenticated cart flows (GET cart, add/update/remove items, merge/adopt on login, checkout conversion) resolve the current cart via <code>ActiveCartService</code>.</li>
+<li>Anonymous carts remain token-based and do not use the ActiveCart pointer.</li>
+</ul>
+<hr />
+<h2 id="order-lifecycle-current">Order Lifecycle (Current)</h2>
+<p>MVP order status flow: <code>CREATED -&gt; PAID -&gt; SHIPPED</code>. (ADR-017)</p>
+<p>Inventory is reserved by decrementing <code>product.stock_quantity</code> when an order transitions to <code>PAID</code>.
+This transition and stock decrement are idempotent; repeated payment success processing must not decrement stock twice.
+<code>SHIPPED</code> is an admin-triggered fulfillment state with no additional pricing or inventory effects.</p>
+<hr />
+<h2 id="guest-checkout-and-order-claiming-current">Guest Checkout and Order Claiming (Current)</h2>
+<p>The checkout endpoint supports both authenticated and anonymous clients. (ADR-023)</p>
+<ul>
+<li>Anonymous checkout requires customer contact and address snapshot fields (minimum: <code>customer_email</code>).</li>
+<li>Orders can be created with <code>user = NULL</code> and store customer/contact snapshots for auditability.</li>
+</ul>
+<h3 id="verified-claim-policy">Verified claim policy</h3>
+<p>Guest orders are only attached to a user account after the user’s email is verified (double opt-in). (ADR-023)</p>
+<p>Claim eligibility:</p>
+<ul>
+<li><code>order.user IS NULL</code></li>
+<li><code>order.customer_email</code> matches the user email (case-insensitive / normalized)</li>
+<li><code>user.email_verified == true</code></li>
+</ul>
+<p>Claim is transactional and idempotent and may run on auth success and/or on email verification.</p>
+<hr />
+<h2 id="cart-order-inventory-current">Cart → Order → Inventory (Current)</h2>
+<p>The system uses a <strong>two-phase inventory model</strong> that separates stock holding from physical stock decrement.
+This design supersedes earlier approaches that decremented stock directly at checkout.</p>
+<p><strong>Key principles</strong>:</p>
+<ul>
+<li><code>Cart</code> represents a mutable shopping intent with <strong>no inventory impact</strong>.</li>
+<li><code>Order</code> is an immutable snapshot created at checkout (<code>status = CREATED</code>).</li>
+<li><code>Product.stock_quantity</code> represents <strong>physical stock only</strong>.</li>
+<li>Overselling is prevented via <strong>explicit inventory reservations</strong>.</li>
+</ul>
+<h3 id="inventory-reservation-model-current">Inventory Reservation Model (Current)</h3>
+<p>At checkout, inventory is <strong>reserved</strong>, not decremented.</p>
+<ul>
+<li>For each order item, an <code>InventoryReservation</code> is created with:</li>
+<li><code>status = ACTIVE</code></li>
+<li>explicit `expires_at`` (TTL)</li>
+<li>Availability is computed as:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">available</span> <span class="o">=</span> <span class="n">product</span><span class="o">.</span><span class="n">stock_quantity</span>
+           <span class="o">-</span> <span class="nb">sum</span><span class="p">(</span><span class="n">quantity</span> <span class="n">of</span> <span class="n">ACTIVE</span> <span class="n">reservations</span> <span class="k">for</span> <span class="n">product</span><span class="p">)</span>
+</code></pre></div>
+<ul>
+<li>Physical stock is decremented only after successful payment (<code>CREATED → PAID</code>).</li>
+<li>Reservations are terminally resolved as:</li>
+<li><code>COMMITTED</code> on payment success</li>
+<li><code>RELEASED / EXPIRED</code> on cancellation or TTL expiry</li>
+</ul>
+<p>Reservation TTL is applied at checkout and is environment-configurable
+(guest vs authenticated users).</p>
+<h3 id="order-lifecycle-current_1">Order Lifecycle (Current)</h3>
+<p>Orders follow a minimal, explicit lifecycle:</p>
+<ul>
+<li><code>CREATED</code></li>
+<li>inventory reserved</li>
+<li>awaiting payment</li>
+<li><code>PAID</code></li>
+<li>reservations committed</li>
+<li>physical stock decremented</li>
+<li><code>CANCELLED</code></li>
+<li>reservations released or expired</li>
+<li>physical stock unchanged</li>
+</ul>
+<p>Cancellation <strong>reasons are metadata</strong>, not separate states
+(e.g. <code>PAYMENT_FAILED</code>, <code>PAYMENT_EXPIRED</code>, <code>CUSTOMER_REQUEST</code>, <code>OUT_OF_STOCK</code>).</p>
+<p>Planned terminal states:</p>
+<ul>
+<li><code>SHIPPED</code></li>
+<li><code>DELIVERED</code></li>
+</ul>
+<h3 id="time-based-expiration-ttl">Time-Based Expiration (TTL)</h3>
+<p>Inventory reservations are time-bound.</p>
+<ul>
+<li>TTL is evaluated only for:</li>
+<li><code>ACTIVE</code> reservations</li>
+<li>orders still in <code>CREATED</code></li>
+<li>Expiration:</li>
+<li>releases reservations</li>
+<li>cancels the order with system metadata</li>
+<li>Paid orders are <strong>never expired</strong>.</li>
+</ul>
+<p>Expiration is executed by a background runner / management command
+(prepared for later scheduling via django-q2).</p>
+<h3 id="architectural-notes">Architectural Notes</h3>
+<ul>
+<li>Inventory and order state side effects are executed <strong>only via service layer orchestration</strong>.</li>
+<li>Models enforce invariants but contain no side-effect logic.</li>
+<li>The design is <strong>WMS-friendly</strong> and prepared for future external fulfillment integration without refactoring core order models.</li>
+</ul>
+<h3 id="references">References</h3>
+<ul>
+<li><a href="../Cart-Order%20Lifecycle/">Cart–Order Lifecycle (current)</a></li>
+<li><a href="../Inventory%20Reservation%20Lifecycle/">Inventory Reservation TTL Lifecycle</a></li>
+<li><a href="../../decisions/ADR-025-Inventory-Reservation-Model/">ADR-025: Inventory Reservation Model</a></li>
+</ul>
+<hr />
+<h2 id="testing-strategy-current">Testing Strategy (Current)</h2>
+<h3 id="test-pyramid">Test pyramid</h3>
+<ul>
+<li><strong>Unit tests (pytest + SQLite):</strong> fast, deterministic, domain/service oriented.</li>
+<li><strong>DB-behavior integration tests (pytest + MySQL):</strong> required for transactionality and DB-specific behavior.</li>
+<li><strong>E2E/contract smoke (Postman):</strong> validates workflows from a consumer perspective.</li>
+</ul>
+<h3 id="critical-paths">Critical paths</h3>
+<p>These flows must remain stable and heavily tested:</p>
+<ul>
+<li>Cart lifecycle: ACTIVE → CONVERTED</li>
+<li>Checkout atomicity + rollback behavior</li>
+<li>Double-checkout conflict handling</li>
+<li>Pricing snapshot invariants</li>
+<li>Unified error payload across hardened domains</li>
+</ul>
+<h3 id="dual-database-approach">Dual database approach</h3>
+<ul>
+<li>SQLite is the default backend for fast unit test feedback.</li>
+<li>A targeted MySQL verification suite validates production-critical DB behavior. (ADR-014)</li>
+</ul>
+<p>Markers:</p>
+<ul>
+<li><code>@pytest.mark.sqlite</code> — safe on SQLite (default suite)</li>
+<li><code>@pytest.mark.mysql</code> — must be verified on MySQL</li>
+</ul>
+<p>Default run:</p>
+<ul>
+<li><code>pytest -m "not mysql"</code></li>
+</ul>
+<p>MySQL verification run:</p>
+<ul>
+<li><code>DJANGO_SETTINGS_MODULE=settings.mysql pytest -m mysql</code></li>
+</ul>
+<p>MySQL suite is required for changes touching:</p>
+<ul>
+<li>checkout/order/payment flows</li>
+<li>pricing snapshot persistence</li>
+<li>transaction/atomicity boundaries</li>
+<li>constraints/migrations</li>
+<li>DB-originated error mapping and conflict/idempotency behavior</li>
+</ul>
+<p>Source: <a href="../../decisions/ADR-014-Dual-Database-Testing-Strategy/">ADR-014</a>.</p>
+<h3 id="mysql-parity-note">MySQL parity note</h3>
+<p>Historical schema constructs that block MySQL migrations must not remain in the active migration chain.
+Where needed, migrations are squashed or rewritten to ensure MySQL parity. (<a href="../../decisions/ADR-015-Category_Model_Is_Flat/">ADR-015</a>, <a href="../../decisions/ADR-014-Dual-Database-Testing-Strategy/">ADR-014</a>)</p>
+<h3 id="api-contract-e2e-verification">API Contract &amp; E2E Verification</h3>
+<p>End-to-end API behavior is verified in CI using <strong>Postman CLI</strong>, executing cloud-hosted Postman collections against a locally started backend with a real MySQL database. (ADR-016)</p>
+<p>Responsibilities:</p>
+<ul>
+<li>CI pipeline prepares the execution environment (DB, migrations, seed data, server startup).</li>
+<li>Postman CLI validates API workflows, authentication, and response behavior.</li>
+</ul>
+<p>This layer complements unit and integration tests by validating the system from a consumer perspective.</p>
+<hr />
+<h2 id="migration-policy-pre-10">Migration Policy (Pre-1.0)</h2>
+<p>Before v1.0, controlled migration resets are allowed for foundational schema changes.
+Resets must be documented, reproducible, and validated by CI from a clean state (migrate → seed → tests). (ADR-021)</p>
+<hr />
+<h2 id="known-limitations-planned-improvements">Known Limitations &amp; Planned Improvements</h2>
+<ul>
+<li>Frontend language decision (JS vs TS) pending.</li>
+<li>Full-system rollout of unified error handling and OpenAPI governance pending (currently prioritized domains: carts/checkout).</li>
+<li>Automated OpenAPI contract tests to be introduced (CI enforcement).</li>
+</ul>
+<hr />
+<h2 id="traceability">Traceability</h2>
+<p><strong>Baseline statements are backed by ADRs:</strong></p>
+<ul>
+<li><a href="../../decisions/ADR-003-database-strategy/">ADR-003 Database Strategy</a></li>
+<li><a href="../../decisions/ADR-004-OpenAPI-as-Source-of-Truth/">ADR-004 OpenAPI as Source of Truth</a></li>
+<li><a href="../../decisions/ADR-006-Snapshot-Pricing-Strategy/">ADR-006 Snapshot Pricing Strategy</a></li>
+<li><a href="../../decisions/ADR-007-Atomic-Checkout-with-Explicit-Rollback/">ADR-007 Atomic Checkout with Explicit Rollback</a></li>
+<li><a href="../decisions/ADR-008-Doubleheckout-Protection.md">ADR-008 Double-checkout Protection</a></li>
+<li><a href="../../decisions/ADR-009-Unified-Error-Handling-Strategy/">ADR-009 Unified Error Handling Strategy</a></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10/dist/mermaid.min.js"></script>
+      
+        <script src="../../js/mermaid-init.js"></script>
+      
+    
+  </body>
+</html>

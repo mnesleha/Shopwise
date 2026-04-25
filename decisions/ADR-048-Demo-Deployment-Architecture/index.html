@@ -1,0 +1,2160 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://github.io/decisions/ADR-048-Demo-Deployment-Architecture/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>ADR-048 Demo Deployment Architecture on Vercel, Render, Aiven, and Cloudflare R2 - Shopwise Showcase Project Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-048-demo-deployment-architecture-on-vercel-render-aiven-and-cloudflare-r2" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-header__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Shopwise Showcase Project Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-048 Demo Deployment Architecture on Vercel, Render, Aiven, and Cloudflare R2
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-nav__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Shopwise Showcase Project Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Demo scenarios
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Guest%20order%20flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guest user flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Auth%20order%20flow%20with%20order%20history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auth Order Flow with Order History
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Cart%20merge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart merge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Order%20claim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Order claim
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Registration%20and%20email%20verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registration and Email Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20shipment%20processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Shipment Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20promotion%20and%20offer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Promotion and Offer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/OpenAPI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAPI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/System%20Architecture%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Current%20Architecture%20Baseline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Current Architecture Baseline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Domain%20Model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ER Diagram.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ER Diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Cart-Order%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart-Order Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Inventory%20Reservation%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory Reservation Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Postman%20Anonymous%20Cart%20Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman Anonymous Cart Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI-CD
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CI-CD
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Pipeline%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Postman%20CLI%20in%20CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman CLI in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural Decisions Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-the-public-demo-is-deployed-as-a-multi-service-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The public demo is deployed as a multi-service architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-local-development-and-deployed-demo-remain-separate-environments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Local development and deployed demo remain separate environments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-github-main-is-the-deployment-source-of-truth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. GitHub main is the deployment source of truth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-frontend-is-deployed-on-vercel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Frontend is deployed on Vercel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-backend-api-is-deployed-on-render-as-a-dedicated-web-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Backend API is deployed on Render as a dedicated web service
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-background-processing-is-deployed-as-a-separate-render-worker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Background processing is deployed as a separate Render worker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-acquiremock-is-deployed-as-a-standalone-public-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. AcquireMock is deployed as a standalone public service
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-mailpit-is-deployed-as-a-standalone-public-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Mailpit is deployed as a standalone public service
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-mysql-remains-the-database-of-record-in-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. MySQL remains the database of record in deployment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-media-files-are-stored-outside-the-application-host" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Media files are stored outside the application host
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#11-production-demo-uses-environment-specific-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Production demo uses environment-specific configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-deployment-management-is-operationally-log-driven" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Deployment management is operationally log-driven
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-seed-data-is-a-first-class-deployment-dependency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Seed data is a first-class deployment dependency
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#current-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Current Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#public-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Public frontend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backend-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#background-worker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background worker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#payment-provider-mock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Payment provider mock
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#email-preview-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Email preview service
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#media-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Media storage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#static-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Static files
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployment-topology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment Topology
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deployment Topology">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#request-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runtime-service-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime service boundaries
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operational-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operational Rules
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Operational Rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-local-development-stays-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Local development stays local
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-deployed-demo-is-updated-by-git-driven-redeploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Deployed demo is updated by git-driven redeploy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-each-service-must-keep-its-own-required-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Each service must keep its own required environment variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-managed-services-must-be-diagnosed-through-service-specific-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Managed services must be diagnosed through service-specific logs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-demo-reset-depends-on-controlled-reseeding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Demo reset depends on controlled reseeding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-seed-maintenance-is-required-after-architectural-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Seed maintenance is required after architectural changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#management-and-maintenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Management and Maintenance
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Management and Maintenance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#environment-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deployment-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observability
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered-and-rejected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered and Rejected
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered and Rejected">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-single-host-deployment-for-all-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Single-host deployment for all components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-keeping-media-on-application-filesystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Keeping media on application filesystem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-immediate-migration-from-mysql-to-postgresql-before-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Immediate migration from MySQL to PostgreSQL before deployment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-free-tier-only-hosting-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Free-tier-only hosting architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-embedding-acquiremock-or-mailpit-into-the-backend-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Embedding AcquireMock or Mailpit into the backend service
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommendations-for-future-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommendations for Future Work
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recommendations for Future Work">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#short-term" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Short term
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#medium-term" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Medium term
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#long-term" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Long term
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployment-services-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment Services Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="adr-048-demo-deployment-architecture-on-vercel-render-aiven-and-cloudflare-r2">ADR-048 Demo Deployment Architecture on Vercel, Render, Aiven, and Cloudflare R2</h1>
+<p><strong>Decision type</strong>: Architecture</p>
+<p><strong>Status</strong>: Accepted</p>
+<p><strong>Date</strong>: Sprint 16</p>
+<h2 id="context">Context</h2>
+<p>Shopwise needs a deployment architecture that:</p>
+<ul>
+<li>supports a fully presentable public demo suitable for CV/showcase use,</li>
+<li>preserves the current application stack without requiring immediate migration from MySQL,</li>
+<li>keeps frontend, backend, worker, payment mock, email preview, database, and media storage operational as separate concerns,</li>
+<li>remains understandable and maintainable for a solo-developer workflow,</li>
+<li>supports continued local development while allowing periodic redeploys of a stable public environment,</li>
+<li>avoids coupling the public demo to local Docker-only infrastructure.</li>
+</ul>
+<p>The deployed system must reflect the current runtime architecture of the application:</p>
+<ul>
+<li>frontend is built with Next.js,</li>
+<li>backend is built with Django + DRF,</li>
+<li>async/background processing is handled by Django Q2,</li>
+<li>MySQL remains the source of truth for relational data,</li>
+<li>media files must survive redeploys,</li>
+<li>email-based business flows must remain demonstrable,</li>
+<li>payment flow must remain demonstrable using AcquireMock,</li>
+<li>local development must stay independent from deployed services.</li>
+</ul>
+<p>The deployment architecture must also account for practical constraints discovered during implementation:</p>
+<ul>
+<li>free hosting tiers introduced operational limits that were too restrictive for the full showcase flow,</li>
+<li>background workers, internal networking, shell access, and always-on behavior required paid starter-level services,</li>
+<li>the production demo required explicit runtime logging to make failures diagnosable,</li>
+<li>seed data quality became a first-order operational dependency of the deployed demo.</li>
+</ul>
+<h2 id="decision">Decision</h2>
+<h3 id="1-the-public-demo-is-deployed-as-a-multi-service-architecture">1. The public demo is deployed as a multi-service architecture</h3>
+<p>Shopwise is deployed as multiple separately managed services, not as a single monolithic host or one-process deployment.</p>
+<p>The deployed system is composed of:</p>
+<ul>
+<li>Vercel for the public Next.js frontend,</li>
+<li>Render Web Service for the Django/DRF backend,</li>
+<li>Render Background Worker for Django Q2,</li>
+<li>Render Web Service for AcquireMock,</li>
+<li>Render Web Service for Mailpit,</li>
+<li>Aiven MySQL for the relational database,</li>
+<li>Cloudflare R2 for media file storage.</li>
+</ul>
+<p>This reflects the real runtime boundaries of the application instead of collapsing all runtime concerns into one host.</p>
+<h3 id="2-local-development-and-deployed-demo-remain-separate-environments">2. Local development and deployed demo remain separate environments</h3>
+<p>Local development remains Docker-based and independent from the public deployment.</p>
+<p>The deployed demo uses its own:</p>
+<ul>
+<li>database,</li>
+<li>media storage,</li>
+<li>service URLs,</li>
+<li>environment variables,</li>
+<li>runtime processes.</li>
+</ul>
+<p>The public environment is treated as a separately deployed environment, not as an extension of local development.</p>
+<p>Development continues locally, and the public demo is updated only through git-based redeploys.</p>
+<h3 id="3-github-main-is-the-deployment-source-of-truth">3. GitHub <code>main</code> is the deployment source of truth</h3>
+<p>The monorepo stored in GitHub serves as the deployment source of truth.</p>
+<p>Deployable parts are sourced from distinct root directories:</p>
+<ul>
+<li><code>frontend/</code></li>
+<li><code>backend/</code></li>
+<li><code>acquiremock/</code></li>
+</ul>
+<p>The public environment is deployed from <code>main</code>.</p>
+<p>Local and in-progress work may continue on other branches, but deployment targets the stable branch intended for demo presentation.</p>
+<h3 id="4-frontend-is-deployed-on-vercel">4. Frontend is deployed on Vercel</h3>
+<p>The public frontend is deployed as a Vercel project from <code>frontend/</code>.</p>
+<p>Vercel is responsible for:</p>
+<ul>
+<li>public UI hosting,</li>
+<li>Next.js build/runtime,</li>
+<li>server-side rendering for frontend routes,</li>
+<li>frontend environment configuration.</li>
+</ul>
+<p>The frontend communicates with the backend through the configured backend origin and API base URL.</p>
+<h3 id="5-backend-api-is-deployed-on-render-as-a-dedicated-web-service">5. Backend API is deployed on Render as a dedicated web service</h3>
+<p>The Django/DRF backend is deployed as a dedicated Render Web Service from <code>backend/</code>.</p>
+<p>This service is responsible for:</p>
+<ul>
+<li>REST API,</li>
+<li>admin,</li>
+<li>authentication endpoints,</li>
+<li>checkout orchestration,</li>
+<li>payment orchestration entrypoints,</li>
+<li>provider integration boundaries,</li>
+<li>public backend routes used by the frontend.</li>
+</ul>
+<p>The backend is not combined with the worker process.</p>
+<h3 id="6-background-processing-is-deployed-as-a-separate-render-worker">6. Background processing is deployed as a separate Render worker</h3>
+<p>Django Q2 runs as a dedicated Render Background Worker from <code>backend/</code>.</p>
+<p>This worker is responsible for:</p>
+<ul>
+<li>asynchronous jobs,</li>
+<li>scheduled jobs,</li>
+<li>email dispatch and similar deferred operations,</li>
+<li>background business workflows.</li>
+</ul>
+<p>The worker is intentionally separated from the web service to preserve operational clarity and to avoid coupling long-running async processing to request-serving processes.</p>
+<h3 id="7-acquiremock-is-deployed-as-a-standalone-public-service">7. AcquireMock is deployed as a standalone public service</h3>
+<p>AcquireMock is deployed as a separate Render Web Service from <code>acquiremock/</code>.</p>
+<p>It remains a standalone runtime dependency and is not embedded into the Django backend.</p>
+<p>This preserves:</p>
+<ul>
+<li>provider isolation,</li>
+<li>realistic payment redirection behavior,</li>
+<li>demonstrable hosted mock payment flow,</li>
+<li>a deployment model closer to real external provider architecture.</li>
+</ul>
+<h3 id="8-mailpit-is-deployed-as-a-standalone-public-service">8. Mailpit is deployed as a standalone public service</h3>
+<p>Mailpit is deployed as a separate Render Web Service.</p>
+<p>It serves two purposes:</p>
+<ul>
+<li>SMTP target for application and provider emails,</li>
+<li>public web UI for showcasing verification links and email-based business flows.</li>
+</ul>
+<p>Mailpit is intentionally exposed for demo purposes, because email-based flows are part of the showcase value of the application.</p>
+<h3 id="9-mysql-remains-the-database-of-record-in-deployment">9. MySQL remains the database of record in deployment</h3>
+<p>The deployed demo continues to use MySQL rather than migrating to PostgreSQL.</p>
+<p>Aiven MySQL is used as the hosted relational database because:</p>
+<ul>
+<li>it allowed the application to stay aligned with its current stack,</li>
+<li>it avoided migration work during the showcase phase,</li>
+<li>it provided a stable managed MySQL service suitable for demo deployment.</li>
+</ul>
+<p>MySQL remains the source of truth for all relational business data.</p>
+<h3 id="10-media-files-are-stored-outside-the-application-host">10. Media files are stored outside the application host</h3>
+<p>Media files are stored in Cloudflare R2 through <code>django-storages</code>.</p>
+<p>WhiteNoise is used only for static files.</p>
+<p>This means:</p>
+<ul>
+<li>static files are served by the Django deployment through WhiteNoise,</li>
+<li>uploaded/generated media files are stored in object storage,</li>
+<li>media does not depend on Render local filesystem persistence,</li>
+<li>redeploys do not destroy media assets.</li>
+</ul>
+<h3 id="11-production-demo-uses-environment-specific-configuration">11. Production demo uses environment-specific configuration</h3>
+<p>Deployment relies on a dedicated production settings profile and deployment-specific environment variables.</p>
+<p>In particular:</p>
+<ul>
+<li>local development uses local settings and local services,</li>
+<li>deployed demo uses production settings,</li>
+<li>storage, database, mail, payment provider URLs, and public URLs are configured through environment variables.</li>
+</ul>
+<p>The same codebase is therefore reused across environments, while runtime behavior is switched by configuration.</p>
+<h3 id="12-deployment-management-is-operationally-log-driven">12. Deployment management is operationally log-driven</h3>
+<p>The deployed environment is managed primarily through:</p>
+<ul>
+<li>service-specific logs in Render,</li>
+<li>deployment/runtime logs in Vercel,</li>
+<li>Sentry-enabled diagnostics where needed,</li>
+<li>Django console logging routed to Render logs.</li>
+</ul>
+<p>Operational diagnosis depends on explicit backend logging at service boundaries rather than relying only on HTTP request logs.</p>
+<h3 id="13-seed-data-is-a-first-class-deployment-dependency">13. Seed data is a first-class deployment dependency</h3>
+<p>The deployed demo depends on deterministic seed data to be functionally complete.</p>
+<p>The seed command is not treated as optional test support only. It is part of deployment operability because the demo requires seeded:</p>
+<ul>
+<li>supplier configuration,</li>
+<li>tax classes,</li>
+<li>product prices,</li>
+<li>admin user,</li>
+<li>payment-ready data,</li>
+<li>scenario-ready demo data.</li>
+</ul>
+<p>A stale or incomplete seed command can make an otherwise healthy deployment appear broken.</p>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
+<ul>
+<li>The deployed demo reflects the real runtime architecture of the application.</li>
+<li>The public showcase supports authentication, checkout, email, and payment demo flows.</li>
+<li>Media survives redeploys because it is not stored on ephemeral application disk.</li>
+<li>MySQL can be retained without immediate migration pressure.</li>
+<li>Frontend and backend can be redeployed independently.</li>
+<li>Local development remains intact and separate from the public environment.</li>
+<li>Failures can be diagnosed per service instead of treating the application as one opaque host.</li>
+</ul>
+<h3 id="negative">Negative</h3>
+<ul>
+<li>The deployment is operationally more complex than a single-host setup.</li>
+<li>Multiple services must be configured and monitored consistently.</li>
+<li>Render starter-tier services introduce ongoing cost.</li>
+<li>Environment variable drift between services is a real risk.</li>
+<li>Public demo correctness depends heavily on seed quality.</li>
+<li>Some operational tasks require service-specific awareness rather than a single admin surface.</li>
+</ul>
+<h2 id="current-implementation">Current Implementation</h2>
+<h3 id="public-frontend">Public frontend</h3>
+<ul>
+<li>Platform: Vercel</li>
+<li>Source: <code>frontend/</code></li>
+<li>Purpose:</li>
+<li>public UI,</li>
+<li>SSR/route rendering,</li>
+<li>frontend-to-backend communication</li>
+</ul>
+<h3 id="backend-api">Backend API</h3>
+<ul>
+<li>Platform: Render Web Service</li>
+<li>Source: <code>backend/</code></li>
+<li>Runtime:</li>
+<li>Django</li>
+<li>DRF</li>
+<li>Gunicorn</li>
+<li>Purpose:</li>
+<li>API</li>
+<li>admin</li>
+<li>orchestration boundaries</li>
+<li>provider integration entrypoints</li>
+</ul>
+<h3 id="background-worker">Background worker</h3>
+<ul>
+<li>Platform: Render Background Worker</li>
+<li>Source: <code>backend/</code></li>
+<li>Runtime:</li>
+<li>Django Q2</li>
+<li>Purpose:</li>
+<li>deferred jobs</li>
+<li>scheduled jobs</li>
+<li>background notifications/tasks</li>
+</ul>
+<h3 id="payment-provider-mock">Payment provider mock</h3>
+<ul>
+<li>Platform: Render Web Service</li>
+<li>Source: <code>acquiremock/</code></li>
+<li>Runtime:</li>
+<li>standalone provider app</li>
+<li>Purpose:</li>
+<li>hosted mock payment flow</li>
+<li>OTP/email mock</li>
+<li>payment redirect scenario</li>
+</ul>
+<h3 id="email-preview-service">Email preview service</h3>
+<ul>
+<li>Platform: Render Web Service</li>
+<li>Runtime:</li>
+<li>Mailpit</li>
+<li>Purpose:</li>
+<li>SMTP target</li>
+<li>email inbox UI for showcase flows</li>
+</ul>
+<h3 id="database">Database</h3>
+<ul>
+<li>Platform: Aiven</li>
+<li>Engine:</li>
+<li>MySQL</li>
+<li>Purpose:</li>
+<li>primary application data storage</li>
+</ul>
+<h3 id="media-storage">Media storage</h3>
+<ul>
+<li>Platform: Cloudflare R2</li>
+<li>Integration:</li>
+<li><code>django-storages</code></li>
+<li>Purpose:</li>
+<li>product/media asset persistence outside Render local disk</li>
+</ul>
+<h3 id="static-files">Static files</h3>
+<ul>
+<li>Runtime:</li>
+<li>WhiteNoise in Django</li>
+<li>Purpose:</li>
+<li>serve static assets from backend deployment</li>
+</ul>
+<h2 id="deployment-topology">Deployment Topology</h2>
+<h3 id="request-flow">Request flow</h3>
+<ol>
+<li>User opens the frontend hosted on Vercel.</li>
+<li>Frontend communicates with the Django backend on Render.</li>
+<li>Backend reads/writes business data in Aiven MySQL.</li>
+<li>Backend stores media in Cloudflare R2.</li>
+<li>Worker processes deferred jobs through Django Q2.</li>
+<li>Email flows are delivered to Mailpit via SMTP.</li>
+<li>Payment flow is delegated to AcquireMock.</li>
+<li>Redirect/payment completion returns control back to the frontend/backend flow.</li>
+</ol>
+<h3 id="runtime-service-boundaries">Runtime service boundaries</h3>
+<ul>
+<li>frontend does not embed backend logic,</li>
+<li>backend does not embed AcquireMock,</li>
+<li>worker does not serve HTTP requests,</li>
+<li>media storage is not tied to application disk,</li>
+<li>email preview is not embedded into backend runtime.</li>
+</ul>
+<h2 id="operational-rules">Operational Rules</h2>
+<h3 id="1-local-development-stays-local">1. Local development stays local</h3>
+<p>Development continues locally using local environment files and local Docker-based services.</p>
+<p>Local commands must not be assumed to act against the deployed environment unless explicitly configured to do so.</p>
+<h3 id="2-deployed-demo-is-updated-by-git-driven-redeploy">2. Deployed demo is updated by git-driven redeploy</h3>
+<p>Public deployment changes are made through repository updates and redeploys, not by editing code directly in hosting platforms.</p>
+<h3 id="3-each-service-must-keep-its-own-required-environment-variables">3. Each service must keep its own required environment variables</h3>
+<p>A service is operational only if its own environment variables are complete.</p>
+<p>This is especially important for:</p>
+<ul>
+<li>backend,</li>
+<li>worker,</li>
+<li>AcquireMock,</li>
+<li>Mailpit-related SMTP consumers.</li>
+</ul>
+<p>Changing env for one service does not automatically update the others.</p>
+<h3 id="4-managed-services-must-be-diagnosed-through-service-specific-logs">4. Managed services must be diagnosed through service-specific logs</h3>
+<p>When a public flow fails, diagnosis should begin with the logs of the service responsible for that part of the flow.</p>
+<p>Typical examples:</p>
+<ul>
+<li>frontend rendering failures → Vercel logs</li>
+<li>checkout / API failures → backend logs</li>
+<li>async notification failures → worker logs</li>
+<li>payment provider failures → AcquireMock logs</li>
+<li>email delivery preview issues → Mailpit logs</li>
+</ul>
+<h3 id="5-demo-reset-depends-on-controlled-reseeding">5. Demo reset depends on controlled reseeding</h3>
+<p>Resetting the demo does not happen automatically on redeploy.</p>
+<p>The database remains persistent across redeploys unless explicitly reset.</p>
+<p>Reseeding is a separate operational action and must be performed intentionally when the demo state needs to be restored.</p>
+<h3 id="6-seed-maintenance-is-required-after-architectural-changes">6. Seed maintenance is required after architectural changes</h3>
+<p>Whenever domain rules, supplier configuration, tax behavior, pricing, or payment assumptions change, the seed command must be updated accordingly.</p>
+<p>Deployment stability depends on this.</p>
+<h2 id="management-and-maintenance">Management and Maintenance</h2>
+<h3 id="environment-management">Environment management</h3>
+<p>The deployed environment is managed through platform environment variables rather than committed production secrets.</p>
+<p>This includes at minimum:</p>
+<ul>
+<li>database credentials,</li>
+<li>storage credentials,</li>
+<li>backend/frontend public URLs,</li>
+<li>SMTP configuration,</li>
+<li>provider configuration,</li>
+<li>runtime feature toggles.</li>
+</ul>
+<h3 id="deployment-management">Deployment management</h3>
+<p>Deployment is managed per service:</p>
+<ul>
+<li>Vercel for frontend,</li>
+<li>Render for backend, worker, AcquireMock, and Mailpit,</li>
+<li>Aiven for database operations,</li>
+<li>Cloudflare for media storage.</li>
+</ul>
+<h3 id="data-management">Data management</h3>
+<p>Operational data management includes:</p>
+<ul>
+<li>migrations,</li>
+<li>seed/reset procedures,</li>
+<li>supplier/payment/tax configuration verification,</li>
+<li>admin-based inspection and correction when needed.</li>
+</ul>
+<h3 id="observability">Observability</h3>
+<p>Operational diagnosis depends on:</p>
+<ul>
+<li>Django console logging,</li>
+<li>Render logs,</li>
+<li>Vercel runtime logs,</li>
+<li>optional Sentry diagnostics.</li>
+</ul>
+<p>The deployment assumes that important runtime boundaries emit explicit logs.</p>
+<h2 id="alternatives-considered-and-rejected">Alternatives Considered and Rejected</h2>
+<h3 id="1-single-host-deployment-for-all-components">1. Single-host deployment for all components</h3>
+<p>Rejected because:</p>
+<ul>
+<li>it would blur runtime boundaries,</li>
+<li>it would make worker/provider/email flows harder to reason about,</li>
+<li>it would not reflect the actual architecture of the application.</li>
+</ul>
+<h3 id="2-keeping-media-on-application-filesystem">2. Keeping media on application filesystem</h3>
+<p>Rejected because:</p>
+<ul>
+<li>Render application disk is not the correct long-term place for demo media persistence,</li>
+<li>redeploy/restart safety was required,</li>
+<li>media should remain independent of app host lifecycle.</li>
+</ul>
+<h3 id="3-immediate-migration-from-mysql-to-postgresql-before-deployment">3. Immediate migration from MySQL to PostgreSQL before deployment</h3>
+<p>Rejected because:</p>
+<ul>
+<li>deployment speed was the priority,</li>
+<li>MySQL was already the current working stack,</li>
+<li>migration would delay the showcase without providing immediate demo value.</li>
+</ul>
+<h3 id="4-free-tier-only-hosting-architecture">4. Free-tier-only hosting architecture</h3>
+<p>Rejected because:</p>
+<ul>
+<li>free-tier sleeping and service limitations made the full showcase flow unreliable,</li>
+<li>worker behavior, shell access, and internal communication needs exceeded practical free-tier limits,</li>
+<li>a stable public demo required more predictable runtime behavior.</li>
+</ul>
+<h3 id="5-embedding-acquiremock-or-mailpit-into-the-backend-service">5. Embedding AcquireMock or Mailpit into the backend service</h3>
+<p>Rejected because:</p>
+<ul>
+<li>it would increase coupling,</li>
+<li>it would make runtime management less clear,</li>
+<li>it would weaken the architecture as a demonstrable provider-based system.</li>
+</ul>
+<h2 id="recommendations-for-future-work">Recommendations for Future Work</h2>
+<h3 id="short-term">Short term</h3>
+<ul>
+<li>harden and modernize the seed command so a full demo-ready state is produced reliably,</li>
+<li>improve operational logging around provider and checkout boundaries,</li>
+<li>document environment variables per service more explicitly,</li>
+<li>verify all seeded supplier, price, and tax prerequisites.</li>
+</ul>
+<h3 id="medium-term">Medium term</h3>
+<ul>
+<li>move hardcoded production observability/configuration values fully into environment variables,</li>
+<li>add a more formal deployment runbook,</li>
+<li>add a repeatable reset/reseed operational procedure,</li>
+<li>improve health verification of cross-service flows.</li>
+</ul>
+<h3 id="long-term">Long term</h3>
+<ul>
+<li>consider consolidating or simplifying the service topology if the showcase evolves into a commercial starterkit,</li>
+<li>consider a future MySQL → PostgreSQL migration if platform fit or product direction requires it,</li>
+<li>introduce stronger deployment automation and release tracking.</li>
+</ul>
+<h2 id="deployment-services-summary">Deployment Services Summary</h2>
+<p>The current public demo is deployed as follows:</p>
+<ul>
+<li><strong>Frontend</strong> → Vercel</li>
+<li><strong>Backend API</strong> → Render Web Service</li>
+<li><strong>Background jobs</strong> → Render Background Worker</li>
+<li><strong>Payment mock</strong> → Render Web Service (<code>AcquireMock</code>)</li>
+<li><strong>Email preview</strong> → Render Web Service (<code>Mailpit</code>)</li>
+<li><strong>Database</strong> → Aiven MySQL</li>
+<li><strong>Media storage</strong> → Cloudflare R2</li>
+<li><strong>Static files</strong> → WhiteNoise in Django backend</li>
+</ul>
+<p>This architecture is the accepted deployment model for the current Shopwise showcase environment.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10/dist/mermaid.min.js"></script>
+      
+        <script src="../../js/mermaid-init.js"></script>
+      
+    
+  </body>
+</html>

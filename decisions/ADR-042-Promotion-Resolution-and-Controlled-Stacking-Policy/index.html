@@ -1,0 +1,1450 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://github.io/decisions/ADR-042-Promotion-Resolution-and-Controlled-Stacking-Policy/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>ADR-042: Promotion Resolution and Controlled Stacking Policy - Shopwise Showcase Project Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-042-promotion-resolution-and-controlled-stacking-policy" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-header__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Shopwise Showcase Project Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-042: Promotion Resolution and Controlled Stacking Policy
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-nav__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Shopwise Showcase Project Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Demo scenarios
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Guest%20order%20flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guest user flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Auth%20order%20flow%20with%20order%20history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auth Order Flow with Order History
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Cart%20merge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart merge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Order%20claim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Order claim
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Registration%20and%20email%20verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registration and Email Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20shipment%20processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Shipment Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20promotion%20and%20offer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Promotion and Offer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/OpenAPI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAPI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/System%20Architecture%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Current%20Architecture%20Baseline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Current Architecture Baseline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Domain%20Model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ER Diagram.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ER Diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Cart-Order%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart-Order Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Inventory%20Reservation%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory Reservation Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Postman%20Anonymous%20Cart%20Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman Anonymous Cart Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI-CD
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CI-CD
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Pipeline%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Postman%20CLI%20in%20CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman CLI in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural Decisions Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-promotion-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Promotion Layers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-controlled-stacking-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Controlled Stacking Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-exclusivity-and-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Exclusivity and Compatibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-intra-layer-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Intra-Layer Resolution
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Intra-Layer Resolution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-line-promotion-winner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Line Promotion winner
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-order-promotion-winner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Order Promotion winner
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-coupon-winner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Coupon winner
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-canonical-application-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Canonical Application Order
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-backend-only-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Backend-Only Resolution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-scope-for-mmp-v10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Scope for MMP / v1.0
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#guard-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Guard Rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#follow-ups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Follow-ups
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="adr-042-promotion-resolution-and-controlled-stacking-policy">ADR-042: Promotion Resolution and Controlled Stacking Policy</h1>
+<p><strong>Decision type</strong>: Architecture</p>
+<p><strong>Status</strong>: Proposed</p>
+<p><strong>Date</strong>: Sprint 12</p>
+<p><strong>Related</strong>: ADR-039, ADR-040, ADR-041, ADR-043</p>
+<h2 id="context">Context</h2>
+<p>Shopwise is evolving from MVP toward <strong>MMP (Minimal Marketable Product)</strong>. In this phase, promotions are no longer treated as a future enhancement but as a core commercial capability that directly affects conversion and marketability.</p>
+<p>ADR-040 establishes promotions as first-class pricing objects and separates:</p>
+<ul>
+<li>promotion definition,</li>
+<li>targeting,</li>
+<li>runtime resolution,</li>
+<li>and historical snapshots.</li>
+</ul>
+<p>However, implementation cannot proceed safely until the system explicitly defines:</p>
+<ul>
+<li>which promotions may combine,</li>
+<li>how conflicting promotions are resolved,</li>
+<li>how deterministic pricing is preserved,</li>
+<li>and how the pricing engine avoids uncontrolled combinatorial complexity.</li>
+</ul>
+<p>The system must therefore support <strong>controlled stacking</strong>, not unlimited stacking and not oversimplified “single winner only” pricing.</p>
+<h2 id="decision">Decision</h2>
+<h3 id="1-promotion-layers">1. Promotion Layers</h3>
+<p>Promotions are resolved in distinct layers:</p>
+<ol>
+<li><strong>Line Promotion</strong></li>
+<li>applies to individual order lines</li>
+<li>
+<p>typically product-targeted or category-targeted</p>
+</li>
+<li>
+<p><strong>Order Promotion</strong></p>
+</li>
+<li>applies to the order/cart subtotal</li>
+<li>
+<p>typically threshold-based or cart-level campaign logic</p>
+</li>
+<li>
+<p><strong>Coupon / Voucher</strong></p>
+</li>
+<li>explicitly entered by the user</li>
+<li>may apply to the order or eligible lines depending on definition</li>
+</ol>
+<p>Shipping promotions are <strong>out of scope</strong> for this ADR and require a future ADR.</p>
+<h3 id="2-controlled-stacking-model">2. Controlled Stacking Model</h3>
+<p>Shopwise supports <strong>controlled stacking across layers</strong>, with the following rules:</p>
+<ul>
+<li>At most <strong>one winning Line Promotion</strong> may apply to a given line</li>
+<li>At most <strong>one winning Order Promotion</strong> may apply to the order</li>
+<li>At most <strong>one Coupon</strong> may apply to the order</li>
+</ul>
+<p>Promotions may stack <strong>across layers</strong> only if they are compatible.</p>
+<p>This means the system may produce combinations such as:</p>
+<ul>
+<li>1× Line Promotion</li>
+<li>1× Order Promotion</li>
+<li>1× Coupon</li>
+</ul>
+<p>…but never multiple winners within the same layer.</p>
+<h3 id="3-exclusivity-and-compatibility">3. Exclusivity and Compatibility</h3>
+<p>Each promotion defines whether it is:</p>
+<ul>
+<li><strong>exclusive</strong> – blocks other promotions outside allowed exceptions</li>
+<li><strong>stackable</strong> – may be combined with compatible promotions in other layers</li>
+</ul>
+<p>Compatibility is governed by the following rules:</p>
+<ul>
+<li>If a promotion is marked <strong>exclusive</strong>, it blocks any other promotion unless the other promotion is explicitly allowed by future policy.</li>
+<li>If a coupon is marked non-combinable, it must not stack with another order-level promotion.</li>
+<li>Line promotions do not stack with other line promotions on the same line.</li>
+</ul>
+<p>This keeps pricing deterministic and prevents uncontrolled promotion overlap.</p>
+<h3 id="4-intra-layer-resolution">4. Intra-Layer Resolution</h3>
+<p>If multiple eligible promotions exist in the same layer, the pricing engine selects <strong>one winner</strong> using deterministic resolution.</p>
+<h4 id="41-line-promotion-winner">4.1 Line Promotion winner</h4>
+<p>For each line, choose the eligible promotion that produces the <strong>lowest discounted unit NET</strong>.</p>
+<p>Tie-breaker order:</p>
+<ol>
+<li>higher explicit promotion priority</li>
+<li>product-targeted promotion over category-targeted promotion</li>
+<li>fixed-amount discount over percentage discount</li>
+<li>lower promotion ID as final deterministic fallback</li>
+</ol>
+<h4 id="42-order-promotion-winner">4.2 Order Promotion winner</h4>
+<p>For the order as a whole, choose the eligible order-level promotion that produces the <strong>lowest final order NET subtotal</strong> after line promotions have been applied.</p>
+<p>Tie-breaker order:</p>
+<ol>
+<li>higher explicit promotion priority</li>
+<li>fixed-amount discount over percentage discount</li>
+<li>lower promotion ID</li>
+</ol>
+<h4 id="43-coupon-winner">4.3 Coupon winner</h4>
+<p>Only one coupon may be active at a time.
+If multiple coupon candidates are possible in the future, the same deterministic tie-breaker policy must apply.</p>
+<h3 id="5-canonical-application-order">5. Canonical Application Order</h3>
+<p>Promotion resolution must follow this order:</p>
+<ol>
+<li>Resolve base unit NET prices</li>
+<li>Resolve and apply the winning <strong>Line Promotion</strong> per line</li>
+<li>Produce discounted line NET values</li>
+<li>Aggregate subtotal</li>
+<li>Resolve and apply the winning <strong>Order Promotion</strong></li>
+<li>Resolve and apply the <strong>Coupon</strong>, if present and compatible</li>
+<li>Pass the discounted NET result into tax calculation</li>
+<li>Produce final gross totals</li>
+<li>Write explicit pricing snapshots</li>
+</ol>
+<p>Tax is always calculated <strong>after</strong> promotion discounts, in line with ADR-039/041 pricing principles.</p>
+<h3 id="6-backend-only-resolution">6. Backend-Only Resolution</h3>
+<p>Promotion resolution is performed only by a dedicated backend pricing/promotion resolver.</p>
+<p>It must not be duplicated in:</p>
+<ul>
+<li>serializers</li>
+<li>views</li>
+<li>admin forms</li>
+<li>frontend code</li>
+</ul>
+<p>Frontend consumes already-resolved pricing and promotion summary data.</p>
+<h3 id="7-scope-for-mmp-v10">7. Scope for MMP / v1.0</h3>
+<p>This ADR supports the following MMP scope:</p>
+<ul>
+<li>line promotions</li>
+<li>order promotions</li>
+<li>one coupon</li>
+<li>controlled stacking across layers</li>
+<li>exclusivity flag</li>
+<li>deterministic tie-breakers</li>
+<li>snapshot of applied promotion effects</li>
+</ul>
+<p>The following are explicitly out of scope for now:</p>
+<ul>
+<li>multiple simultaneous coupons</li>
+<li>multiple stacked line promotions on the same line</li>
+<li>shipping promotions</li>
+<li>buy-X-get-Y</li>
+<li>customer-segment combinatorics beyond current eligibility model</li>
+<li>arbitrary rule engine behavior</li>
+</ul>
+<p>Those require future ADRs.</p>
+<h2 id="consequences">Consequences</h2>
+<p><strong>Positive</strong></p>
+<ul>
+<li>Promotions become commercially useful for MMP, not merely technically present.</li>
+<li>The pricing engine remains deterministic and testable.</li>
+<li>The model supports common real-world e-commerce scenarios without opening unlimited complexity.</li>
+<li>Snapshot pricing remains auditable and explainable.</li>
+</ul>
+<p><strong>Trade-offs</strong></p>
+<ul>
+<li>The pricing engine becomes more complex than a single-winner MVP model.</li>
+<li>More snapshot detail and test coverage are required.</li>
+<li>Admin/business rules must clearly communicate exclusivity and compatibility behavior.</li>
+</ul>
+<h2 id="guard-rules">Guard Rules</h2>
+<ul>
+<li>Promotions may stack <strong>only across approved layers</strong>, never aritrarily.</li>
+<li>At most one winner exists per promotion layer.</li>
+<li>Promotion exclusivity must be explicit and centrally enforced.</li>
+<li>Promotion resolution must be deterministic and backend-owned.</li>
+<li>Any new promotion type or stacking dimension requires a new ADR.</li>
+</ul>
+<h2 id="follow-ups">Follow-ups</h2>
+<p>This ADR requires the following implementation-aligned decisions and artifacts:</p>
+<ul>
+<li>explicit pricing pipeline and rounding policy (ADR-041)</li>
+<li>explicit order pricing snapshot schema (ADR-043)</li>
+<li>promotion eligibility and targeting implementation details</li>
+<li>comprehensive pricing and promotion test matrix</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10/dist/mermaid.min.js"></script>
+      
+        <script src="../../js/mermaid-init.js"></script>
+      
+    
+  </body>
+</html>

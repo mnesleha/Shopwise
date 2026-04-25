@@ -1,0 +1,2744 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://github.io/decisions/readme/">
+      
+      
+        <link rel="prev" href="../../ci-cd/Postman%20CLI%20in%20CI/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Architectural Decisions Index - Shopwise Showcase Project Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#architecture-process-decision-records-adr-index" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-header__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Shopwise Showcase Project Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Architectural Decisions Index
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-nav__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Shopwise Showcase Project Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Demo scenarios
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Guest%20order%20flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guest user flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Auth%20order%20flow%20with%20order%20history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auth Order Flow with Order History
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Cart%20merge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart merge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Order%20claim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Order claim
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Registration%20and%20email%20verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registration and Email Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20shipment%20processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Shipment Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20promotion%20and%20offer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Promotion and Offer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/OpenAPI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAPI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/System%20Architecture%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Current%20Architecture%20Baseline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Current Architecture Baseline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Domain%20Model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ER Diagram.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ER Diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Cart-Order%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart-Order Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Inventory%20Reservation%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory Reservation Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Postman%20Anonymous%20Cart%20Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman Anonymous Cart Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI-CD
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CI-CD
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Pipeline%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Postman%20CLI%20in%20CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman CLI in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural Decisions Index
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural Decisions Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-use-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to Use ADRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision Types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR Index
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-architecture-foundations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Architecture Foundations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Architecture Foundations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adr-001-initial-system-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-001 – Initial System Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-003-database-strategy-sqlite-vs-mysql" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-003 – Database Strategy (SQLite vs MySQL)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-004-openapi-as-source-of-truth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-004 – OpenAPI as Source of Truth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-006-snapshot-pricing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-006 – Snapshot Pricing Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-007-atomic-checkout-with-explicit-rollback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-007 – Atomic Checkout with Explicit Rollback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-008-double-checkout-protection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-008 – Double-Checkout Protection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-009-unified-error-handling-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-009 – Unified Error Handling Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#orders-pricing-inventory-fulfillment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Orders, Pricing, Inventory, Fulfillment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Orders, Pricing, Inventory, Fulfillment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adr-012-unified-order-and-checkout-api-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-012 – Unified Order and Checkout API Contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-013-pricing-and-rounding-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-013 – Pricing and Rounding Policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-017-inventory-reservation-and-order-status-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-017 – Inventory Reservation and Order Status Policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-025-inventory-reservation-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-025 – Inventory Reservation Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-029-audit-log-baseline-orders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-029 – Audit Log Baseline (Orders)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-039-pricing-foundation-and-tax-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-039 – Pricing Foundation and Tax Policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-040-promotion-model-and-snapshot-pricing-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-040 – Promotion Model and Snapshot Pricing Evolution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-041-pricing-calculation-pipeline-and-rounding-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-041 – Pricing Calculation Pipeline and Rounding Policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-042-promotion-resolution-and-controlled-stacking-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-042 – Promotion Resolution and Controlled Stacking Policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-043-order-line-pricing-snapshot-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-043 – Order Line Pricing Snapshot Schema
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-044-order-level-discounts-and-acquisition-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-044 – Order-Level Discounts and Acquisition Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#identity-auth-cart-checkout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity, Auth, Cart, Checkout
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Identity, Auth, Cart, Checkout">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adr-018-anonymous-cart-and-cart-merge-on-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-018 – Anonymous Cart and Cart Merge on Login
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-019-authentication-strategy-session-based-vs-jwt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-019 – Authentication Strategy (Session-Based vs JWT)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-020-custom-user-model-with-email-based-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-020 – Custom User Model with Email-Based Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-022-anonymous-cart-introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-022 – Anonymous Cart Introduction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-023-guest-checkout-and-verified-claim-of-guest-orders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-023 – Guest Checkout and Verified Claim of Guest Orders
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-026-activecart-pointer-refactor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-026 – ActiveCart Pointer Refactor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-030-jwt-in-httponly-cookies-with-ssr-forwarding-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-030 – JWT in httpOnly Cookies with SSR Forwarding Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-033-cart-merge-must-not-block-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-033 – Cart Merge Must Not Block Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-035-account-email-change-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-035 – Account Email Change Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-036-api-throttling-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-036 – API Throttling Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#catalogue-media-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Catalogue, Media, Search
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Catalogue, Media, Search">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adr-015-category-model-is-flat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-015 – Category Model Is Flat
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-037-product-media-storage-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-037 – Product Media Storage Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-038-mysql-ngram-parser-for-mmp-catalogue-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-038 – MySQL ngram Parser for MMP Catalogue Search
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#payments-shipping-external-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Payments, Shipping, External Providers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Payments, Shipping, External Providers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adr-045-provider-agnostic-payment-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-045 – Provider-Agnostic Payment Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-046-provider-agnostic-payments-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-046 – Provider-Agnostic Payments Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-047-carrier-agnostic-shipping-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-047 – Carrier-Agnostic Shipping Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frontend-ssr-e2e-reliability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend, SSR, E2E Reliability
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Frontend, SSR, E2E Reliability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adr-027-public_base_url-for-externally-shared-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-027 – PUBLIC_BASE_URL for Externally Shared Links
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-031-playwright-no-waitforresponse-with-next-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-031 – Playwright: No waitForResponse() with Next Proxy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-032-handling-nextjs-router-cache-race-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-032 – Handling Next.js Router Cache Race Conditions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-034-ssr-hydration-race-condition-with-controlled-form-inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-034 – SSR Hydration Race Condition with Controlled Form Inputs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployment-runtime-and-delivery-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment, Runtime, and Delivery Process
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deployment, Runtime, and Delivery Process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adr-021-pre-10-migration-reset-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-021 – Pre-1.0 Migration Reset Policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-028-delivery-model-adjustment-scrum-to-scrumban-xp-driven" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-028 – Delivery Model Adjustment: Scrum to Scrumban (XP-driven)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-048-demo-deployment-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-048 – Demo Deployment Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#working-rules-for-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Working Rules for ADRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-by-topic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading by Topic
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reading by Topic">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pricing-commerce" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pricing / Commerce
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#identity-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity / Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cart-checkout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cart / Checkout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inventory-fulfillment-shipping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inventory / Fulfillment / Shipping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#payments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Payments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontend-integration-ssr-e2e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend Integration / SSR / E2E
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#process-delivery-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Process / Delivery / Deployment
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-use-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to Use ADRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision Types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR Index
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-architecture-foundations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Architecture Foundations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Architecture Foundations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adr-001-initial-system-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-001 – Initial System Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-003-database-strategy-sqlite-vs-mysql" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-003 – Database Strategy (SQLite vs MySQL)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-004-openapi-as-source-of-truth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-004 – OpenAPI as Source of Truth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-006-snapshot-pricing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-006 – Snapshot Pricing Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-007-atomic-checkout-with-explicit-rollback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-007 – Atomic Checkout with Explicit Rollback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-008-double-checkout-protection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-008 – Double-Checkout Protection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-009-unified-error-handling-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-009 – Unified Error Handling Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#orders-pricing-inventory-fulfillment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Orders, Pricing, Inventory, Fulfillment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Orders, Pricing, Inventory, Fulfillment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adr-012-unified-order-and-checkout-api-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-012 – Unified Order and Checkout API Contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-013-pricing-and-rounding-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-013 – Pricing and Rounding Policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-017-inventory-reservation-and-order-status-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-017 – Inventory Reservation and Order Status Policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-025-inventory-reservation-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-025 – Inventory Reservation Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-029-audit-log-baseline-orders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-029 – Audit Log Baseline (Orders)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-039-pricing-foundation-and-tax-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-039 – Pricing Foundation and Tax Policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-040-promotion-model-and-snapshot-pricing-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-040 – Promotion Model and Snapshot Pricing Evolution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-041-pricing-calculation-pipeline-and-rounding-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-041 – Pricing Calculation Pipeline and Rounding Policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-042-promotion-resolution-and-controlled-stacking-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-042 – Promotion Resolution and Controlled Stacking Policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-043-order-line-pricing-snapshot-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-043 – Order Line Pricing Snapshot Schema
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-044-order-level-discounts-and-acquisition-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-044 – Order-Level Discounts and Acquisition Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#identity-auth-cart-checkout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity, Auth, Cart, Checkout
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Identity, Auth, Cart, Checkout">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adr-018-anonymous-cart-and-cart-merge-on-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-018 – Anonymous Cart and Cart Merge on Login
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-019-authentication-strategy-session-based-vs-jwt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-019 – Authentication Strategy (Session-Based vs JWT)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-020-custom-user-model-with-email-based-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-020 – Custom User Model with Email-Based Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-022-anonymous-cart-introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-022 – Anonymous Cart Introduction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-023-guest-checkout-and-verified-claim-of-guest-orders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-023 – Guest Checkout and Verified Claim of Guest Orders
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-026-activecart-pointer-refactor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-026 – ActiveCart Pointer Refactor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-030-jwt-in-httponly-cookies-with-ssr-forwarding-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-030 – JWT in httpOnly Cookies with SSR Forwarding Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-033-cart-merge-must-not-block-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-033 – Cart Merge Must Not Block Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-035-account-email-change-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-035 – Account Email Change Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-036-api-throttling-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-036 – API Throttling Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#catalogue-media-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Catalogue, Media, Search
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Catalogue, Media, Search">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adr-015-category-model-is-flat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-015 – Category Model Is Flat
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-037-product-media-storage-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-037 – Product Media Storage Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-038-mysql-ngram-parser-for-mmp-catalogue-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-038 – MySQL ngram Parser for MMP Catalogue Search
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#payments-shipping-external-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Payments, Shipping, External Providers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Payments, Shipping, External Providers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adr-045-provider-agnostic-payment-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-045 – Provider-Agnostic Payment Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-046-provider-agnostic-payments-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-046 – Provider-Agnostic Payments Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-047-carrier-agnostic-shipping-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-047 – Carrier-Agnostic Shipping Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frontend-ssr-e2e-reliability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend, SSR, E2E Reliability
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Frontend, SSR, E2E Reliability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adr-027-public_base_url-for-externally-shared-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-027 – PUBLIC_BASE_URL for Externally Shared Links
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-031-playwright-no-waitforresponse-with-next-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-031 – Playwright: No waitForResponse() with Next Proxy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-032-handling-nextjs-router-cache-race-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-032 – Handling Next.js Router Cache Race Conditions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-034-ssr-hydration-race-condition-with-controlled-form-inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-034 – SSR Hydration Race Condition with Controlled Form Inputs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployment-runtime-and-delivery-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment, Runtime, and Delivery Process
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deployment, Runtime, and Delivery Process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adr-021-pre-10-migration-reset-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-021 – Pre-1.0 Migration Reset Policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-028-delivery-model-adjustment-scrum-to-scrumban-xp-driven" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-028 – Delivery Model Adjustment: Scrum to Scrumban (XP-driven)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-048-demo-deployment-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-048 – Demo Deployment Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#working-rules-for-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Working Rules for ADRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-by-topic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading by Topic
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reading by Topic">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pricing-commerce" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pricing / Commerce
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#identity-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity / Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cart-checkout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cart / Checkout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inventory-fulfillment-shipping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inventory / Fulfillment / Shipping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#payments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Payments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontend-integration-ssr-e2e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend Integration / SSR / E2E
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#process-delivery-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Process / Delivery / Deployment
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="architecture-process-decision-records-adr-index">Architecture &amp; Process Decision Records (ADR Index)</h1>
+<p>This directory contains the project’s <strong>Architecture Decision Records (ADRs)</strong>.</p>
+<p>ADRs document important architectural and process decisions with long-term impact on the system, development workflow, or runtime model.</p>
+<p>For the <strong>current effective system state</strong>, see:</p>
+<ul>
+<li><a href="../../architecture/Current%20Architecture%20Baseline/">Current Architecture Baseline</a></li>
+</ul>
+<hr />
+<h2 id="how-to-use-adrs">How to Use ADRs</h2>
+<ul>
+<li>Read the <strong>Current Architecture Baseline</strong> first if you want to understand the system as it works today.</li>
+<li>Read ADRs when you want to understand:</li>
+<li>why something was designed this way,</li>
+<li>why a refactor happened,</li>
+<li>or why a constraint/guardrail exists.</li>
+</ul>
+<p>ADRs are historical decision records.<br />
+They are <strong>not</strong> the primary source of current runtime truth.</p>
+<hr />
+<h2 id="decision-types">Decision Types</h2>
+<p>ADRs in this project document two kinds of decisions:</p>
+<ul>
+<li><strong>Architecture</strong> — system design, domain boundaries, API behavior, infrastructure/runtime constraints</li>
+<li><strong>Process</strong> — delivery model, CI/testing workflow, quality governance</li>
+</ul>
+<p>Decision type is declared explicitly in each ADR header.</p>
+<hr />
+<h2 id="adr-index">ADR Index</h2>
+<h2 id="core-architecture-foundations">Core Architecture Foundations</h2>
+<h3 id="adr-001-initial-system-architecture"><a href="../ADR-001-Project-Setup-Decisions/">ADR-001 – Initial System Architecture</a></h3>
+<p>Defines the initial project setup and foundational architecture direction.</p>
+<h3 id="adr-003-database-strategy-sqlite-vs-mysql"><a href="./ADR-003-Database-Strategy-SQLite-vs-MySQL.md">ADR-003 – Database Strategy (SQLite vs MySQL)</a></h3>
+<p>Defines SQLite for fast unit tests and MySQL for production-like behavior and DB-critical verification.</p>
+<h3 id="adr-004-openapi-as-source-of-truth"><a href="../ADR-004-OpenAPI-as-Source-of-Truth/">ADR-004 – OpenAPI as Source of Truth</a></h3>
+<p>Establishes OpenAPI as the authoritative API contract for status codes, payload shapes, and expected behavior.</p>
+<h3 id="adr-006-snapshot-pricing-strategy"><a href="../ADR-006-Snapshot-Pricing-Strategy/">ADR-006 – Snapshot Pricing Strategy</a></h3>
+<p>Introduces historical price snapshotting at checkout to preserve order-time truth.</p>
+<h3 id="adr-007-atomic-checkout-with-explicit-rollback"><a href="../ADR-007-Atomic-Checkout-with-Explicit-Rollback/">ADR-007 – Atomic Checkout with Explicit Rollback</a></h3>
+<p>Defines checkout as an atomic operation and prevents partial conversion side effects.</p>
+<h3 id="adr-008-double-checkout-protection"><a href="../ADR-008-Double-Checkout-Protection/">ADR-008 – Double-Checkout Protection</a></h3>
+<p>Prevents converting the same cart multiple times and defines deterministic conflict handling.</p>
+<h3 id="adr-009-unified-error-handling-strategy"><a href="../ADR-009-Unified-Error-Handling-Strategy/">ADR-009 – Unified Error Handling Strategy</a></h3>
+<p>Introduces a unified API error contract and centralized exception handling.</p>
+<hr />
+<h2 id="orders-pricing-inventory-fulfillment">Orders, Pricing, Inventory, Fulfillment</h2>
+<h3 id="adr-012-unified-order-and-checkout-api-contract"><a href="../ADR-012-Unified-Order-and-Checkout-API-Contract/">ADR-012 – Unified Order and Checkout API Contract</a></h3>
+<p>Unifies public order and checkout response shapes and removes persistence-specific leakage from the contract.</p>
+<h3 id="adr-013-pricing-and-rounding-policy"><a href="../ADR-013-Pricing-and-Rounding-Policy/">ADR-013 – Pricing and Rounding Policy</a></h3>
+<p>Defines deterministic rounding behavior and discount precedence rules for the pre-VAT pricing model.</p>
+<h3 id="adr-017-inventory-reservation-and-order-status-policy"><a href="../ADR-017-Inventory-Reservation-and-Order-Status-Policy/">ADR-017 – Inventory Reservation and Order Status Policy</a></h3>
+<p>Introduces the order-state direction for paid/fulfilled flow and inventory-related orchestration.</p>
+<h3 id="adr-025-inventory-reservation-model"><a href="../ADR-025-Inventory-Reservation-Model/">ADR-025 – Inventory Reservation Model</a></h3>
+<p>Defines reserve-on-checkout, commit-on-payment, release-on-cancel/expiry, and physical stock semantics.</p>
+<h3 id="adr-029-audit-log-baseline-orders"><a href="../ADR-029-Audit-Log-Baseline-Orders/">ADR-029 – Audit Log Baseline (Orders)</a></h3>
+<p>Introduces a dedicated audit log MVP for order/inventory-related domain events.</p>
+<h3 id="adr-039-pricing-foundation-and-tax-policy"><a href="../ADR-039-Pricing-Foundation-and-Tax-Policy/">ADR-039 – Pricing Foundation and Tax Policy</a></h3>
+<p>Introduces canonical NET pricing, tax layering, and backend pricing authority.</p>
+<h3 id="adr-040-promotion-model-and-snapshot-pricing-evolution"><a href="../ADR-040-Promotion-Model-and-Snapshot-Pricing-Evolution/">ADR-040 – Promotion Model and Snapshot Pricing Evolution</a></h3>
+<p>Establishes promotions as first-class pricing objects and separates definition, targeting, resolution, and snapshots.</p>
+<h3 id="adr-041-pricing-calculation-pipeline-and-rounding-policy"><a href="../ADR-041-Pricing-Calculation-Pipeline-and-Rounding-Policy/">ADR-041 – Pricing Calculation Pipeline and Rounding Policy</a></h3>
+<p>Defines the canonical pricing pipeline across NET prices, promotions, tax calculation, and rounded totals.</p>
+<h3 id="adr-042-promotion-resolution-and-controlled-stacking-policy"><a href="../ADR-042-Promotion-Resolution-and-Controlled-Stacking-Policy/">ADR-042 – Promotion Resolution and Controlled Stacking Policy</a></h3>
+<p>Defines controlled stacking across promotion layers with deterministic resolution.</p>
+<h3 id="adr-043-order-line-pricing-snapshot-schema"><a href="../ADR-043-Order-Line-Pricing-Snapshot-Schema/">ADR-043 – Order Line Pricing Snapshot Schema</a></h3>
+<p>Defines explicit line-level order pricing snapshots for historical pricing truth.</p>
+<h3 id="adr-044-order-level-discounts-and-acquisition-strategy"><a href="../ADR-044-Order-Level-Discounts-and-Acquisition-Strategy/">ADR-044 – Order-Level Discounts and Acquisition Strategy</a></h3>
+<p>Defines order-level discounts as a distinct pricing layer and frames discount acquisition as part of commercial UX.</p>
+<hr />
+<h2 id="identity-auth-cart-checkout">Identity, Auth, Cart, Checkout</h2>
+<h3 id="adr-018-anonymous-cart-and-cart-merge-on-login"><a href="../ADR-018-Anonymous-Cart-and-Cart-Merge-on-Login/">ADR-018 – Anonymous Cart and Cart Merge on Login</a></h3>
+<p>Defines guest cart adoption/merge behavior and deterministic merge rules.</p>
+<h3 id="adr-019-authentication-strategy-session-based-vs-jwt"><a href="../ADR-019-Authentication-Strategy-Session-Based-vs-JWT/">ADR-019 – Authentication Strategy (Session-Based vs JWT)</a></h3>
+<p>Selects JWT-based authentication as the API auth direction.</p>
+<h3 id="adr-020-custom-user-model-with-email-based-authentication"><a href="../ADR-020-Custom-User-Model-with-Email-Based-Authentication/">ADR-020 – Custom User Model with Email-Based Authentication</a></h3>
+<p>Introduces a custom user model with email as the primary identifier.</p>
+<h3 id="adr-022-anonymous-cart-introduction"><a href="../ADR-022-Anonymous_Cart_Introduction/">ADR-022 – Anonymous Cart Introduction</a></h3>
+<p>Defines token-based anonymous carts, resolution strategy, and merge/adopt mechanics.</p>
+<h3 id="adr-023-guest-checkout-and-verified-claim-of-guest-orders"><a href="../ADR-023-Guest-Checkout-and-Verified-Claim-of-Guest-Orders/">ADR-023 – Guest Checkout and Verified Claim of Guest Orders</a></h3>
+<p>Defines guest checkout and safe post-verification claiming of guest orders.</p>
+<h3 id="adr-026-activecart-pointer-refactor"><a href="../ADR-026-ActiveCart-Pointer-Refactor/">ADR-026 – ActiveCart Pointer Refactor</a></h3>
+<p>Introduces a dedicated ActiveCart pointer for authenticated users and removes status-based cart resolution assumptions.</p>
+<h3 id="adr-030-jwt-in-httponly-cookies-with-ssr-forwarding-strategy"><a href="../ADR-030-JWT-in-httpOnly-Cookies-with-SSR-Forwarding-Strategy/">ADR-030 – JWT in httpOnly Cookies with SSR Forwarding Strategy</a></h3>
+<p>Defines the current auth transport model for Next.js SSR-compatible frontend integration.</p>
+<h3 id="adr-033-cart-merge-must-not-block-authentication"><a href="../ADR-033-Cart-Merge-Must-Not-Block-Authentication/">ADR-033 – Cart Merge Must Not Block Authentication</a></h3>
+<p>Separates authentication success from best-effort cart merge outcomes.</p>
+<h3 id="adr-035-account-email-change-flow"><a href="../ADR-035-Account-Email-Change-Flow/">ADR-035 – Account Email Change Flow</a></h3>
+<p>Defines secure pending-request-based email change with confirmation and logout-all behavior.</p>
+<h3 id="adr-036-api-throttling-strategy"><a href="../ADR-036-API-Throttling-Strategy/">ADR-036 – API Throttling Strategy</a></h3>
+<p>Defines throttling rules for abuse-prone auth/account flows.</p>
+<hr />
+<h2 id="catalogue-media-search">Catalogue, Media, Search</h2>
+<h3 id="adr-015-category-model-is-flat"><a href="../ADR-015-Category_Model_Is_Flat/">ADR-015 – Category Model Is Flat</a></h3>
+<p>Defines categories as a flat model without hierarchy.</p>
+<h3 id="adr-037-product-media-storage-strategy"><a href="../ADR-037-Product-Media-Storage-Strategy/">ADR-037 – Product Media Storage Strategy</a></h3>
+<p>Defines media storage abstraction and separation of structured catalogue media vs editorial content uploads.</p>
+<h3 id="adr-038-mysql-ngram-parser-for-mmp-catalogue-search"><a href="../ADR-038-MySQL-ngram-parser-for-MMP-catalogue-search/">ADR-038 – MySQL <code>ngram</code> Parser for MMP Catalogue Search</a></h3>
+<p>Approves a MySQL-specific search backend implementation while keeping API/service boundaries database-agnostic.</p>
+<hr />
+<h2 id="payments-shipping-external-providers">Payments, Shipping, External Providers</h2>
+<h3 id="adr-045-provider-agnostic-payment-architecture"><a href="../ADR-045-Provider-Agnostic-Payment-Architecture/">ADR-045 – Provider-Agnostic Payment Architecture</a></h3>
+<p>Establishes the provider abstraction model for payments.</p>
+<h3 id="adr-046-provider-agnostic-payments-architecture"><a href="../ADR-046-Provider-Agnostic-Payments-Architecture/">ADR-046 – Provider-Agnostic Payments Architecture</a></h3>
+<p>Finalizes the implemented payment architecture with AcquireMock as the first hosted provider.</p>
+<h3 id="adr-047-carrier-agnostic-shipping-architecture"><a href="../ADR-047-Carrier-Agnostic-Shipping-Architecture/">ADR-047 – Carrier-Agnostic Shipping Architecture</a></h3>
+<p>Defines pluggable shipment provider architecture with a mock carrier as the first implementation.</p>
+<hr />
+<h2 id="frontend-ssr-e2e-reliability">Frontend, SSR, E2E Reliability</h2>
+<h3 id="adr-027-public_base_url-for-externally-shared-links"><a href="../ADR-027-PUBLIC_BASE_URL-for-externally-shared-links/">ADR-027 – <code>PUBLIC_BASE_URL</code> for Externally Shared Links</a></h3>
+<p>Defines a single configuration source for public-facing links used in emails and externally shared flows.</p>
+<h3 id="adr-031-playwright-no-waitforresponse-with-next-proxy"><a href="../ADR-031-Playwright-No-waitForResponse-with-Next-Proxy/">ADR-031 – Playwright: No <code>waitForResponse()</code> with Next Proxy</a></h3>
+<p>Defines Playwright reliability rules for proxied Next.js API flows.</p>
+<h3 id="adr-032-handling-nextjs-router-cache-race-conditions"><a href="../ADR-032-Handling-Next.js-Router-Cache-Race-Conditions/">ADR-032 – Handling Next.js Router Cache Race Conditions</a></h3>
+<p>Defines SSR/CSR boundary rules for user-specific header widgets and cart badge updates.</p>
+<h3 id="adr-034-ssr-hydration-race-condition-with-controlled-form-inputs"><a href="../ADR-034-SSR-Hydration-Race-Condition-with-Controlled-Form-Inputs/">ADR-034 – SSR Hydration Race Condition with Controlled Form Inputs</a></h3>
+<p>Prefers uncontrolled inputs for simple SSR forms to avoid hydration overwrite races.</p>
+<hr />
+<h2 id="deployment-runtime-and-delivery-process">Deployment, Runtime, and Delivery Process</h2>
+<h3 id="adr-021-pre-10-migration-reset-policy"><a href="../ADR-021-Pre-1.0-Migration-Reset-Policy/">ADR-021 – Pre-1.0 Migration Reset Policy</a></h3>
+<p>Allows controlled migration resets before 1.0 for foundational schema changes.</p>
+<h3 id="adr-028-delivery-model-adjustment-scrum-to-scrumban-xp-driven"><a href="../ADR-028-Delivery-Model-Adjustment-XP-Scrumban/">ADR-028 – Delivery Model Adjustment: Scrum to Scrumban (XP-driven)</a></h3>
+<p>Formally adopts Scrumban/XP-style delivery to handle discovery-driven technical work.</p>
+<h3 id="adr-048-demo-deployment-architecture"><a href="../ADR-048-Demo-Deployment-Architecture/">ADR-048 – Demo Deployment Architecture</a></h3>
+<p>Defines the public demo deployment as a multi-service runtime architecture.</p>
+<hr />
+<h2 id="working-rules-for-adrs">Working Rules for ADRs</h2>
+<ul>
+<li>Accepted ADRs with runtime impact should be reflected in the <strong>Current Architecture Baseline</strong>.</li>
+<li>If a new cross-cutting finding changes an existing invariant, create:</li>
+<li>a new ADR, or</li>
+<li>an explicit update/superseding ADR.</li>
+<li>ADRs should describe <strong>why</strong> and <strong>trade-offs</strong>, not duplicate code-level implementation details.</li>
+</ul>
+<hr />
+<h2 id="reading-by-topic">Reading by Topic</h2>
+<h3 id="pricing-commerce">Pricing / Commerce</h3>
+<p>ADR-006, 013, 039, 040, 041, 042, 043, 044</p>
+<h3 id="identity-authentication">Identity / Authentication</h3>
+<p>ADR-019, 020, 022, 023, 030, 033, 035, 036</p>
+<h3 id="cart-checkout">Cart / Checkout</h3>
+<p>ADR-008, 018, 022, 023, 026, 033</p>
+<h3 id="inventory-fulfillment-shipping">Inventory / Fulfillment / Shipping</h3>
+<p>ADR-017, 025, 029, 047</p>
+<h3 id="payments">Payments</h3>
+<p>ADR-045, 046</p>
+<h3 id="frontend-integration-ssr-e2e">Frontend Integration / SSR / E2E</h3>
+<p>ADR-027, 030, 031, 032, 034</p>
+<h3 id="process-delivery-deployment">Process / Delivery / Deployment</h3>
+<p>ADR-021, 028, 048</p>
+<h2 id="notes">Notes</h2>
+<ul>
+<li>ADRs explain why decisions were made.</li>
+<li>Some ADRs describe process decisions (CI, testing workflow) where they directly impact system quality.</li>
+<li>The <a href="../../architecture/Current%20Architecture%20Baseline/">Architecture Baseline</a> reflects the current, effective state derived from accepted ADRs.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10/dist/mermaid.min.js"></script>
+      
+        <script src="../../js/mermaid-init.js"></script>
+      
+    
+  </body>
+</html>

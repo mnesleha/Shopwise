@@ -1,0 +1,1467 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://github.io/decisions/ADR-045-Provider-Agnostic-Payment-Architecture/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>ADR-045: Provider-Agnostic Payment Architecture and Hosted Gateway Integration Strategy - Shopwise Showcase Project Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-045-provider-agnostic-payment-architecture-and-hosted-gateway-integration-strategy" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-header__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Shopwise Showcase Project Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-045: Provider-Agnostic Payment Architecture and Hosted Gateway Integration Strategy
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-nav__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Shopwise Showcase Project Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Demo scenarios
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Guest%20order%20flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guest user flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Auth%20order%20flow%20with%20order%20history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auth Order Flow with Order History
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Cart%20merge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart merge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Order%20claim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Order claim
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Registration%20and%20email%20verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registration and Email Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20shipment%20processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Shipment Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20promotion%20and%20offer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Promotion and Offer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/OpenAPI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAPI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/System%20Architecture%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Current%20Architecture%20Baseline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Current Architecture Baseline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Domain%20Model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ER Diagram.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ER Diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Cart-Order%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart-Order Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Inventory%20Reservation%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory Reservation Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Postman%20Anonymous%20Cart%20Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman Anonymous Cart Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI-CD
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CI-CD
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Pipeline%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Postman%20CLI%20in%20CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman CLI in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural Decisions Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-payment-architecture-is-provider-agnostic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Payment architecture is provider-agnostic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-checkout-remains-the-order-creation-authority" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Checkout remains the order creation authority
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-payment-result-is-applied-asynchronously-and-backend-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Payment result is applied asynchronously and backend-first
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-payment-providers-are-isolated-behind-a-service-layer-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Payment providers are isolated behind a service-layer contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-payment-state-application-is-centralized" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Payment state application is centralized
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-payment-method-and-payment-provider-are-separate-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Payment method and payment provider are separate concepts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-existing-fake-payment-flow-becomes-an-explicit-development-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Existing fake payment flow becomes an explicit development provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-card-payment-is-introduced-through-hosted-gateway-redirect-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Card payment is introduced through hosted gateway redirect flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-webhook-processing-must-be-idempotent-and-auditable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Webhook processing must be idempotent and auditable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-acquiremock-is-treated-as-one-provider-not-as-a-permanent-architecture-dependency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. AcquireMock is treated as one provider, not as a permanent architecture dependency
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="adr-045-provider-agnostic-payment-architecture-and-hosted-gateway-integration-strategy">ADR-045: Provider-Agnostic Payment Architecture and Hosted Gateway Integration Strategy</h1>
+<p><strong>Decision type</strong>: Architecture</p>
+<p><strong>Status</strong>: Proposed</p>
+<p><strong>Date</strong>: Sprint 15</p>
+<h2 id="context">Context</h2>
+<p>Shopwise already supports:</p>
+<ul>
+<li>cart-to-checkout conversion on the backend,</li>
+<li>order creation as a backend-controlled operation,</li>
+<li>order item snapshot persistence,</li>
+<li>inventory reservation during checkout,</li>
+<li>payment as a separate domain concept following order creation,</li>
+<li>frontend checkout flows with payment method selection.</li>
+</ul>
+<p>The current checkout flow creates an order in <code>CREATED</code> state and defers payment handling to a separate step. This is already directionally compatible with realistic e-commerce payment processing, where the order lifecycle and the payment provider lifecycle are related but not identical.</p>
+<p>The next architectural gap is payment provider integration.</p>
+<p>Originally, the project used a simple backend-controlled fake payment flow suitable for development. However, the next implementation phase requires integration of a hosted mock payment gateway in order to prepare the system for later integration with real card payment providers.</p>
+<p>At the same time, the architecture must avoid coupling checkout behavior directly to a single provider-specific flow. The long-term goal is not merely to add AcquireMock, but to establish a payment architecture where:</p>
+<ul>
+<li>checkout orchestration remains stable,</li>
+<li>payment providers are replaceable,</li>
+<li>provider-specific behavior is isolated,</li>
+<li>backend remains the authority for payment state transitions,</li>
+<li>future real PSP integrations require only limited incremental changes.</li>
+</ul>
+<p>This is especially important because hosted checkout providers typically introduce:</p>
+<ul>
+<li>redirect-based customer flows,</li>
+<li>asynchronous webhook confirmation,</li>
+<li>provider-specific payment statuses,</li>
+<li>retry and idempotency concerns,</li>
+<li>delayed finalization relative to checkout submission.</li>
+</ul>
+<p>Therefore, payment integration must be designed as an extensible provider architecture rather than as a special-case checkout patch.</p>
+<h2 id="decision">Decision</h2>
+<p>Shopwise adopts the following architectural direction for payments:</p>
+<h3 id="1-payment-architecture-is-provider-agnostic">1. Payment architecture is provider-agnostic</h3>
+<p>Payments are modeled as a provider-agnostic domain with explicit separation between:</p>
+<ul>
+<li>customer-facing payment method,</li>
+<li>technical payment provider,</li>
+<li>order lifecycle,</li>
+<li>payment lifecycle,</li>
+<li>provider integration logic.</li>
+</ul>
+<p>The system must support multiple payment providers without requiring checkout flow redesign.</p>
+<h3 id="2-checkout-remains-the-order-creation-authority">2. Checkout remains the order creation authority</h3>
+<p>Checkout remains responsible for:</p>
+<ul>
+<li>validating cart state,</li>
+<li>creating the order,</li>
+<li>creating order items and snapshots,</li>
+<li>reserving inventory,</li>
+<li>converting the cart,</li>
+<li>initiating payment orchestration.</li>
+</ul>
+<p>Checkout is not responsible for final payment success determination.</p>
+<p>An order is created before external payment confirmation and initially remains in a non-final state.</p>
+<h3 id="3-payment-result-is-applied-asynchronously-and-backend-first">3. Payment result is applied asynchronously and backend-first</h3>
+<p>Final payment outcome must be determined by backend-controlled payment application logic, not by frontend redirects.</p>
+<p>Frontend return/redirect URLs are treated as customer experience steps only.</p>
+<p>Backend remains the source of truth for:</p>
+<ul>
+<li>payment success,</li>
+<li>payment failure,</li>
+<li>payment expiration,</li>
+<li>order state transition after payment,</li>
+<li>inventory commitment or release side effects.</li>
+</ul>
+<h3 id="4-payment-providers-are-isolated-behind-a-service-layer-contract">4. Payment providers are isolated behind a service-layer contract</h3>
+<p>Provider-specific integration logic must be implemented behind a dedicated provider interface.</p>
+<p>This abstraction layer is responsible for:</p>
+<ul>
+<li>starting payment sessions,</li>
+<li>normalizing provider responses,</li>
+<li>verifying webhook authenticity,</li>
+<li>parsing provider events,</li>
+<li>translating provider-specific states into internal payment events.</li>
+</ul>
+<p>Provider adapters must not directly mutate order state or inventory state.</p>
+<h3 id="5-payment-state-application-is-centralized">5. Payment state application is centralized</h3>
+<p>Payment outcome handling must be centralized in a backend application/service layer that applies normalized payment results to the domain.</p>
+<p>This layer is responsible for:</p>
+<ul>
+<li>updating payment records,</li>
+<li>ensuring idempotent transition handling,</li>
+<li>transitioning order state,</li>
+<li>committing inventory reservations on success,</li>
+<li>preserving retry semantics on failure where applicable,</li>
+<li>recording provider payloads for audit/debug purposes.</li>
+</ul>
+<h3 id="6-payment-method-and-payment-provider-are-separate-concepts">6. Payment method and payment provider are separate concepts</h3>
+<p>Shopwise explicitly distinguishes:</p>
+<ul>
+<li><strong>payment method</strong> = the business-facing option selected by the customer (for example <code>CARD</code>, <code>COD</code>)</li>
+<li><strong>payment provider</strong> = the technical implementation used to process the payment (for example <code>DEV_FAKE</code>, <code>ACQUIREMOCK</code>, future real PSPs)</li>
+</ul>
+<p>This distinction allows one payment method to be mapped to different providers over time without changing checkout semantics.</p>
+<h3 id="7-existing-fake-payment-flow-becomes-an-explicit-development-provider">7. Existing fake payment flow becomes an explicit development provider</h3>
+<p>The current backend-controlled fake payment flow is retained as an intentional development/testing provider rather than removed.</p>
+<p>Its purpose is to provide:</p>
+<ul>
+<li>local development convenience,</li>
+<li>fast backend-driven test scenarios,</li>
+<li>deterministic fallback payment behavior,</li>
+<li>provider abstraction validation before external gateway integration.</li>
+</ul>
+<p>This provider is modeled explicitly as <code>DEV_FAKE</code>.</p>
+<h3 id="8-card-payment-is-introduced-through-hosted-gateway-redirect-flow">8. Card payment is introduced through hosted gateway redirect flow</h3>
+<p>Card payment is introduced through a hosted payment page model.</p>
+<p>For the current implementation phase:</p>
+<ul>
+<li><code>CARD</code> is mapped to <code>ACQUIREMOCK</code>,</li>
+<li>backend creates the order and starts payment,</li>
+<li>backend returns redirect information,</li>
+<li>frontend redirects the customer to the hosted gateway,</li>
+<li>webhook-driven backend processing finalizes payment,</li>
+<li>frontend return flow only displays the resulting state.</li>
+</ul>
+<p>This aligns the architecture with realistic future PSP integration patterns.</p>
+<h3 id="9-webhook-processing-must-be-idempotent-and-auditable">9. Webhook processing must be idempotent and auditable</h3>
+<p>Webhook-based payment providers require explicit support for:</p>
+<ul>
+<li>signature verification,</li>
+<li>duplicate event handling,</li>
+<li>safe retries,</li>
+<li>raw payload persistence,</li>
+<li>traceable status transitions.</li>
+</ul>
+<p>A repeated provider callback must not cause repeated domain side effects.</p>
+<h3 id="10-acquiremock-is-treated-as-one-provider-not-as-a-permanent-architecture-dependency">10. AcquireMock is treated as one provider, not as a permanent architecture dependency</h3>
+<p>AcquireMock is introduced as a hosted mock gateway provider for development and architecture preparation.</p>
+<p>It is not treated as the payment architecture itself.</p>
+<p>The architecture must remain open for future providers such as real card gateways without requiring redesign of:</p>
+<ul>
+<li>checkout flow,</li>
+<li>order lifecycle,</li>
+<li>payment state transitions,</li>
+<li>frontend integration contract.</li>
+</ul>
+<h2 id="consequences">Consequences</h2>
+<p><strong>Positive</strong></p>
+<ul>
+<li>Establishes a stable payment architecture before real PSP integration.</li>
+<li>Keeps checkout flow intact while allowing richer payment behavior.</li>
+<li>Prevents provider-specific logic from leaking into cart/order domain logic.</li>
+<li>Preserves backend authority over payment and order truth.</li>
+<li>Supports both simple dev flows and realistic hosted gateway flows.</li>
+<li>Reduces future integration cost for real payment providers.</li>
+<li>Improves testability through explicit provider boundaries and normalized events.</li>
+<li>Creates a clean path for webhook/idempotency-safe payment processing.</li>
+</ul>
+<p><strong>Trade-offs</strong></p>
+<ul>
+<li>Adds architectural complexity compared to a direct fake payment endpoint.</li>
+<li>Requires new abstraction layers and additional payment metadata persistence.</li>
+<li>Introduces asynchronous payment completion semantics into frontend UX.</li>
+<li>Requires webhook verification and idempotency design earlier than a simple MVP would.</li>
+<li>Increases backend orchestration complexity in exchange for long-term extensibility.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<ol>
+<li>Integrate AcquireMock directly into the existing checkout flow as a special case</li>
+</ol>
+<p>Rejected because it would couple checkout behavior to one provider-specific redirect/webhook model and make later real PSP integration more invasive.</p>
+<ol>
+<li>Keep the current fake payment flow and postpone hosted gateway integration</li>
+</ol>
+<p>Rejected because the project now needs realistic redirect/webhook payment behavior in order to prepare the architecture for real card gateways.</p>
+<ol>
+<li>Treat frontend redirect completion as payment success</li>
+</ol>
+<p>Rejected because payment truth must come from backend-confirmed provider results, not from customer return navigation.</p>
+<ol>
+<li>Bind payment method directly to a single provider permanently</li>
+</ol>
+<p>Rejected because payment methods and payment providers evolve independently and must remain separate concepts.</p>
+<ol>
+<li>Remove the existing fake flow entirely and replace it only with AcquireMock</li>
+</ol>
+<p>Rejected because the fake flow remains valuable as a development/testing provider and as a validation step for the provider abstraction itself.</p>
+<h2 id="notes">Notes</h2>
+<p>This ADR intentionally does not yet finalize:</p>
+<ul>
+<li>the full detailed payment data model fields,</li>
+<li>the exact provider response DTO shapes,</li>
+<li>retry UX details on the frontend,</li>
+<li>payment expiration policy behavior beyond basic provider mapping,</li>
+<li>future refund/void/partial capture capabilities,</li>
+<li>selection rules for production provider routing,</li>
+<li>final naming of service-layer modules and classes.</li>
+</ul>
+<p>These belong to follow-up implementation slices.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10/dist/mermaid.min.js"></script>
+      
+        <script src="../../js/mermaid-init.js"></script>
+      
+    
+  </body>
+</html>

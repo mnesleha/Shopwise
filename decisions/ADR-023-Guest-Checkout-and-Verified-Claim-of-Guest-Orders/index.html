@@ -1,0 +1,1413 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://github.io/decisions/ADR-023-Guest-Checkout-and-Verified-Claim-of-Guest-Orders/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>ADR-023: Guest Checkout and Verified Claim of Guest Orders - Shopwise Showcase Project Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-023-guest-checkout-and-verified-claim-of-guest-orders" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-header__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Shopwise Showcase Project Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-023: Guest Checkout and Verified Claim of Guest Orders
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-nav__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Shopwise Showcase Project Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Demo scenarios
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Guest%20order%20flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guest user flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Auth%20order%20flow%20with%20order%20history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auth Order Flow with Order History
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Cart%20merge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart merge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Order%20claim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Order claim
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Registration%20and%20email%20verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registration and Email Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20shipment%20processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Shipment Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20promotion%20and%20offer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Promotion and Offer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/OpenAPI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAPI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/System%20Architecture%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Current%20Architecture%20Baseline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Current Architecture Baseline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Domain%20Model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ER Diagram.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ER Diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Cart-Order%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart-Order Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Inventory%20Reservation%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory Reservation Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Postman%20Anonymous%20Cart%20Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman Anonymous Cart Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI-CD
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CI-CD
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Pipeline%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Postman%20CLI%20in%20CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman CLI in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural Decisions Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#d1-introduce-guest-checkout-on-existing-checkout-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D1 — Introduce Guest Checkout on existing checkout endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d2-store-customercontact-snapshots-on-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D2 — Store customer/contact snapshots on Order
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d3-verified-claim-policy-for-guest-orders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D3 — Verified claim policy for guest orders
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="D3 — Verified claim policy for guest orders">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#claim-trigger-semantics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Claim trigger semantics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d4-auth-success-hook-as-integration-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D4 — “Auth success hook” as integration point
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d5-audit-readiness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D5 — Audit readiness
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#guest-checkout-and-later-verified-claim" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Guest checkout and later verified claim
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="adr-023-guest-checkout-and-verified-claim-of-guest-orders">ADR-023: Guest Checkout and Verified Claim of Guest Orders</h1>
+<p><strong>Status</strong>: Accepted</p>
+<p><strong>Date</strong>: Sprint 8</p>
+<p><strong>Decision type</strong>: Architecure</p>
+<p><strong>Related ADRs</strong>:</p>
+<ul>
+<li><a href="../ADR-022-Anonymous_Cart_Introduction/">ADR-022</a>: Anonymous Cart identification + transport + request resolution (cookie/header)</li>
+<li><a href="../ADR-018-Anonymous-Cart-and-Cart-Merge-on-Login/">ADR-018</a>: Cart merge policy on login</li>
+</ul>
+<h2 id="context">Context</h2>
+<p>Shopwise currently supports:</p>
+<ul>
+<li>Authenticated checkout flow and JWT authentication.</li>
+<li>Anonymous carts identified via <code>cart_token</code> (HTTP-only cookie; optional <code>X-Cart-Token</code> header).</li>
+<li>Cart merge/adopt on login.</li>
+</ul>
+<p>However, the current UX requires registration/login to complete the end-to-end purchase flow. In modern e-commerce, <strong>guest checkout</strong> is a common business practice to improve conversion by reducing friction. We also want the system to support <strong>claiming guest orders into a user account</strong>, but only after <strong>email verification</strong> (double opt-in) to prevent account takeover of another person’s purchase history.</p>
+<p>Additionally, we want to keep the architecture ready for:</p>
+<ul>
+<li>Social login (multiple authentication methods yielding a verified user)</li>
+<li>Future audit logging around order lifecycle and ownership changes</li>
+</ul>
+<h2 id="decision">Decision</h2>
+<h3 id="d1-introduce-guest-checkout-on-existing-checkout-endpoint">D1 — Introduce Guest Checkout on existing checkout endpoint</h3>
+<p>The endpoint <code>POST /api/v1/cart/checkout/</code> will support anonymous and authenticated clients.</p>
+<ul>
+<li>Anonymous checkout is allowed when the request provides required customer contact details (minimum: <code>customer_email</code>) and required address/contact fields introduced in this ADR.</li>
+<li>The checkout flow will create an <code>Order</code> even when <code>user = NULL</code>.</li>
+</ul>
+<h3 id="d2-store-customercontact-snapshots-on-order">D2 — Store customer/contact snapshots on Order</h3>
+<p>We will extend the Order domain model to include:</p>
+<ul>
+<li><code>customer_email</code> (required; indexed)</li>
+<li>shipping/billing snapshot fields (minimal MVP set; see Domain &amp; DB section)</li>
+<li>optional metadata fields to support auditability (e.g., <code>claimed_at</code>, <code>claimed_by</code>, etc.)</li>
+</ul>
+<p>This ensures orders remain self-contained and auditable even if the user account changes or is deleted.</p>
+<h3 id="d3-verified-claim-policy-for-guest-orders">D3 — Verified claim policy for guest orders</h3>
+<p>Guest orders must <strong>not</strong> be automatically attached to an account on registration/login unless the user’s email is verified.</p>
+<ul>
+<li>Claim eligibility requires <code>user.email_verified == True</code>.</li>
+<li>Claim operation attaches orders where:</li>
+<li><code>order.user IS NULL</code></li>
+<li><code>order.customer_email</code> matches user’s email (case-insensitive)</li>
+<li>optionally: additional verification flags (non-goal for MVP)</li>
+</ul>
+<p>Claim will be performed via a single idempotent service function invoked from the auth layer when:</p>
+<ul>
+<li>Register completes with auto-login (user created)</li>
+<li>Login completes (password login)</li>
+<li>Social login completes (OAuth callback / identity provider)¨</li>
+</ul>
+<h4 id="claim-trigger-semantics">Claim trigger semantics</h4>
+<p>Guest order claiming is triggered in the following situations:</p>
+<ol>
+<li>
+<p><strong>On authentication success</strong>, if the user account already has <code>email_verified = true</code>
+   (e.g. returning verified user login, social login with verified email).</p>
+</li>
+<li>
+<p><strong>On email verification event</strong>, when a user’s <code>email_verified</code> flag transitions from
+   <code>false</code> to <code>true</code>.</p>
+</li>
+</ol>
+<p>Both triggers invoke the same idempotent claim operation.</p>
+<h3 id="d4-auth-success-hook-as-integration-point">D4 — “Auth success hook” as integration point</h3>
+<p>We introduce a single orchestration point called after successful authentication:</p>
+<p><code>on_auth_success(request, user)</code></p>
+<p>Responsibilities:</p>
+<ul>
+<li>Merge/adopt guest cart if a cart token is present (ADR-022 + ADR-018).</li>
+<li>Clear guest cart cookie after adopt/merge.</li>
+<li>If <code>user.email_verified</code> is true: claim eligible guest orders.</li>
+</ul>
+<p>This keeps the system ready for social login (any auth method calls the same hook).</p>
+<p>The authentication layer acts only as an orchestration point.</p>
+<p>All business logic for guest cart merge/adoption and guest order claiming is implemented in dedicated, idempotent service functions and executed transactionally.</p>
+<h3 id="d5-audit-readiness">D5 — Audit readiness</h3>
+<p>Ownership changes (guest → user) and fulfillment-related changes are audit-relevant. We will prepare for audit logging by:</p>
+<ul>
+<li>Maintaining explicit order ownership fields (<code>user</code>, <code>customer_email</code>) and timestamps (e.g., <code>claimed_at</code>)</li>
+<li>Ensuring claim is transactional and idempotent</li>
+<li>Optionally adding an <code>OrderEvent</code>/<code>AuditLog</code> model later (non-goal for this ADR, but accounted for)</li>
+</ul>
+<h2 id="flow">Flow</h2>
+<h3 id="guest-checkout-and-later-verified-claim">Guest checkout and later verified claim</h3>
+<pre class="mermaid"><code>sequenceDiagram
+  autonumber
+  participant C as Client (Guest)
+  participant API as API
+  participant CART as Cart Service
+  participant ORD as Order Service
+  participant AUTH as Auth Service
+  participant DB as DB
+
+  C-&gt;&gt;API: GET /api/v1/cart/ (no auth)
+  API-&gt;&gt;CART: resolve_or_create_cart(cart_token?)
+  CART-&gt;&gt;DB: create anonymous ACTIVE cart (hash token)
+  API--&gt;&gt;C: 201 + Set-Cookie cart_token=...
+
+  C-&gt;&gt;API: POST /api/v1/cart/items/ (cookie/header token)
+  API-&gt;&gt;CART: resolve cart by token
+  CART-&gt;&gt;DB: add items
+  API--&gt;&gt;C: 201
+
+  C-&gt;&gt;API: POST /api/v1/cart/checkout/ (no auth, with customer_email + address)
+  API-&gt;&gt;CART: resolve cart by token
+  API-&gt;&gt;ORD: create Order(user=NULL, customer_email=..., snapshots)
+  ORD-&gt;&gt;DB: insert Order
+  API-&gt;&gt;CART: mark cart CONVERTED
+  API--&gt;&gt;C: 201 + Order response
+
+  C-&gt;&gt;AUTH: Register/Login/Social Login
+  AUTH-&gt;&gt;AUTH: authenticate, issue JWT
+  AUTH-&gt;&gt;AUTH: on_auth_success(request, user)
+  AUTH-&gt;&gt;CART: adopt/merge guest cart if token present#59; clear cookie
+  alt [user.email_verified == true]
+    AUTH-&gt;&gt;ORD: claim_guest_orders_for_user(user)
+    ORD-&gt;&gt;DB: update Orders where user is NULL and customer_email matches
+  else [not verified]
+    AUTH-&gt;&gt;ORD: skip claim
+  end
+  AUTH--&gt;&gt;C: 200 + tokens (+ maybe user)</code></pre>
+<h2 id="consequences">Consequences</h2>
+<p><strong>Positive</strong></p>
+<ul>
+<li>Supports real-world e-commerce conversion practice: guest checkout.</li>
+<li>Orders remain auditable with contact snapshots even without a user.</li>
+<li>Claiming guest orders is secure due to email verification requirement.</li>
+<li>Social login readiness via unified auth-success hook.</li>
+<li>Cleaner separation of concerns: cart domain vs order domain vs auth orchestration.</li>
+</ul>
+<p><strong>Negative / Trade-offs</strong></p>
+<ul>
+<li>Requires additional data fields and validation on checkout.
+  -Adds email verification workflow dependency for claim (must exist or be implemented).</li>
+<li>More test surface area (guest checkout + verified claim paths).</li>
+</ul>
+<p><strong>Claim idempotence guarantees</strong></p>
+<p>Guest order claiming is idempotent.</p>
+<p>An order is eligible for claiming only if:</p>
+<ul>
+<li><code>order.user IS NULL</code></li>
+<li><code>order.customer_email_normalized == user.email_normalized</code></li>
+<li><code>user.email_verified == true</code></li>
+</ul>
+<p>Once claimed, the order is marked as claimed and will not be re-processed on subsequent claim attempts.</p>
+<p><strong>Non-goals</strong></p>
+<ul>
+<li>Implementing full audit logging system in this ADR (but design is audit-ready).</li>
+<li>Implementing social login itself (only providing a stable integration point).</li>
+<li>Advanced fraud prevention (beyond email verification).</li>
+</ul>
+<h2 id="testing-strategy">Testing Strategy</h2>
+<ul>
+<li>API tests (SQLite): guest checkout, authenticated checkout, no-claim when unverified, claim when verified.</li>
+<li>MySQL suite: transactional idempotency tests for claim and cart merge/adopt, unique constraints.</li>
+<li>Postman flows: guest checkout end-to-end + register/login and verify claim behavior.</li>
+<li>Tests must verify that guest order claiming is triggered both on authentication and on email verification, and that the operation is idempotent.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10/dist/mermaid.min.js"></script>
+      
+        <script src="../../js/mermaid-init.js"></script>
+      
+    
+  </body>
+</html>

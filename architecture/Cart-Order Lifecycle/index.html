@@ -1,0 +1,1774 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://github.io/architecture/Cart-Order%20Lifecycle/">
+      
+      
+        <link rel="prev" href="../Domain%20Model/">
+      
+      
+        <link rel="next" href="../Inventory%20Reservation%20Lifecycle/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Cart-Order Lifecycle - Shopwise Showcase Project Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cartorder-lifecycle" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-header__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Shopwise Showcase Project Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Cart-Order Lifecycle
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-nav__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Shopwise Showcase Project Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Demo scenarios
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Guest%20order%20flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guest user flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Auth%20order%20flow%20with%20order%20history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auth Order Flow with Order History
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Cart%20merge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart merge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Order%20claim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Order claim
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Registration%20and%20email%20verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registration and Email Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20shipment%20processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Shipment Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20promotion%20and%20offer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Promotion and Offer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/OpenAPI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAPI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../System%20Architecture%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Current%20Architecture%20Baseline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Current Architecture Baseline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Domain%20Model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ER Diagram.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ER Diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart-Order Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart-Order Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#high-level-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High-Level Principles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cart-phase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cart Phase
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checkout-phase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checkout Phase
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Checkout Phase">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inventory-reservation-at-checkout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inventory Reservation at Checkout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reservation-ttl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reservation TTL
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#order-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order Lifecycle
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Order Lifecycle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#order-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order States
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#created" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CREATED
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#paid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PAID
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cancelled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CANCELLED
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#payment-interaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Payment Interaction
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Payment Interaction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#payment-success" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Payment Success
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#payment-failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Payment Failure
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#time-based-expiration-ttl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time-Based Expiration (TTL)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cancellation-paths-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cancellation Paths Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architectural-rationale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architectural Rationale
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related Documents
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Inventory%20Reservation%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory Reservation Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Postman%20Anonymous%20Cart%20Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman Anonymous Cart Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI-CD
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CI-CD
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Pipeline%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Postman%20CLI%20in%20CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman CLI in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural Decisions Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#high-level-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High-Level Principles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cart-phase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cart Phase
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checkout-phase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checkout Phase
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Checkout Phase">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inventory-reservation-at-checkout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inventory Reservation at Checkout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reservation-ttl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reservation TTL
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#order-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order Lifecycle
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Order Lifecycle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#order-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order States
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#created" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CREATED
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#paid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PAID
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cancelled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CANCELLED
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#payment-interaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Payment Interaction
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Payment Interaction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#payment-success" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Payment Success
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#payment-failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Payment Failure
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#time-based-expiration-ttl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time-Based Expiration (TTL)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cancellation-paths-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cancellation Paths Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architectural-rationale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architectural Rationale
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related Documents
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="cartorder-lifecycle">Cart–Order Lifecycle</h1>
+<p>This document describes the current Cart → Order lifecycle in Shopwise,
+including inventory reservation, payment interaction, and cancellation semantics.</p>
+<p>It reflects the architecture as of Sprint 9 and supersedes earlier snapshots
+that relied on direct stock decrement during checkout.</p>
+<hr />
+<h2 id="high-level-principles">High-Level Principles</h2>
+<ul>
+<li><strong>Cart</strong> represents a mutable shopping intent.</li>
+<li><strong>Order</strong> represents an immutable snapshot of checkout intent.</li>
+<li><strong>InventoryReservation</strong> separates <em>holding stock</em> from <em>physical stock decrement</em>.</li>
+<li><strong>Product.stock_quantity</strong> always represents <strong>physical stock only</strong>.</li>
+<li>Stock is decremented <strong>only after successful payment</strong>.</li>
+<li>Time-based expiration is a first-class concept (TTL).</li>
+</ul>
+<hr />
+<h2 id="cart-phase">Cart Phase</h2>
+<p>The cart is a temporary, mutable structure that exists before checkout.</p>
+<p>Characteristics:</p>
+<ul>
+<li>Items can be freely added, updated, or removed.</li>
+<li>Cart can be anonymous (guest) or associated with an authenticated user.</li>
+<li>Cart has no impact on inventory availability.</li>
+</ul>
+<p>The cart is not persisted as an order until checkout.</p>
+<p>Note:
+For authenticated users, the “current cart” is not derived from cart status.
+It is resolved via a dedicated ActiveCart pointer (<a href="../../decisions/ADR-026-ActiveCart-Pointer-Refactor/">ADR-026</a>), which decouples
+cart history from the active cart reference.</p>
+<hr />
+<h2 id="checkout-phase">Checkout Phase</h2>
+<p>Checkout transforms a cart into an order snapshot.</p>
+<p>At checkout:</p>
+<ul>
+<li>An <strong>Order</strong> is created with status <code>CREATED</code>.</li>
+<li><strong>OrderItems</strong> are created as an immutable snapshot of cart contents.</li>
+<li><strong>InventoryReservation</strong> records are created for each product in the order.</li>
+</ul>
+<h3 id="inventory-reservation-at-checkout">Inventory Reservation at Checkout</h3>
+<p>Checkout does <strong>not</strong> decrement physical stock.</p>
+<p>Instead, the system creates inventory reservations with:</p>
+<ul>
+<li><code>status = ACTIVE</code></li>
+<li>explicit expiration timestamp (<code>expires_at</code>)</li>
+<li>quantity per product</li>
+</ul>
+<p>Reservation availability is computed as:</p>
+<p>available = product.stock_quantity - sum(quantity of ACTIVE reservations for that product)</p>
+<p>This prevents overselling under concurrency while keeping physical stock unchanged.</p>
+<h3 id="reservation-ttl">Reservation TTL</h3>
+<p>Each reservation has a time-to-live (TTL), applied at checkout time.</p>
+<p>TTL values are environment-configurable:</p>
+<ul>
+<li><code>RESERVATION_TTL_GUEST_SECONDS</code></li>
+<li><code>RESERVATION_TTL_AUTH_SECONDS</code></li>
+</ul>
+<p>The computed TTL is stored directly on the reservation as <code>expires_at</code>.</p>
+<hr />
+<h2 id="order-lifecycle">Order Lifecycle</h2>
+<p>Orders represent a finalized snapshot of checkout intent.</p>
+<h3 id="order-states">Order States</h3>
+<p>Orders can exist in the following states:</p>
+<ul>
+<li><code>CREATED</code></li>
+<li><code>PAID</code></li>
+<li><code>CANCELLED</code></li>
+</ul>
+<p>Additional terminal states (planned):</p>
+<ul>
+<li><code>SHIPPED</code></li>
+<li><code>DELIVERED</code></li>
+</ul>
+<h3 id="created">CREATED</h3>
+<ul>
+<li>Order was created from checkout.</li>
+<li>Inventory is reserved (<code>ACTIVE</code> reservations).</li>
+<li>Physical stock is unchanged.</li>
+<li>Awaiting payment.</li>
+</ul>
+<h3 id="paid">PAID</h3>
+<ul>
+<li>Payment completed successfully.</li>
+<li>Inventory reservations are <strong>committed</strong>:</li>
+<li>reservation status: <code>ACTIVE → COMMITTED</code></li>
+<li>physical stock is decremented</li>
+<li>Order becomes immutable.</li>
+</ul>
+<h3 id="cancelled">CANCELLED</h3>
+<ul>
+<li>Terminal state.</li>
+<li>Order was not paid or was explicitly cancelled.</li>
+<li>Inventory reservations were released or expired.</li>
+<li>Physical stock remains unchanged.</li>
+</ul>
+<p>Cancellation reasons are stored as metadata, not as order states:</p>
+<ul>
+<li><code>CUSTOMER_REQUEST</code></li>
+<li><code>PAYMENT_FAILED</code></li>
+<li><code>PAYMENT_EXPIRED</code></li>
+<li><code>OUT_OF_STOCK</code></li>
+<li><code>SHOP_REQUEST</code></li>
+<li><code>FRAUD_SUSPECTED</code> (planned)</li>
+</ul>
+<hr />
+<h2 id="payment-interaction">Payment Interaction</h2>
+<p>Payment resolves the inventory reservation lifecycle.</p>
+<h3 id="payment-success">Payment Success</h3>
+<p>On successful payment:</p>
+<ul>
+<li>Inventory reservations are <strong>committed</strong>.</li>
+<li>Physical stock is decremented.</li>
+<li>Order transitions: <code>CREATED → PAID</code>.</li>
+</ul>
+<p>This operation is idempotent and protected against race conditions.</p>
+<h3 id="payment-failure">Payment Failure</h3>
+<p>On payment failure:</p>
+<ul>
+<li>Order is cancelled.</li>
+<li>Inventory reservations are released.</li>
+<li>Physical stock is not decremented.</li>
+</ul>
+<p>Result:</p>
+<p>CREATED → CANCELLED</p>
+<p>cancel_reason = PAYMENT_FAILED</p>
+<p>Retrying payment is not supported; a new checkout is required.</p>
+<hr />
+<h2 id="time-based-expiration-ttl">Time-Based Expiration (TTL)</h2>
+<p>Orders in <code>CREATED</code> state are not valid indefinitely.</p>
+<p>If payment is not completed before reservation TTL expires:</p>
+<ul>
+<li>Reservations are expired.</li>
+<li>Order is cancelled automatically by the system.</li>
+</ul>
+<p>Expiration rules:</p>
+<ul>
+<li>Applies only to <code>ACTIVE</code> reservations.</li>
+<li>Applies only if the order is still <code>CREATED</code>.</li>
+<li>Paid orders are never expired.</li>
+</ul>
+<p>Result:</p>
+<p>CREATED → CANCELLED</p>
+<p>cancel_reason = PAYMENT_EXPIRED</p>
+<p>Expiration is executed by a background runner (later via django-q2),
+and can be triggered manually via a management command for testing.</p>
+<hr />
+<h2 id="cancellation-paths-summary">Cancellation Paths Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Order State</th>
+<th>Reservation Result</th>
+<th>Stock</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Payment success</td>
+<td>PAID</td>
+<td>COMMITTED</td>
+<td>↓</td>
+</tr>
+<tr>
+<td>Payment failure</td>
+<td>CANCELLED</td>
+<td>RELEASED</td>
+<td>=</td>
+</tr>
+<tr>
+<td>TTL expiration</td>
+<td>CANCELLED</td>
+<td>EXPIRED</td>
+<td>=</td>
+</tr>
+<tr>
+<td>Customer cancel (CREATED)</td>
+<td>CANCELLED</td>
+<td>RELEASED</td>
+<td>=</td>
+</tr>
+<tr>
+<td>Out-of-stock on checkout</td>
+<td>—</td>
+<td>—</td>
+<td>=</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="architectural-rationale">Architectural Rationale</h2>
+<p>This lifecycle design ensures that:</p>
+<ul>
+<li>Overselling is prevented without prematurely decrementing stock.</li>
+<li>Inventory logic is explicit, auditable, and WMS-friendly.</li>
+<li>Time-based behavior is deterministic and testable.</li>
+<li>Order states remain minimal; reasons are expressed as metadata.</li>
+</ul>
+<p>This separation enables future integrations such as:</p>
+<ul>
+<li>External WMS systems</li>
+<li>Asynchronous fulfillment workflows</li>
+<li>Detailed audit logging and reconciliation</li>
+</ul>
+<hr />
+<h2 id="related-documents">Related Documents</h2>
+<ul>
+<li><a href="../../decisions/ADR-025-Inventory-Reservation-Model/">ADR-025: Inventory Reservation Model</a></li>
+<li><a href="../Current%20Architecture%20Baseline/">Current Architecture Baseline</a></li>
+<li>Order Fulfillment Architecture (planned)</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10/dist/mermaid.min.js"></script>
+      
+        <script src="../../js/mermaid-init.js"></script>
+      
+    
+  </body>
+</html>

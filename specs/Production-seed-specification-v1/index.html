@@ -1,0 +1,2403 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://github.io/specs/Production-seed-specification-v1/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Shopwise Production Seed Specification v1 - Shopwise Showcase Project Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#shopwise-production-seed-specification-v1" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-header__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Shopwise Showcase Project Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Shopwise Production Seed Specification v1
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-nav__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Shopwise Showcase Project Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Demo scenarios
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Guest%20order%20flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guest user flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Auth%20order%20flow%20with%20order%20history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auth Order Flow with Order History
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Cart%20merge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart merge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Order%20claim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Order claim
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Registration%20and%20email%20verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registration and Email Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20shipment%20processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Shipment Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20promotion%20and%20offer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Promotion and Offer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/OpenAPI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAPI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/System%20Architecture%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Current%20Architecture%20Baseline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Current Architecture Baseline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Domain%20Model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ER Diagram.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ER Diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Cart-Order%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart-Order Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Inventory%20Reservation%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory Reservation Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/Postman%20Anonymous%20Cart%20Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman Anonymous Cart Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI-CD
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CI-CD
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Pipeline%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Postman%20CLI%20in%20CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman CLI in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural Decisions Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Principles
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design Principles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-the-production-seed-is-separate-from-the-dev-seed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The production seed is separate from the dev seed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-the-production-seed-is-explicit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. The production seed is explicit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-the-production-seed-is-presentation-oriented" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. The production seed is presentation-oriented
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-the-production-seed-does-not-pre-consume-interactive-scenarios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. The production seed does not pre-consume interactive scenarios
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-media-assets-are-part-of-the-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Media assets are part of the repository
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#seeded-entities-and-minimum-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Seeded Entities and Minimum Scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#users" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Users
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Users">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#superuser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Superuser
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#staff-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Staff user
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#customer-user-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Customer user 1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#customer-user-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Customer user 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#general-user-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General user requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tax-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tax Classes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supplier" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supplier
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supplier">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#supplier_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supplier
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supplier-addresses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supplier Addresses
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supplier-payment-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supplier Payment Details
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supplier-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supplier Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Categories
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#products" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Products
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Products">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#electronics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Electronics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#grocery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Grocery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#product-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Product Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gallery-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gallery Images
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stable-product-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stable Product Identity
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prices
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inventory-stock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inventory / Stock
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#product-images-media" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Product Images / Media
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Product Images / Media">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommended-asset-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended Asset Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapping-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mapping Rule
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#order-promotion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order Promotion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#promotions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Promotions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Promotions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#promotion-a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Promotion A
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#promotion-b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Promotion B
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#offer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Offer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#campaign-ready-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Campaign-Ready State
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#orders-carts-scenario-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Orders / Carts / Scenario State
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Orders / Carts / Scenario State">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-the-seed-must-prepare" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the seed must prepare
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Orders
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-seed-must-not-pre-consume" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the seed must not pre-consume
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supported-showcase-scenarios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Showcase Scenarios
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supported Showcase Scenarios">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-guest-checkout-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Guest checkout flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-authenticated-checkout-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Authenticated checkout flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-cart-merge-scenario" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Cart merge scenario
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-promotion-offer-campaign-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Promotion / offer / campaign flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-admin-inspection-scenario" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Admin inspection scenario
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#out-of-scope-for-production-seed-v1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Out of Scope for Production Seed v1
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Principles
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Principles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-the-seed-must-be-modular" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The seed must be modular
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-the-seed-must-be-implementable-in-phases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. The seed must be implementable in phases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-the-seed-must-be-readable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. The seed must be readable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-the-seed-must-be-safely-resettable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. The seed must be safely resettable
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommended-implementation-phases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended Implementation Phases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recommended Implementation Phases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-reference-data-and-identities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1 — Reference Data and Identities
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-catalog-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2 — Catalog Core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-product-media" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3 — Product Media
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-commercial-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4 — Commercial Layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-scenario-hardening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5 — Scenario Hardening
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#expected-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected Result
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="shopwise-production-seed-specification-v1">Shopwise Production Seed Specification v1</h1>
+<h2 id="purpose">Purpose</h2>
+<p>The production/demo seed must create a stable, visually representative, and functionally complete showcase state of the application.</p>
+<p>It is intended for:</p>
+<ul>
+<li>public portfolio / CV showcase,</li>
+<li>guided video scenarios,</li>
+<li>repeatable reset/reseed workflows,</li>
+<li>recruiter and technical review,</li>
+<li>demonstration of quality-driven product and system design.</li>
+</ul>
+<p>It is <strong>not</strong> intended primarily for:</p>
+<ul>
+<li>developer convenience,</li>
+<li>large volumes of test data,</li>
+<li>random or exploratory data generation,</li>
+<li>heavily configurable generic seed infrastructure.</li>
+</ul>
+<p>The production seed must be:</p>
+<ul>
+<li>deterministic,</li>
+<li>explicit,</li>
+<li>readable,</li>
+<li>safely resettable,</li>
+<li>oriented toward showcase value rather than maximum flexibility.</li>
+</ul>
+<hr />
+<h2 id="design-principles">Design Principles</h2>
+<h3 id="1-the-production-seed-is-separate-from-the-dev-seed">1. The production seed is separate from the dev seed</h3>
+<p>The production/demo seed must be treated as a distinct scenario/profile/command and must not inherit the assumptions of the current dev-oriented seed design if those assumptions do not serve the showcase use case.</p>
+<h3 id="2-the-production-seed-is-explicit">2. The production seed is explicit</h3>
+<p>Catalog, users, promotions, offers, and showcase-ready entities should be defined explicitly in Python code rather than hidden behind a generic YAML-driven configuration layer, unless that layer provides clear practical value.</p>
+<h3 id="3-the-production-seed-is-presentation-oriented">3. The production seed is presentation-oriented</h3>
+<p>Every seeded entity must exist for a clear reason:</p>
+<ul>
+<li>it supports a public demo flow,</li>
+<li>it supports a quality showcase,</li>
+<li>it supports a video scenario,</li>
+<li>it supports visual/product representativeness,</li>
+<li>or it is required for operational consistency of the demo.</li>
+</ul>
+<h3 id="4-the-production-seed-does-not-pre-consume-interactive-scenarios">4. The production seed does not pre-consume interactive scenarios</h3>
+<p>The seed must not create partially consumed or already-spent states for scenarios such as:</p>
+<ul>
+<li>cart merge,</li>
+<li>guest-to-auth transitions,</li>
+<li>order claiming,</li>
+<li>or similar flows that are meant to be performed live in a demo or test scenario.</li>
+</ul>
+<p>The seed prepares the <strong>conditions</strong> for those scenarios, not the already-mutated end state.</p>
+<h3 id="5-media-assets-are-part-of-the-repository">5. Media assets are part of the repository</h3>
+<p>Seeded showcase product images are versioned in the repository and uploaded through Django storage during the seed process.</p>
+<p>The seed must not hardcode public object-storage URLs into the database.</p>
+<hr />
+<h2 id="seeded-entities-and-minimum-scope">Seeded Entities and Minimum Scope</h2>
+<h2 id="users">Users</h2>
+<p>The production seed must create the following identities.</p>
+<h3 id="superuser">Superuser</h3>
+<p>Purpose:</p>
+<ul>
+<li>system administration,</li>
+<li>internal inspection,</li>
+<li>admin maintenance/debug.</li>
+</ul>
+<p>Requirements:</p>
+<ul>
+<li>email</li>
+<li>password</li>
+<li>first name</li>
+<li>last name</li>
+<li><code>is_superuser=True</code></li>
+<li><code>is_staff=True</code></li>
+</ul>
+<h3 id="staff-user">Staff user</h3>
+<p>Purpose:</p>
+<ul>
+<li>admin/business showcase scenarios,</li>
+<li>safer demo alternative to the superuser account.</li>
+</ul>
+<p>Requirements:</p>
+<ul>
+<li>email</li>
+<li>password</li>
+<li>first name</li>
+<li>last name</li>
+<li><code>is_staff=True</code></li>
+<li>not a superuser</li>
+</ul>
+<h3 id="customer-user-1">Customer user 1</h3>
+<p>Purpose:</p>
+<ul>
+<li>authenticated checkout,</li>
+<li>orders list / order detail,</li>
+<li>campaign / offer scenarios,</li>
+<li>cart merge scenarios</li>
+</ul>
+<p>Requirements:</p>
+<ul>
+<li>email</li>
+<li>password</li>
+<li>first name</li>
+<li>last name</li>
+</ul>
+<h3 id="customer-user-2">Customer user 2</h3>
+<p>Purpose:</p>
+<ul>
+<li>alternative authenticated scenarios,</li>
+<li>separation of demo/test customer flows,</li>
+<li>optional campaign / email / claim-related scenarios</li>
+</ul>
+<p>Requirements:</p>
+<ul>
+<li>email</li>
+<li>password</li>
+<li>first name</li>
+<li>last name</li>
+</ul>
+<h3 id="general-user-requirements">General user requirements</h3>
+<p>All seeded identities must feel human and presentable. They must not be limited to email/password only.</p>
+<hr />
+<h2 id="tax-classes">Tax Classes</h2>
+<p>The production seed must create exactly 3 tax classes:</p>
+<ul>
+<li>VAT 21%</li>
+<li>VAT 12%</li>
+<li>VAT 0%</li>
+</ul>
+<p>Purpose:</p>
+<ul>
+<li>VAT breakdown demonstration,</li>
+<li>product category variation,</li>
+<li>realistic pricing and summary logic.</li>
+</ul>
+<hr />
+<h2 id="supplier">Supplier</h2>
+<p>The production seed must create <strong>one active default supplier</strong> that is fully valid for the checkout and order pipeline.</p>
+<h3 id="supplier_1">Supplier</h3>
+<p>Requirements:</p>
+<ul>
+<li>active</li>
+<li>valid for order creation</li>
+<li>valid for pricing and supplier snapshot/config resolution</li>
+<li>usable without manual post-seed repair</li>
+</ul>
+<h3 id="supplier-addresses">Supplier Addresses</h3>
+<p>The supplier must include all default addresses required by the domain model, at minimum:</p>
+<ul>
+<li>default billing address</li>
+<li>default shipping / operational address if required by the application rules</li>
+</ul>
+<h3 id="supplier-payment-details">Supplier Payment Details</h3>
+<p>The supplier must include all payment details required by the application so that:</p>
+<ul>
+<li>supplier configuration validation passes,</li>
+<li>checkout does not fail on supplier configuration,</li>
+<li>order summary works,</li>
+<li>cart summary works,</li>
+<li>order/payment orchestration can proceed.</li>
+</ul>
+<h3 id="supplier-configuration">Supplier Configuration</h3>
+<p>The seed must explicitly ensure that supplier-related configuration is complete enough to avoid runtime checkout failure.</p>
+<p>This is a hard requirement of the production seed.</p>
+<hr />
+<h2 id="categories">Categories</h2>
+<p>The production seed must create 3 categories:</p>
+<ul>
+<li>Electronics</li>
+<li>Grocery</li>
+<li>Pets</li>
+</ul>
+<p>Requirements:</p>
+<ul>
+<li>active</li>
+<li>usable in the storefront</li>
+<li>linked to products</li>
+<li>usable in promotion logic</li>
+</ul>
+<hr />
+<h2 id="products">Products</h2>
+<p>The production seed must create <strong>15 showcase products</strong>.</p>
+<h3 id="electronics">Electronics</h3>
+<ol>
+<li>Wireless Headphones</li>
+<li>Mechanical Keyboard</li>
+<li>USB-C Dock</li>
+<li>Smart Speaker</li>
+<li>Portable SSD</li>
+</ol>
+<h3 id="grocery">Grocery</h3>
+<ol>
+<li>Organic Pasta</li>
+<li>Olive Oil</li>
+<li>Granola Mix</li>
+<li>Green Tea</li>
+<li>Dark Chocolate</li>
+</ol>
+<h3 id="pets">Pets</h3>
+<ol>
+<li>Dog Food Premium</li>
+<li>Cat Litter Pro</li>
+<li>Pet Shampoo</li>
+<li>Chew Toy Rope</li>
+<li>Pet Bowl Set</li>
+</ol>
+<h3 id="product-requirements">Product Requirements</h3>
+<p>Each seeded product must have at minimum:</p>
+<ul>
+<li>name</li>
+<li>slug</li>
+<li>category</li>
+<li>tax class</li>
+<li>active/published state suitable for the storefront</li>
+<li>valid price</li>
+<li>in-stock / inventory-ready state</li>
+<li>valid supplier relation/configuration if required by the domain</li>
+<li>at least 1 main image</li>
+</ul>
+<h3 id="gallery-images">Gallery Images</h3>
+<p>A selected subset of products must have multiple images for a stronger product-detail demo.</p>
+<p>Recommended:</p>
+<ul>
+<li>Wireless Headphones → 3 images</li>
+<li>Mechanical Keyboard → 3 images</li>
+<li>Smart Speaker → 2 images</li>
+<li>Organic Pasta → 2 images</li>
+<li>Dog Food Premium → 2 images</li>
+</ul>
+<p>All other products may have only 1 main image in v1.</p>
+<h3 id="stable-product-identity">Stable Product Identity</h3>
+<p>Each product must have a stable <strong>slug</strong> that serves as:</p>
+<ul>
+<li>the seed identifier,</li>
+<li>the mapping key for the image catalogue,</li>
+<li>the stable identifier for tests,</li>
+<li>the stable identifier for demo/video scenarios.</li>
+</ul>
+<p>Recommended slugs:</p>
+<ul>
+<li><code>wireless-headphones</code></li>
+<li><code>mechanical-keyboard</code></li>
+<li><code>usb-c-dock</code></li>
+<li><code>smart-speaker</code></li>
+<li><code>portable-ssd</code></li>
+<li><code>organic-pasta</code></li>
+<li><code>olive-oil</code></li>
+<li><code>granola-mix</code></li>
+<li><code>green-tea</code></li>
+<li><code>dark-chocolate</code></li>
+<li><code>dog-food-premium</code></li>
+<li><code>cat-litter-pro</code></li>
+<li><code>pet-shampoo</code></li>
+<li><code>chew-toy-rope</code></li>
+<li><code>pet-bowl-set</code></li>
+</ul>
+<hr />
+<h2 id="prices">Prices</h2>
+<p>Every seeded product must have a valid price.</p>
+<p>Requirements:</p>
+<ul>
+<li>prices must be realistic enough for presentation,</li>
+<li>prices must be sufficiently varied,</li>
+<li>pricing must support:</li>
+<li>cart summary,</li>
+<li>order summary,</li>
+<li>VAT breakdown,</li>
+<li>promotion scenarios,</li>
+<li>minimum-order-value promotion logic.</li>
+</ul>
+<p>The seed must ensure that pricing data is complete and internally consistent.</p>
+<hr />
+<h2 id="inventory-stock">Inventory / Stock</h2>
+<p>All showcase products must be in stock by default.</p>
+<p>Requirements:</p>
+<ul>
+<li>no seeded showcase product is out of stock unless intentionally introduced as a later specialized test/demo case,</li>
+<li>seeded catalog must be safe for live demo usage without accidental stock-related blockers.</li>
+<li>one dedicated out-of-stock product for a targeted scenario</li>
+</ul>
+<hr />
+<h2 id="product-images-media">Product Images / Media</h2>
+<p>The production seed must support image upload through the active Django storage backend.</p>
+<h3 id="requirements">Requirements</h3>
+<ul>
+<li>images are versioned in the repository,</li>
+<li>the seed uploads them through model/file/image fields,</li>
+<li>the seed does not write final public storage URLs directly into the database,</li>
+<li>the active storage backend decides where the files are stored,</li>
+<li>the same seed works with local storage and production object storage.</li>
+</ul>
+<h3 id="recommended-asset-structure">Recommended Asset Structure</h3>
+<div class="highlight"><pre><span></span><code>backend/utils/seed/assets/products/
+  wireless-headphones/
+    main.jpg
+    gallery-1.jpg
+    gallery-2.jpg
+  mechanical-keyboard/
+    main.jpg
+    gallery-1.jpg
+    gallery-2.jpg
+  ...
+</code></pre></div>
+<h3 id="mapping-rule">Mapping Rule</h3>
+<p>Products map to asset folders by slug.</p>
+<hr />
+<h2 id="order-promotion">Order Promotion</h2>
+<p>The production seed must create at least one order-level promotion.</p>
+<p>Requirements:</p>
+<ul>
+<li>auto-apply</li>
+<li>minimum order value</li>
+<li>visible in cart and/or checkout behavior</li>
+</ul>
+<p>Purpose:</p>
+<ul>
+<li>demonstrate promotion logic,</li>
+<li>support business realism,</li>
+<li>enrich cart/checkout showcase behavior.</li>
+</ul>
+<hr />
+<h2 id="promotions">Promotions</h2>
+<p>The production seed must create at least two promotions.</p>
+<h3 id="promotion-a">Promotion A</h3>
+<ul>
+<li>fixed discount</li>
+<li>applied to one category</li>
+</ul>
+<p>Recommended category:</p>
+<ul>
+<li>Electronics</li>
+</ul>
+<h3 id="promotion-b">Promotion B</h3>
+<ul>
+<li>percentage discount</li>
+<li>applied to several specific products</li>
+</ul>
+<p>Recommended products:</p>
+<ul>
+<li>Smart Speaker</li>
+<li>Green Tea</li>
+<li>Pet Shampoo</li>
+</ul>
+<p>Purpose:</p>
+<ul>
+<li>demonstrate category-scoped and product-scoped promotion logic.</li>
+</ul>
+<hr />
+<h2 id="offer">Offer</h2>
+<p>The production seed must create one offer for the campaign demo.</p>
+<p>Requirements:</p>
+<ul>
+<li>usable in a customer-facing flow</li>
+<li>tied to an email/campaign-oriented use case</li>
+<li>deterministically configured</li>
+</ul>
+<hr />
+<h2 id="campaign-ready-state">Campaign-Ready State</h2>
+<p>The seed does not need to execute a campaign automatically, but it must create all conditions required to run the campaign scenario.</p>
+<p>That means:</p>
+<ul>
+<li>an existing offer,</li>
+<li>at least one suitable target customer,</li>
+<li>email-ready conditions,</li>
+<li>products/promotion context that makes the offer visible and meaningful.</li>
+</ul>
+<hr />
+<h2 id="orders-carts-scenario-state">Orders / Carts / Scenario State</h2>
+<h3 id="what-the-seed-must-prepare">What the seed must prepare</h3>
+<p>The seed must prepare:</p>
+<ul>
+<li>users,</li>
+<li>catalog,</li>
+<li>supplier configuration,</li>
+<li>promotions,</li>
+<li>offers,</li>
+<li>checkout-ready configuration,</li>
+<li>email/payment-ready environment assumptions.</li>
+</ul>
+<h3 id="orders">Orders</h3>
+<p>For one seeded customer, create:</p>
+<ul>
+<li>1 delivered order</li>
+<li>with correct shipment in DELIVERED status</li>
+<li>1 cancelled order</li>
+<li>1 active order</li>
+<li>in a status suitable for display in active bucket</li>
+</ul>
+<p><strong>Requirements</strong></p>
+<ul>
+<li>order items must be consistent with current catalog</li>
+<li>prices/taxes/order totals must match seeded configuration</li>
+<li>payment/shipment status must not be just “hard fake” if it violates domain rules</li>
+<li>active/completed grouping must work in UI without manual intervention</li>
+</ul>
+<h3 id="what-the-seed-must-not-pre-consume">What the seed must not pre-consume</h3>
+<p>The seed must <strong>not</strong> create already-spent scenario states such as:</p>
+<ul>
+<li>pre-consumed cart merge state,</li>
+<li>already-claimed order scenario state,</li>
+<li>other one-time mutated flows that stop being reproducible after one pass.</li>
+</ul>
+<p>Those scenarios must be replayed as actions in a demo/test/video flow, not stored as a partially completed seeded state.</p>
+<hr />
+<h2 id="supported-showcase-scenarios">Supported Showcase Scenarios</h2>
+<p>The production seed must support at minimum the following scenarios.</p>
+<h3 id="1-guest-checkout-flow">1. Guest checkout flow</h3>
+<p>It must be possible to:</p>
+<ul>
+<li>browse the catalog,</li>
+<li>add products to cart,</li>
+<li>view cart summary,</li>
+<li>complete checkout,</li>
+<li>go through the AcquireMock payment flow,</li>
+<li>observe related email flow in Mailpit.</li>
+</ul>
+<h3 id="2-authenticated-checkout-flow">2. Authenticated checkout flow</h3>
+<p>It must be possible to:</p>
+<ul>
+<li>log in as an existing seeded customer,</li>
+<li>shop and checkout,</li>
+<li>complete an order,</li>
+<li>view order list and/or order detail.</li>
+</ul>
+<h3 id="3-cart-merge-scenario">3. Cart merge scenario</h3>
+<p>The seed must prepare the conditions for this scenario:</p>
+<ul>
+<li>an existing authenticated user,</li>
+<li>a functioning catalog,</li>
+<li>working session/auth logic.</li>
+</ul>
+<p>The scenario itself should be played live, for example:</p>
+<ul>
+<li>login → authenticated cart</li>
+<li>logout</li>
+<li>guest cart</li>
+<li>login</li>
+<li>merge</li>
+</ul>
+<p>The merge is a scenario action, not a pre-seeded consumed state.</p>
+<h3 id="4-promotion-offer-campaign-flow">4. Promotion / offer / campaign flow</h3>
+<p>It must be possible to:</p>
+<ul>
+<li>trigger or demonstrate an offer/campaign-related flow,</li>
+<li>receive email in Mailpit,</li>
+<li>observe customer-facing pricing/promotion effect.</li>
+</ul>
+<h3 id="5-admin-inspection-scenario">5. Admin inspection scenario</h3>
+<p>It must be possible to:</p>
+<ul>
+<li>log in to admin,</li>
+<li>inspect seeded products,</li>
+<li>inspect prices,</li>
+<li>inspect supplier configuration,</li>
+<li>inspect promotions/offers,</li>
+<li>inspect order/payment-related entities as part of the showcase.</li>
+</ul>
+<hr />
+<h2 id="out-of-scope-for-production-seed-v1">Out of Scope for Production Seed v1</h2>
+<p>The first version of the production seed does <strong>not</strong> need to handle:</p>
+<ul>
+<li>claim scenarios as pre-seeded ready-made states,</li>
+<li>bulk products,</li>
+<li>multiple suppliers,</li>
+<li>advanced shipping scenarios,</li>
+<li>large order history datasets,</li>
+<li>large campaign variation sets,</li>
+<li>complex out-of-stock scenarios,</li>
+<li>generic flexible seed configuration for arbitrary future use cases.</li>
+</ul>
+<p>These may be added later, but they are not required for a strong first showcase-ready seed.</p>
+<hr />
+<h2 id="implementation-principles">Implementation Principles</h2>
+<h3 id="1-the-seed-must-be-modular">1. The seed must be modular</h3>
+<p>Implementation must be split into logical parts, for example:</p>
+<ul>
+<li>users</li>
+<li>reference data</li>
+<li>supplier</li>
+<li>categories</li>
+<li>products</li>
+<li>prices</li>
+<li>images</li>
+<li>promotions</li>
+<li>offers</li>
+<li>scenario support</li>
+</ul>
+<h3 id="2-the-seed-must-be-implementable-in-phases">2. The seed must be implementable in phases</h3>
+<p>The refactor must be executed in logical phases. It should not be attempted as one giant rewrite without boundaries.</p>
+<h3 id="3-the-seed-must-be-readable">3. The seed must be readable</h3>
+<p>Seed data should be easy to understand and audit. Explicitness is preferred over over-abstraction.</p>
+<h3 id="4-the-seed-must-be-safely-resettable">4. The seed must be safely resettable</h3>
+<p>After a database reset, the production seed must be able to restore the application into a fully showcase-ready state.</p>
+<hr />
+<h2 id="recommended-implementation-phases">Recommended Implementation Phases</h2>
+<h3 id="phase-1-reference-data-and-identities">Phase 1 — Reference Data and Identities</h3>
+<ul>
+<li>users</li>
+<li>tax classes</li>
+<li>supplier</li>
+<li>supplier addresses</li>
+<li>supplier payment details</li>
+<li>categories</li>
+</ul>
+<h3 id="phase-2-catalog-core">Phase 2 — Catalog Core</h3>
+<ul>
+<li>products</li>
+<li>slugs</li>
+<li>prices</li>
+<li>stock</li>
+<li>category/tax assignment</li>
+</ul>
+<h3 id="phase-3-product-media">Phase 3 — Product Media</h3>
+<ul>
+<li>image catalogue integration</li>
+<li>upload via Django storage</li>
+<li>gallery support</li>
+</ul>
+<h3 id="phase-4-commercial-layer">Phase 4 — Commercial Layer</h3>
+<ul>
+<li>order promotion</li>
+<li>category/product promotions</li>
+<li>offer</li>
+</ul>
+<h3 id="phase-5-scenario-hardening">Phase 5 — Scenario Hardening</h3>
+<ul>
+<li>verify guest checkout</li>
+<li>verify authenticated checkout</li>
+<li>verify cart merge preconditions</li>
+<li>verify campaign/email flow</li>
+<li>fill any missing configuration dependencies</li>
+</ul>
+<hr />
+<h2 id="expected-result">Expected Result</h2>
+<p>After a database reset followed by the production/demo seed, the application must be in a state where:</p>
+<ul>
+<li>the storefront looks representative,</li>
+<li>products have working images,</li>
+<li>cart summary works,</li>
+<li>VAT breakdown works,</li>
+<li>checkout works,</li>
+<li>supplier configuration is complete,</li>
+<li>promotions and offer exist,</li>
+<li>auth flow works,</li>
+<li>AcquireMock flow works,</li>
+<li>Mailpit-related flow is ready,</li>
+<li>admin contains coherent showcase data.</li>
+</ul>
+<p>This is the accepted target state of the production seed v1.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10/dist/mermaid.min.js"></script>
+      
+        <script src="../../js/mermaid-init.js"></script>
+      
+    
+  </body>
+</html>

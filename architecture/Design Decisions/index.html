@@ -1,0 +1,1526 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://github.io/architecture/Design%20Decisions/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Design Decisions - Shopwise Showcase Project Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#design-decisions" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-header__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Shopwise Showcase Project Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Design Decisions
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-nav__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Shopwise Showcase Project Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Demo scenarios
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Guest%20order%20flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guest user flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Auth%20order%20flow%20with%20order%20history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auth Order Flow with Order History
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Cart%20merge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart merge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Order%20claim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Order claim
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Registration%20and%20email%20verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registration and Email Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20shipment%20processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Shipment Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20promotion%20and%20offer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Promotion and Offer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/OpenAPI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAPI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../System%20Architecture%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Current%20Architecture%20Baseline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Current Architecture Baseline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Domain%20Model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ER Diagram.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ER Diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Cart-Order%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart-Order Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Inventory%20Reservation%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory Reservation Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Postman%20Anonymous%20Cart%20Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman Anonymous Cart Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI-CD
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CI-CD
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Pipeline%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Postman%20CLI%20in%20CI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman CLI in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural Decisions Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#purpose-of-this-document" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose of This Document
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-adopt-test-driven-development-tdd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Adopt Test-Driven Development (TDD)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-introduce-cart-as-a-first-class-domain-entity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Introduce Cart as a First-Class Domain Entity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-make-order-a-read-only-resource" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Make Order a Read-Only Resource
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-introduce-explicit-cart-lifecycle-active-converted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Introduce Explicit Cart Lifecycle (ACTIVE → CONVERTED)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5enforce-max-one-active-cart-per-user-via-application-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.Enforce “Max One ACTIVE Cart per User” via Application Logic
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6introduce-fake-payment-api-instead-of-real-payment-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.Introduce Fake Payment API Instead of Real Payment Integration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-model-payment-as-an-explicit-separate-step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Model Payment as an Explicit, Separate Step
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-hybrid-database-strategy-sqlite-for-tests-mysql-for-prod-like-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Hybrid Database Strategy (SQLite for Tests, MySQL for Prod-like Setup)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-enforce-api-permissions-before-business-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Enforce API Permissions Before Business Logic
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-treat-documentation-as-a-quality-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Treat Documentation as a Quality Tool
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-adopt-openapi-as-canonical-api-specification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Adopt OpenAPI as Canonical API Specification
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-prefer-workflow-oriented-testing-over-crud-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Prefer Workflow-Oriented Testing Over CRUD Testing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="design-decisions">Design Decisions</h1>
+<h2 id="purpose-of-this-document">Purpose of This Document</h2>
+<p>This document records the <strong>key architectural and process decisions</strong> made during the development
+of the Shopwise project.</p>
+<p>Its purpose is to:</p>
+<ul>
+<li>preserve decision context</li>
+<li>explain why specific approaches were chosen</li>
+<li>support onboarding and future refactoring</li>
+<li>reduce reliance on implicit or tribal knowledge</li>
+</ul>
+<p>Each decision is described using:</p>
+<ul>
+<li>context and problem statement</li>
+<li>the decision itself</li>
+<li>rationale</li>
+<li>consequences and impact</li>
+</ul>
+<h2 id="1-adopt-test-driven-development-tdd">1. Adopt Test-Driven Development (TDD)</h2>
+<p><strong>Context / Problem</strong></p>
+<p>Without tests driving development, there is a high risk that:</p>
+<ul>
+<li>business rules remain implicit</li>
+<li>edge cases are missed</li>
+<li>refactoring becomes unsafe</li>
+</ul>
+<p><strong>Decision</strong></p>
+<p>Adopt Test-Driven Development as the primary development approach for core domain logic
+and critical workflows.</p>
+<p><strong>Rationale</strong></p>
+<ul>
+<li>Forces early clarification of business rules</li>
+<li>Encourages small, focused units of behavior</li>
+<li>Provides immediate feedback during development</li>
+<li>Enables safe refactoring as the domain evolves</li>
+</ul>
+<p><strong>Consequences / Impact</strong></p>
+<ul>
+<li>Tests act as executable specifications</li>
+<li>Domain rules are explicitly documented through tests</li>
+<li>Development speed may initially slow down but increases long-term confidence</li>
+<li>Strong alignment between implementation and expected behavior</li>
+</ul>
+<h2 id="2-introduce-cart-as-a-first-class-domain-entity">2. Introduce Cart as a First-Class Domain Entity</h2>
+<p><strong>Context / Problem</strong></p>
+<p>Initial designs allowed direct (and even anonymous) Order creation, leading to:</p>
+<ul>
+<li>unclear ownership</li>
+<li>unrealistic workflows</li>
+<li>weak validation boundaries</li>
+</ul>
+<p><strong>Decision</strong></p>
+<p>Introduce Cart as a dedicated domain entity representing user intent.
+Restrict Order creation exclusively to Cart checkout.</p>
+<p><strong>Rationale</strong></p>
+<ul>
+<li>Separates intent (Cart) from result (Order)</li>
+<li>Reflects real-world e-commerce workflows</li>
+<li>Provides a natural validation and control point</li>
+</ul>
+<p><strong>Consequences / Impact</strong></p>
+<ul>
+<li>Cleaner domain boundaries</li>
+<li>Simplified Order API</li>
+<li>Improved testability of checkout logic</li>
+<li>Elimination of ambiguous order creation paths</li>
+</ul>
+<h2 id="3-make-order-a-read-only-resource">3. Make Order a Read-Only Resource</h2>
+<p><strong>Context / Problem</strong></p>
+<p>CRUD-style Order APIs allow modification of transactional data after creation,
+which contradicts real-world transaction semantics.</p>
+<p><strong>Decision</strong></p>
+<p>Treat Order as a read-only resource from the API perspective.</p>
+<p><strong>Rationale</strong></p>
+<ul>
+<li>Orders represent historical business decisions</li>
+<li>Prevents accidental or invalid modifications</li>
+<li>Simplifies reasoning about system state</li>
+</ul>
+<p><strong>Consequences / Impact</strong></p>
+<ul>
+<li>Removal of create/update endpoints for Order</li>
+<li>All mutations occur indirectly (checkout, payment)</li>
+<li>Reduced API surface area and complexity</li>
+</ul>
+<h2 id="4-introduce-explicit-cart-lifecycle-active-converted">4. Introduce Explicit Cart Lifecycle (ACTIVE → CONVERTED)</h2>
+<p><strong>Context / Problem</strong></p>
+<p>Implicit cart states made it difficult to reason about checkout correctness
+and historical traceability.</p>
+<p><strong>Decision</strong></p>
+<p>Define an explicit and finite Cart lifecycle:</p>
+<ul>
+<li>ACTIVE</li>
+<li>CONVERTED</li>
+</ul>
+<p><strong>Rationale</strong></p>
+<ul>
+<li>Prevents repeated or invalid checkout attempts</li>
+<li>Makes state transitions explicit and testable</li>
+<li>Supports historical analysis</li>
+</ul>
+<p><strong>Consequences / Impact</strong></p>
+<ul>
+<li>Checkout becomes a one-time operation per cart</li>
+<li>Clear state-based validation rules</li>
+<li>Improved observability of cart history</li>
+</ul>
+<h2 id="5enforce-max-one-active-cart-per-user-via-application-logic">5.Enforce “Max One ACTIVE Cart per User” via Application Logic</h2>
+<p><strong>Context / Problem</strong></p>
+<p>Database-level constraints (e.g. OneToOne relationships) limit flexibility
+and complicate future extensions such as cart history.</p>
+<p><strong>Decision</strong></p>
+<p>Allow multiple carts per user, but enforce at most one ACTIVE cart
+using application-level validation.</p>
+<p><strong>Rationale</strong></p>
+<ul>
+<li>Preserves cart history</li>
+<li>Keeps business rules explicit and readable</li>
+<li>Avoids overly restrictive database constraints</li>
+</ul>
+<p><strong>Consequences / Impact</strong></p>
+<ul>
+<li>Clear domain rule enforced by code and tests</li>
+<li>Increased flexibility for future features</li>
+<li>Improved alignment with business logic</li>
+</ul>
+<h2 id="6introduce-fake-payment-api-instead-of-real-payment-integration">6.Introduce Fake Payment API Instead of Real Payment Integration</h2>
+<p><strong>Context / Problem</strong></p>
+<p>Real payment gateways introduce:</p>
+<ul>
+<li>external dependencies</li>
+<li>non-deterministic behavior</li>
+<li>unnecessary complexity for a showcase project</li>
+</ul>
+<p><strong>Decision</strong></p>
+<p>Implement a Fake Payment API simulating payment outcomes.</p>
+<p><strong>Rationale</strong></p>
+<ul>
+<li>Keeps focus on domain and workflow design</li>
+<li>Enables deterministic automated testing</li>
+<li>Avoids reliance on third-party services</li>
+</ul>
+<p><strong>Consequences / Impact</strong></p>
+<ul>
+<li>Predictable and repeatable E2E scenarios</li>
+<li>Clear payment-related state transitions</li>
+<li>Solid foundation for frontend and demo use</li>
+</ul>
+<h2 id="7-model-payment-as-an-explicit-separate-step">7. Model Payment as an Explicit, Separate Step</h2>
+<p><strong>Context / Problem</strong></p>
+<p>Automatically completing payment during checkout would hide
+important state transitions and failure scenarios.</p>
+<p><strong>Decision</strong></p>
+<p>Model Payment as an explicit action performed after checkout.</p>
+<p><strong>Rationale</strong></p>
+<ul>
+<li>Reflects real-world transactional workflows</li>
+<li>Makes failures explicit and observable</li>
+<li>Improves test coverage and reasoning</li>
+</ul>
+<p><strong>Consequences / Impact</strong></p>
+<ul>
+<li>Clear Order states (CREATED, PAID, PAYMENT_FAILED)</li>
+<li>Easier extension for retries or refunds</li>
+<li>Better separation of responsibilities</li>
+</ul>
+<h2 id="8-hybrid-database-strategy-sqlite-for-tests-mysql-for-prod-like-setup">8. Hybrid Database Strategy (SQLite for Tests, MySQL for Prod-like Setup)</h2>
+<p><strong>Context / Problem</strong></p>
+<p>Using MySQL everywhere complicates CI;
+using SQLite everywhere hides production behavior differences.</p>
+<p><strong>Decision</strong></p>
+<p>Adopt a hybrid approach:</p>
+<ul>
+<li>SQLite for tests and CI</li>
+<li>MySQL for local and production-like environments</li>
+</ul>
+<p><strong>Rationale</strong></p>
+<ul>
+<li>Fast and isolated test execution</li>
+<li>Realistic behavior where it matters</li>
+<li>Reduced CI setup complexity</li>
+</ul>
+<p><strong>Consequences / Impact</strong></p>
+<ul>
+<li>Stable CI pipeline</li>
+<li>Clear environment separation</li>
+<li>Explicit handling of DB-specific behavior</li>
+</ul>
+<h2 id="9-enforce-api-permissions-before-business-logic">9. Enforce API Permissions Before Business Logic</h2>
+<p><strong>Context / Problem</strong></p>
+<p>Anonymous or unauthorized access led to runtime errors
+and unclear API behavior.</p>
+<p><strong>Decision</strong></p>
+<p>Use DRF permission checks to fail requests before business logic is executed.</p>
+<p><strong>Rationale</strong></p>
+<ul>
+<li>Security should fail early</li>
+<li>Prevents leaking internal errors</li>
+<li>Aligns with REST and DRF best practices</li>
+</ul>
+<p><strong>Consequences / Impact</strong></p>
+<ul>
+<li>Consistent 403 vs 405 behavior</li>
+<li>Cleaner request handling</li>
+<li>More predictable API responses</li>
+</ul>
+<h2 id="10-treat-documentation-as-a-quality-tool">10. Treat Documentation as a Quality Tool</h2>
+<p><strong>Context / Problem</strong></p>
+<p>Traditional documentation often becomes outdated
+and disconnected from implementation.</p>
+<p><strong>Decision</strong></p>
+<p>Treat documentation as an active quality artifact
+that evolves together with the codebase.</p>
+<p><strong>Rationale</strong></p>
+<ul>
+<li>Improves shared understanding</li>
+<li>Reveals unclear or missing behavior</li>
+<li>Supports onboarding and cross-role communication</li>
+</ul>
+<p><strong>Consequences / Impact</strong></p>
+<ul>
+<li>Documentation drives test creation</li>
+<li>Reduced reliance on tribal knowledge</li>
+<li>Better long-term maintainability</li>
+</ul>
+<h2 id="11-adopt-openapi-as-canonical-api-specification">11. Adopt OpenAPI as Canonical API Specification</h2>
+<p><strong>Context / Problem</strong></p>
+<p>API behavior was defined only implicitly through code and tests.</p>
+<p><strong>Decision</strong></p>
+<p>Use OpenAPI / Swagger as the canonical, auto-generated API specification.</p>
+<p><strong>Rationale</strong></p>
+<ul>
+<li>Makes API surface explicit</li>
+<li>Integrates with testing and Postman</li>
+<li>Supports multiple audiences</li>
+</ul>
+<p><strong>Consequences / Impact</strong></p>
+<ul>
+<li>Single source of truth for API behavior</li>
+<li>Easier gap analysis</li>
+<li>Improved onboarding experience</li>
+</ul>
+<h2 id="12-prefer-workflow-oriented-testing-over-crud-testing">12. Prefer Workflow-Oriented Testing Over CRUD Testing</h2>
+<p><strong>Context / Problem</strong></p>
+<p>Isolated CRUD tests do not reflect real user behavior
+and provide limited confidence in business correctness.</p>
+<p><strong>Decision</strong></p>
+<p>Prioritize workflow-based and integration tests.</p>
+<p><strong>Rationale</strong></p>
+<ul>
+<li>Business value lies in workflows</li>
+<li>Integration points carry the highest risk</li>
+<li>Better alignment with real usage</li>
+</ul>
+<p><strong>Consequences / Impact</strong></p>
+<ul>
+<li>Fewer but more meaningful tests</li>
+<li>Higher confidence in core flows</li>
+<li>Clear mapping between tests and business rules</li>
+</ul>
+<h2 id="summary">Summary</h2>
+<p>The design decisions documented here shape Shopwise as a
+workflow-driven, quality-focused backend system.</p>
+<p>They emphasize:</p>
+<ul>
+<li>explicit rules over implicit behavior</li>
+<li>clarity over convenience</li>
+<li>documentation and tests as first-class artifacts</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10/dist/mermaid.min.js"></script>
+      
+        <script src="../../js/mermaid-init.js"></script>
+      
+    
+  </body>
+</html>
