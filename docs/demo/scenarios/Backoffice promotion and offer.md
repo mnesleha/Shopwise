@@ -22,8 +22,7 @@ It is designed to show how an authenticated customer can prepare a cart, how an 
 
 ## Video preview
 
-> Video preview placeholder  
-> Add the scenario video link or embedded preview here once the media hosting approach is finalized.
+<video src="https://github.com/user-attachments/assets/2adcc56a-396a-4345-aa13-96938dabf2e1" controls width="100%"></video>
 
 ---
 
