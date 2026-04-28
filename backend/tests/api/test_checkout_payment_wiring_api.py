@@ -365,7 +365,10 @@ def test_checkout_passes_only_generic_callback_context_to_payments_layer(client)
     assert response.status_code == 201
     kwargs = start_payment_mock.call_args.kwargs
     assert kwargs["payment_method"] == "CARD"
-    assert kwargs["extra"] == {"callback_base_url": "http://testserver/"}
+    assert kwargs["extra"] == {
+        "callback_base_url": "http://testserver/",
+        "is_guest": True,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -473,7 +476,9 @@ def test_card_checkout_sends_acquiremock_contract_body(client, settings):
     assert post_mock.call_args.args[0] == "https://acquiremock.test/api/create-invoice"
     assert kwargs["json"]["amount"] == int(payment.amount * 100)
     assert kwargs["json"]["reference"] == str(response.json()["id"])
-    assert kwargs["json"]["redirectUrl"] == settings.FRONTEND_RETURN_URL
+    assert kwargs["json"]["redirectUrl"] == (
+        f"{settings.FRONTEND_RETURN_URL}?orderId={response.json()['id']}&guest=1"
+    )
     assert kwargs["json"]["webhookUrl"].endswith("/api/v1/webhooks/acquiremock/")
     assert kwargs["json"]["webhookUrl"] == "http://testserver/api/v1/webhooks/acquiremock/"
 

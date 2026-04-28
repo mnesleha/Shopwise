@@ -1124,6 +1124,7 @@ Notes:
                     {"product_id": line.item.product_id, "quantity": line.item.quantity}
                     for line in cart_pricing.items
                 ]
+                legacy_unmigrated_gross_total = Decimal("0.00")
 
                 for line in cart_pricing.items:
                     item = line.item
@@ -1172,6 +1173,7 @@ Notes:
                         line_total = (
                             item.price_at_add_time * Decimal(str(line.quantity))
                         ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                        legacy_unmigrated_gross_total += line_total
                         discount_type = None
                         discount_value = None
                         # Phase 3 snapshot fields — unavailable for unmigrated products.
@@ -1216,12 +1218,16 @@ Notes:
                 # values returned by the VAT allocation engine.
                 od = cart_pricing.order_discount
                 if od is not None:
-                    _subtotal_gross = od.total_gross_after.amount
+                    _subtotal_gross = (
+                        od.total_gross_after.amount + legacy_unmigrated_gross_total
+                    ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                     _total_tax = od.total_tax_after.amount
                     _order_discount_gross = od.gross_reduction.amount
                     _order_promotion_code = od.promotion_code
                 else:
-                    _subtotal_gross = cart_pricing.subtotal_discounted.amount
+                    _subtotal_gross = (
+                        cart_pricing.subtotal_discounted.amount + legacy_unmigrated_gross_total
+                    ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                     _total_tax = cart_pricing.total_tax.amount
                     _order_discount_gross = None
                     _order_promotion_code = None

@@ -222,7 +222,7 @@ def test_admin_action_rejects_non_campaign_apply_offer(offer_admin):
     offer_admin.send_offer_email(request, qs)
 
     stored = list(messages.get_messages(request))
-    assert any("campaign_apply" in str(m).lower() for m in stored)
+    assert any("campaign apply" in str(m).lower() for m in stored)
 
 
 @override_settings(

@@ -1,9 +1,8 @@
 import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
-from tests.conftest import checkout_payload
+from tests.conftest import create_valid_order
 from accounts.services.email_verification import issue_email_verification_token
-from orders.models import Order
 
 
 @pytest.mark.django_db(transaction=True)
@@ -13,8 +12,10 @@ def test_verify_email_claims_guest_orders_mysql():
     user = User.objects.create_user(
         email="customer@example.com", password="Passw0rd!123")
 
-    Order.objects.create(
-        user=None, **checkout_payload(customer_email="customer@example.com"))
+    create_valid_order(
+        user=None,
+        customer_email="customer@example.com",
+    )
 
     token = issue_email_verification_token(user)
 
