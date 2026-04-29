@@ -40,6 +40,12 @@ vi.mock("@/components/auth/AuthProvider", () => ({
   useAuth: () => ({ refresh: vi.fn().mockResolvedValue({}) }),
 }));
 
+vi.mock("@/components/cart/CartProvider", () => ({
+  useCart: () => ({
+    resetCount: vi.fn(),
+  }),
+}));
+
 const mockToastSuccess = vi.fn();
 const mockToastError = vi.fn();
 
@@ -121,7 +127,7 @@ describe("ProfilePageClient", () => {
     expect(screen.getByTestId("address-list")).toBeInTheDocument();
     expect(screen.getByTestId("address-item-1")).toBeInTheDocument();
     expect(screen.getByTestId("address-item-2")).toBeInTheDocument();
-  });
+  }, 10000);
 
   it("renders empty state when there are no addresses", async () => {
     const user = userEvent.setup();

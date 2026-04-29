@@ -176,7 +176,7 @@ Its role is API-level contract and workflow validation.
 
 ## 3.4 Frontend Unit / Integration Tests
 
-**Primary tool:** Vitest
+**Primary tool:** Vitest/React Testing Library
 
 Vitest is used to validate frontend-local behavior such as:
 
@@ -260,7 +260,7 @@ Performance tests should be interpreted together with architecture changes, data
 | Backend unit/domain       | Business rule correctness               | pytest         |
 | MySQL verification        | Concurrency and DB-specific correctness | pytest + MySQL |
 | API contract/workflow     | HTTP contract and workflow validation   | Postman        |
-| Frontend unit/integration | Frontend-local correctness              | Vitest         |
+| Frontend unit/integration | Frontend-local correctness              | Vitest/RTL     |
 | Browser E2E               | User-observable flow validation         | Playwright     |
 | Performance baseline      | Load and runtime behavior               | Locust         |
 

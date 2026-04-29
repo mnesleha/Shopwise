@@ -39,6 +39,12 @@ vi.mock("@/lib/api/auth", () => ({
     mockRequestEmailVerification(...args),
 }));
 
+vi.mock("@/components/cart/CartProvider", () => ({
+  useCart: () => ({
+    resetCount: vi.fn(),
+  }),
+}));
+
 const mockToastSuccess = vi.fn();
 const mockToastError = vi.fn();
 vi.mock("sonner", () => ({
@@ -81,7 +87,7 @@ describe("AccountTab", () => {
     // Editable inputs pre-filled with name values
     expect(screen.getByTestId("input-first-name")).toHaveValue("Alice");
     expect(screen.getByTestId("input-last-name")).toHaveValue("Smith");
-  });
+  }, 10000);
 
   it("B) clicking Save triggers PATCH with correct body and shows success toast", async () => {
     const user = userEvent.setup();

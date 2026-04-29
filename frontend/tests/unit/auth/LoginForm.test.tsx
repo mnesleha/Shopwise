@@ -130,6 +130,7 @@ describe("LoginForm", () => {
         expect(onSubmit).toHaveBeenCalledWith({
           email: "user@example.com",
           password: "secret123",
+          remember_me: false,
         }),
       );
     });

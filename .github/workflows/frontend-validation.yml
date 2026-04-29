@@ -1,0 +1,44 @@
+name: Frontend Validation
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-validation.yml"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-validation.yml"
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  validate:
+    name: Unit Tests And Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        env:
+          HUSKY: 0
+        run: npm ci
+
+      - name: Run Vitest
+        run: npm run test -- --run
+
+      - name: Run Next build
+        run: npm run build

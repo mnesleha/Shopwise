@@ -15,12 +15,13 @@ export default defineConfig({
     globals: true,
     setupFiles: './vitest.setup.ts',
     exclude: ["tests/e2e/**", "playwright/**", "**/*.spec.{ts,tsx}", "node_modules/**"],
-    // Performance optimizations
+    // Keep a single worker for stability/perf, but isolate modules per file so
+    // local vi.mock() calls do not leak across the shared run.
     poolOptions: {
       threads: {
-        singleThread: true,  // Shared environment between tests
+        singleThread: true,
       },
     },
-    isolate: false,  // Do not isolate each test file (faster)
+    isolate: true,
   },
 });

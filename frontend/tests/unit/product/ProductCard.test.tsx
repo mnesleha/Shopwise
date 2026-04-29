@@ -35,7 +35,7 @@ function buildProps(
 // ── Test A: Card renders primary image ────────────────────────────────────────
 
 describe("ProductCard — A: renders primary image thumbnail", () => {
-  it("renders an <img> with the thumb URL when primaryImage is provided", () => {
+  it("renders an <img> with the medium URL when primaryImage is provided", () => {
     const primaryImage = makeProductImage({
       id: 1,
       variants: {
@@ -61,7 +61,7 @@ describe("ProductCard — A: renders primary image thumbnail", () => {
 
     expect(img).toHaveAttribute(
       "src",
-      "https://example.com/products/1/thumb.jpg",
+      "https://example.com/products/1/medium.jpg",
     );
     expect(img).toHaveAttribute("alt", "Ergonomic Mouse");
   });
