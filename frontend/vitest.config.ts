@@ -13,8 +13,13 @@ export default defineConfig({
   test: {
     environment: "happy-dom",
     globals: true,
-    setupFiles: './vitest.setup.ts',
-    exclude: ["tests/e2e/**", "playwright/**", "**/*.spec.{ts,tsx}", "node_modules/**"],
+    setupFiles: "./vitest.setup.ts",
+    exclude: [
+      "tests/e2e/**",
+      "playwright/**",
+      "**/*.spec.{ts,tsx}",
+      "node_modules/**",
+    ],
     // Keep a single worker for stability/perf, but isolate modules per file so
     // local vi.mock() calls do not leak across the shared run.
     poolOptions: {

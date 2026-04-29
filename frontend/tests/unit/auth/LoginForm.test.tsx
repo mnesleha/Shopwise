@@ -18,11 +18,11 @@ import LoginForm from "@/components/auth/LoginForm";
 import { renderWithProviders } from "../helpers/render";
 import { LOGIN_FORM, LOGIN_SUBMIT } from "../helpers/testIds";
 
-function renderForm(props: Partial<React.ComponentProps<typeof LoginForm>> = {}) {
+function renderForm(
+  props: Partial<React.ComponentProps<typeof LoginForm>> = {},
+) {
   const onSubmit = vi.fn();
-  renderWithProviders(
-    <LoginForm onSubmit={onSubmit} {...props} />,
-  );
+  renderWithProviders(<LoginForm onSubmit={onSubmit} {...props} />);
   return { onSubmit };
 }
 
@@ -42,12 +42,16 @@ describe("LoginForm", () => {
 
     it("does NOT render forgot-password button when callback is not provided", () => {
       renderForm();
-      expect(screen.queryByRole("button", { name: /forgot password/i })).toBeNull();
+      expect(
+        screen.queryByRole("button", { name: /forgot password/i }),
+      ).toBeNull();
     });
 
     it("renders forgot-password button when callback is provided", () => {
       renderForm({ onForgotPassword: vi.fn() });
-      expect(screen.getByRole("button", { name: /forgot password/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /forgot password/i }),
+      ).toBeInTheDocument();
     });
 
     it("does NOT render register link when callback is not provided", () => {
@@ -57,7 +61,9 @@ describe("LoginForm", () => {
 
     it("renders register link when callback is provided", () => {
       renderForm({ onGoToRegister: vi.fn() });
-      expect(screen.getByRole("button", { name: /create one/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /create one/i }),
+      ).toBeInTheDocument();
     });
   });
 
@@ -108,7 +114,9 @@ describe("LoginForm", () => {
       renderForm();
       await user.type(screen.getByLabelText(/email/i), "user@example.com");
       await user.click(screen.getByTestId(LOGIN_SUBMIT));
-      expect(await screen.findByText(/password is required/i)).toBeInTheDocument();
+      expect(
+        await screen.findByText(/password is required/i),
+      ).toBeInTheDocument();
     });
 
     it("does NOT call onSubmit when validation fails", async () => {
@@ -154,7 +162,9 @@ describe("LoginForm", () => {
       const user = userEvent.setup();
       const onForgotPassword = vi.fn();
       renderForm({ onForgotPassword });
-      await user.click(screen.getByRole("button", { name: /forgot password/i }));
+      await user.click(
+        screen.getByRole("button", { name: /forgot password/i }),
+      );
       expect(onForgotPassword).toHaveBeenCalledTimes(1);
     });
 
