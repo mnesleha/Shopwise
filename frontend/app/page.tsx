@@ -183,7 +183,7 @@ export default function ShopwiseShowcaseHomepage() {
                   API Docs
                 </a>
                 <a
-                  href="https://github.com/mnesleha/Shopwise/blob/main/docs/decisions/readme.md"
+                  href="https://mnesleha.github.io/Shopwise/decisions/readme/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-full border border-slate-700 px-3 py-1 hover:bg-slate-700 hover:text-white transition-colors"
@@ -191,7 +191,7 @@ export default function ShopwiseShowcaseHomepage() {
                   ADR
                 </a>
                 <a
-                  href="https://github.com/mnesleha/Shopwise/blob/main/docs/testing/readme.md"
+                  href="https://mnesleha.github.io/Shopwise/testing/test%20strategy/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-full border border-slate-700 px-3 py-1 hover:bg-slate-700 hover:text-white transition-colors"
