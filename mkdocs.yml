@@ -46,6 +46,11 @@ nav: # define the left panel
       - Cart-Order Lifecycle: architecture/Cart-Order Lifecycle.md
       - Inventory Reservation Lifecycle: architecture/Inventory Reservation Lifecycle.md
       - Postman Anonymous Cart Testing: architecture/Postman Anonymous Cart Testing.md
+  - Process:
+      - Working Agreement: process/Working Agreement.md
+      - Sprint Process: process/Sprint Process.md
+      - Definition of Done: process/Definition of Done.md
+      - QA in Development: process/QA in Development.md
   - ADRs:
       - Architectural Decisions Index: decisions/readme.md
   - Testing:
