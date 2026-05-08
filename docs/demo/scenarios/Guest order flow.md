@@ -47,7 +47,7 @@ No authenticated customer account is required.
    - **Payment method:** Cash on Delivery
    - **Shipment method:** Standard
 10. Submit the order using the guest checkout path.
-11. Open **Mailpit** and locate the guest order email.
+11. Open [**Mailpit**](https://shopwise-mailpit.onrender.com/) and locate the guest order email.
 12. Open the guest order link from the email.
 13. Review the guest order detail page.
 

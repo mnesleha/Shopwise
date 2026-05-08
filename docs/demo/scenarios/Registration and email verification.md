@@ -40,7 +40,7 @@ No seeded customer account is required.
 3. Fill in the registration form for a new customer account.
 4. Submit the registration form.
 5. Observe the email verification feedback in the UI.
-6. Open **Mailpit** and locate the verification email.
+6. Open [**Mailpit**](https://shopwise-mailpit.onrender.com/) and locate the verification email.
 7. Open the verification link from the email.
 8. Observe the redirect into the authenticated customer area.
 9. Open the profile view if needed.

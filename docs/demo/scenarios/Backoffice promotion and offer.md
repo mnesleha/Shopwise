@@ -44,7 +44,7 @@ This scenario uses:
 5. Sign in to Django admin with the admin/staff account.
 6. Open the promotions workflow used for campaign sending.
 7. Create and send the campaign from the backoffice flow.
-8. Open **Mailpit** and locate the campaign offer email.
+8. Open [**Mailpit**](https://shopwise-mailpit.onrender.com/) and locate the campaign offer email.
 9. Open the offer link from the email.
 10. Review the promotion claimed screen.
 11. Return to the customer cart detail page.
