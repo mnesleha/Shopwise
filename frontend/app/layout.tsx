@@ -1,6 +1,8 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/sonner";
+import { Analytics } from "@vercel/analytics/next";
+import ClaritySnippet from "@/components/analytics/ClaritySnippet";
 
 export const metadata: Metadata = {
   title: "Shopwise",
@@ -16,6 +18,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body>
         {children}
+        <Analytics />
+        <ClaritySnippet />
         <Toaster
           richColors
           position="top-center"
