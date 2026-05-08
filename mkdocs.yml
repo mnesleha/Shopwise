@@ -23,6 +23,10 @@ extra_javascript:
 
 nav: # define the left panel
   - Index: index.md
+  - Onboarding: Onboarding.md
+  - Vision:
+      - Product Vision: vision/Product Vision.md
+      - Quality Goals: vision/Quality Goals.md
   - Demo scenarios:
       - Demo scenarios index: demo/readme.md
       - Guest user flow: demo/scenarios/Guest order flow.md
@@ -48,4 +52,3 @@ nav: # define the left panel
       - Test Strategy: testing/Test Strategy.md
   - CI-CD:
       - Pipeline Overview: ci-cd/Pipeline Overview.md
-      - Postman CLI in CI: ci-cd/Postman CLI in CI.md

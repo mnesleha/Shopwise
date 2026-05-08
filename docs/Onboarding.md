@@ -1,247 +1,400 @@
-# Shopwise – Onboarding Document
+# Onboarding
 
-## Purpose of This Document
+## Purpose
 
-This document serves as the primary onboarding and context-setting artifact for the Shopwise project.
+This document is the recommended entry point for understanding the **Shopwise** project.
 
-Its goals are:
+It explains:
 
-- to provide a clear understanding of **what is being built and why**
-- to explain **how development, testing, and documentation are integrated**
-- to enable a new team member (developer, QA, or PM) to become productive quickly
-- to act as a stable knowledge anchor when continuing work in a new context (e.g. new sprint, new discussion thread)
+- what Shopwise is today
+- how the project is structured
+- how to navigate the documentation
+- what the main architectural and quality principles are
+- where to start depending on your role or review goal
 
-This document intentionally focuses on **concepts, decisions, and workflows**, not implementation details.
+This document is intentionally practical.  
+It does not try to be the full architecture reference.
 
-## What Is Shopwise
+For the authoritative current system truth, see:
 
-Shopwise is a demo e-commerce backend project built as a **quality-driven showcase**.
+- [Current Architecture Baseline](./architecture/Current%20Architecture%20Baseline.md)
 
-The project models a simplified but realistic e-commerce workflow:
+For historical design rationale, see:
 
-- product and category catalog
-- user cart representing intent
-- order creation via checkout
-- simulated payment processing
+- [ADR Index](./decisions/readme.md)
 
-The system is not intended to be production-ready.
-Its primary purpose is to demonstrate **thoughtful backend design, testing strategy, documentation practices, and QA involvement throughout development**.
+---
 
-## Why Shopwise Exists
+## 1. What Shopwise Is
 
-Shopwise was created to demonstrate that:
+**Shopwise** is a quality-driven commerce application built as a **QA/SDET showcase project** and evolving toward a **marketable e-commerce starter kit**.
 
-- backend domain design goes beyond CRUD
-- testing is part of design, not a post-development activity
-- documentation can actively drive quality and reveal gaps
-- QA is an equal partner in development, architecture, and communication
+The project exists to demonstrate not only feature delivery, but also:
 
-The project intentionally emphasizes _how_ and _why_ things are built, not just _what_ is built.
+- architectural thinking
+- explicit decision-making
+- strong automated testing
+- realistic runtime boundaries
+- documentation as part of engineering quality
 
-## Technology Stack
+It is intentionally more than a toy demo or CRUD showcase.
+The project aims to show how a modern commerce system can be built with:
 
-Backend:
+- backend-owned business logic
+- explicit domain boundaries
+- safe evolution over time
+- reliable automated verification
+- presentable, reviewable documentation
 
-- Python
-- Django
-- Django REST Framework (DRF)
+---
 
-Databases:
+## 2. Current Shape of the System
 
-- MySQL – production-like environment
-- SQLite – fast, isolated test execution
+Shopwise is currently a **multi-part system**, not a backend-only application.
 
-Testing:
+### Main parts
 
-- Pytest – unit and API integration tests
-- Postman – E2E and workflow verification
+- **Frontend** — Next.js, React, TypeScript
+- **Backend API** — Django + Django REST Framework
+- **Background worker** — django-q2
+- **Database** — MySQL
+- **Media storage** — Cloudflare R2
+- **Supporting services** — payment provider mock, shipping provider mock, Mailpit
+- **Public demo deployment** — Vercel + Render + Aiven + R2
 
-CI:
+The project includes both:
 
-- GitHub Actions – automated test execution
+- backend architecture work
+- frontend integration work
 
-Documentation:
+It is already deployed as a public multi-service demo.
 
-- Markdown-based documentation
-- OpenAPI / Swagger (drf-spectacular)
+---
 
-Frontend:
+## 3. What the Project Currently Covers
 
-- React
-- Next.js
-- Vitest
-- React Testing Library
+The current implemented scope includes:
 
-E2E:
+- catalogue browsing
+- anonymous cart
+- authenticated cart
+- cart merge/adopt behavior on login
+- checkout
+- guest checkout
+- guest order claiming after verified email
+- inventory reservation and release
+- payment orchestration with provider abstraction
+- shipping orchestration with provider abstraction
+- async email delivery
+- public demo deployment
 
-- Playwright
+The project is currently also evolving in:
 
-## Development Methodology
+- pricing / VAT / promotions
+- frontend integration guard
+- marketable v1.0 scope shaping
 
-Shopwise follows a Scrum-inspired, iterative approach with strong emphasis on quality practices.
+---
 
-### Core principals
+## 4. How to Read This Documentation
 
-- **Test-Driven Development** (TDD)
+The documentation is intentionally split into several layers.
 
-  Business rules are validated by tests before and during implementation.
+## 4.1 Start with these documents
 
-- **Documentation-Driven Development** (DDD\*)
-  Documentation is used to:
-  - explain intent
-  - validate API consistency
-  - reveal missing tests and unclear behavior
+### [Product Vision](./vision/Product%20Vision.md)
 
-- **Incremental refinement**
+Explains why the project exists and what direction it is taking.
 
-  Architecture and domain decisions are revisited as understanding evolves.
+### [Current Architecture Baseline](./architecture/Current%20Architecture%20Baseline.md)
 
-\*DDD here refers to Documentation-Driven Development, not Domain-Driven Design, although domain modeling principles are applied
+Describes what is true now.
 
-## Domain Model
+### [ADR Index](./decisions/readme.md)
 
-The core domain entities are:
+Explains why important decisions were made.
 
-- Product
-- Category
-- Cart
-- CartItem
-- Order
-- Payment
+### [Test Strategy](./testing/Test%20Strategy.md)
 
-### Cart
+Explains how system behavior is validated.
 
-- Represents user intent
-- A user can have at most one ACTIVE cart
-- Cart lifecycle:
-  ACTIVE → CONVERTED
+---
 
-### Order
+## 4.2 Documentation roles
 
-- Represents the result of checkout
-- Orders are immutable from the API perspective
-- Orders are created exclusively via cart checkout
-- Orders are read-only resources
+### Vision documents
 
-### Payment
+Explain:
 
-- One-to-one relationship with Order
-- Simulates payment processing
-- Possible outcomes:
-  SUCCESS
-  FAILED
+- why the project exists
+- what qualities matter most
+- what direction the product is taking
 
-This separation ensures a clear distinction between **intent (Cart)** and **result (Order)**.
+### Architecture documents
 
-## API Overview and Workflow
+Explain:
 
-The API is designed around workflows rather than isolated resources.
+- current runtime structure
+- domain boundaries
+- lifecycle behavior
+- implementation guardrails
 
-### Cart
+### ADRs
 
-- GET /api/v1/cart/
-  Retrieves or creates the active cart for the user.
+Explain:
 
-- POST /api/v1/cart/items/
-  Adds an item to the active cart.
+- why a decision was made
+- what trade-offs were accepted
+- how architectural evolution happened
 
-- POST /api/v1/cart/checkout/
-  Converts the cart into an order.
+### Testing documents
 
-### Orders (Read-Only)
+Explain:
 
-- GET /api/v1/orders/
-  Lists user orders.
+- how quality is verified
+- what each test layer is responsible for
+- how testing aligns with architecture
 
-- GET /api/v1/orders/{id}/
-  Retrieves order details.
+### CI/CD documents
 
-### Payments
+Explain:
 
-- POST /api/v1/payments/
-  Simulates payment for a given order.
+- how validation and documentation publishing are automated
 
-## End-to-End Workflow
+---
 
-A typical E2E scenario follows this sequence:
+## 5. Core Architectural Truths
 
-1. User retrieves active cart
-2. User adds items to cart
-3. User performs checkout
-4. Order is created from cart
-5. Payment is simulated
-6. Order status is updated based on payment result
+These are the most important things to understand early.
 
-This workflow is covered by:
+### 5.1 Backend is the business authority
 
-- automated API tests (pytest)
-- Postman E2E collection
+The backend is the authoritative source of truth for:
 
-## Testing strategy
+- pricing
+- inventory
+- orders
+- payment outcomes
+- shipping state
+- audit events
 
-Shopwise follows a test pyramid approach:
+Frontend never computes authoritative business results.
 
-- Unit tests
+### 5.2 Service layer owns side effects
 
-  Validate domain rules and invariants (models).
+Business side effects belong in service-layer orchestration, not in views, serializers, or model `save()` hooks.
 
-- API integration tests
+### 5.3 Orders preserve historical truth
 
-  Validate workflows, permissions, and state transitions.
+Orders are snapshot-based.  
+History must not be rebuilt from mutable runtime catalogue or pricing state.
 
-- E2E tests (Postman)
+### 5.4 External integrations are isolated
 
-  Validate realistic user flows across multiple endpoints.
+Payments and shipping providers are isolated behind provider adapters.
+The core system should not depend on provider-specific payload structure.
 
-  Key testing tools:
+### 5.5 Testing is an architecture tool
 
-- Pytest
+Tests are used not only to detect regressions, but also to enforce domain invariants, verify concurrency behavior, and validate architectural boundaries.
 
-  Primary automated testing framework.
+---
+
+## 6. Core Domain Areas
+
+## 6.1 Identity & Authentication
+
+Covers:
+
+- registration
+- login
+- JWT in httpOnly cookies
+- session probing
+- verified identity flows
+- secure account operations
+
+## 6.2 Catalogue
+
+Covers:
+
+- products
+- flat categories
+- media references
+- search behavior
+
+## 6.3 Cart
+
+Covers:
+
+- authenticated cart resolution via ActiveCart pointer
+- anonymous cart token flow
+- merge/adopt behavior on login
+
+## 6.4 Checkout & Orders
+
+Covers:
+
+- order creation
+- immutable order snapshots
+- guest checkout
+- guest order claiming
+
+## 6.5 Inventory
+
+Covers:
+
+- reserve on checkout
+- commit on payment success
+- release on cancel / expiry
+- physical stock semantics
+
+## 6.6 Payments
+
+Covers:
+
+- provider-agnostic payment architecture
+- hosted payment initiation
+- backend-confirmed payment truth
+
+## 6.7 Shipping
+
+Covers:
+
+- carrier-agnostic shipping architecture
+- shipment lifecycle
+- mock/manual provider as first implementation
+
+## 6.8 Audit
+
+Covers:
+
+- append-only audit event trail
+- best-effort event persistence
+- service-layer emission
+
+---
+
+## 7. Testing and Quality Model
+
+Shopwise uses a layered test strategy.
+
+### Backend / domain correctness
+
+- `pytest`
+
+### MySQL verification
+
+- MySQL-specific correctness and concurrency tests
+
+### API contract / workflow validation
 
 - Postman
 
-  Executable documentation and E2E verification.
+### Frontend validation
 
-## Documentation Methodology
+- Vitest
 
-Documentation is treated as a quality and communication tool.
+### Browser E2E
 
-- README.md
-  Entry point and project overview.
+- Playwright
 
-- docs/
-  Structured documentation by topic and audience.
+### Performance baseline
 
-- OpenAPI / Swagger
-  Auto-generated API documentation used to:
-  - inspect API completeness
-  - identify undocumented behavior
-  - reveal missing test coverage
+- Locust
 
-Documentation gaps are intentionally treated nad used as input for further dvelopment.
+### CI/CD execution
 
-## Next steps
+- GitHub Actions
 
-Planned upcoming work includes:
+Testing is intentionally separated by responsibility rather than collapsed into one large undifferentiated test layer.
 
-- OpenAPI / Swagger integration and refinement
-- Documentation-driven identification of missing tests
-- Frontend exploration using:
-  - Vite
-  - React
-  - Vitest
-  - React Testing Library
+For detail, see:
 
-Frontend work will build on a stable, documented and test-covered backend.
+- [Test Strategy](./testing/Test%20Strategy.md)
 
-## How to Continue Work
+---
 
-To continue work on this project:
+## 8. Delivery Model
 
-1. Review this onboarding document
-2. Explore the docs/ directory
-3. Review existing tests and Postman collections
-4. Use Swagger/OpenAPI as a reference for API behavior
+The project currently uses:
 
-This document is intended to provide enough context to continue development without relaying on historical discussions.
+- **Scrumban** as the practical delivery model
+- **XP / TDD / documentation-driven development** as the technical core
+
+This reflects the realities of:
+
+- solo development
+- architecture-heavy discovery
+- strong test-driven refinement
+- frequent cross-cutting findings
+
+Architectural evolution is expected, but it should always be captured explicitly in ADRs and reflected in the current baseline.
+
+---
+
+## 9. Recommended Reading Paths
+
+## 9.1 Recruiter / reviewer
+
+1. [README (root)](../README.md)
+2. [Product Vision](./vision/Product%20Vision.md)
+3. [Current Architecture Baseline](./architecture/Current%20Architecture%20Baseline.md)
+4. [ADR Index](./decisions/readme.md)
+
+## 9.2 Backend contributor
+
+1. [Current Architecture Baseline](./architecture/Current%20Architecture%20Baseline.md)
+2. Relevant ADRs from the [ADR Index](./decisions/readme.md)
+3. [Cart–Order Lifecycle](./architecture/Cart-Order%20Lifecycle.md)
+4. [Inventory Reservation Lifecycle](./architecture/Inventory%20Reservation%20Lifecycle.md)
+5. [Test Strategy](./testing/Test%20Strategy.md)
+
+## 9.3 Frontend contributor
+
+1. [Current Architecture Baseline](./architecture/Current%20Architecture%20Baseline.md)
+2. Relevant auth / SSR / E2E ADRs
+3. [System Architecture Overview](./architecture/System%20Architecture%20Overview.md)
+4. [Test Strategy](./testing/Test%20Strategy.md)
+
+## 9.4 Architecture reviewer
+
+1. [Product Vision](./vision/Product%20Vision.md)
+2. [Current Architecture Baseline](./architecture/Current%20Architecture%20Baseline.md)
+3. [System Architecture Overview](./architecture/System%20Architecture%20Overview.md)
+4. [ADR Index](./decisions/readme.md)
+
+---
+
+## 10. Active Evolution Areas
+
+The following areas are currently evolving and should be read with awareness that further ADRs may refine them:
+
+- pricing / VAT / promotions
+- provider maturity beyond mock providers
+- richer deployment/observability practices
+- broader audit coverage
+- v1.0 scope closure
+
+When reviewing these areas, rely on:
+
+- accepted ADRs
+- current baseline
+- current test coverage
+- current deployed behavior
+
+---
+
+## 11. Final Note
+
+Shopwise is intentionally built as a **serious engineering artifact**.
+
+It is meant to show:
+
+- how architecture evolves under test feedback
+- how documentation supports engineering quality
+- how domain correctness is protected across backend, API, frontend, and runtime boundaries
+- how a commerce system can be made both explainable and testable
+
+If you are new to the project, the best next document to read is:
+
+- [Current Architecture Baseline](./architecture/Current%20Architecture%20Baseline.md)

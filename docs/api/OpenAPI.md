@@ -25,7 +25,6 @@ The decision to use OpenAPI (Swagger) in Shopwise is driven by several goals:
 
 - Shared language across roles  
   OpenAPI provides a common reference point for:
-
   - developers
   - QA engineers
   - test managers
@@ -45,14 +44,12 @@ In Shopwise, OpenAPI serves multiple roles:
 
 - Diagnostic tool  
   Generated documentation is reviewed to detect:
-
   - missing validation rules
   - unclear or inconsistent responses
   - undocumented status codes
 
 - Input for testing strategy  
   Gaps identified in OpenAPI documentation are used as input for:
-
   - new automated tests
   - refinement of existing test cases
 
@@ -80,15 +77,16 @@ OpenAPI documentation in Shopwise is designed to integrate with:
 - SwaggerUI
 
   Interactive exploration of endpoints and schemas
+  Link: [OpenAPI Swagger UI](https://shopwise-backend-ljqn.onrender.com/api/docs/swagger/)
 
 - Redoc
 
   Readable, structured API reference for documentation purposes.
+  Link: [OpenAPI Redoc UI](https://shopwise-backend-ljqn.onrender.com/api/docs/redoc/)
 
 - Postman
 
   OpenAPI definitions can be imported to Postman to:
-
   - generate requests collections
   - support E2E testing
   - reduce manual setup effort
