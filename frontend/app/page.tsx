@@ -191,7 +191,7 @@ export default function ShopwiseShowcaseHomepage() {
                   ADR
                 </a>
                 <a
-                  href="https://mnesleha.github.io/Shopwise/testing/test%20strategy/"
+                  href="https://mnesleha.github.io/Shopwise/testing/Test%20Strategy/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-full border border-slate-700 px-3 py-1 hover:bg-slate-700 hover:text-white transition-colors"
