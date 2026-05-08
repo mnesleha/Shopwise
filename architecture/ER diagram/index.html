@@ -1,0 +1,4172 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://github.io/architecture/ER%20diagram/">
+      
+      
+        <link rel="prev" href="../Domain%20Model/">
+      
+      
+        <link rel="next" href="../Cart-Order%20Lifecycle/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>ER Diagram - Shopwise Showcase Project Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#entity-relationship-diagram" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-header__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Shopwise Showcase Project Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ER Diagram
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Shopwise Showcase Project Documentation" class="md-nav__button md-logo" aria-label="Shopwise Showcase Project Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Shopwise Showcase Project Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Onboarding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Vision
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../vision/Product%20Vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Product Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../vision/Quality%20Goals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quality Goals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Demo scenarios
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo scenarios index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Guest%20order%20flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guest user flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Auth%20order%20flow%20with%20order%20history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auth Order Flow with Order History
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Cart%20merge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart merge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Order%20claim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Order claim
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Registration%20and%20email%20verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registration and Email Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20shipment%20processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Shipment Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/scenarios/Backoffice%20promotion%20and%20offer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backoffice Promotion and Offer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/OpenAPI/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAPI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../System%20Architecture%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Current%20Architecture%20Baseline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Current Architecture Baseline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Domain%20Model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ER Diagram
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ER Diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#relationship-notation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationship notation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#identity-and-customer-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity And Customer Profile
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Identity And Customer Profile">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#customerprofile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CustomerProfile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#address" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Address
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#catalog-and-pricing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Catalog And Pricing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Catalog And Pricing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#category" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Category
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#taxclass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TaxClass
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#product" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Product
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#productimage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ProductImage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cart-and-checkout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cart And Checkout
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cart And Checkout">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cart
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cartitem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CartItem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#activecart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ActiveCart
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#orders-payments-and-shipping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Orders, Payments, And Shipping
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Orders, Payments, And Shipping">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inventoryreservation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InventoryReservation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orderitem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OrderItem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#payment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Payment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shipment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shipment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shipmentevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ShipmentEvent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#promotions-and-discounts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Promotions And Discounts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Promotions And Discounts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#discount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discount
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#promotion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Promotion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#promotionproduct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PromotionProduct
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#promotioncategory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PromotionCategory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orderpromotion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OrderPromotion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#offer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Offer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supplier-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supplier Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supplier Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#supplier" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supplier
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supplieraddress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SupplierAddress
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supplierpaymentdetails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SupplierPaymentDetails
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audit-trail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit Trail
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Audit Trail">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#auditevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AuditEvent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relationship-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationship Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#diagram-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagram Export
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Cart-Order%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cart-Order Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Inventory%20Reservation%20Lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inventory Reservation Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Postman%20Anonymous%20Cart%20Testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postman Anonymous Cart Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Process
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Process
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../process/Working%20Agreement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Working Agreement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../process/Sprint%20Process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sprint Process
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../process/Definition%20of%20Done/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Definition of Done
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../process/QA%20in%20Development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    QA in Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADRs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    ADRs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural Decisions Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Testing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/Test%20Strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Strategy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI-CD
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CI-CD
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-cd/Pipeline%20Overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#relationship-notation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationship notation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#identity-and-customer-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity And Customer Profile
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Identity And Customer Profile">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#customerprofile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CustomerProfile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#address" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Address
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#catalog-and-pricing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Catalog And Pricing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Catalog And Pricing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#category" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Category
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#taxclass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TaxClass
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#product" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Product
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#productimage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ProductImage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cart-and-checkout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cart And Checkout
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cart And Checkout">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cart
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cartitem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CartItem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#activecart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ActiveCart
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#orders-payments-and-shipping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Orders, Payments, And Shipping
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Orders, Payments, And Shipping">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inventoryreservation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InventoryReservation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orderitem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OrderItem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#payment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Payment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shipment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shipment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shipmentevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ShipmentEvent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#promotions-and-discounts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Promotions And Discounts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Promotions And Discounts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#discount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discount
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#promotion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Promotion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#promotionproduct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PromotionProduct
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#promotioncategory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PromotionCategory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orderpromotion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OrderPromotion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#offer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Offer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supplier-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supplier Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supplier Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#supplier" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supplier
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supplieraddress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SupplierAddress
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supplierpaymentdetails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SupplierPaymentDetails
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audit-trail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit Trail
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Audit Trail">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#auditevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AuditEvent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relationship-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationship Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#diagram-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagram Export
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="entity-relationship-diagram">Entity Relationship Diagram</h1>
+<p>This page maps the current Shopwise database schema to the main domain entities
+used by the Django backend.</p>
+<p>The goal is not to document every framework table generated by Django, but to
+explain the business entities, the most important columns, and especially the
+relationship types visible in the DataGrip export.</p>
+<p>Version: 2.0</p>
+<h2 id="relationship-notation">Relationship notation</h2>
+<ul>
+<li><code>1:1</code> means exactly one related row on both sides</li>
+<li><code>1:N</code> means one parent row can have many child rows</li>
+<li><code>N:1</code> means many rows point to one parent row</li>
+<li><code>optional</code> means the foreign key is nullable</li>
+<li><code>snapshot only</code> means the relation is stored as copied scalar fields, not as a foreign key</li>
+</ul>
+<h2 id="scope">Scope</h2>
+<p>The current schema is best understood in these domains:</p>
+<ul>
+<li>Identity and customer profile</li>
+<li>Catalog and pricing</li>
+<li>Cart and checkout</li>
+<li>Orders, payments, and shipping</li>
+<li>Promotions and audit trail</li>
+<li>Supplier configuration</li>
+</ul>
+<h2 id="identity-and-customer-profile">Identity And Customer Profile</h2>
+<h3 id="user">User</h3>
+<p>Registered user account based on a custom email-first Django user model.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>email</td>
+<td>Email</td>
+<td>Unique login identifier</td>
+</tr>
+<tr>
+<td>username</td>
+<td>String</td>
+<td>Derived for Django compatibility</td>
+</tr>
+<tr>
+<td>email_verified</td>
+<td>Boolean</td>
+<td>Email verification state</td>
+</tr>
+<tr>
+<td>token_version</td>
+<td>Integer</td>
+<td>Token revocation version</td>
+</tr>
+<tr>
+<td>is_staff</td>
+<td>Boolean</td>
+<td>Admin access</td>
+</tr>
+<tr>
+<td>is_superuser</td>
+<td>Boolean</td>
+<td>Django superuser flag</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>User -&gt; CustomerProfile <code>(1:1)</code></li>
+<li>User -&gt; Cart <code>(1:N, optional on Cart)</code></li>
+<li>User -&gt; Order <code>(1:N, optional on Order)</code></li>
+<li>User -&gt; AuditEvent <code>(1:N, optional on AuditEvent)</code></li>
+<li>User -&gt; EmailVerificationToken <code>(1:N)</code></li>
+<li>User -&gt; EmailChangeRequest <code>(1:N)</code></li>
+<li>User -&gt; PasswordResetRequest <code>(1:N)</code></li>
+<li>User -&gt; ActiveCart <code>(1:1)</code></li>
+</ul>
+<h3 id="customerprofile">CustomerProfile</h3>
+<p>Extension row for e-commerce customer data.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>Integer</td>
+<td>Unique FK to User</td>
+</tr>
+<tr>
+<td>default_shipping_address_id</td>
+<td>Integer</td>
+<td>Optional FK to Address</td>
+</tr>
+<tr>
+<td>default_billing_address_id</td>
+<td>Integer</td>
+<td>Optional FK to Address</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>CustomerProfile -&gt; User <code>(1:1)</code></li>
+<li>CustomerProfile -&gt; Address <code>(1:N)</code></li>
+<li>CustomerProfile -&gt; default_shipping_address <code>(N:1, optional)</code></li>
+<li>CustomerProfile -&gt; default_billing_address <code>(N:1, optional)</code></li>
+</ul>
+<h3 id="address">Address</h3>
+<p>Saved customer address belonging to a profile.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>profile_id</td>
+<td>Integer</td>
+<td>FK to CustomerProfile</td>
+</tr>
+<tr>
+<td>first_name</td>
+<td>String</td>
+<td>Recipient first name</td>
+</tr>
+<tr>
+<td>last_name</td>
+<td>String</td>
+<td>Recipient last name</td>
+</tr>
+<tr>
+<td>street_line_1</td>
+<td>String</td>
+<td>Required</td>
+</tr>
+<tr>
+<td>city</td>
+<td>String</td>
+<td>Required</td>
+</tr>
+<tr>
+<td>postal_code</td>
+<td>String</td>
+<td>Required</td>
+</tr>
+<tr>
+<td>country</td>
+<td>Country code</td>
+<td>ISO country code</td>
+</tr>
+<tr>
+<td>phone</td>
+<td>String</td>
+<td>Required for new writes</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>Address -&gt; CustomerProfile <code>(N:1)</code></li>
+</ul>
+<h2 id="catalog-and-pricing">Catalog And Pricing</h2>
+<h3 id="category">Category</h3>
+<p>Flat product taxonomy. The current schema does not contain a parent-child self reference.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>name</td>
+<td>String</td>
+<td>Unique</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>Category -&gt; Product <code>(1:N, Product.category_id is optional)</code></li>
+<li>Category -&gt; Discount <code>(1:N, optional target)</code></li>
+<li>Category -&gt; PromotionCategory <code>(1:N)</code></li>
+</ul>
+<h3 id="taxclass">TaxClass</h3>
+<p>Named tax classification used by product pricing.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>name</td>
+<td>String</td>
+<td>Display name</td>
+</tr>
+<tr>
+<td>code</td>
+<td>String</td>
+<td>Unique machine code</td>
+</tr>
+<tr>
+<td>rate</td>
+<td>Decimal</td>
+<td>Tax percentage</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>Boolean</td>
+<td>Active flag</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>TaxClass -&gt; Product <code>(1:N, Product.tax_class_id is optional)</code></li>
+</ul>
+<h3 id="product">Product</h3>
+<p>Sellable catalog item. Pricing is in transition from legacy <code>price</code> to tax-aware net and gross fields.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>name</td>
+<td>String</td>
+<td>Product name</td>
+</tr>
+<tr>
+<td>slug</td>
+<td>String</td>
+<td>Optional unique slug</td>
+</tr>
+<tr>
+<td>price</td>
+<td>Decimal</td>
+<td>Legacy price field</td>
+</tr>
+<tr>
+<td>price_net_amount</td>
+<td>Decimal</td>
+<td>Canonical net amount</td>
+</tr>
+<tr>
+<td>price_gross_amount</td>
+<td>Decimal</td>
+<td>Derived gross amount</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>Enum</td>
+<td>ISO currency code</td>
+</tr>
+<tr>
+<td>tax_class_id</td>
+<td>Integer</td>
+<td>Optional FK to TaxClass</td>
+</tr>
+<tr>
+<td>stock_quantity</td>
+<td>Integer</td>
+<td>Available stock</td>
+</tr>
+<tr>
+<td>category_id</td>
+<td>Integer</td>
+<td>Optional FK to Category</td>
+</tr>
+<tr>
+<td>primary_image_id</td>
+<td>Integer</td>
+<td>Optional FK to ProductImage</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>Boolean</td>
+<td>Availability flag</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>Product -&gt; Category <code>(N:1, optional)</code></li>
+<li>Product -&gt; TaxClass <code>(N:1, optional)</code></li>
+<li>Product -&gt; ProductImage <code>(1:N)</code></li>
+<li>Product -&gt; primary_image <code>(N:1, optional)</code></li>
+<li>Product -&gt; CartItem <code>(1:N)</code></li>
+<li>Product -&gt; OrderItem <code>(1:N)</code></li>
+<li>Product -&gt; Discount <code>(1:N)</code></li>
+<li>Product -&gt; PromotionProduct <code>(1:N)</code></li>
+<li>Product -&gt; InventoryReservation <code>(1:N)</code></li>
+</ul>
+<h3 id="productimage">ProductImage</h3>
+<p>Gallery image for a product.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>product_id</td>
+<td>Integer</td>
+<td>FK to Product</td>
+</tr>
+<tr>
+<td>image</td>
+<td>File</td>
+<td>Stored asset</td>
+</tr>
+<tr>
+<td>alt_text</td>
+<td>String</td>
+<td>Optional alt text</td>
+</tr>
+<tr>
+<td>sort_order</td>
+<td>Integer</td>
+<td>Gallery ordering</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>DateTime</td>
+<td>Creation timestamp</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>ProductImage -&gt; Product <code>(N:1)</code></li>
+</ul>
+<h2 id="cart-and-checkout">Cart And Checkout</h2>
+<h3 id="cart">Cart</h3>
+<p>Shopping cart for either an authenticated user or an anonymous visitor.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>Integer</td>
+<td>Optional FK to User</td>
+</tr>
+<tr>
+<td>anonymous_token_hash</td>
+<td>String</td>
+<td>Optional unique guest token hash</td>
+</tr>
+<tr>
+<td>status</td>
+<td>Enum</td>
+<td>ACTIVE, CONVERTED, MERGED</td>
+</tr>
+<tr>
+<td>merged_into_cart_id</td>
+<td>Integer</td>
+<td>Optional self FK</td>
+</tr>
+<tr>
+<td>merged_at</td>
+<td>DateTime</td>
+<td>Merge timestamp</td>
+</tr>
+<tr>
+<td>claimed_offer_token</td>
+<td>String</td>
+<td>Optional claimed offer token</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>DateTime</td>
+<td>Creation timestamp</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>Cart -&gt; User <code>(N:1, optional)</code></li>
+<li>Cart -&gt; CartItem <code>(1:N)</code></li>
+<li>Cart -&gt; Cart <code>(N:1 self-reference, optional via merged_into_cart_id)</code></li>
+<li>Cart -&gt; ActiveCart <code>(1:N from Cart perspective, 1:1 from User perspective through pointer table)</code></li>
+</ul>
+<h3 id="cartitem">CartItem</h3>
+<p>Single product line inside a cart.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>cart_id</td>
+<td>Integer</td>
+<td>FK to Cart</td>
+</tr>
+<tr>
+<td>product_id</td>
+<td>Integer</td>
+<td>FK to Product</td>
+</tr>
+<tr>
+<td>quantity</td>
+<td>Integer</td>
+<td>Positive quantity</td>
+</tr>
+<tr>
+<td>price_at_add_time</td>
+<td>Decimal</td>
+<td>Snapshot when item was added</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>DateTime</td>
+<td>Creation timestamp</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>DateTime</td>
+<td>Update timestamp</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>CartItem -&gt; Cart <code>(N:1)</code></li>
+<li>CartItem -&gt; Product <code>(N:1)</code></li>
+</ul>
+<h3 id="activecart">ActiveCart</h3>
+<p>MySQL-safe pointer that guarantees a single current active cart per authenticated user.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>Integer</td>
+<td>Unique FK to User</td>
+</tr>
+<tr>
+<td>cart_id</td>
+<td>Integer</td>
+<td>FK to Cart</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>DateTime</td>
+<td>Creation timestamp</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>DateTime</td>
+<td>Update timestamp</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>ActiveCart -&gt; User <code>(1:1)</code></li>
+<li>ActiveCart -&gt; Cart <code>(N:1)</code></li>
+</ul>
+<h2 id="orders-payments-and-shipping">Orders, Payments, And Shipping</h2>
+<h3 id="order">Order</h3>
+<p>Checkout result storing customer, address, pricing, and supplier snapshots.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>Integer</td>
+<td>Optional FK to User</td>
+</tr>
+<tr>
+<td>customer_email</td>
+<td>Email</td>
+<td>Required</td>
+</tr>
+<tr>
+<td>status</td>
+<td>Enum</td>
+<td>CREATED, PAID, PAYMENT_FAILED, DELIVERY_FAILED, SHIPPED, DELIVERED, CANCELLED</td>
+</tr>
+<tr>
+<td>shipping_*</td>
+<td>Mixed</td>
+<td>Shipping address snapshot</td>
+</tr>
+<tr>
+<td>billing_*</td>
+<td>Mixed</td>
+<td>Billing address snapshot</td>
+</tr>
+<tr>
+<td>subtotal_net</td>
+<td>Decimal</td>
+<td>Optional snapshot total</td>
+</tr>
+<tr>
+<td>subtotal_gross</td>
+<td>Decimal</td>
+<td>Optional snapshot total</td>
+</tr>
+<tr>
+<td>total_tax</td>
+<td>Decimal</td>
+<td>Optional snapshot total</td>
+</tr>
+<tr>
+<td>total_discount</td>
+<td>Decimal</td>
+<td>Optional snapshot total</td>
+</tr>
+<tr>
+<td>order_discount_gross</td>
+<td>Decimal</td>
+<td>Optional order-level discount snapshot</td>
+</tr>
+<tr>
+<td>order_promotion_code</td>
+<td>String</td>
+<td>Optional applied order promotion code</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>Enum</td>
+<td>Currency of all monetary snapshots</td>
+</tr>
+<tr>
+<td>supplier_*</td>
+<td>Mixed</td>
+<td>Supplier identity, address, and payment snapshots</td>
+</tr>
+<tr>
+<td>is_claimed</td>
+<td>Boolean</td>
+<td>Claimed guest order flag</td>
+</tr>
+<tr>
+<td>claimed_by_user_id</td>
+<td>Integer</td>
+<td>Optional FK to User</td>
+</tr>
+<tr>
+<td>guest_access_token_hash</td>
+<td>String</td>
+<td>Optional guest access token</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>DateTime</td>
+<td>Creation timestamp</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>Order -&gt; User <code>(N:1, optional)</code></li>
+<li>Order -&gt; claimed_by_user <code>(N:1, optional)</code></li>
+<li>Order -&gt; OrderItem <code>(1:N)</code></li>
+<li>Order -&gt; Payment <code>(1:N)</code></li>
+<li>Order -&gt; Shipment <code>(1:N)</code></li>
+<li>Order -&gt; InventoryReservation <code>(1:N)</code></li>
+<li>Order -&gt; Supplier <code>(no FK, snapshot only)</code></li>
+<li>Order -&gt; OrderPromotion <code>(no FK, stored as order_promotion_code snapshot only)</code></li>
+</ul>
+<h3 id="inventoryreservation">InventoryReservation</h3>
+<p>Temporary stock reservation tied to an order before final stock commitment.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>order_id</td>
+<td>Integer</td>
+<td>FK to Order</td>
+</tr>
+<tr>
+<td>product_id</td>
+<td>Integer</td>
+<td>FK to Product</td>
+</tr>
+<tr>
+<td>quantity</td>
+<td>Integer</td>
+<td>Reserved quantity</td>
+</tr>
+<tr>
+<td>status</td>
+<td>Enum</td>
+<td>ACTIVE, COMMITTED, RELEASED, EXPIRED</td>
+</tr>
+<tr>
+<td>expires_at</td>
+<td>DateTime</td>
+<td>Reservation expiry</td>
+</tr>
+<tr>
+<td>release_reason</td>
+<td>Enum</td>
+<td>Optional reason</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>DateTime</td>
+<td>Creation timestamp</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>InventoryReservation -&gt; Order <code>(N:1)</code></li>
+<li>InventoryReservation -&gt; Product <code>(N:1)</code></li>
+</ul>
+<h3 id="orderitem">OrderItem</h3>
+<p>Immutable order line with extensive pricing snapshots captured at checkout.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>order_id</td>
+<td>Integer</td>
+<td>FK to Order</td>
+</tr>
+<tr>
+<td>product_id</td>
+<td>Integer</td>
+<td>FK to Product</td>
+</tr>
+<tr>
+<td>quantity</td>
+<td>Integer</td>
+<td>Positive quantity</td>
+</tr>
+<tr>
+<td>price_at_order_time</td>
+<td>Decimal</td>
+<td>Legacy snapshot field</td>
+</tr>
+<tr>
+<td>unit_price_at_order_time</td>
+<td>Decimal</td>
+<td>Unit price snapshot</td>
+</tr>
+<tr>
+<td>line_total_at_order_time</td>
+<td>Decimal</td>
+<td>Line total snapshot</td>
+</tr>
+<tr>
+<td>unit_price_net_at_order_time</td>
+<td>Decimal</td>
+<td>Net unit price snapshot</td>
+</tr>
+<tr>
+<td>unit_price_gross_at_order_time</td>
+<td>Decimal</td>
+<td>Gross unit price snapshot</td>
+</tr>
+<tr>
+<td>tax_amount_at_order_time</td>
+<td>Decimal</td>
+<td>Tax amount snapshot</td>
+</tr>
+<tr>
+<td>tax_rate_at_order_time</td>
+<td>Decimal</td>
+<td>Effective tax rate snapshot</td>
+</tr>
+<tr>
+<td>promotion_code_at_order_time</td>
+<td>String</td>
+<td>Optional line promotion code</td>
+</tr>
+<tr>
+<td>promotion_discount_gross_at_order_time</td>
+<td>Decimal</td>
+<td>Optional discount snapshot</td>
+</tr>
+<tr>
+<td>product_name_at_order_time</td>
+<td>String</td>
+<td>Product name snapshot</td>
+</tr>
+<tr>
+<td>line_total_net_at_order_time</td>
+<td>Decimal</td>
+<td>Net line total snapshot</td>
+</tr>
+<tr>
+<td>line_total_gross_at_order_time</td>
+<td>Decimal</td>
+<td>Gross line total snapshot</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>OrderItem -&gt; Order <code>(N:1)</code></li>
+<li>OrderItem -&gt; Product <code>(N:1)</code></li>
+</ul>
+<h3 id="payment">Payment</h3>
+<p>Single payment attempt for an order. The schema allows multiple attempts per order.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>order_id</td>
+<td>Integer</td>
+<td>FK to Order</td>
+</tr>
+<tr>
+<td>status</td>
+<td>Enum</td>
+<td>PENDING, SUCCESS, FAILED</td>
+</tr>
+<tr>
+<td>payment_method</td>
+<td>Enum</td>
+<td>CARD, COD</td>
+</tr>
+<tr>
+<td>provider</td>
+<td>Enum</td>
+<td>DEV_FAKE, ACQUIREMOCK</td>
+</tr>
+<tr>
+<td>amount</td>
+<td>Decimal</td>
+<td>Optional monetary snapshot</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>Enum</td>
+<td>Optional currency snapshot</td>
+</tr>
+<tr>
+<td>provider_payment_id</td>
+<td>String</td>
+<td>Optional external id</td>
+</tr>
+<tr>
+<td>provider_reference</td>
+<td>String</td>
+<td>Optional provider reference</td>
+</tr>
+<tr>
+<td>redirect_url</td>
+<td>String</td>
+<td>Optional hosted payment URL</td>
+</tr>
+<tr>
+<td>paid_at</td>
+<td>DateTime</td>
+<td>Optional success timestamp</td>
+</tr>
+<tr>
+<td>failed_at</td>
+<td>DateTime</td>
+<td>Optional failure timestamp</td>
+</tr>
+<tr>
+<td>failure_reason</td>
+<td>String</td>
+<td>Optional failure description</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>DateTime</td>
+<td>Creation timestamp</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>Payment -&gt; Order <code>(N:1)</code></li>
+</ul>
+<h3 id="shipment">Shipment</h3>
+<p>Shipping fulfillment record attached to an order.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>order_id</td>
+<td>Integer</td>
+<td>FK to Order</td>
+</tr>
+<tr>
+<td>provider_code</td>
+<td>String</td>
+<td>Shipping provider code</td>
+</tr>
+<tr>
+<td>service_code</td>
+<td>String</td>
+<td>Service code</td>
+</tr>
+<tr>
+<td>carrier_name_snapshot</td>
+<td>String</td>
+<td>Carrier display name at creation time</td>
+</tr>
+<tr>
+<td>service_name_snapshot</td>
+<td>String</td>
+<td>Service display name at creation time</td>
+</tr>
+<tr>
+<td>tracking_number</td>
+<td>String</td>
+<td>Optional tracking id</td>
+</tr>
+<tr>
+<td>status</td>
+<td>Enum</td>
+<td>PENDING, LABEL_CREATED, IN_TRANSIT, DELIVERED, FAILED_DELIVERY, CANCELLED</td>
+</tr>
+<tr>
+<td>label_url</td>
+<td>String</td>
+<td>Optional label URL</td>
+</tr>
+<tr>
+<td>label_file</td>
+<td>File</td>
+<td>Optional stored label file</td>
+</tr>
+<tr>
+<td>receiver_snapshot</td>
+<td>JSON</td>
+<td>Receiver snapshot data</td>
+</tr>
+<tr>
+<td>shipped_at</td>
+<td>DateTime</td>
+<td>Optional shipped timestamp</td>
+</tr>
+<tr>
+<td>delivered_at</td>
+<td>DateTime</td>
+<td>Optional delivered timestamp</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>DateTime</td>
+<td>Creation timestamp</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>Shipment -&gt; Order <code>(N:1)</code></li>
+<li>Shipment -&gt; ShipmentEvent <code>(1:N)</code></li>
+</ul>
+<h3 id="shipmentevent">ShipmentEvent</h3>
+<p>Normalized tracking or carrier event belonging to a shipment.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>shipment_id</td>
+<td>Integer</td>
+<td>FK to Shipment</td>
+</tr>
+<tr>
+<td>event_type</td>
+<td>String</td>
+<td>Provider event type</td>
+</tr>
+<tr>
+<td>raw_status</td>
+<td>String</td>
+<td>Optional raw carrier status</td>
+</tr>
+<tr>
+<td>normalized_status</td>
+<td>Enum</td>
+<td>Shopwise shipment status</td>
+</tr>
+<tr>
+<td>payload</td>
+<td>JSON</td>
+<td>Raw event payload</td>
+</tr>
+<tr>
+<td>external_event_id</td>
+<td>String</td>
+<td>Optional provider event id</td>
+</tr>
+<tr>
+<td>occurred_at</td>
+<td>DateTime</td>
+<td>Optional event timestamp</td>
+</tr>
+<tr>
+<td>processed_at</td>
+<td>DateTime</td>
+<td>Optional processing timestamp</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>DateTime</td>
+<td>Creation timestamp</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>ShipmentEvent -&gt; Shipment <code>(N:1)</code></li>
+</ul>
+<h2 id="promotions-and-discounts">Promotions And Discounts</h2>
+<h3 id="discount">Discount</h3>
+<p>Legacy discount model still present in the schema for direct product or category targeting.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>name</td>
+<td>String</td>
+<td>Discount name</td>
+</tr>
+<tr>
+<td>discount_type</td>
+<td>Enum</td>
+<td>PERCENT or FIXED</td>
+</tr>
+<tr>
+<td>value</td>
+<td>Decimal</td>
+<td>Discount value</td>
+</tr>
+<tr>
+<td>valid_from</td>
+<td>Date</td>
+<td>Start date</td>
+</tr>
+<tr>
+<td>valid_to</td>
+<td>Date</td>
+<td>End date</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>Boolean</td>
+<td>Active flag</td>
+</tr>
+<tr>
+<td>product_id</td>
+<td>Integer</td>
+<td>Optional FK to Product</td>
+</tr>
+<tr>
+<td>category_id</td>
+<td>Integer</td>
+<td>Optional FK to Category</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>Discount -&gt; Product <code>(N:1, optional)</code></li>
+<li>Discount -&gt; Category <code>(N:1, optional)</code></li>
+</ul>
+<h3 id="promotion">Promotion</h3>
+<p>Current line-level promotion definition. Targets are assigned through explicit join tables.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>name</td>
+<td>String</td>
+<td>Display name</td>
+</tr>
+<tr>
+<td>code</td>
+<td>String</td>
+<td>Unique business identifier</td>
+</tr>
+<tr>
+<td>type</td>
+<td>Enum</td>
+<td>PERCENT or FIXED</td>
+</tr>
+<tr>
+<td>value</td>
+<td>Decimal</td>
+<td>Discount magnitude</td>
+</tr>
+<tr>
+<td>amount_scope</td>
+<td>Enum</td>
+<td>NET or GROSS</td>
+</tr>
+<tr>
+<td>priority</td>
+<td>Integer</td>
+<td>Conflict resolution priority</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>Boolean</td>
+<td>Active flag</td>
+</tr>
+<tr>
+<td>active_from</td>
+<td>Date</td>
+<td>Optional lower bound</td>
+</tr>
+<tr>
+<td>active_to</td>
+<td>Date</td>
+<td>Optional upper bound</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>Promotion -&gt; PromotionProduct <code>(1:N)</code></li>
+<li>Promotion -&gt; PromotionCategory <code>(1:N)</code></li>
+</ul>
+<h3 id="promotionproduct">PromotionProduct</h3>
+<p>Explicit join table linking a promotion to a product.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>promotion_id</td>
+<td>Integer</td>
+<td>FK to Promotion</td>
+</tr>
+<tr>
+<td>product_id</td>
+<td>Integer</td>
+<td>FK to Product</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>PromotionProduct -&gt; Promotion <code>(N:1)</code></li>
+<li>PromotionProduct -&gt; Product <code>(N:1)</code></li>
+</ul>
+<h3 id="promotioncategory">PromotionCategory</h3>
+<p>Explicit join table linking a promotion to a category.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>promotion_id</td>
+<td>Integer</td>
+<td>FK to Promotion</td>
+</tr>
+<tr>
+<td>category_id</td>
+<td>Integer</td>
+<td>FK to Category</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>PromotionCategory -&gt; Promotion <code>(N:1)</code></li>
+<li>PromotionCategory -&gt; Category <code>(N:1)</code></li>
+</ul>
+<h3 id="orderpromotion">OrderPromotion</h3>
+<p>Order-level promotion definition applied to the whole order instead of individual line items.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>name</td>
+<td>String</td>
+<td>Display name</td>
+</tr>
+<tr>
+<td>code</td>
+<td>String</td>
+<td>Unique business identifier</td>
+</tr>
+<tr>
+<td>type</td>
+<td>Enum</td>
+<td>PERCENT or FIXED</td>
+</tr>
+<tr>
+<td>value</td>
+<td>Decimal</td>
+<td>Discount magnitude</td>
+</tr>
+<tr>
+<td>acquisition_mode</td>
+<td>Enum</td>
+<td>AUTO_APPLY, CAMPAIGN_APPLY, MANUAL_ENTRY</td>
+</tr>
+<tr>
+<td>stacking_policy</td>
+<td>Enum</td>
+<td>EXCLUSIVE, STACKABLE_WITH_LINE</td>
+</tr>
+<tr>
+<td>minimum_order_value</td>
+<td>Decimal</td>
+<td>Optional eligibility threshold</td>
+</tr>
+<tr>
+<td>priority</td>
+<td>Integer</td>
+<td>Conflict resolution priority</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>Boolean</td>
+<td>Active flag</td>
+</tr>
+<tr>
+<td>active_from</td>
+<td>Date</td>
+<td>Optional lower bound</td>
+</tr>
+<tr>
+<td>active_to</td>
+<td>Date</td>
+<td>Optional upper bound</td>
+</tr>
+<tr>
+<td>is_discoverable</td>
+<td>Boolean</td>
+<td>Messaging visibility flag</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>OrderPromotion -&gt; Offer <code>(1:N)</code></li>
+<li>OrderPromotion -&gt; Order <code>(no FK, stored as order_promotion_code snapshot only)</code></li>
+</ul>
+<h3 id="offer">Offer</h3>
+<p>Concrete token or coupon that grants access to an order-level promotion.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>token</td>
+<td>String</td>
+<td>Unique token</td>
+</tr>
+<tr>
+<td>promotion_id</td>
+<td>Integer</td>
+<td>FK to OrderPromotion</td>
+</tr>
+<tr>
+<td>status</td>
+<td>Enum</td>
+<td>CREATED, DELIVERED, CLAIMED, REDEEMED, EXPIRED</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>Boolean</td>
+<td>Active flag</td>
+</tr>
+<tr>
+<td>active_from</td>
+<td>Date</td>
+<td>Optional lower bound</td>
+</tr>
+<tr>
+<td>active_to</td>
+<td>Date</td>
+<td>Optional upper bound</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>Offer -&gt; OrderPromotion <code>(N:1)</code></li>
+</ul>
+<h2 id="supplier-configuration">Supplier Configuration</h2>
+<h3 id="supplier">Supplier</h3>
+<p>Canonical supplier identity used for seller and invoice snapshots at order creation time.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>name</td>
+<td>String</td>
+<td>Supplier name</td>
+</tr>
+<tr>
+<td>company_id</td>
+<td>String</td>
+<td>Optional registration number</td>
+</tr>
+<tr>
+<td>vat_id</td>
+<td>String</td>
+<td>Optional VAT id</td>
+</tr>
+<tr>
+<td>email</td>
+<td>Email</td>
+<td>Optional contact</td>
+</tr>
+<tr>
+<td>phone</td>
+<td>String</td>
+<td>Optional contact</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>Boolean</td>
+<td>Only active supplier is used for new orders</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>DateTime</td>
+<td>Creation timestamp</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>Supplier -&gt; SupplierAddress <code>(1:N)</code></li>
+<li>Supplier -&gt; SupplierPaymentDetails <code>(1:N)</code></li>
+<li>Supplier -&gt; Order <code>(no FK, snapshot only)</code></li>
+</ul>
+<h3 id="supplieraddress">SupplierAddress</h3>
+<p>Postal or registered address for a supplier.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>supplier_id</td>
+<td>Integer</td>
+<td>FK to Supplier</td>
+</tr>
+<tr>
+<td>label</td>
+<td>String</td>
+<td>Optional label</td>
+</tr>
+<tr>
+<td>street_line_1</td>
+<td>String</td>
+<td>Required</td>
+</tr>
+<tr>
+<td>city</td>
+<td>String</td>
+<td>Required</td>
+</tr>
+<tr>
+<td>postal_code</td>
+<td>String</td>
+<td>Required</td>
+</tr>
+<tr>
+<td>country</td>
+<td>String</td>
+<td>Country code or name</td>
+</tr>
+<tr>
+<td>is_default_for_orders</td>
+<td>Boolean</td>
+<td>Default address for order snapshots</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>SupplierAddress -&gt; Supplier <code>(N:1)</code></li>
+</ul>
+<h3 id="supplierpaymentdetails">SupplierPaymentDetails</h3>
+<p>Banking or payment details copied into orders as immutable snapshots.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>supplier_id</td>
+<td>Integer</td>
+<td>FK to Supplier</td>
+</tr>
+<tr>
+<td>label</td>
+<td>String</td>
+<td>Optional label</td>
+</tr>
+<tr>
+<td>bank_name</td>
+<td>String</td>
+<td>Optional bank name</td>
+</tr>
+<tr>
+<td>account_number</td>
+<td>String</td>
+<td>Optional account number</td>
+</tr>
+<tr>
+<td>iban</td>
+<td>String</td>
+<td>Optional IBAN</td>
+</tr>
+<tr>
+<td>swift</td>
+<td>String</td>
+<td>Optional SWIFT</td>
+</tr>
+<tr>
+<td>is_default_for_orders</td>
+<td>Boolean</td>
+<td>Default payment details for order snapshots</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>SupplierPaymentDetails -&gt; Supplier <code>(N:1)</code></li>
+</ul>
+<h2 id="audit-trail">Audit Trail</h2>
+<h3 id="auditevent">AuditEvent</h3>
+<p>Best-effort business audit record.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Integer</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>entity_type</td>
+<td>String</td>
+<td>Entity name</td>
+</tr>
+<tr>
+<td>entity_id</td>
+<td>String</td>
+<td>Target entity id</td>
+</tr>
+<tr>
+<td>action</td>
+<td>String</td>
+<td>Action identifier</td>
+</tr>
+<tr>
+<td>actor_type</td>
+<td>Enum</td>
+<td>system, customer, admin</td>
+</tr>
+<tr>
+<td>actor_user_id</td>
+<td>Integer</td>
+<td>Optional FK to User</td>
+</tr>
+<tr>
+<td>actor_identifier</td>
+<td>String</td>
+<td>Optional external identifier</td>
+</tr>
+<tr>
+<td>metadata</td>
+<td>JSON</td>
+<td>Business metadata</td>
+</tr>
+<tr>
+<td>context</td>
+<td>JSON</td>
+<td>Additional context</td>
+</tr>
+<tr>
+<td>scope_key</td>
+<td>String</td>
+<td>Optional scope partition</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>DateTime</td>
+<td>Creation timestamp</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:</p>
+<ul>
+<li>AuditEvent -&gt; User <code>(N:1, optional)</code></li>
+</ul>
+<h2 id="relationship-summary">Relationship Summary</h2>
+<p>The key cardinalities in the current schema are:</p>
+<ul>
+<li>User -&gt; CustomerProfile <code>(1:1)</code></li>
+<li>CustomerProfile -&gt; Address <code>(1:N)</code></li>
+<li>User -&gt; Cart <code>(1:N)</code></li>
+<li>User -&gt; ActiveCart <code>(1:1)</code></li>
+<li>Cart -&gt; CartItem <code>(1:N)</code></li>
+<li>CartItem -&gt; Product <code>(N:1)</code></li>
+<li>Category -&gt; Product <code>(1:N, optional on Product)</code></li>
+<li>TaxClass -&gt; Product <code>(1:N, optional on Product)</code></li>
+<li>Product -&gt; ProductImage <code>(1:N)</code></li>
+<li>Order -&gt; OrderItem <code>(1:N)</code></li>
+<li>Order -&gt; Payment <code>(1:N)</code></li>
+<li>Order -&gt; Shipment <code>(1:N)</code></li>
+<li>Shipment -&gt; ShipmentEvent <code>(1:N)</code></li>
+<li>Order -&gt; InventoryReservation <code>(1:N)</code></li>
+<li>Product -&gt; OrderItem <code>(1:N)</code></li>
+<li>Product -&gt; InventoryReservation <code>(1:N)</code></li>
+<li>Discount -&gt; Product <code>(N:1, optional)</code></li>
+<li>Discount -&gt; Category <code>(N:1, optional)</code></li>
+<li>Promotion -&gt; PromotionProduct <code>(1:N)</code></li>
+<li>Promotion -&gt; PromotionCategory <code>(1:N)</code></li>
+<li>PromotionProduct -&gt; Product <code>(N:1)</code></li>
+<li>PromotionCategory -&gt; Category <code>(N:1)</code></li>
+<li>OrderPromotion -&gt; Offer <code>(1:N)</code></li>
+<li>Supplier -&gt; SupplierAddress <code>(1:N)</code></li>
+<li>Supplier -&gt; SupplierPaymentDetails <code>(1:N)</code></li>
+<li>AuditEvent -&gt; User <code>(N:1, optional)</code></li>
+</ul>
+<p>Snapshot-only relations that do not appear as foreign keys:</p>
+<ul>
+<li>Order -&gt; Supplier</li>
+<li>Order -&gt; OrderPromotion</li>
+<li>Order -&gt; customer shipping and billing address data</li>
+</ul>
+<h2 id="diagram-export">Diagram Export</h2>
+<p>The current DataGrip export image is included below for visual reference.</p>
+<p><img alt="EER Diagram" src="../er-diagram.png" /></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10/dist/mermaid.min.js"></script>
+      
+        <script src="../../js/mermaid-init.js"></script>
+      
+    
+  </body>
+</html>
